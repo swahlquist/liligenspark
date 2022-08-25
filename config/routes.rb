@@ -273,6 +273,7 @@ Coughdrop::Application.routes.draw do
       get 'blocked_cells'
       post 'extra_action'
       post 'alias'
+      post 'status/:user_id' => 'organizations#set_status'
     end
     
     resources :utterances do

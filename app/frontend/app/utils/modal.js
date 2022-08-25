@@ -298,6 +298,11 @@ modal.ModalController = Controller.extend({
       if(modal.last_any_template != 'highlight' && modal.last_any_template != 'highlight-secondary') {
         modal.last_controller = controller;        
       }
+      var tooltip = document.querySelector('body > .tooltip');
+      if(tooltip) {
+        tooltip.parentElement.removeChild(tooltip);
+      }
+  
       controller.set('model', settings);
       if(modal.auto_close_timer) {
         runCancel(modal.auto_close_timer);

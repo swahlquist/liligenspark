@@ -21,9 +21,9 @@
           {{/if}}
         </td>
         {{#if profiles}} <!-- if org has default communicator or supporter profile, and org is premium -->
-          <td style='width: 60px; padding-bottom: 0;'>
+          <td style='width: 110px; padding-bottom: 0;'>
             {{#if show_profiles}}
-              <div class='profile_box' title={{t "Communication Profiles (%{state})" state=user.profile_state key='communication_profiles'}} data-toggle="tooltip" data-placement="top">
+              <div class='profile_box' title={{t "Communication Profiles (%{state})" state=user.profile_state key='communication_profiles'}} data-toggle="tooltip" data-placement="top" style='display: inline-block;'>
                 {{#if user.second_profile_history}}
                   <button class='btn btn-default' {{action 'user_profile' user}} style='position: absolute; margin-left: -3px; margin-top: -3px;'>
                     <span class='glyphicon glyphicon-lamp'></span>
@@ -38,6 +38,13 @@
                   <span class='glyphicon glyphicon-lamp'></span>
                 </button>
               </div>
+              <div class='profile_box' title={{user.org_status_state}} data-toggle="tooltip" data-placement="top" style='display: inline-block;'>
+                {{#if user.org_status_class}}
+                  <button class='btn btn-default' {{action 'user_status' user}} style='padding-top: 3px; padding-bottom: 9px;'>
+                    <span class={{user.org_status_class}} style='font-size: 20px; line-height: 10px; vertical-align: middle;'></span>
+                  </button>
+                {{/if}}
+              </div>                
               <!-- don't show the score, that's personal and 
                   not useful at a glance. Show how many assessments
                   they've had in the last year (maybe just via visible overlap)

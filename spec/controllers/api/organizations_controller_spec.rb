@@ -1335,4 +1335,79 @@ describe Api::OrganizationsController, :type => :controller do
       expect(link['state']['org_id']).to eq(o.global_id)
     end
   end
+  
+  describe "set_status" do
+    it "should require an api token" do
+      post 'set_status', params: {organization_id: 'asdf', user_id: 'qwer'}
+      assert_missing_token
+    end
+
+    it "should require a valid org" do
+      token_user
+      post 'set_status', params: {organization_id: 'asdf', user_id: 'qwer'}
+      assert_not_found('asdf')
+    end
+
+    it "should require supervisor or manager access" do
+      token_user
+      o = Organization.create(:settings => {'total_licenses' => 1})
+      post 'set_status', params: {organization_id: o.global_id, user_id: 'qwer'}
+      assert_unauthorized
+    end
+
+    it "should require a valid org user" do
+      token_user
+      o = Organization.create(:settings => {'total_licenses' => 1})
+      o.add_supervisor(@user.user_name, false)
+      post 'set_status', params: {organization_id: o.global_id, user_id: 'qwer'}
+      assert_not_found('qwer')
+    end
+
+    it "should require supervision permission on the specific user" do
+      token_user
+      u = User.create
+      o = Organization.create(:settings => {'total_licenses' => 1})
+      o.add_supervisor(@user.user_name, false)
+      o.add_user(u.user_name, false)
+      post 'set_status', params: {organization_id: o.global_id, user_id: u.global_id}
+      assert_unauthorized
+    end
+
+    it "should update user state" do
+      token_user
+      u = User.create
+      o = Organization.create(:settings => {'total_licenses' => 1})
+      o.add_supervisor(@user.user_name, false)
+      o.add_user(u.user_name, false)
+      User.link_supervisor_to_user(@user.reload, u.reload)
+      post 'set_status', params: {organization_id: o.global_id, user_id: u.global_id, status: {'state' => 'bacon', 'note' => 'no way'}}
+      json = assert_success_json
+      expect(json['status']).to eq({
+        'state' => 'bacon',
+        'date' => Time.now.to_i,
+        'note' => 'no way'
+      })
+    end
+
+    it "should record a log message on update" do
+      token_user
+      u = User.create
+      o = Organization.create(:settings => {'total_licenses' => 1})
+      o.add_supervisor(@user.user_name, false)
+      o.add_user(u.user_name, false)
+      User.link_supervisor_to_user(@user.reload, u.reload)
+      post 'set_status', params: {organization_id: o.global_id, user_id: u.global_id, status: {'state' => 'bacon', 'note' => 'no way'}}
+      json = assert_success_json
+      expect(json['status']).to eq({
+        'state' => 'bacon',
+        'date' => Time.now.to_i,
+        'note' => 'no way'
+      })
+      l = LogSession.last
+      expect(l).to_not eq(nil)
+      expect(l.user).to eq(u)
+      expect(l.author).to eq(@user)
+      expect(l.data['note']['text']).to eq("Status set to bacon - no way")
+    end
+  end
 end

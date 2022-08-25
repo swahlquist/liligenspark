@@ -28,6 +28,38 @@ class Api::OrganizationsController < ApplicationController
     render json: JsonApi::User.paginate(params, users, {:limited_identity => true, :include_email => true, :organization => @org, :prefix => prefix, :organization_manager => org_manager, :profile_type => 'supervisor'})
   end
 
+  def set_status
+    if !@org.supervisor?(@api_user) && !@org.manager?(@api_user)
+      return allowed?(@api_user, 'never_allow')
+    end
+    user = @org.users.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    return unless allowed?(user, 'supervise')
+    link = UserLink.where(user_id: user.id).detect{|l| l.data['type'] == 'org_user' }
+    if link
+      link.data['state'] ||= {}
+      link.data['state']['status'] = {
+        'date' => Time.now.to_i,
+        'state' => params['status']['state']
+      }
+      if params['status']['note']
+        link.data['state']['status']['note'] = params['status']['note']
+      end
+      link.save
+      log_note = "Status set to #{params['status']['state']}"
+      log_note += " - #{params['status']['note']}" if params['status']['note']
+      LogSession.message({
+        recipient: user,
+        sender: @api_user,
+        message: log_note,
+        notify: false
+      })
+      render json: {updated: true, link_id: link.id, status: link.data['state']['status']}
+    else
+      return api_error 400, {error: 'user not found in org'}
+    end
+  end
+
   def extras
     return unless allowed?(@org, 'edit')
     users = @org.extras_users.sort_by(&:user_name)
@@ -73,9 +105,11 @@ class Api::OrganizationsController < ApplicationController
       # TODO: sharding
       com_extras = UserExtra.where(user_id: com_ids)
       recents = []
-      com_extras.each do |extra|
-        profs = (extra.settings['recent_profiles'] || {})[org.settings['communicator_profile']['profile_id']]
-        recents << profs[-1] if profs && profs[-1] && profs[-1]['added'] > (Time.now - org.profile_frequency('communicator')).to_i
+      com_extras.find_in_batches(batch_size: 50) do |batch|
+        batch.each do |extra|
+          profs = (extra.settings['recent_profiles'] || {})[org.settings['communicator_profile']['profile_id']]
+          recents << profs[-1] if profs && profs[-1] && profs[-1]['added'] > (Time.now - org.profile_frequency('communicator')).to_i
+        end
       end
       res['user_counts']['communicators'] = com_ids.length
       res['user_counts']['communicator_recent_profiles'] = recents.length
@@ -85,9 +119,11 @@ class Api::OrganizationsController < ApplicationController
       # TODO: sharding
       sup_extras = UserExtra.where(user_id: sup_ids)
       recents = []
-      sup_extras.each do |extra|
-        profs = (extra.settings['recent_profiles'] || {})[org.settings['supervisor_profile']['profile_id']] || []
-        recents << profs[-1] if profs[-1] && profs[-1]['added'] > (Time.now - org.profile_frequency('supervisor')).to_i
+      sup_extras.find_in_batches(batch_size: 50) do |batch|
+        batch.each do |extra|
+          profs = (extra.settings['recent_profiles'] || {})[org.settings['supervisor_profile']['profile_id']] || []
+          recents << profs[-1] if profs[-1] && profs[-1]['added'] > (Time.now - org.profile_frequency('supervisor')).to_i
+        end
       end
       res['user_counts']['supervisors'] = sup_ids.length
       res['user_counts']['supervisor_recent_profiles'] = recents.length
@@ -121,7 +157,7 @@ class Api::OrganizationsController < ApplicationController
     end
     res['user_counts']['recent_session_count'] = recent_sessions.count
     res['user_counts']['recent_session_user_count'] = recent_sessions.distinct.count('user_id')
-    
+
     render json: res.to_json
   end
   
@@ -129,7 +165,7 @@ class Api::OrganizationsController < ApplicationController
     org = Organization.find_by_path(params['organization_id'])
     return unless allowed?(org, 'edit')
     # Only the reports in the list should be allowed for non-admins
-    if !['logged_2', 'not_logged_2', 'unused_3', 'unused_6'].include?(params['report'])
+    if !['logged_2', 'not_logged_2', 'unused_3', 'unused_6', 'summaries'].include?(params['report']) && !params['report'].match(/^status-/)
       if !org.admin?
         return unless allowed?(org, 'impossible')
       end
@@ -222,6 +258,22 @@ class Api::OrganizationsController < ApplicationController
     elsif params['report'] == 'new_users'
       x = 2
       users = User.where(['created_at > ?', x.weeks.ago])
+    elsif params['report'].match(/status-/)
+      status = params['report'].split(/-/, 2)[1]
+      links = UserLink.links_for(org).select{|l| l['type'] == 'org_user' && (((l['state'] || {})['status'] || {})['state'] || 'unchecked') == status }
+      statuses = {}
+      if !org.admin?
+        # TODO: sharding
+        org.downstream_orgs.each do |o|
+          links += UserLink.links_for(o).select{|l| l['type'] == 'org_user' && (((l['state'] || {})['status'] || {})['state'] || 'unchecked') == status }
+        end
+      end
+      links.each{|l| statuses[l['user_id']] ||= l['state']['status'] || {'state' => 'unchecked'} }
+
+      users = User.find_all_by_global_id(links.map{|l| l['user_id'] }.uniq)
+      users.each do |u|
+        u.instance_variable_set('@org_status', statuses[u.global_id])
+      end
     elsif params['report'].match(/logged_/)
       # logins that have generated logs in the last 2 weeks
       x = params['report'].split(/_/)[1].to_i
@@ -324,12 +376,78 @@ class Api::OrganizationsController < ApplicationController
       stats['logs'] = LogSession.count
       stats['organizations'] = Organization.count
       stats['versions'] = PaperTrail::Version.count
+    elsif params['report'] == 'summaries'
+      # TODO: Users clustered by total available words
+      approved_users = org.approved_users(false)
+      # if it's a shell org, go ahead and report on its children
+      if approved_users.count == 0
+        approved_users += org.downstream_orgs.map{|o| o.approved_users(false) }.flatten
+      end
+      methods = {}
+      devices = {}
+      vocabs = {}
+      statuses = {}
+      sizes = []
+      board_ids = []
+      links = UserLink.links_for(org).select{|l| l['type'] == 'org_user' && l['state']['status'] }
+      approved_users.each do |user|
+        if user.settings['preferences']['home_board']
+          board_ids.push(user.settings['preferences']['home_board']['id'])
+        end
+        link = links.detect{|l| l['user_id'] == user.global_id }
+        state = link && link['state'] && link['state']['status'] && link['state']['status']['state']
+        state ||= 'unchecked'
+        statuses[state] = (statuses[state] || 0) + 1
+      end
+      boards_hash = {}
+      Board.find_batches_by_global_id(board_ids.uniq){|b| boards_hash[b.global_id] = b }
+      approved_users.each do |user|
+        user.access_methods.each{|m| methods[m] = (methods[m] || 0) + 1 }
+        if user.settings['external_device']
+          dn = user.settings['external_device']['device_name']
+          dn = "Unnamed" if dn.blank?
+          devices[dn] = (devices[dn] || 0) + 1
+          vocabs[user.settings['external_device']['vocab_name']] = (vocabs[user.settings['external_device']['vocab_name']] || 0) + 1
+          sizes << user.settings['external_device']['size']
+        elsif user.settings['preferences']['home_board']
+          brd = boards_hash[user.settings['preferences']['home_board']['id']]
+          grid = BoardContent.load_content('grid')
+          devices['CoughDrop'] = (devices['CoughDrop'] || 0) + 1
+          if brd.key.match(/^core-\d/)
+            vocabs['Quick Core'] = (vocabs['Quick Core'] || 0) + 1
+          elsif brd.key.match(/vocal-flair/)
+            vocabs['Vocal Flair'] = (vocabs['Vocal Flair'] || 0) + 1
+          elsif brd.key.match(/sequoia/)
+            vocabs['Sequoia'] = (vocabs['Sequoia'] || 0) + 1
+          else
+            key = brd.key.split(/\//)[1]
+            vocabs[key] = (vocabs[key] || 0) + 1
+          end
+          sizes << (grid['rows'] || 3) * (grid['columns'] || 4)
+          brd.settings['downstream_board_ids'].length
+        else
+          devices['No Device'] = (devices['No Device'] || 0) + 1
+        end
+      end
+      stats = {}
+      stats['access_methods'] = methods
+      stats['devices'] = devices
+      stats['vocabs'] = vocabs
+      stats['statuses'] = statuses
+      sizes_hash = {}
+      sizes.each do |size|
+        lower = size - (size % 30)
+        range = "#{lower}-#{lower + 29} cells"
+        sizes_hash[range] = (sizes_hash[range] || 0) + 1
+      end
+      stats['sizes'] = sizes_hash
     else
       return api_error 400, {:error => "unrecognized report: #{params['report']}"}
     end
     res = {}
     res[:user] = users.sort_by(&:user_name).map{|u| 
       r = JsonApi::User.as_json(u, limited_identity: true); 
+      r['org_status'] = u.instance_variable_get('@org_status') if u.instance_variable_get('@org_status')
       r['email'] = u.settings['email'];
       if org.admin?
         r['referrer'] = u.settings['referrer']

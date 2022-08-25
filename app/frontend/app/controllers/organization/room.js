@@ -5,6 +5,7 @@ import persistence from '../../utils/persistence';
 import modal from '../../utils/modal';
 import { computed } from '@ember/object';
 import EmberObject from '@ember/object';
+import { set as emberSet } from '@ember/object';
 
 export default Controller.extend({
   first_log: computed('model.logs.data', function() {
@@ -126,6 +127,16 @@ export default Controller.extend({
     supervisor_profile: function(user) {
       var profile_id = this.get('organization.supervisor_profile_id');
       modal.open('modals/profiles', {user: user, profile_id: profile_id, type: 'supervisor'});
+    },
+    communicator_status: function(user) {
+      var _this = this;
+      modal.open('modals/user-status', {user: user, type: 'communicator', organization: this.get('organization')}).then(function(res) {
+        if(res) {
+          var ref_user = _this.get('model.communicators').find(function(u) { return u && u.id == user.id;});
+          emberSet(ref_user, 'org_status', res.status);
+          _this.set('refresh_id', Math.random());  
+        }
+      });
     },
     set_goal: function(decision) {
       var _this = this;

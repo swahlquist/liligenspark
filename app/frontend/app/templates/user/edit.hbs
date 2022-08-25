@@ -218,8 +218,13 @@
           </div>
         </div>
       {{/if}}
+      <div class="form-group">
+        <label for="external_access_method" class="col-sm-4 control-label">{{t "Access Method" key='access_method'}}</label>
+        <div class="col-sm-6">
+          {{bound-select select_class="form-control" select_id="external_access_method" content=access_methods selection=external_access_method action=(action (mut external_access_method)) }}
+        </div>
+      </div>
     {{/if}}
-  
   {{/if}}
   {{#unless app_state.supporter_role}}
     {{#if model.permissions.delete}}

@@ -42,6 +42,9 @@ Ember.templateHelpers.time = function(date) {
 };
 
 Ember.templateHelpers.date_ago = function(date, precision) {
+  if(typeof(date) == 'number' && date < 1577862000000) {
+    date = date * 1000;
+  }
   var moment = window.moment(date);
   if(precision == 'day') {
     var pre = window.moment();

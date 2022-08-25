@@ -282,6 +282,34 @@ CoughDrop.registrationTypes = [
   {name: i18n.t('registration_type_teacher', "A teacher"), id: 'teacher'},
   {name: i18n.t('registration_type_other', "An aide, caregiver or other supporter"), id: 'other'}
 ];
+CoughDrop.user_statuses = [
+  {id: 'unchecked', label: i18n.t('unknown', "Unknown/Nothing"), on: true},
+  {id: 'hourglass', label: i18n.t('waiting_for_evaluation', "Waiting for Evaluation"), on: true},
+  {id: 'equalizer', label: i18n.t('waiting_for_results', "Waiting for Recommendation from Eval"), on: true},
+  {id: 'piggy-bank', label: i18n.t('temporary_solution_while_waiting', "Temporary Solution, Waiting for Funding"), on: true},
+  {id: 'phone', label: i18n.t('waiting_for_device', "Waiting for Device"), on: true},
+  {id: 'hand-up', label: i18n.t('training_started', "Training Started"), on: true},
+  {id: 'grain', label: i18n.t('implemented_recently', "Implemented Recently"), on: true},
+  {id: 'tree-deciduous', label: i18n.t('implemented_making_progress', "Implemented, Making Progress"), on: true},
+  {id: 'exclamation-sign', label: i18n.t('needing_additional_supporter', "Needing Additional Support"), on: true},
+  {id: 'gift'},
+  {id: 'bell'},
+  {id: 'flash'},
+  {id: 'calendar'},
+  {id: 'education'},
+];
+CoughDrop.access_methods = {
+  touch: 'hand-up',
+  axis_scanning: 'screenshot',
+  scanning: 'barcode',
+  arrow_dwell: 'arrow-up',
+  mouse_dwell: 'arrow-up',
+  gaze: 'eye-open',
+  head: 'user',
+  dwell: 'arrow-up',
+  other: 'asterisk'
+};
+
 
 CoughDrop.board_levels = [
   {name: i18n.t('unspecified_empty', "[  ]"), id: ''},

@@ -22,22 +22,26 @@ module JsonApi::Unit
     json['communicators'] = []
     org = unit.organization
     premium_org = org && ((org.settings || {})['premium'] || org.admin)
-    org_links = UserLink.links_for(org).select{|l| ['org_supervisor', 'org_user'].include?(l['type']) && users_hash[l['user_id']]}
+    org_links = UserLink.links_for(org).select{|l| ['org_supervisor', 'org_user'].include?(l['type']) && users_hash[l['user_id']]}    
     UserLink.links_for(unit).each do |link|
       user = users_hash[link['user_id']]
       if user
         if link['type'] == 'org_unit_supervisor'
           hash = JsonApi::User.as_json(user, limited_identity: true)
           hash['org_unit_edit_permission'] = !!(link['state'] && link['state']['edit_permission'])
-          org_link = org_links.detect{|l| l['type'] == 'org_supervisor' && l['state']['profile_id'] }
+          org_link = org_links.detect{|l| l['type'] == 'org_supervisor' && l['user_id'] == user.global_id && l['state']['profile_id'] }
           if premium_org && org_link && org_link['state']['profile_history'] && org.matches_profile_id('supervisor', org_link['state']['profile_id'], org_link['state']['profile_template_id'])
             hash['profile_history'] = org_link['state']['profile_history']
           end
           json['supervisors'] << hash
         elsif link['type'] == 'org_unit_communicator'
           hash = JsonApi::User.as_json(user, limited_identity: true, include_goal: true)
-          org_link = org_links.detect{|l| l['type'] == 'org_user' && l['state']['profile_id'] }
-          if premium_org && org_link && org_link['state']['profile_history'] && org.matches_profile_id('communicator', org_link['state']['profile_id'], org_link['state']['profile_template_id'])
+          org_link = org_links.detect{|l| l['type'] == 'org_user' && l['user_id'] == user.global_id }
+          if org_link && org_link['state']['status']
+            hash['org_status'] = org_link['state']['status']
+          end
+          hash['org_status'] ||= {'state' => (user.settings['preferences'] && user.settings['preferences']['home_board'] ? 'tree-deciduous' : 'unchecked')}
+          if premium_org && org_link && org_link['state']['profile_id'] && org_link['state']['profile_history'] && org.matches_profile_id('communicator', org_link['state']['profile_id'], org_link['state']['profile_template_id'])
             hash['profile_history'] = org_link['state']['profile_history']
           end
           json['communicators'] << hash

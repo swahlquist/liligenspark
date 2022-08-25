@@ -15,6 +15,8 @@ module JsonApi::Organization
     if args.key?(:permissions)
       json['permissions'] = org.permissions_for(args[:permissions])
     end
+
+    json['status_overrides'] = org.settings['status_overrides']
     
     if json['permissions'] && json['permissions']['edit']
       json['extra_colors'] = org.settings['extra_colors']

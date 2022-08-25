@@ -261,7 +261,8 @@ module JsonApi::User
 
         manager = !!links.detect{|l| l['type'] == 'org_manager' && l['record_code'] == org_code }
         sup = links.detect{|l| l['type'] == 'org_supervisor' && l['record_code'] == org_code }
-        mngd = !!links.detect{|l| l['type'] == 'org_user' && l['record_code'] == org_code }
+        org_user = links.detect{|l| l['type'] == 'org_user' && l['record_code'] == org_code } 
+        mngd = !!org_user
     
         if args[:profile_type]
           args[:cutoff] ||= args[:organization].profile_frequency(args[:profile_type])          
@@ -307,6 +308,8 @@ module JsonApi::User
           json['org_pending'] = args[:organization].pending_user?(user)
           json['org_sponsored'] = args[:organization].sponsored_user?(user)
           json['org_eval'] = args[:organization].eval_user?(user)
+          json['org_status'] = org_user['state']['status']
+          json['org_status'] ||= {'state' => (user.settings['preferences'] && user.settings['preferences']['home_board'] ? 'tree-deciduous' : 'unchecked')}
           json['joined'] = user.created_at.iso8601
         end
       end

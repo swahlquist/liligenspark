@@ -26,6 +26,7 @@ export default Controller.extend({
     this.refresh_supervisors();
     this.refresh_orgs();
     this.refresh_stats();
+    this.refresh_report();
     var id = this.get('model.id');
     if(this.get('model.permissions.manage')) {
       this.refresh_logs();
@@ -145,6 +146,15 @@ export default Controller.extend({
     }, function() {
       _this.set('weekly_stats', {error: true});
     });
+  },
+  refresh_report: function() {
+    var _this = this;
+    _this.set('report', {loading: true});
+    persistence.ajax('/api/v1/organizations/' + this.get('model.id') + '/admin_reports?report=summaries', {type: 'GET'}).then(function(report) {
+      _this.set('report', report);
+    }, function(err) {
+      _this.set('report', {error: true});
+    })
   },
   refresh_orgs: function() {
     var _this = this;

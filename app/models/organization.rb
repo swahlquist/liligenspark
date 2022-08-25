@@ -783,6 +783,8 @@ class Organization < ActiveRecord::Base
           'sponsored' => !!link['state']['sponsored']
         }
         e['profile'] = org.settings['communicator_profile'].slice('profile_id', 'template_id', 'frequency') if org.settings['communicator_profile']
+        e['status'] = link['state']['status']
+        e['status'] ||= (user.settings['preferences'] && user.settings['preferences']['home_board'] ? 'tree-deciduous' : 'unchecked')
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
@@ -1053,6 +1055,7 @@ class Organization < ActiveRecord::Base
     self.settings['inactivity_timeout'] = params['inactivity_timeout'].to_i if params['inactivity_timeout']
     self.settings.delete('inactivity_timeout') if (self.settings['inactivity_timeout'] || 0) < 10
     self.settings['image_url'] = process_string(params['image_url']) if params['image_url']
+    self.settings['status_overrides'] = params['status_overrides']
     self.settings['extra_colors'] = params['extra_colors']
     raise "updater required" unless non_user_params['updater']
     if params[:allotted_licenses]

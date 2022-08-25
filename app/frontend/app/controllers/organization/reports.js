@@ -4,6 +4,8 @@ import persistence from '../../utils/persistence';
 import modal from '../../utils/modal';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import { set as emberSet } from '@ember/object';
+import CoughDrop from '../../app';
 
 export default Controller.extend({
   queryParams: ['current_report'],
@@ -41,9 +43,18 @@ export default Controller.extend({
         list.push({id: 'unused_3', name: i18n.t('unused_3', "Not used for the last 3 months")});
         list.push({id: 'unused_6', name: i18n.t('unused_6', "Not used for the last 6 months")});
       }
+      list.push({id: 'summaries', name: i18n.t('summaries', "SUMMARIES")});
       return list;
     } else {
       return [];
+    }
+  }),
+  custom_report: computed('current_report', function() {
+    var rep = this.get('current_report');
+    if(rep.match(/^status-/)) {
+      var code = rep.replace(/^status-/, '');
+      var status = CoughDrop.user_statuses.find(function(r) { return r.id == code; });
+      return "Status: " + status.label;
     }
   }),
   get_report: observer('current_report', 'model.id', function() {
@@ -97,6 +108,9 @@ export default Controller.extend({
             list.forEach(function(u) {
               if(u && u.goal && u.goal.last_tracked) {
                 u.goal.recently_tracked = u.goal.last_tracked > two_weeks_ago;
+              }
+              if(u.org_status) {
+                u.org_status_class = 'glyphicon glyphicon-' + u.org_status.state;
               }
             });
             _this.set('results.list', list);
@@ -164,6 +178,19 @@ export default Controller.extend({
       element.click();
 
       document.body.removeChild(element);
+    },
+    set_status: function(user) {
+      var _this = this;
+      modal.open('modals/user-status', {user: user, type: 'communicator', organization: this.get('model')}).then(function(res) {
+        if(res) {
+          var ref_user = _this.get('results.list').find(function(u) { return u && u.id == user.id;});
+          if(ref_user) {
+            emberSet(ref_user, 'org_status', res.status);
+            emberSet(ref_user, 'org_status_class', 'glyphicon glyphicon-' + res.status.state);
+          }
+
+        }
+      });
     },
     remove_report_user: function(user) {
       var action = null;

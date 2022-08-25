@@ -5,6 +5,7 @@ import CoughDrop from '../../app';
 import i18n from '../../utils/i18n';
 import { computed } from '@ember/object';
 import modal from '../../utils/modal';
+import { htmlSafe } from '@ember/string';
 
 export default Component.extend({
   didInsertElement: function() {
@@ -20,6 +21,7 @@ export default Component.extend({
     'more_weeks',
     'more_users',
     'populated_stamps',
+    'refresh_id',
     function() {
       var res = [];
       var _this = this;
@@ -122,6 +124,16 @@ export default Component.extend({
               });
             }
           });
+          if(user.org_status) {
+            var state = CoughDrop.user_statuses.find(function(s) { return s.id == user.org_status.state; });
+            if(_this.get('org.status_overrides')) {
+              state = _this.get('org.status_overrides').find(function(s) { return s.id == user.org_status.state; });
+            }
+            if(state) {
+              user.org_status_state = i18n.t('status_colon', "Status: " + state.label);
+            }
+            user.org_status_class = htmlSafe('glyphicon glyphicon-' + user.org_status.state);
+          }
           res.push(user);
         });
         if(_this.get('profiles')) {
@@ -135,10 +147,10 @@ export default Component.extend({
                   prof = p;
                   var expected = window.moment(p.expected * 1000);
                   if(p.expected && expected < now) {
-                    user.profile_class = 'btn btn-default weeks_profile overdue';
+                    user.profile_class = htmlSafe('btn btn-default weeks_profile overdue');
                     user.profile_state = i18n.t('overdue', "overdue");
                   } else if(p.expected && expected < now.add(-1, 'month')) {
-                    user.profile_class = 'btn btn-default weeks_profile due_soon';
+                    user.profile_class = htmlSafe('btn btn-default weeks_profile due_soon');
                     user.profile_state = i18n.t('due_soon', "due soon");
                   }
                 }
@@ -285,6 +297,9 @@ export default Component.extend({
     },
     user_profile: function(user) {
       this.sendAction('user_profile', user);
+    },
+    user_status: function(user) {
+      this.sendAction('user_status', user);
     }
   }
 });
