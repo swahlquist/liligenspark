@@ -420,7 +420,7 @@ class Api::OrganizationsController < ApplicationController
           elsif brd.key.match(/sequoia/)
             vocabs['Sequoia'] = (vocabs['Sequoia'] || 0) + 1
           else
-            key = brd.key.split(/\//)[1]
+            key = brd.key.split(/\//)[1].sub(/_\d+$/, '')
             vocabs[key] = (vocabs[key] || 0) + 1
           end
           sizes << (grid['rows'] || 3) * (grid['columns'] || 4)
