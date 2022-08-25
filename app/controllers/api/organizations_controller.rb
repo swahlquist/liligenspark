@@ -411,7 +411,7 @@ class Api::OrganizationsController < ApplicationController
           sizes << user.settings['external_device']['size']
         elsif user.settings['preferences']['home_board']
           brd = boards_hash[user.settings['preferences']['home_board']['id']]
-          grid = BoardContent.load_content('grid')
+          grid = BoardContent.load_content(brd, 'grid')
           devices['CoughDrop'] = (devices['CoughDrop'] || 0) + 1
           if brd.key.match(/^core-\d/)
             vocabs['Quick Core'] = (vocabs['Quick Core'] || 0) + 1
