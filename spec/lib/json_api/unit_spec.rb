@@ -132,6 +132,75 @@ describe JsonApi::Unit do
       expect(json['supervisors'][0]['profile_history'][0]['log_id']).to eq(s.global_id)
     end
 
+    it "should include profile history for the correct user if there are multiple users" do
+      u1 = User.create
+      d1 = Device.create(user: u1)
+      o = Organization.create(settings: {'premium' => true, 'supervisor_profile' => {'profile_id' => 'qqq'}})
+      o.add_supervisor(u1.user_name, false)
+      s1 = LogSession.create!(data: {
+          'profile' => {
+            'id' => 'qqq',
+            'name' => 'Best Profile'
+          },
+        },
+        user: u1, author: u1, device: d1
+      )
+
+      u2 = User.create
+      d2 = Device.create(user: u2)
+      o.add_supervisor(u2.user_name, false)
+
+      u3 = User.create
+      d3 = Device.create(user: u3)
+      o.add_supervisor(u3.user_name, false)
+      s3 = LogSession.create!(data: {
+          'profile' => {
+            'id' => 'qqq',
+            'name' => 'Worst Profile'
+          },
+        },
+        user: u3, author: u3, device: d3
+      )
+
+      Worker.process_queues
+      Worker.process_queues
+      links = UserLink.where(user: u1.reload)
+      expect(links.length).to eq(1)
+      expect(links[0].data['type']).to eq('org_supervisor')
+      expect(links[0].data['state']).to_not eq(nil)
+      expect(links[0].data['state']['profile_history']).to_not eq(nil)
+      expect(links[0].data['state']['profile_id']).to eq('qqq')
+      expect(links[0].data['state']['profile_history'][0]['log_id']).to eq(s1.global_id)
+      links = UserLink.where(user: u2.reload)
+      expect(links.length).to eq(1)
+      expect(links[0].data['type']).to eq('org_supervisor')
+      expect(links[0].data['state']).to_not eq(nil)
+      expect(links[0].data['state']['profile_history']).to eq(nil)
+      links = UserLink.where(user: u3.reload)
+      expect(links.length).to eq(1)
+      expect(links[0].data['type']).to eq('org_supervisor')
+      expect(links[0].data['state']).to_not eq(nil)
+      expect(links[0].data['state']['profile_history']).to_not eq(nil)
+      expect(links[0].data['state']['profile_id']).to eq('qqq')
+      expect(links[0].data['state']['profile_history'][0]['log_id']).to eq(s3.global_id)
+
+      unit = OrganizationUnit.create(:settings => {'name' => 'Roomy'}, :organization => o)
+      unit.add_supervisor(u1.user_name, true)
+      unit.add_supervisor(u2.user_name, true)
+      unit.add_supervisor(u3.user_name, true)
+      json = JsonApi::Unit.build_json(unit)
+      expect(json['supervisors'].length).to eq(3)
+      sups = json['supervisors'].sort_by{|s| s['id'] }
+      expect(sups[0]['id']).to eq(u1.global_id)
+      expect(sups[0]['profile_history']).to_not eq(nil)
+      expect(sups[0]['profile_history'][0]['log_id']).to eq(s1.global_id)
+      expect(sups[1]['id']).to eq(u2.global_id)
+      expect(sups[1]['profile_history']).to eq(nil)
+      expect(sups[2]['id']).to eq(u3.global_id)
+      expect(sups[2]['profile_history']).to_not eq(nil)
+      expect(sups[2]['profile_history'][0]['log_id']).to eq(s3.global_id)
+    end
+
     it "should include whether org has profiles defined" do
       u = User.create
       u.enable_feature('profiles')
