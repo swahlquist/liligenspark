@@ -234,7 +234,7 @@ class User < ActiveRecord::Base
     end
     devices = ((self.settings || {})['preferences'] || {})['devices']
     types = {}
-    devices.each do |key, device_prefs|
+    (devices || {}).each do |key, device_prefs|
       if !device || device.device_key == key
         method = 'touch'
         if device_prefs['scanning']

@@ -165,7 +165,7 @@ class Api::OrganizationsController < ApplicationController
     org = Organization.find_by_path(params['organization_id'])
     return unless allowed?(org, 'edit')
     # Only the reports in the list should be allowed for non-admins
-    if !['logged_2', 'not_logged_2', 'unused_3', 'unused_6', 'summaries'].include?(params['report']) && !params['report'].match(/^status-/)
+    if !['logged_2', 'not_logged_2', 'unused_3', 'unused_6', 'summaries'].include?(params['report']) && !(params['report'] || '').match(/^status-/)
       if !org.admin?
         return unless allowed?(org, 'impossible')
       end
