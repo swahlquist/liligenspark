@@ -2874,4 +2874,51 @@ describe User, :type => :model do
       u2.audit_protected_sources
     end
   end
+
+  describe "access_methods" do
+    it "should not fail on missing preferences" do
+      u = User.create
+      expect(u.access_methods).to eq(['touch'])
+    end
+
+    it "should use external override if set" do
+      u = User.create
+      u.settings['external_device'] = {'access_method' => 'bacon'}
+      expect(u.access_methods).to eq(['bacon'])
+    end
+
+    it "should return all pertinent methods, sorted by frequency" do
+      u = User.create
+      u.settings['preferences']['devices'] ||= {}
+      u.settings['preferences']['devices']['a'] = {'scanning' => true}
+      u.settings['preferences']['devices']['b'] = {'dwell' => true}
+      u.settings['preferences']['devices']['c'] = {}
+      expect(u.access_methods).to eq(['dwell', 'scanning'])
+
+      u.settings['preferences']['devices']['a'] = {}
+      u.settings['preferences']['devices']['b'] = {}
+      u.settings['preferences']['devices']['c'] = {}
+      expect(u.access_methods).to eq(['touch'])
+
+      u.settings['preferences']['devices']['a'] = {'scanning' => true}
+      u.settings['preferences']['devices']['b'] = {'dwell' => true, 'dwell_type' => 'eyegaze'}
+      u.settings['preferences']['devices']['c'] = {'dwell' => true, 'dwell_type' => 'eyegaze'}
+      expect(u.access_methods).to eq(['gaze', 'scanning'])
+    end
+
+    it "should return only single device method, if specified" do
+      u = User.create
+      u.settings['preferences']['devices'] ||= {}
+      u.settings['preferences']['devices']['a'] = {'scanning' => true}
+      u.settings['preferences']['devices']['b'] = {'dwell' => true}
+      u.settings['preferences']['devices']['c'] = {}
+      d = Device.new
+      d.device_key = 'a'
+      expect(u.access_methods(d)).to eq(['scanning'])
+      d.device_key = 'b'
+      expect(u.access_methods(d)).to eq(['dwell'])
+      d.device_key = 'c'
+      expect(u.access_methods(d)).to eq(['touch'])
+    end
+  end
 end

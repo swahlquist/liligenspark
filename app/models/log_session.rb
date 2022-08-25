@@ -375,20 +375,7 @@ class LogSession < ActiveRecord::Base
     if self.device && self.user
       device_prefs = self.user.settings['preferences']['devices'][self.device.device_key]
       if device_prefs
-        self.data['stats']['access_method'] = 'touch'
-        if device_prefs['scanning']
-          if device_prefs['scan_mode'] == 'axes'
-            self.data['stats']['access_method'] = 'axis_scanning'
-          else
-            self.data['stats']['access_method'] = 'scanning'
-          end
-        elsif device_prefs['dwell']
-          if device_prefs['dwell_type'] == 'arrow_dwell'
-            self.data['stats']['access_method'] = 'arrow_dwell'
-          else
-            self.data['stats']['access_method'] = 'dwell'
-          end
-        end
+        device_prefs['access_method'] = self.user.access_methods(self.device)[0]
         self.data['stats']['voice_uri'] = ((device_prefs['voice'] || {})['voice_uris'] || [])[0] || 'default'
         self.data['stats']['text_position'] = device_prefs['text_position'] || 'top'
         self.data['stats']['auto_home_return'] = self.user.settings['preferences']['auto_home_return']

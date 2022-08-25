@@ -41,6 +41,17 @@ export default Controller.extend({
     this.set('external_device', this.get('model.external_device.device_name'));
     this.set('external_vocab', this.get('model.external_device.vocab_name'));
     this.set('external_vocab_size', this.get('model.external_device.size'));
+    this.set('external_access_method', this.get('model.external_device.access_method'));
+  }),
+  access_methods: computed(function() {
+    return [
+      {name: i18n.t('touch', "Touch"), id: 'touch'},
+      {name: i18n.t('partner_assisted_scanning', "Partner-Assisted Scanning"), id: 'partner_scanning'},
+      {name: i18n.t('scanning', "Auditory/Visual Scanning"), id: 'scanning'},
+      {name: i18n.t('head_tracking', "Head Tracking"), id: 'head'},
+      {name: i18n.t('eye_gaze_tracking', "Eye Gaze Tracking"), id: 'gaze'},
+      {name: i18n.t('other', "Other"), id: 'other'},
+    ];
   }),
   device_options: computed(function() {
     return [].concat(CoughDrop.User.devices).concat({id: 'other', name: i18n.t('other', "Other")});
@@ -156,6 +167,9 @@ export default Controller.extend({
         if(this.get('external_vocab_size')) {
           device.size = parseInt(this.get('external_vocab_size'), 10);
           if(!device.size) { delete device['size']; }
+        }
+        if(this.get('external_access_method')) {
+          device.access_method = this.get('external_access_method');
         }
         user.set('external_device', device);
       } else {

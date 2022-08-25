@@ -72,6 +72,16 @@ export default modal.ModalController.extend({
     }
     return res;
   }),
+  access_methods: computed(function() {
+    return [
+      {name: i18n.t('touch', "Touch"), id: 'touch'},
+      {name: i18n.t('partner_assisted_scanning', "Partner-Assisted Scanning"), id: 'partner_scanning'},
+      {name: i18n.t('scanning', "Auditory/Visual Scanning"), id: 'scanning'},
+      {name: i18n.t('head_tracking', "Head Tracking"), id: 'head'},
+      {name: i18n.t('eye_gaze_tracking', "Eye Gaze Tracking"), id: 'gaze'},
+      {name: i18n.t('other', "Other"), id: 'other'},
+    ]
+  }),
   third_party_new_user: computed('model.user.org_management_action', function() {
     return this.get('model.user.org_management_action') == 'add_external_user';
   }),
@@ -137,6 +147,9 @@ export default modal.ModalController.extend({
         if(this.get('external_vocab_size')) {
           device.size = parseInt(this.get('external_vocab_size'), 10);
           if(!device.size) { delete device['size']; }
+        }
+        if(this.get('external_access_method')) {
+          device.access_method = this.get('external_access_method');
         }
         user.set('external_device', device);
       }

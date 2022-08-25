@@ -227,6 +227,41 @@ class User < ActiveRecord::Base
       end
     end
   end
+
+  def access_methods(device=nil)
+    if self.settings['external_device']
+      return [self.settings['external_device']['access_method'] || 'touch']
+    end
+    devices = ((self.settings || {})['preferences'] || {})['devices']
+    types = {}
+    devices.each do |key, device_prefs|
+      if !device || device.device_key == key
+        method = 'touch'
+        if device_prefs['scanning']
+          if device_prefs['scan_mode'] == 'axes'
+            method = 'axis_scanning'
+          else
+            method = 'scanning'
+          end
+        elsif device_prefs['dwell']
+          if device_prefs['dwell_type'] == 'arrow_dwell'
+            method = 'arrow_dwell'
+          elsif device_prefs['dwell_type'] == 'mouse_dwell'
+            method = 'arrow_dwell'
+          elsif device_prefs['dwell_type'] == 'eyegaze'
+            method = 'gaze'
+          elsif device_prefs['dwell_type'] == 'head'
+            method = 'head'
+          else
+            method = 'dwell'
+          end
+        end
+        types[method] = (types[method] || 0) + 1
+      end
+    end
+    types.delete('touch') if types.keys.length > 1
+    types.to_a.sort_by{|a, b| b }.reverse.map(&:first)
+  end
   
   def add_premium_voice(voice_id, system_name)
     # Limit the number of premium_voices users can download
