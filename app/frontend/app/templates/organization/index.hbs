@@ -485,6 +485,39 @@
   {{/if}}
   {{#if model.permissions.manage}}
     <div style='margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px;'></div>
+    {{#if model.premium}}
+      <h3>{{t "Communicator Breakdown Statistics" key='general_stats'}}</h3>
+      {{#if report.loading}}
+        {{t "Loading..." key='loading'}}
+      {{else if report.error}}
+        {{t "Error Loading Statistics" key='error_loading_statistic'}}
+      {{else}}
+        <div class='row'>
+          <div class='col-sm-6'>
+            <strong>{{t "Access Methods" key='access_methods'}}</strong>
+            {{stats/bar-breakdown hash=report.stats.access_methods}}
+          </div>
+          <div class='col-sm-6'>
+            <strong>{{t "Communicator Status" key='communicator_status'}}</strong>
+            {{stats/bar-breakdown hash=report.stats.statuses org_id=model.id order='status'}}
+          </div>
+          <div style='clear: both;'></div>
+          <div class='col-sm-6'>
+            <strong>{{t "Devices" key='devices'}}</strong>
+            {{stats/bar-breakdown hash=report.stats.devices}}
+          </div>
+          <div class='col-sm-6'>
+            <strong>{{t "Vocabularies" key='vocabularies'}}</strong>
+            {{stats/bar-breakdown hash=report.stats.vocabs}}
+          </div>
+          <div style='clear: both;'></div>
+          <div class='col-sm-6'>
+            <strong>{{t "Grid Sizes" key='grid_sizes'}}</strong>
+            {{stats/bar-breakdown hash=report.stats.sizes order='size'}}
+          </div>
+        </div>
+      {{/if}}
+    {{/if}}
     <div>
       <h3>{{t "Recent Words" key='recent_words'}}</h3>
       {{#if user_counts.word_counts.length}}

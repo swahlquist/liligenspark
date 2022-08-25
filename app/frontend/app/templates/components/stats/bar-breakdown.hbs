@@ -1,0 +1,31 @@
+<div style='margin-left: 25px;'>
+  {{#unless rows}}
+    <p>{{t "No results" key='no_results'}}</p>
+  {{/unless}}
+  {{#each rows as |row|}}
+    <div class='row'>
+      <div class='col-sm-4' style={{row.label_style}}>
+        {{#if row.link}}
+          {{#link-to 'organization.reports' org_id (query-params current_report=row.link)}}
+            {{#if row.glyph}}
+              <span class={{row.glyph}}></span>
+            {{/if}}
+            {{row.id}}
+          {{/link-to}}
+        {{else}}
+          {{#if row.glyph}}
+            <span class={{row.glyph}}></span>
+          {{/if}}
+          {{row.id}}
+        {{/if}}
+      </div>
+      <div class='col-sm-8'>
+        <div style='width: 80%; border-right: 1px solid #ddd; padding: 5px 0; height: 50px;'>
+          <div style={{row.style}}>
+            {{row.val}}
+          </div>
+        </div>
+      </div>
+    </div>
+  {{/each}}
+</div>

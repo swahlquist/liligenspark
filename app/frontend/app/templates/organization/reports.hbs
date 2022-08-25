@@ -5,6 +5,9 @@
         <label for="report_type" class="col-sm-1 control-label">{{t "Report:" key='report_colon'}}</label>
         <div class="col-sm-6">
           {{bound-select select_class="form-control" select_id="report_type" content=available_reports selection=current_report action=(action (mut current_report)) }}
+          {{#if custom_report}}
+            <em>{{custom_report}}</em>
+          {{/if}}
         </div>
       </div>
     </form>
