@@ -32,7 +32,7 @@ class Api::OrganizationsController < ApplicationController
     if !@org.supervisor?(@api_user) && !@org.manager?(@api_user)
       return unless allowed?(@org, 'manage')
     end
-    user = @org.users.find_by_path(params['user_id'])
+    user = @org.users.find_by_path(params['user_id']) || @org.attached_users('eval').find_by_path(params['user_id'])
     return unless exists?(user, params['user_id'])
     return unless allowed?(user, 'supervise')
     link = UserLink.where(user_id: user.id).detect{|l| l.data['type'] == 'org_user' }
