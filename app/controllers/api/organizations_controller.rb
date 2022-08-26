@@ -32,10 +32,17 @@ class Api::OrganizationsController < ApplicationController
     if !@org.supervisor?(@api_user) && !@org.manager?(@api_user)
       return unless allowed?(@org, 'manage')
     end
-    user = @org.users.find_by_path(params['user_id']) || @org.attached_users('eval').find_by_path(params['user_id'])
+
+    link = UserLink.links_for(@org).detect{|l| l['type'] == 'org_user' && l['user_id'] == params['user_id'] }
+    if !@org.admin?
+      @org.downstream_orgs.each do |o|
+        link ||= UserLink.links_for(o).detect{|l| l['type'] == 'org_user' && l['user_id'] == params['user_id'] }
+      end
+    end
+    user = link && User.find_by_path(link['user_id'])
     return unless exists?(user, params['user_id'])
     return unless allowed?(user, 'supervise')
-    link = UserLink.where(user_id: user.id).detect{|l| l.data['type'] == 'org_user' }
+    link = UserLink.where(user_id: user.id, record_code: link['record_code']).detect{|l| l.data['type'] == 'org_user' }
     if link
       link.data['state'] ||= {}
       link.data['state']['status'] = {
