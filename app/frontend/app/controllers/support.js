@@ -15,6 +15,14 @@ export default modal.ModalController.extend({
   ios: computed(function() {
     return window.navigator.userAgent.match(/ipad|ipod|iphone/i);
   }),
+  author_ids: computed('sessionUser.supervisors', function() {
+    var list = [];
+    list.push({id: app_state.get('sessionUser.id'), name: app_state.get('sessionUser.name') + " <" + app_state.get('sessionUser.email') + ">"});
+    app_state.get('sessionUser.supervisors').forEach(function(sup) {
+      list.push({id: sup.id, name: sup.name + " (" + sup.user_name + ")"});
+    });
+    return list;
+  }),
   actions: {
     toggle_cookies: function() {
       var _this = this;
@@ -34,6 +42,7 @@ export default modal.ModalController.extend({
       var message = {
         name: this.get('name'),
         email: this.get('email'),
+        author_id: this.get('author_id'),
         recipient: 'support',
         subject: this.get('subject'),
         locale: i18n.langs.preferred,

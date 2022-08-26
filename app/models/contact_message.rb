@@ -30,6 +30,14 @@ class ContactMessage < ActiveRecord::Base
       self.settings['name'] = non_user_params['api_user'].settings['name']
       self.settings['email'] = non_user_params['api_user'].settings['email']
       self.settings['user_id'] = non_user_params['api_user'].global_id
+      if params['author_id']
+        sup = non_user_params['api_user'].supervisors.detect{|s| s.global_id == params['author_id'] }
+        if sup
+          self.settings['supervisor_id'] = sup.global_id
+          self.settings['name'] = sup.settings['name']
+          self.settings['email'] = sup.settings['email']
+        end
+      end
     end
     if params['recipient'] && params['recipient'].match(/support/) && ENV['ZENDESK_DOMAIN']
       if !self.settings['email']
@@ -48,6 +56,9 @@ class ContactMessage < ActiveRecord::Base
     user = User.find_by_path(self.settings['user_id']) if self.settings['user_id']
     if user
       body += (user.user_name) + '<br/>'
+      if self.settings['supervisor_id']
+        body += "* REPLY WILL GO TO SUPERVISOR, NOT USER"
+      end
     end
     body += "locale: #{self.settings['locale']}" + '<br/>' if self.settings['locale']
     body += (self.settings['ip_address'] ? "ip address: #{self.settings['ip_address']}" : 'no IP address found') + '<br/>'

@@ -24,6 +24,72 @@ describe ContactMessage, :type => :model do
     expect(m.errored?).to eq(false)
     expect(m.settings['email']).to eq(nil)
   end
+
+  it "should set email to supervisor's email if specified" do
+    u1 = User.create(settings: {'name' => 'Bob Jones', 'email' => 'bob@example.com'})
+    u2 = User.create(settings: {'name' => 'Alice Rider', 'email' => 'alice@example.com'})
+    User.link_supervisor_to_user(u2, u1)
+    m = ContactMessage.process_new({
+      'name' => 'Fred Jones',
+      'email' => 'fred@example.com',
+      'subject' => 'ok',
+      'recipient' => 'nobody',
+      'message' => 'asdf',
+      'hat' => 'asdf'
+    }, {'api_user' => u1})
+    expect(m).not_to eq(nil)
+    expect(m.errored?).to eq(false)
+    expect(m.settings['email']).to eq('bob@example.com')
+    expect(m.settings['name']).to eq('Bob Jones')
+    expect(m.settings['user_id']).to eq(u1.global_id)
+    expect(m.settings['subject']).to eq('ok')
+    expect(m.settings['recipient']).to eq('nobody')
+    expect(m.settings['message']).to eq('asdf')
+    expect(m.settings['hat']).to eq(nil)
+    
+    m = ContactMessage.process_new({
+      'name' => 'Fred Jones',
+      'email' => 'fred@example.com',
+      'subject' => 'ok',
+      'recipient' => 'nobody',
+      'message' => 'asdf',
+      'hat' => 'asdf',
+      'author_id' => u2.global_id
+    }, {'api_user' => u1})
+    expect(m).not_to eq(nil)
+    expect(m.errored?).to eq(false)
+    expect(m.settings['email']).to eq('alice@example.com')
+    expect(m.settings['name']).to eq('Alice Rider')
+    expect(m.settings['subject']).to eq('ok')
+    expect(m.settings['user_id']).to eq(u1.global_id)
+    expect(m.settings['supervisor_id']).to eq(u2.global_id)
+    expect(m.settings['recipient']).to eq('nobody')
+    expect(m.settings['message']).to eq('asdf')
+    expect(m.settings['hat']).to eq(nil)
+  end
+
+  it "should ignore author_id if not a supervisor" do
+    u1 = User.create(settings: {'name' => 'Bob Jones', 'email' => 'bob@example.com'})
+    u2 = User.create(settings: {'name' => 'Alice Rider', 'email' => 'alice@example.com'})
+    m = ContactMessage.process_new({
+      'name' => 'Fred Jones',
+      'email' => 'fred@example.com',
+      'subject' => 'ok',
+      'recipient' => 'nobody',
+      'message' => 'asdf',
+      'hat' => 'asdf',
+      'author_id' => u2.global_id
+    }, {'api_user' => u1})
+    expect(m).not_to eq(nil)
+    expect(m.errored?).to eq(false)
+    expect(m.settings['email']).to eq('bob@example.com')
+    expect(m.settings['name']).to eq('Bob Jones')
+    expect(m.settings['user_id']).to eq(u1.global_id)
+    expect(m.settings['subject']).to eq('ok')
+    expect(m.settings['recipient']).to eq('nobody')
+    expect(m.settings['message']).to eq('asdf')
+    expect(m.settings['hat']).to eq(nil)
+  end
   
   it "should schedule a message delivery" do
     expect(AdminMailer).to receive(:schedule_delivery).with(:message_sent, /\d+_\d+/).and_return(true)
