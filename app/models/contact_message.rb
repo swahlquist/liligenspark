@@ -27,8 +27,13 @@ class ContactMessage < ActiveRecord::Base
       self.settings[key] = non_user_params[key] if non_user_params[key]
     end
     if non_user_params['api_user']
-      self.settings['name'] = non_user_params['api_user'].settings['name']
-      self.settings['email'] = non_user_params['api_user'].settings['email']
+      if params['author_id'] == 'custom'
+        self.settings['name'] ||= non_user_params['api_user'].settings['name']
+        self.settings['email'] ||= non_user_params['api_user'].settings['email']
+      else
+        self.settings['name'] = non_user_params['api_user'].settings['name']
+        self.settings['email'] = non_user_params['api_user'].settings['email']
+      end
       self.settings['user_id'] = non_user_params['api_user'].global_id
       if params['author_id']
         sup = non_user_params['api_user'].supervisors.detect{|s| s.global_id == params['author_id'] }

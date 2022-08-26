@@ -1,5 +1,6 @@
 {{#modal-dialog opening='opening' closing='closing' desired_width=645 uncloseable='true'}}
   <div class="modal-header">
+    <button class='btn btn-default btn-sm' {{action 'really_subscription_skip'}} style='float: right;'>{{t "Start w/ 2-Month Trial" key='start_with_2_month_trial_brief'}}</button>
     {{#if model.user.really_expired}}
       <h3>{{t "Purchase Update" key='subscription_update'}}</h3>
     {{else}}

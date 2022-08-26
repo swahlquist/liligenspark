@@ -102,6 +102,30 @@ describe ContactMessage, :type => :model do
       'hat' => 'asdf'
     })
   end
+
+  it "should handle custom author_id correctly" do
+    u1 = User.create(settings: {'name' => 'Bob Jones', 'email' => 'bob@example.com'})
+    u2 = User.create(settings: {'name' => 'Alice Rider', 'email' => 'alice@example.com'})
+    User.link_supervisor_to_user(u2, u1)
+    m = ContactMessage.process_new({
+      'name' => 'Fred Jones',
+      'email' => 'fred@example.com',
+      'subject' => 'ok',
+      'recipient' => 'nobody',
+      'message' => 'asdf',
+      'author_id' => 'custom',
+      'hat' => 'asdf'
+    }, {'api_user' => u1})
+    expect(m).not_to eq(nil)
+    expect(m.errored?).to eq(false)
+    expect(m.settings['email']).to eq('fred@example.com')
+    expect(m.settings['name']).to eq('Fred Jones')
+    expect(m.settings['user_id']).to eq(u1.global_id)
+    expect(m.settings['subject']).to eq('ok')
+    expect(m.settings['recipient']).to eq('nobody')
+    expect(m.settings['message']).to eq('asdf')
+    expect(m.settings['hat']).to eq(nil)
+  end
   
   it "should schedule a message delivery for support messages when remote support not configured" do
     orig = ENV['ZENDESK_DOMAIN']

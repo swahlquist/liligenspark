@@ -16,6 +16,16 @@ export default modal.ModalController.extend({
     }
   },
   actions: {
+    really_subscription_skip: function() {
+      var role = this.get('model.subscription.user_type');
+      var user = this.get('model.user');
+      user.set('preferences.role', role);
+      var progress = user.get('preferences.progress') || {};
+      progress.skipped_subscribe_modal = true;
+      user.set('preferences.progress', progress);
+      user.save().then(null, function() { });
+      this.send('subscription_skip');
+    },
     subscription_skip: function() {
       modal.close();
       if(window.ga) {

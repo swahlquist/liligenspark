@@ -42,8 +42,8 @@
           <h3 style="margin-bottom: -5px; font-size: 18px;">{{t "Report a Problem/Share Feedback" key='problem_or_feedback'}}</h3>
         </div>
       </div>
-      {{#if app_state.currentUser}}
-        {{#if app_state.currentUser.supervisors}}
+      {{#if app_state.sessionUser}}
+        {{#if app_state.sessionUser.supervisors}}
           <div class="form-group">
             <label for="author_id" class="col-sm-3 control-label">{{t "Send Reply To" key='send_reply_to'}}</label>
             <div class="col-sm-7">
@@ -51,7 +51,8 @@
             </div>
           </div>
         {{/if}}
-      {{else}}
+      {{/if}}
+      {{#if prompt_user}}
         <div class="form-group">
           <label for="name" class="col-sm-3 control-label">{{t "Name" key='name'}}</label>
           <div class="col-sm-7">

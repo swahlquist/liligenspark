@@ -144,6 +144,8 @@
       </div>
       {{#if model.permissions.supervise}}
         <div class='col-sm-3 col-xs-6 big_button_holder'>
+          {{#if org_managed}}
+          {{/if}}
           {{#if app_state.feature_flags.profiles}}
             <button class='btn big_button btn-default' {{action "profile_preview" model}} style='height: 100px; padding-top: 0;'>
               <div style='font-size: 14px; margin-top: -3px;'>{{t "Latest Communication Profile:" key='latest_profile'}}</div>

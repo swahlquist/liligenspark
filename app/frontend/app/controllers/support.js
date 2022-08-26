@@ -21,7 +21,11 @@ export default modal.ModalController.extend({
     app_state.get('sessionUser.supervisors').forEach(function(sup) {
       list.push({id: sup.id, name: sup.name + " (" + sup.user_name + ")"});
     });
+    list.push({id: 'custom', name: i18n.t('other_account', "Other Account")});
     return list;
+  }),
+  prompt_user: computed('app_state.sessionUser', 'author_id', function() {
+    return !app_state.get('sessionUser') || this.get('author_id') == 'custom';
   }),
   actions: {
     toggle_cookies: function() {
