@@ -40,6 +40,11 @@ module JsonApi::Unit
           if org_link && org_link['state']['status']
             hash['org_status'] = org_link['state']['status']
           end
+          if user.settings['external_device']
+            hash['device'] = {external_device: true}.merge(user.settings['external_device'])
+          elsif user.settings['preferences']['home_board']
+            hash['device'] = {device_name: "CoughDrop", default_device: true, board_key: user.settings['preferences']['home_board']['key']}
+          end
           hash['org_status'] ||= {'state' => (user.settings['preferences'] && user.settings['preferences']['home_board'] ? 'tree-deciduous' : 'unchecked')}
           if premium_org && org_link && org_link['state']['profile_id'] && org_link['state']['profile_history'] && org.matches_profile_id('communicator', org_link['state']['profile_id'], org_link['state']['profile_template_id'])
             hash['profile_history'] = org_link['state']['profile_history']
