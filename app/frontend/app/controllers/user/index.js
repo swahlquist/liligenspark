@@ -684,7 +684,9 @@ export default Controller.extend({
     },
     external_device: function() {
       if(this.get('model.permissions.edit')) {
-        modal.notice(i18n.t('device_can_be_changed_on_profile', "User's external device settings can be changed on their profile"));
+        modal.open('modals/external-device', {user: this.get('model')});
+      } else {
+
       }
     },
     manual_log: function() {

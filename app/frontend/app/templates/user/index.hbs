@@ -144,8 +144,6 @@
       </div>
       {{#if model.permissions.supervise}}
         <div class='col-sm-3 col-xs-6 big_button_holder'>
-          {{#if org_managed}}
-          {{/if}}
           {{#if app_state.feature_flags.profiles}}
             <button class='btn big_button btn-default' {{action "profile_preview" model}} style='height: 100px; padding-top: 0;'>
               <div style='font-size: 14px; margin-top: -3px;'>{{t "Latest Communication Profile:" key='latest_profile'}}</div>
@@ -170,23 +168,36 @@
             </button>
           {{/if}}
         </div>
-        {{#if model.external_device}}
-          <div class='col-sm-3 col-xs-6 big_button_holder'>
-            <button class='btn big_button btn-default secondary_button' {{action "manual_log"}} style='height: 100px;'>
-              Manual Log<br/>Session
-            </button>
-          </div>
-          <div class='col-sm-3 col-xs-6 big_button_holder'>
+        {{#unless model.supporter_role}}
+          {{#if model.external_device}}
+            <div class='col-sm-3 col-xs-6 big_button_holder'>
+              <button class='btn big_button btn-default secondary_button' {{action "manual_log"}} style='height: 100px;'>
+                {{t "Manual Log<br/>Session" key='manual_log_session'}}
+              </button>
+            </div>
+            <div class='col-sm-3 col-xs-6 big_button_holder'>
               <button class='btn big_button btn-default alternate_button' {{action "recordNote" "text"}} style='height: 100px;'>
-              New Note
-            </button>
-          </div>
-        {{else}}
-          <div class='col-sm-6 col-xs-6'></div>
-        {{/if}}
+                {{t "New Note" key='new_note'}}
+              </button>
+            </div>
+          {{else}}
+            <div class='col-sm-6 col-xs-6'></div>
+          {{/if}}
+          {{#if model.managing_org}}
+            {{#if model.permissions.edit}}
+              {{#unless model.permissions.delete}}
+                <div class='col-sm-3 col-xs-6 big_button_holder'>
+                  <button class='btn big_button btn-default lesser_button' {{action 'external_device'}} style='height: 100px;'>
+                    {{t "Update Device"}}
+                  </button>
+                </div>
+              {{/unless}}
+            {{/if}}
+          {{/if}}
+        {{/unless}}
 
         {{#unless app_state.currentUser.modeling_only}}
-          <div class='col-sm-3 col-xs-6' style='text-align: right; margin-top: -5px; margin-bottom: -10px;'>
+          <div class='col-sm-3 col-xs-6' style='float: right; text-align: right; margin-top: -5px; margin-bottom: -10px;'>
             <div class="btn-group">
               <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style='border-width: 3px; background: #eee;'>
                 <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/extra_455_g.svg' style='height: 30px;'/>
