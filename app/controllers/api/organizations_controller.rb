@@ -69,7 +69,7 @@ class Api::OrganizationsController < ApplicationController
           states[status['id']] = status['label']
         end
       end
-      state = stats[params['status']['state']] || params['status']['state']
+      state = states[params['status']['state']] || params['status']['state']
       log_note = "Status set to #{params['status']['state']}"
       log_note += " - #{params['status']['note']}" if params['status']['note']
       LogSession.message({
@@ -286,11 +286,11 @@ class Api::OrganizationsController < ApplicationController
     elsif params['report'].match(/status-/) || params['report'].match(/access-/) || params['report'].match(/device-/) || 
               params['report'].match(/vocab-/) || params['report'].match(/grid-/)
       type, lookup = params['report'].split(/-/, 2)
-      links = UserLink.links_for(org).select{|l| l['type'] == 'org_user' && (type != 'status' || (((l['state'] || {})['status'] || {})['state'] || 'unchecked') == lookup) }
+      links = UserLink.links_for(org).select{|l| l['type'] == 'org_user' && !l['state']['pending'] && (type != 'status' || (((l['state'] || {})['status'] || {})['state'] || 'unchecked') == lookup) }
       statuses = {}
       if !org.admin?
         org.downstream_orgs.each do |o|
-          links += UserLink.links_for(o).select{|l| l['type'] == 'org_user' && (type != 'status' || (((l['state'] || {})['status'] || {})['state'] || 'unchecked') == lookup) }
+          links += UserLink.links_for(o).select{|l| l['type'] == 'org_user' && !l['state']['pending'] && (type != 'status' || (((l['state'] || {})['status'] || {})['state'] || 'unchecked') == lookup) }
         end
       end
       links.each{|l| statuses[l['user_id']] ||= l['state']['status'] || {'state' => 'unchecked'} }
@@ -449,10 +449,10 @@ class Api::OrganizationsController < ApplicationController
       stats['versions'] = PaperTrail::Version.count
     elsif params['report'] == 'summaries'
       # TODO: Users clustered by total available words
-      approved_users = org.approved_users(false)
+      approved_users = org.attached_users('approved_user')
       # if it's a shell org, go ahead and report on its children
       if approved_users.count == 0
-        approved_users += org.downstream_orgs.map{|o| o.approved_users(false) }.flatten
+        approved_users += org.downstream_orgs.map{|o| o.attached_users('approved_user') }.flatten
       end
       methods = {}
       devices = {}
