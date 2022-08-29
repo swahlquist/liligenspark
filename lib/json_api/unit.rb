@@ -42,7 +42,7 @@ module JsonApi::Unit
           end
           if user.settings['external_device']
             hash['device'] = {external_device: true}.merge(user.settings['external_device'])
-          elsif user.settings['preferences']['home_board']
+          elsif user.settings['preferences'] && user.settings['preferences']['home_board']
             hash['device'] = {device_name: "CoughDrop", default_device: true, board_key: user.settings['preferences']['home_board']['key']}
           end
           hash['org_status'] ||= {'state' => (user.settings['preferences'] && user.settings['preferences']['home_board'] ? 'tree-deciduous' : 'unchecked')}

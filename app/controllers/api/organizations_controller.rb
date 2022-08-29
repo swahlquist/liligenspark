@@ -53,6 +53,23 @@ class Api::OrganizationsController < ApplicationController
         link.data['state']['status']['note'] = params['status']['note']
       end
       link.save
+      states = {
+        'unchecked' => "Unknown/Nothing",
+        'hourglass' => "Waiting for Evaluation",
+        'equalizer'=> "Waiting for Recommendation from Eval",
+        'piggy-bank' => "Temporary Solution, Waiting for Funding",
+        'phone' => "Waiting for Device",
+        'hand-up' => "Training Started",
+        'grain' => "Implemented Recently",
+        'tree-deciduous' => "Implemented, Making Progress",
+        'exclamation-sign' => "Needing Additional Support"
+      }
+      if @org.settings['status_overrides']
+        @org.settings['status_overrides'].each do |status|
+          states[status['id']] = status['label']
+        end
+      end
+      state = stats[params['status']['state']] || params['status']['state']
       log_note = "Status set to #{params['status']['state']}"
       log_note += " - #{params['status']['note']}" if params['status']['note']
       LogSession.message({
@@ -172,7 +189,8 @@ class Api::OrganizationsController < ApplicationController
     org = Organization.find_by_path(params['organization_id'])
     return unless allowed?(org, 'edit')
     # Only the reports in the list should be allowed for non-admins
-    if !['logged_2', 'not_logged_2', 'unused_3', 'unused_6', 'summaries'].include?(params['report']) && !(params['report'] || '').match(/^status-/)
+    if !['logged_2', 'not_logged_2', 'unused_3', 'unused_6', 'summaries'].include?(params['report']) && !(params['report'] || '').match(/^status-/) && !(params['report'] || '').match(/^access-/) &&
+          !(params['report'] || '').match(/^device-/) && !(params['report'] || '').match(/^vocab-/)&& !(params['report'] || '').match(/^grid-/)
       if !org.admin?
         return unless allowed?(org, 'impossible')
       end
@@ -265,21 +283,67 @@ class Api::OrganizationsController < ApplicationController
     elsif params['report'] == 'new_users'
       x = 2
       users = User.where(['created_at > ?', x.weeks.ago])
-    elsif params['report'].match(/status-/)
-      status = params['report'].split(/-/, 2)[1]
-      links = UserLink.links_for(org).select{|l| l['type'] == 'org_user' && (((l['state'] || {})['status'] || {})['state'] || 'unchecked') == status }
+    elsif params['report'].match(/status-/) || params['report'].match(/access-/) || params['report'].match(/device-/) || 
+              params['report'].match(/vocab-/) || params['report'].match(/grid-/)
+      type, lookup = params['report'].split(/-/, 2)
+      links = UserLink.links_for(org).select{|l| l['type'] == 'org_user' && (type != 'status' || (((l['state'] || {})['status'] || {})['state'] || 'unchecked') == lookup) }
       statuses = {}
       if !org.admin?
-        # TODO: sharding
         org.downstream_orgs.each do |o|
-          links += UserLink.links_for(o).select{|l| l['type'] == 'org_user' && (((l['state'] || {})['status'] || {})['state'] || 'unchecked') == status }
+          links += UserLink.links_for(o).select{|l| l['type'] == 'org_user' && (type != 'status' || (((l['state'] || {})['status'] || {})['state'] || 'unchecked') == lookup) }
         end
       end
       links.each{|l| statuses[l['user_id']] ||= l['state']['status'] || {'state' => 'unchecked'} }
 
       users = User.find_all_by_global_id(links.map{|l| l['user_id'] }.uniq)
-      users.each do |u|
+      boards_hash = {}
+      if ['vocab', 'grid'].include?(type)
+        board_ids = users.map{|u| u.settings['preferences'] && u.settings['preferences']['home_board'] && u.settings['preferences']['home_board']['id']}.compact.uniq
+        Board.find_batches_by_global_id(board_ids) do |brd|
+          boards_hash[brd.global_id] = brd
+        end
+      end
+
+      users = users.select do |u|
         u.instance_variable_set('@org_status', statuses[u.global_id])
+        if type == 'access'
+          u.access_methods.include?(lookup)
+        elsif type == 'device'
+          dn = 'No Device'
+          if u.settings['external_device']
+            dn = u.settings['external_device']['device_name']
+            dn = "Unnamed" if dn.blank?
+          elsif u.settings['preferences']['home_board']
+            dn = 'CoughDrop'
+          end
+          lookup == dn
+        elsif type == 'vocab'
+          if u.settings['external_device']
+            u.instance_variable_set('@vocab_name', u.settings['external_device']['vocab_name']);
+            lookup == u.settings['external_device']['vocab_name'] || lookup == 'Other'
+          elsif u.settings['preferences']['home_board']
+            vn = Board.vocab_name(boards_hash[u.settings['preferences']['home_board']['id']])
+            u.instance_variable_set('@vocab_name', vn);
+            lookup == vn || lookup == 'Other'
+          else
+            false
+          end
+        elsif type == 'grid'
+          size = -1
+          if u.settings['external_device']
+            size = u.settings['external_device']['size']
+          elsif u.settings['preferences']['home_board']
+            brd = boards_hash[u.settings['preferences']['home_board']['id']]
+            grid = BoardContent.load_content(brd, 'grid') if brd
+            size = -1
+            if grid
+              size = (grid['rows'] || 3) * (grid['columns'] || 4)
+            end
+          end
+          lookup.to_i - (lookup.to_i % 30) == size - (size % 30)
+        else
+          true
+        end
       end
     elsif params['report'].match(/logged_/)
       # logins that have generated logs in the last 2 weeks
@@ -418,20 +482,14 @@ class Api::OrganizationsController < ApplicationController
           sizes << user.settings['external_device']['size']
         elsif user.settings['preferences']['home_board']
           brd = boards_hash[user.settings['preferences']['home_board']['id']]
-          grid = BoardContent.load_content(brd, 'grid')
-          devices['CoughDrop'] = (devices['CoughDrop'] || 0) + 1
-          if brd.key.match(/\/core-\d/)
-            vocabs['Quick Core'] = (vocabs['Quick Core'] || 0) + 1
-          elsif brd.key.match(/vocal-flair/)
-            vocabs['Vocal Flair'] = (vocabs['Vocal Flair'] || 0) + 1
-          elsif brd.key.match(/sequoia/)
-            vocabs['Sequoia'] = (vocabs['Sequoia'] || 0) + 1
-          else
-            key = brd.key.split(/\//)[1].sub(/_\d+$/, '')
-            vocabs[key] = (vocabs[key] || 0) + 1
+          if brd
+            grid = BoardContent.load_content(brd, 'grid')
+            devices['CoughDrop'] = (devices['CoughDrop'] || 0) + 1
+            vn = Board.vocab_name(brd)
+            vocabs[vn] = (vocabs[vn] || 0) + 1 if vn
+            sizes << (grid['rows'] || 3) * (grid['columns'] || 4)
+            brd.settings['downstream_board_ids'].length
           end
-          sizes << (grid['rows'] || 3) * (grid['columns'] || 4)
-          brd.settings['downstream_board_ids'].length
         else
           devices['No Device'] = (devices['No Device'] || 0) + 1
         end
@@ -439,6 +497,17 @@ class Api::OrganizationsController < ApplicationController
       stats = {}
       stats['access_methods'] = methods
       stats['devices'] = devices
+      if vocabs.keys.length > 8
+        clumped_vocabs = {}
+        vocabs.each do |voc, cnt|
+          if cnt <= (vocabs.keys.length / 6) && voc.instance_variable_get('@board_key')
+            clumped_vocabs['Other'] = (clumbed_vocabs['Other'] || 0) + 1
+          else
+            clumped_vocabs[voc] = cnt
+          end
+        end
+        vocabs = clumped_vocabs
+      end
       stats['vocabs'] = vocabs
       stats['statuses'] = statuses
       sizes_hash = {}
@@ -455,6 +524,7 @@ class Api::OrganizationsController < ApplicationController
     res[:user] = users.sort_by(&:user_name).map{|u| 
       r = JsonApi::User.as_json(u, limited_identity: true); 
       r['org_status'] = u.instance_variable_get('@org_status') if u.instance_variable_get('@org_status')
+      r['vocab_name'] = u.instance_variable_get('@vocab_name') if u.instance_variable_get('@vocab_name')
       r['email'] = u.settings['email'];
       if org.admin?
         r['referrer'] = u.settings['referrer']

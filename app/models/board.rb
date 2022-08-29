@@ -951,6 +951,21 @@ class Board < ActiveRecord::Base
     end
     res
   end
+
+  def self.vocab_name(board)
+    return nil unless board
+    if board.key.match(/\/core-\d/)
+      'Quick Core'
+    elsif board.key.match(/vocal-flair/)
+      'Vocal Flair'
+    elsif board.key.match(/sequoia/)
+      'Sequoia'
+    else
+      str = board.key.split(/\//)[1].sub(/_\d+$/, '')
+      str.instance_variable_set('@board_key', true)
+      str
+    end
+  end
   
   def process_params(params, non_user_params)
     raise "user required as board author" unless self.user_id || non_user_params[:user]

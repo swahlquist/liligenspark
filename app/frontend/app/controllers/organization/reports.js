@@ -48,12 +48,30 @@ export default Controller.extend({
       return [];
     }
   }),
+  custom_report_all: computed('current_report', function() {
+    return this.get('current_report') == 'vocab-Other';
+  }),
   custom_report: computed('current_report', function() {
     var rep = this.get('current_report');
+    var parts = this.get('current_report').split(/-/);
+    parts.shift();
+    var str = parts.join('-');
     if(rep.match(/^status-/)) {
       var code = rep.replace(/^status-/, '');
       var status = CoughDrop.user_statuses.find(function(r) { return r.id == code; });
       return "Status: " + status.label;
+    } else if(rep.match(/^access-/)) {
+      return "Access Method: " + str;
+    } else if(rep.match(/^device-/)) {
+      if(str == 'Other') { str = "All Results"; }
+      return "Device Type: " + str;
+    } else if(rep.match(/^vocab-/)) {
+      if(str == 'Other') { str = "All Results"; }
+      return "Vocabulary: " + str;
+    } else if(rep.match(/^grid-/)) {
+      var size = parseInt(str, 10);
+      var lower = size - (size % 30);
+      return "Grid Sizes: " + lower + "-" + (lower + 29) + " cells";
     }
   }),
   get_report: observer('current_report', 'model.id', function() {

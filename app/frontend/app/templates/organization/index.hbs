@@ -495,7 +495,7 @@
         <div class='row'>
           <div class='col-sm-6' style='margin-bottom: 15px;'>
             <strong>{{t "Access Methods" key='access_methods'}}</strong>
-            {{stats/bar-breakdown hash=report.stats.access_methods}}
+            {{stats/bar-breakdown hash=report.stats.access_methods org_id=model.id order='access'}}
           </div>
           <div class='col-sm-6' style='margin-bottom: 15px;'>
             <strong>{{t "Communicator Status" key='communicator_status'}}</strong>
@@ -504,16 +504,16 @@
           <div style='clear: both;'></div>
           <div class='col-sm-6' style='margin-bottom: 15px;'>
             <strong>{{t "Devices" key='devices'}}</strong>
-            {{stats/bar-breakdown hash=report.stats.devices}}
+            {{stats/bar-breakdown hash=report.stats.devices org_id=model.id order='device'}}
           </div>
           <div class='col-sm-6' style='margin-bottom: 15px;'>
             <strong>{{t "Vocabularies" key='vocabularies'}}</strong>
-            {{stats/bar-breakdown hash=report.stats.vocabs}}
+            {{stats/bar-breakdown hash=report.stats.vocabs org_id=model.id order='vocab'}}
           </div>
           <div style='clear: both;'></div>
           <div class='col-sm-6' style='margin-bottom: 15px;'>
             <strong>{{t "Grid Sizes" key='grid_sizes'}}</strong>
-            {{stats/bar-breakdown hash=report.stats.sizes order='size'}}
+            {{stats/bar-breakdown hash=report.stats.sizes org_id=model.id order='size'}}
           </div>
         </div>
       {{/if}}

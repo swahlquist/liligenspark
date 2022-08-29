@@ -75,7 +75,7 @@
             {{/each}}
           </div>
           {{#if user.device}}
-            <div style='position: absolute; margin: 25px 5px 5px 10px; color: #888; text-shadow: 1px 1px #fff, -1px -1px #fff, 1px -1px #fff, -1px 1px #fff; font-size: 12px;'>
+            <div style='position: absolute; margin: 25px 5px 5px 10px; color: #888; text-shadow: 1px 1px #fff, -1px -1px #fff, 1px -1px #fff, -1px 1px #fff; font-size: 12px; background: rgba(255, 255, 255, 0.3); border-radius: 5px;'>
               {{#if user.device.default_device}}
                 {{t "%app_name%" key='app_name'}} - {{user.device.board_key}}
               {{else if user.device.external_device}}

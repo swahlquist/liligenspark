@@ -44,6 +44,13 @@ export default Component.extend({
         }
         if(this.get('order') == 'size') {
           item.index = parseInt(item.id, 10);
+          item.link = 'grid-' + item.index;
+        } else if(this.get('order') == 'vocab') {
+          item.link = 'vocab-' + item.id;
+        } else if(this.get('order') == 'access') {
+          item.link = 'access-' + item.id;
+        } else if(this.get('order') == 'device') {
+          item.link = 'device-' + item.id;
         }
         list.push(item);
         max = Math.max(max, item.score);

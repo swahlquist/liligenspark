@@ -70,6 +70,11 @@
                     ({{item.email}})
                   {{/if}}
                   <span style='font-size: 10px; display: block; margin-top: -3px;' class="comma_item_list">
+                    {{#if custom_report_all}}
+                      {{#if item.vocab_name}}
+                        <span class="comma_item">{{item.vocab_name}}</span>
+                      {{/if}}
+                    {{/if}}
                     {{#if item.org_pending}}
                       <span class="comma_item">{{t "pending" key='pending'}}</span>
                     {{/if}}
