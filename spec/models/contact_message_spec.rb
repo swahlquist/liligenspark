@@ -250,4 +250,129 @@ describe ContactMessage, :type => :model do
     expect(m.errored?).to eq(false)
     expect(m.settings['email']).to eq(nil)
   end
+
+  it "should add CCs if the user is tied to a premium org" do
+    orig_d = ENV['ZENDESK_DOMAIN']
+    orig_u = ENV['ZENDESK_USER']
+    orig_t = ENV['ZENDESK_TOKEN']
+    ENV['ZENDESK_DOMAIN'] = 'asdf'
+    ENV['ZENDESK_USER'] = "nunya@example.com"
+    ENV['ZENDESK_TOKEN'] = "q49t84awhg498gh34"
+
+    u1 = User.create
+    u1.settings['email'] = 'asdf@example.com'
+    u1.save
+    o1 = Organization.create
+    o1.settings['premium'] = true
+    o1.settings['support_target'] = {'email' => 'org1@example.com'}
+    o1.save
+    o1.add_manager(u1.user_name)
+    u2 = User.create
+    u2.settings['email'] = 'asdf@example.com'
+    u2.save
+    o2 = Organization.create
+    o2.settings['premium'] = true
+    o2.settings['support_target'] = {'email' => 'org2@example.com'}
+    o2.save
+    o2.add_supervisor(u2.user_name, false)
+    u3 = User.create
+    u3.settings['email'] = 'asdf@example.com'
+    u3.save
+    o3 = Organization.create
+    o3.settings['support_target'] = {'email' => 'org3@example.com'}
+    o3.add_manager(u3.user_name)
+
+    expect(User.find_by_email('asdf@example.com').sort_by(&:id)).to eq([u1, u2, u3])
+    expect(Organization.attached_orgs(u1.reload, true)[0]['org']).to eq(o1)
+    expect(Organization.attached_orgs(u2.reload, true)[0]['org']).to eq(o2)
+    expect(Organization.attached_orgs(u3.reload, true)[0]['org']).to eq(o3)
+
+    expect(AdminMailer).not_to receive(:schedule_delivery)
+    m = ContactMessage.process_new({
+      'message' => 'asdf', 
+      'email' => 'asdf@example.com',
+      'subject' => 'Ahem',
+      'recipient' => 'technical support'
+    })
+    expect(m.errored?).to eq(false)
+    expect(Typhoeus).to receive(:post){|endpoint, args|
+      expect(endpoint).to eq('https://asdf/api/v2/tickets.json')
+      expect(args[:headers]).to eq({'Content-Type' => 'application/json'})
+      expect(args[:userpwd]).to eq("nunya@example.com/token:q49t84awhg498gh34")
+      expect(args[:body]).to_not eq(nil)
+      expect(JSON.parse(args[:body])).to eq({
+        'ticket' => {
+          'requester' => {'name' => 'asdf@example.com', 'email' => 'asdf@example.com'},
+          'subject' => "Ahem",
+          'comment' => {'html_body' => "<i>Source App: CoughDrop</i><br/>asdf<br/><br/><span style='font-style: italic;'>no IP address found<br/>no app version found<br/>no user agent found</span>"},
+          'email_ccs' => [
+            {'user_name' => o1.settings['name'], 'user_email' => 'org1@example.com', 'action' => 'put'},
+            {'user_name' => o2.settings['name'], 'user_email' => 'org2@example.com', 'action' => 'put'},
+          ]
+        }
+      })
+    }.and_return(OpenStruct.new(:code => 201))
+    Worker.process_queues
+
+    ENV['ZENDESK_DOMAIN'] = orig_d
+    ENV['ZENDESK_USER'] = orig_u
+    ENV['ZENDESK_TOKEN'] = orig_t
+  end
+
+  it "should add parent-org CCs" do
+    orig_d = ENV['ZENDESK_DOMAIN']
+    orig_u = ENV['ZENDESK_USER']
+    orig_t = ENV['ZENDESK_TOKEN']
+    ENV['ZENDESK_DOMAIN'] = 'asdf'
+    ENV['ZENDESK_USER'] = "nunya@example.com"
+    ENV['ZENDESK_TOKEN'] = "q49t84awhg498gh34"
+
+    u1 = User.create
+    u1.settings['email'] = 'asdf@example.com'
+    u1.save
+    o1 = Organization.create
+    o1.settings['premium'] = true
+    o1.settings['support_target'] = {'email' => 'org1@example.com'}
+    o1.save
+    o1.add_user(u1.user_name, false, false)
+    o2 = Organization.create
+    o2.settings['premium'] = true
+    o2.settings['support_target'] = {'email' => 'org2@example.com'}
+    o2.save
+    o1.parent_organization_id = o2.id
+    o1.save
+    expect(o1.parent_org_id).to eq(o2.global_id)
+    expect(o1.upstream_orgs).to eq([o2])
+    
+    expect(AdminMailer).not_to receive(:schedule_delivery)
+    m = ContactMessage.process_new({
+      'message' => 'asdf', 
+      'email' => 'asdf@example.com',
+      'subject' => 'Ahem',
+      'recipient' => 'technical support'
+    })
+    expect(m.errored?).to eq(false)
+    expect(Typhoeus).to receive(:post){|endpoint, args|
+      expect(endpoint).to eq('https://asdf/api/v2/tickets.json')
+      expect(args[:headers]).to eq({'Content-Type' => 'application/json'})
+      expect(args[:userpwd]).to eq("nunya@example.com/token:q49t84awhg498gh34")
+      expect(args[:body]).to_not eq(nil)
+      expect(JSON.parse(args[:body])).to eq({
+        'ticket' => {
+          'requester' => {'name' => 'asdf@example.com', 'email' => 'asdf@example.com'},
+          'subject' => "Ahem",
+          'comment' => {'html_body' => "<i>Source App: CoughDrop</i><br/>asdf<br/><br/><span style='font-style: italic;'>no IP address found<br/>no app version found<br/>no user agent found</span>"},
+          'email_ccs' => [
+            {'user_name' => o1.settings['name'], 'user_email' => 'org1@example.com', 'action' => 'put'},
+            {'user_name' => o2.settings['name'], 'user_email' => 'org2@example.com', 'action' => 'put'},
+          ]
+        }
+      })
+    }.and_return(OpenStruct.new(:code => 201))
+    Worker.process_queues
+
+    ENV['ZENDESK_DOMAIN'] = orig_d
+    ENV['ZENDESK_USER'] = orig_u
+    ENV['ZENDESK_TOKEN'] = orig_t
+  end
 end

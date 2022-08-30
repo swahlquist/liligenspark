@@ -30,6 +30,9 @@ class Organization < ActiveRecord::Base
     else
       self.external_auth_key = nil
     end
+    if self.settings['support_target'] && self.settings['support_target']['email']
+      self.settings['support_target']['name'] = self.settings['name']
+    end
     @processed = false
     true
   end
@@ -789,7 +792,7 @@ class Organization < ActiveRecord::Base
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
         e['login_timeout'] = org.settings['inactivity_timeout'] if org.settings['inactivity_timeout']
-        e['premium'] = true if org.settings['org_access']
+        e['premium'] = true if org.settings['premium']
         e['org'] = org if include_org
         res << e
       elsif link['type'] == 'org_manager' && org
@@ -807,7 +810,7 @@ class Organization < ActiveRecord::Base
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
         e['login_timeout'] = org.settings['inactivity_timeout'] if org.settings['inactivity_timeout']
-        e['premium'] = true if org.settings['org_access']
+        e['premium'] = true if org.settings['premium']
         e['restricted'] = true if org.settings['org_access'] == false
         e['org'] = org if include_org
         res << e
@@ -826,7 +829,7 @@ class Organization < ActiveRecord::Base
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
         e['login_timeout'] = org.settings['inactivity_timeout'] if org.settings['inactivity_timeout']
-        e['premium'] = true if org.settings['org_access']
+        e['premium'] = true if org.settings['premium']
         e['org'] = org if include_org
         res << e
       end
@@ -1057,6 +1060,7 @@ class Organization < ActiveRecord::Base
     self.settings['image_url'] = process_string(params['image_url']) if params['image_url']
     self.settings['status_overrides'] = params['status_overrides']
     self.settings['extra_colors'] = params['extra_colors']
+    self.settings['support_target'] = params['support_target']
     raise "updater required" unless non_user_params['updater']
     if params[:allotted_licenses]
       total = params[:allotted_licenses].to_i

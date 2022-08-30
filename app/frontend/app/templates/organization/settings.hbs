@@ -29,7 +29,7 @@
   {{/if}}
   {{#if model.permissions.delete}}
     <div class="form-group">
-      <label for="org_access" class="col-sm-3 control-label">{{t "Login Timeout" key='inactivity_timeout'}}</label>
+      <label for="inactivity_timeout" class="col-sm-3 control-label">{{t "Login Timeout" key='inactivity_timeout'}}</label>
       <div class="col-sm-3">
         {{input id='inactivity_timeout' value=model.inactivity_timeout class="form-control" type="text"}}
       </div>
@@ -84,6 +84,24 @@
         </div>
       {{/if}}
     </div>
+  {{/if}}
+  {{#if model.premium}}
+    <div class="form-group">
+      <label for="allow_support_target" class="col-sm-3 control-label">{{t "Support Emails" key='support_emails'}}</label>
+      <div class="col-sm-7">
+        <div class="checkbox big_checkbox">
+          <label>
+            {{input checked=allow_support_target type="checkbox"}}
+              {{t "Email a copy of all support tickets from within this organization" key='allow_support_target'}}
+          </label>
+        </div>
+      </div>
+    </div>
+    {{#if allow_support_target}}
+      <div class='col-sm-7 col-sm-offset-3' style='margin-top: -5px; margin-bottom: 10px;'>
+        {{input value=support_email class="form-control" placeholder="email address"}}
+      </div>
+    {{/if}}
   {{/if}}
   <div class='form-group'>
       <label class="col-sm-3 control-label">{{t "Editing Colors" key='editing_colors'}}</label>

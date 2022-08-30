@@ -40,6 +40,7 @@ CoughDrop.Organization = DS.Model.extend({
   total_premium_supervisors: DS.attr('number'),
   total_extras: DS.attr('number'),
   include_extras: DS.attr('boolean'),
+  support_target: DS.attr('raw'),
   extra_colors: DS.attr('raw'),
   status_overrides: DS.attr('raw'),
   premium: DS.attr('boolean'),

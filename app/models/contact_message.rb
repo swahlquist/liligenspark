@@ -83,6 +83,31 @@ class ContactMessage < ActiveRecord::Base
         }
       }
     }
+
+    # Check for org-level setting to add user account 
+    # to all tickets for that org (and parent orgs)
+    users = []
+    users = [User.find_by_global_id(self.settings['user_id']), User.find_by_global_id(self.settings['supervisor_id'])].compact if self.settings['user_id']
+    users = User.find_by_email(self.settings['email']) if users.empty?
+    org_targets = {}
+    users.each do |user|
+      Organization.attached_orgs(user, true).each do |org|
+        if !org['pending'] && org['org'] && org['premium']
+          if org['org'].settings['support_target']
+            org_targets[org['org'].settings['support_target']['email']] ||= org['org'].settings['support_target']['name']
+          end
+          org['org'].upstream_orgs.each do |o|
+            if o.settings['premium'] && o.settings['support_target']
+              org_targets[o.settings['support_target']['email']] ||= o.settings['support_target']['name']
+            end
+          end
+        end
+      end
+    end
+    org_targets.each do |email, name|
+      json['ticket']['email_ccs'] ||= []
+      json['ticket']['email_ccs'] << {'user_email' => email, 'user_name' => name, 'action' => 'put'}
+    end
     res = Typhoeus.post(endpoint, {body: json.to_json, userpwd: basic_auth, headers: {'Content-Type' => 'application/json'}})
     if res.code == 201
       true

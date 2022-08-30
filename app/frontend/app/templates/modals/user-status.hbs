@@ -3,7 +3,7 @@
     <button type="button" class="close" {{action 'close'}}>&times;</button>
     <h3>
       <img src={{model.user.avatar_url}} style='height: 50px;'/>
-      {{t "Status for %{un}" un=model.user.user_name key='status_for_user'}}
+      {{t "Progress for %{un}" un=model.user.user_name key='progress_for_user'}}
     </h3>
   </div>
   <div class="modal-body">
@@ -60,7 +60,7 @@
 
       {{else}}
         <div>
-          <button class='btn btn-default' {{action 'edit'}}>{{t "Update Status" key='update_state'}}</button>
+          <button class='btn btn-default' {{action 'edit'}}>{{t "Update Progress" key='update_state'}}</button>
         </div>
       {{/if}}
     </div>
