@@ -186,7 +186,8 @@ var persistence = EmberObject.extend({
       }
     }
     if(!key) { /*debugger;*/ }
-    return new RSVP.Promise(function(resolve, reject) {
+    var res = new RSVP.Promise(function(resolve, reject) {
+      setTimeout(function() {
       if(valid_stores.indexOf(store) == -1) {
         reject({error: "invalid type: " + store});
         return;
@@ -261,7 +262,9 @@ var persistence = EmberObject.extend({
         persistence.known_missing[store][key] = true;
         reject(err);
       });
+    }, 0)
     });
+    return res;
   },
   remember_access: function(lookup, store, id) {
     if(lookup == 'find' && store == 'board') {
@@ -908,6 +911,14 @@ var persistence = EmberObject.extend({
     return res;
   },
   url_cache: {},
+  store_url_quick_check: function(url, type) {
+    var _this = this;
+    if(type == 'image' || type == 'sound') {
+      return (_this.url_cache && _this.url_cache[url] && (!_this.url_uncache || !_this.url_uncache[url]));
+    }
+    return false;
+
+  },
   store_url: function store_url(url, type, keep_big, force_reload, sync_id) {
     persistence.urls_to_store = persistence.urls_to_store || [];
     var defer = RSVP.defer();
@@ -1263,7 +1274,7 @@ var persistence = EmberObject.extend({
     }
   },
   time_promise: function(promise, msg, ms) {
-    return new RSVP.Promise(function(resolve, reject) {
+    var promise = new RSVP.Promise(function(resolve, reject) {
       ms = ms || 30000;
       var done = false;
       promise.then(function(res) {
@@ -1280,6 +1291,8 @@ var persistence = EmberObject.extend({
         }
       }, ms);  
     });
+    promise.promise_name = msg;
+    return promise;
   },
   sync: function(user_id, force, ignore_supervisees, sync_reason) {
     if(!window.coughDropExtras || !window.coughDropExtras.ready) {
@@ -1289,6 +1302,7 @@ var persistence = EmberObject.extend({
         });
       });
     }
+
     sync_reason = sync_reason || 'manual_sync';
     if(sync_reason == 'manual_sync') {
       // When manual sync is triggered, assume a file storage
@@ -1333,11 +1347,6 @@ var persistence = EmberObject.extend({
         sync_reject({error: "failed to retrieve user, missing id"});
       }
 
-      // Prime the caches again, only do a hard prime if manually-triggered
-      var prime_caches = RSVP.resolve();
-      if(!ignore_supervisees) {
-        prime_caches = persistence.time_promise(persistence.prime_caches(sync_reason == 'manual_sync').then(null, function() { return RSVP.resolve(); }), "priming caches");
-      }
 
       var check_first = function(callback) {
         if(!persistence.get('sync_progress') || persistence.get('sync_progress.canceled') || persistence.get('sync_progress.sync_id') != sync_id) {
@@ -1348,6 +1357,37 @@ var persistence = EmberObject.extend({
           return callback;
         }
       };
+
+      var check_db = RSVP.resolve();
+      if(capabilities.dbman.db_type == 'sqlite_plugin' && sync_reason != 'supervisee') {
+        // Test if the local storage connection is live and, if not, reset
+        check_db = new RSVP.Promise(function(res, rej) {
+          var sql_caught_up = false;
+          capabilities.dbman.db.executeSql("SELECT * FROM board LIMIT 1", function(r) { 
+            res();
+            sql_caught_up = true;
+          }, function(e) { 
+            res();
+            sql_caught_up = true;
+          });
+          setTimeout(function() {
+            if(!sql_caught_up) {
+              console.log("Local DB Transactions Flushed");
+              capabilities.dbman.db.abortAllPendingTransactions()
+            }
+            res();
+          }, 1000);  
+        });
+      }
+
+      // Prime the caches again, only do a hard prime if manually-triggered
+      var prime_caches = check_db;
+      if(!ignore_supervisees) {
+        prime_caches = check_db.then(check_first(function() {
+          return persistence.time_promise(persistence.prime_caches(sync_reason == 'manual_sync').then(null, function() { return RSVP.resolve(); }), "priming caches");
+        }));
+      }
+
 
       var find_user = prime_caches.then(check_first(function() {
         return CoughDrop.store.findRecord('user', user_id).then(function(user) {
@@ -1468,18 +1508,22 @@ var persistence = EmberObject.extend({
           }
         }
 
-        var spread_out = function(callback) {
+        var spread_out = function(callback, name) {
           spread_out.delay = (spread_out.delay || 0) + 1500;
           var delay = spread_out.delay;
-          sync_promises.push(new RSVP.Promise(function(resolve, reject) {
+          var promise = new RSVP.Promise(function(resolve, reject) {
             runLater(function() {
-              callback().then(function(res) {
+              var p = callback();
+              promise.promise_name = (p.promise_name || promise.promise_name || 'unnamed') + " for " + user.get('user_name');
+              p.then(function(res) {
                 resolve(res);
               }, function(err) {
                 reject(err);
               })
             }, delay);
-          }));
+          });
+          promise.promise_name = name + " for " + user.get('user_name');
+          sync_promises.push(promise);
         };
 
         // Step 1: If online
@@ -1490,7 +1534,7 @@ var persistence = EmberObject.extend({
         if(persistence.get('sync_progress.root_user') == user_id) {
           spread_out(function() {
             return persistence.time_promise(persistence.sync_changed(), "syncing changed");
-          });
+          }, "syncing changed");
         }
 
         var importantIds = [];
@@ -1500,7 +1544,7 @@ var persistence = EmberObject.extend({
         spread_out(function() {
           // Timed promised cannot call store_url() which gets queued
           return persistence.time_promise(persistence.sync_user(user, importantIds), "sync user data");
-        });
+        }, "sync user data");
 
         // Step 3: If online
         // check if the board set has changed at all, and if so
@@ -1516,14 +1560,17 @@ var persistence = EmberObject.extend({
         }, function() {
           return persistence.sync_boards(user, importantIds, synced_boards, force);
         });
+        get_local_revisions.promise_name = "syncing boards for " + user.get('user_name');
         sync_promises.push(get_local_revisions);
           
 
         // Step 4: If user has any supervisees, sync them as well
         if(user && user.get('supervisees') && !ignore_supervisees) {
           spread_out(function() {
-            return persistence.sync_supervisees(user, force);
-          });
+            var res = persistence.sync_supervisees(user, force);
+            res.promise_name = "syncing supervisees";
+            return res;
+          }, "syncing supervisees");
         }
 
         // Step 5: Cache needed sound files
@@ -1533,25 +1580,36 @@ var persistence = EmberObject.extend({
             console.error("sound sync error", err);
             return RSVP.resolve();
           }), "syncing beep sounds");
-        });
+        }, "syncing beep sounds");
 
         // Step 6: Push stored logs
         spread_out(function() {
-          return persistence.sync_logs(user);
-        });
+          return persistence.time_promise(persistence.sync_logs(user), "pushing logs");
+        }, "pushing logs");
 
         // Step 7: Sync user tags
         spread_out(function() {
-          return persistence.sync_tags(user);
-        });
+          return persistence.time_promise(persistence.sync_tags(user), "syncing tags");
+        }, "syncing tags");
 
         // Step 8: Sync contacts
         spread_out(function() {
-          return persistence.sync_contacts(user);
-        });
+          return persistence.time_promise(persistence.sync_contacts(user), "syncing contacts");
+        }, "syncing contacts");
 
         // reject on any errors
+        var check_again = function() {
+          if(!check_again.done) {
+            sync_promises.forEach(function(p, idx) { p.promise_name = p.promise_name || ("unnamed " + idx + " for " + user.get('user_name')); });
+            var pending = sync_promises.filter(function(p) {
+              return p._state != 1 && p._state != 2;
+            }).map(function(p) { return p.promise_name });
+            console.log("Sync waiting on", pending);
+            runLater(check_again, 5000);
+          }
+        };
         RSVP.all_wait(sync_promises).then(function() {
+          check_again.done = true;
           // Step 4: If online
           // store the list ids to settings.importantIds so they don't get expired
           // even after being offline for a long time. Also store lastSync somewhere
@@ -1565,9 +1623,11 @@ var persistence = EmberObject.extend({
             sync_reject(arguments);
           });
         }, function() {
+          check_again.done = true;
           persistence.refresh_after_eventual_stores();
           sync_reject.apply(null, arguments);
         });
+        runLater(check_again, 5000);
       })).then(null, function() {
         persistence.refresh_after_eventual_stores();
         sync_reject(null, arguments);
@@ -1719,12 +1779,12 @@ var persistence = EmberObject.extend({
     var retrieve_list = wait.then(null, function() { return RSVP.resolve(); }).then(function() {
       var all_store_images = [];
       (user.get('supervisors') || []).forEach(function(sup) {
-        if(CoughDrop.remote_url(sup.avatar_url)) {
+        if(CoughDrop.remote_url(sup.avatar_url) && !persistence.store_url_quick_check(sup.avatar_url, 'image')) {
           all_store_images.push(persistence.store_url(sup.avatar_url, 'image'));
         }
       });
       (user.get('contacts') || []).forEach(function(contact) {
-        if(CoughDrop.remote_url(contact.image_url)) {
+        if(CoughDrop.remote_url(contact.image_url) && !persistence.store_url_quick_check(contact.image_url, 'image')) {
           all_store_images.push(persistence.store_url(contact.image_url, 'image'));
         }
       });
@@ -2130,9 +2190,19 @@ var persistence = EmberObject.extend({
               local_full_set_revision = board.get('local_full_set_revision');
               importantIds.push('board_' + id);
               var visited_board_promises = [];
+              var content_promises = 0;
               var safely_cached = !!safely_cached_boards[board.id];
               // force a reload of the buttonset if the board changed
-              board.load_button_set(!safely_cached);
+              if((next.depth == 0 && next.visit_source == 'home board') || (next.depth == 1 && next.visit_source == 'sidebar board')) {
+                // Confirm if the button set is stored locally
+                persistence.find('buttonset', board.get('id')).then(function(bs) {
+                  if(bs.full_set_revision != local_full_set_revision && !bs.buttons && !safely_cached) {
+                    board.load_button_set(!safely_cached);
+                  }
+                }, function(err) {
+                  board.load_button_set(!safely_cached);
+                })
+              }
               // If the retrieved board's revision matches the synced cache's revision,
               // then this board and all its children should be already in the db.
               var cache_mismatch = fresh_revisions && fresh_revisions[board.get('id')] && fresh_revisions[board.get('id')] != board.get('current_revision');
@@ -2148,22 +2218,25 @@ var persistence = EmberObject.extend({
               synced_boards.push(board);
               visited_boards.push(id);
 
-              if(CoughDrop.remote_url(board.get('icon_url_with_fallback'))) {
+              if(CoughDrop.remote_url(board.get('icon_url_with_fallback')) && !persistence.store_url_quick_check(board.get('icon_url_with_fallback'), 'image')) {
                 // store_url already has a queue, we don't need to fill the sync queue with these
+                content_promises++;
                 visited_board_promises.push(persistence.store_url(board.get('icon_url_with_fallback'), 'image', false, force, sync_id).then(null, function() {
                   console.log("icon url failed to sync, " + board.get('icon_url_with_fallback'));
                   return RSVP.resolve();
                 }));
                 importantIds.push("dataCache_" + board.get('icon_url_with_fallback'));
               }
-              if(CoughDrop.remote_url(board.get('background.image'))) {
+              if(CoughDrop.remote_url(board.get('background.image')) && !persistence.store_url_quick_check(board.get('background.image'), 'image')) {
+                content_promises++;
                 visited_board_promises.push(persistence.store_url(board.get('background.image'), 'image', true, force, sync_id).then(null, function() {
                   console.log("bg url failed to sync, " + board.get('background.image'));
                   return RSVP.resolve();
                 }));
                 importantIds.push("dataCache_" + board.get('background.image'));
               }
-              if(CoughDrop.remote_url(board.get('background.prompt.sound'))) {
+              if(CoughDrop.remote_url(board.get('background.prompt.sound')) && !persistence.store_url_quick_check(board.get('background.prompt.sound'), 'sound')) {
+                content_promises++;
                 visited_board_promises.push(persistence.store_url(board.get('background.prompt.sound'), 'sound', true, force, sync_id).then(null, function() {
                   console.log("bg sound url failed to sync, " + board.get('background.prompt.sound'));
                   return RSVP.resolve();
@@ -2171,7 +2244,8 @@ var persistence = EmberObject.extend({
                 importantIds.push("dataCache_" + board.get('background.prompt.sound'));
               }
 
-              if(next.image) {
+              if(next.image && !persistence.store_url_quick_check(next.image, 'image')) {
+                content_promises++;
                 visited_board_promises.push(//persistence.queue_sync_action('store_sidebar_image', sync_id, function() {
                   /*return*/ persistence.store_url(next.image, 'image', false, force, sync_id).then(null, function() {
                     return RSVP.reject({error: "sidebar icon url failed to sync, " + next.image});
@@ -2200,17 +2274,21 @@ var persistence = EmberObject.extend({
                     personalized = CoughDrop.Image.personalize_url(image.url, user.get('user_token'), user.get('preferences.skin'));
                   }
 
-                  visited_board_promises.push(//persistence.queue_sync_action('store_button_image', sync_id, function() {
-                    /*return*/ persistence.store_url(personalized, 'image', keep_big, force, sync_id).then(null, function() {
-                      return RSVP.reject({error: "button image failed to sync, " + image.url});
-                    })
-                 /*})*/);
-                  importantIds.push("dataCache_" + image.url);
+                  if(!persistence.store_url_quick_check(personalized, 'image')) {
+                    content_promises++;
+                    visited_board_promises.push(//persistence.queue_sync_action('store_button_image', sync_id, function() {
+                      /*return*/ persistence.store_url(personalized, 'image', keep_big, force, sync_id).then(null, function() {
+                        return RSVP.reject({error: "button image failed to sync, " + image.url});
+                      })
+                  /*})*/);
+                    importantIds.push("dataCache_" + image.url);
+                  }
                 } else {
                   // If the device thinks the image is stored locally but
                   // it isn't, then go ahead and re-download it
                   var image_filename = image.url && image.url.split(/\/|\\/).pop();
                   if(!persistence.image_filename_cache[image_filename]) {
+                    content_promises++;
                     visited_board_promises.push(
                       persistence.store_url(image.url, 'image', keep_big, force, sync_id).then(null, function() {
                         return RSVP.reject({error: "missing button image failed to sync, " + image.url});
@@ -2229,7 +2307,7 @@ var persistence = EmberObject.extend({
               board.map_sound_urls(all_sound_urls).forEach(function(sound) {
 //               board.get('local_sounds_with_license').forEach(function(sound) {
                 importantIds.push("sound_" + sound.id);
-                if(CoughDrop.remote_url(sound.url)) {
+                if(CoughDrop.remote_url(sound.url) && !persistence.store_url_quick_check(sound.url, 'sound')) {
                   visited_board_promises.push(//persistence.queue_sync_action('store_button_sound', sync_id, function() {
                      /*return*/ persistence.store_url(sound.url, 'sound', false, force, sync_id).then(null, function() {
                       return RSVP.reject({error: "button sound failed to sync, " + sound.url});
@@ -2344,11 +2422,18 @@ var persistence = EmberObject.extend({
                 }
               });
 
+              if(safely_cached && content_promises > 0) {
+                console.log("EXPECTED NO BOARD CONTENT SAVES BUT THERE WERE " + visited_board_promises.length);
+              }
               RSVP.all_wait(visited_board_promises).then(function() {
                 full_set_revisions[board.get('id')] = board.get('full_set_revision');
-                runLater(function() {
+                if(safely_cached && visited_board_promises.length == 0) {
                   nextBoard(defer);
-                }, 150);
+                } else {
+                  runLater(function() {
+                    nextBoard(defer);
+                  }, 75);  
+                }
               }, function(err) {
                 var msg = "board " + (key || id) + " failed to sync completely";
                 if(typeof err == 'string') {
@@ -2362,7 +2447,7 @@ var persistence = EmberObject.extend({
                 board_errors.push({error: msg, board_id: id, board_key: key});
                 runLater(function() {
                   nextBoard(defer);
-                }, 150);
+                }, 75);
               });
             }, function(err) {
               var board_unauthorized = (err && err.error == "Not authorized");
@@ -2371,7 +2456,7 @@ var persistence = EmberObject.extend({
                 // Prolly, since they won't be using that board anyway without an edit.
                 runLater(function() {
                   nextBoard(defer);
-                }, 150);
+                }, 75);
               } else {
                 // TODO: if a board has been deleted
                 if(err.error && err.error.error) {
@@ -2384,7 +2469,7 @@ var persistence = EmberObject.extend({
                 }
                 runLater(function() {
                   nextBoard(defer);
-                }, 150);
+                }, 75);
               }
             });
           } else if(!next) {
@@ -2398,13 +2483,31 @@ var persistence = EmberObject.extend({
             }, 50);
           }
         }
-        // threaded lookups, though a polling pool would probably be better since all
-        // could resolve and then the final one finds a ton more boards
-        var n_threads = capabilities.mobile ? 1 : 2;
-        for(var threads = 0; threads < 2; threads++) {
-          var defer = RSVP.defer();
-          nextBoard(defer);
-          board_load_promises.push(defer.promise);
+        // Threaded lookups with a global limit to prevent
+        // people with lots of supervisees from getting bogged down
+        var n_threads = capabilities.mobile ? 6 : 10;
+        var add_thread = function(defer) {
+          defer = defer || RSVP.defer();
+          if(persistence.active_board_threads > n_threads) {
+            runLater(function() {
+              add_thread(defer);
+            }, 1000);
+          } else {
+            persistence.active_board_threads = (persistence.active_board_threads || 0) + 1;
+            nextBoard(defer);
+            defer.promise.then(function() {
+              persistence.active_board_threads--;
+            }, function() {
+              persistence.active_board_threads--;
+            });  
+          }
+          if(!defer.added) {
+            defer.added = true;
+            board_load_promises.push(defer.promise);
+          }
+        };
+        for(var threads = 0; threads < n_threads; threads++) {
+          add_thread();
         }
         RSVP.all_wait(board_load_promises).then(function() {
           resolve(full_set_revisions);
@@ -2442,7 +2545,7 @@ var persistence = EmberObject.extend({
           }
         }
         var url = user.get('avatar_url');
-        if(url) {
+        if(url && !persistence.store_url_quick_check(url, 'image')) {
           return persistence.store_url_now(url, 'image');
         } else {
           return RSVP.resolve({});

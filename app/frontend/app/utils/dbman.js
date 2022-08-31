@@ -173,7 +173,6 @@ var dbman = {
       success(new_list);
     }, error);
   },
-
   // Stuff under here exposes internals
   find_one_internal: function(store, key, success, error) {
     var done = log_timing('find_one', store, key);
@@ -200,7 +199,9 @@ var dbman = {
         var record = event.target.result;
         if(record) {
           done();
-          success(record);
+          setTimeout(function() {
+            success(record);
+          }, 0);
         } else {
           done();
           error({error: "no record found for " + store + ":" + key});
@@ -226,14 +227,15 @@ var dbman = {
         }
         if(result) {
           done();
-          success(result);
+          setTimeout(function() {
+            success(result);
+          }, 0);
         } else {
           done();
           error({error: "no record found for " + store + ":" + key});
         }
       }, function(err) {
         done();
-        console.log(err);
         error({error: err.message});
       });
     } else {
@@ -269,7 +271,9 @@ var dbman = {
           cursor.continue();
         } else {
           done();
-          success(list);
+          setTimeout(function() {
+            success(list);
+          }, 0);
         }
       };
       res.onerror = function() {
@@ -294,7 +298,9 @@ var dbman = {
           }
         });
         done();
-        success(list);
+        setTimeout(function() {
+          success(list);
+        }, 0);
       };
       var store_name = null;
       if(stores[store]) { store_name = store; }
@@ -348,7 +354,9 @@ var dbman = {
         var res = transaction.objectStore(store).put(record);
         res.onsuccess = function(event) {
           done();
-          success(record);
+          setTimeout(function() {
+            success(record);
+          }, 0);
         };
         res.onerror = function(event) {
           done();
@@ -373,7 +381,9 @@ var dbman = {
         args.push(ref_id);
         dbman.db.executeSql(sql, args, function() {
           done();
-          success(record);
+          setTimeout(function() {
+            success(record);
+          }, 0);
         }, function(err) {
           console.log(err);
           done();
@@ -399,7 +409,9 @@ var dbman = {
             capabilities.dbman.deletes.push({id: id});
           }
           done();
-          success({id: id});
+          setTimeout(function() {
+            success({id: id});
+          }, 0);
         };
         res.onerror = function(event) {
           done();
@@ -411,7 +423,9 @@ var dbman = {
       if(stores[store]) { store_name = store; }
       dbman.db.executeSql('DELETE FROM ' + store_name + ' WHERE ref_id=?', [id], function() {
         done();
-        success({id: id});
+        setTimeout(function() {
+          success({id: id});
+        }, 0);
       }, function(err) {
         done();
         error({error: err.message});
@@ -429,7 +443,9 @@ var dbman = {
       var res = transaction.objectStore(store).clear();
       res.onsuccess = function(event) {
         done();
-        success({store: store});
+        setTimeout(function() {
+          success({store: store});
+        }, 0);
       };
       res.onerror = function() {
         done();
@@ -446,7 +462,9 @@ var dbman = {
         error({error: err.message});
       }, function() {
         done();
-        success({store: store});
+        setTimeout(function() {
+          success({store: store});
+        }, 0);
       });
     } else {
       done();
