@@ -267,19 +267,21 @@ var persistence = EmberObject.extend({
     return res;
   },
   remember_access: function(lookup, store, id) {
-    if(lookup == 'find' && store == 'board') {
-      var recent_boards = stashes.get('recent_boards') || [];
-      recent_boards.unshift({id: id});
-      var old_list = Utils.uniq(recent_boards.slice(0, 100), function(b) { return !b.id.toString().match(/^tmp_/) ? b.id : null; });
-      var key = {};
-      var list = [];
-      old_list.forEach(function(b) {
-        if(!key[b.id]) {
-          list.push(b);
-        }
-      });
-      stashes.persist('recent_boards', list);
-    }
+    try {
+      if(lookup == 'find' && store == 'board') {
+        var recent_boards = stashes.get('recent_boards') || [];
+        recent_boards.unshift({id: id});
+        var old_list = Utils.uniq(recent_boards.slice(0, 100), function(b) { return !b.id.toString().match(/^tmp_/) ? b.id : null; });
+        var key = {};
+        var list = [];
+        old_list.forEach(function(b) {
+          if(!key[b.id]) {
+            list.push(b);
+          }
+        });
+        stashes.persist('recent_boards', list);
+      }
+    } catch(e) { }
   },
   find_recent: function(store) {
     return new RSVP.Promise(function(resolve, reject) {
@@ -2961,32 +2963,10 @@ persistence.DSExtend = {
         var check_remote = function() {
           // if nothing found locally and system is online (and it's not a local-only id), make a remote request
           if(persistence.get('online') && !id.match(/^tmp[_\/]/)) {
-            persistence.remember_access('find', type.modelName, id);
-            return _super.call(_this, store, type, id).then(function(record) {
-              // mark the retrieved timestamp for freshness checks
-              if(record[type.modelName]) {
-                delete record[type.modelName].local_result;
-                var now = (new Date()).getTime();
-                record[type.modelName].retrieved = now;
-                if(record.images) {
-                  record.images.forEach(function(i) { i.retrieved = now; });
-                }
-                if(record.sounds) {
-                  record.sounds.forEach(function(i) { i.retrieved = now; });
-                }
-              }
-              var ref_id = null;
-              if(type.modelName == 'user' && id == 'self') {
-                ref_id = 'self';
-              }
-              // store the result locally for future offline access
-              return persistence.store_eventually(type.modelName, record, ref_id).then(function() {
-                find_resolve(record);
-                // return RSVP.resolve(record);
-              }, function() {
-                find_reject({error: "failed to delayed-persist to local db"});
-              });
-            }, function(err) {
+            if(!persistence.get('syncing')) {
+              persistence.remember_access('find', type.modelName, id);
+            }
+            var error = function(err) {
               var local_fallback = false;
               if(err && (err.invalid_token || (err.result && err.result.invalid_token))) {
                 // for expired tokens, allow local results as a fallback
@@ -3019,8 +2999,52 @@ persistence.DSExtend = {
               } else {
                 return find_reject(err);
               }
+            };
+            runLater(function() {
+              // TODO: maybe just shorter timeout, check if persistence.offline and error then
+              // it looks like these super calls is where it's getting eaten...
+              if(error.skip) { return; }
+              error.skip = true;
+              error({error: 'timeout'});
+            }, 15000)
+            if(type.modelName == 'user') { debugger }
+            return _super.call(_this, store, type, id).then(function(record) {
+              if(type.modelName == 'user') { debugger }
+              // DEBUGGER HERE, when wifi is off this still gets
+              // called a couple times, but eats the promise for some reason
+              // TODO: maybe check if it's a problem in persistence.ajax
+              if(error.skip) { return; }
+              error.skip = true;
+              // mark the retrieved timestamp for freshness checks
+              if(record[type.modelName]) {
+                delete record[type.modelName].local_result;
+                var now = (new Date()).getTime();
+                record[type.modelName].retrieved = now;
+                if(record.images) {
+                  record.images.forEach(function(i) { i.retrieved = now; });
+                }
+                if(record.sounds) {
+                  record.sounds.forEach(function(i) { i.retrieved = now; });
+                }
+              }
+              var ref_id = null;
+              if(type.modelName == 'user' && id == 'self') {
+                ref_id = 'self';
+              }
+              // store the result locally for future offline access
+              return persistence.store_eventually(type.modelName, record, ref_id).then(function() {
+                find_resolve(record);
+                // return RSVP.resolve(record);
+              }, function() {
+                find_reject({error: "failed to delayed-persist to local db"});
+              });
+            }, function(err) {
+              if(error.skip) { return; }
+              error.skip = true;
+              error(err);
             });
           } else {
+            if(type.modelName == 'user') { debugger }
             if(skip_db) {
               return find_reject(persistence.offline_reject());
             } else {

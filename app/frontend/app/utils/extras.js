@@ -193,7 +193,7 @@ import app_state from './app_state';
 //     });
 //     args.push(clean_options);
 
-    return RSVP.resolve().then(function() {
+    return new RSVP.Promise(function(ajax_resolve, ajax_reject) {
       var prefix = location.protocol + "//" + location.host;
       if(capabilities.installed_app && capabilities.api_host) {
         prefix = capabilities.api_host;
@@ -257,7 +257,7 @@ import app_state from './app_state';
             // force a login prompt for invalid tokens
             session.force_logout(i18n.t('session_expired', "This session has expired, please log back in"));
           } else {
-            console.log("ember ajax error: " + data.status + ": " + data.error + " (" + options.url + ")");
+            console.log("ember ajax returned error: " + data.status + ": " + data.error + " (" + options.url + ")");
             if(error) {
               error_prep(xhr, message, data);
               error.call(this, xhr, message, data);
@@ -268,16 +268,24 @@ import app_state from './app_state';
               // if it expects to receive a proper promise.
               // TODO: raise an error somehow if the caller provides an error function
               // and expects a proper promise in response.
-              return RSVP.resolve(null);
+              return ajax_resolve(null);
+              // return RSVP.resolve(null);
             } else {
-              var rej = RSVP.reject({
+              // var rej = RSVP.reject({
+              //   stack: data.status + ": " + data.error + " (" + options.url + ")",
+              //   fakeXHR: fakeXHR(xhr),
+              //   message: message,
+              //   result: data
+              // });
+              // rej.then(null, function() { });
+              // return rej;
+              return ajax_reject({
                 stack: data.status + ": " + data.error + " (" + options.url + ")",
                 fakeXHR: fakeXHR(xhr),
                 message: message,
                 result: data
               });
-              rej.then(null, function() { });
-              return rej;
+
             }
           }
         } else {
@@ -293,22 +301,25 @@ import app_state from './app_state';
           if(success) {
             success.call(this, data, message, xhr);
           }
-          return data;
+          ajax_resolve(data);
+          // return data;
         }
       }, function(xhr, message, result) {
         if((result == 'timeout' || result == '') && xhr.status === 0 && xhr.readyState === 0) {
           if((original_options.attempt <= 2 && original_options.type == 'GET') || original_options.attempt <= 1) {
             // try failed GET requests twice, POST/PUT requests once
             original_options.attempt = (original_options.attempt || 1) + 1
-            return new RSVP.Promise(function(res, rej) {
+            // return new RSVP.Promise(function(res, rej) {
               runLater(function() {
                 $.ajax(original_options).then(function(r) {
-                  res(r);
+                  ajax_resolve(r);
+                  // res(r);
                 }, function(e) {
-                  rej(e);
+                  ajax_reject(e);
+                  // rej(e);
                 });
               }, 500);
-            });
+            // });
           }
         }
         error_prep(xhr, message, result);
@@ -319,13 +330,18 @@ import app_state from './app_state';
         if(error && xhr.responseJSON) {
           error.call(this, xhr, message, result);
         }
-        var rej = RSVP.reject({
+        ajax_reject({
           fakeXHR: fakeXHR(xhr),
           message: message,
           result: result
         });
-        rej.then(null, function() { });
-        return rej;
+        // var rej = RSVP.reject({
+        //   fakeXHR: fakeXHR(xhr),
+        //   message: message,
+        //   result: result
+        // });
+        // rej.then(null, function() { });
+        // return rej;
       });
       res.then(null, function() { });
       return res;
