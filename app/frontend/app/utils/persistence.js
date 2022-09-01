@@ -1393,7 +1393,7 @@ var persistence = EmberObject.extend({
 
       var find_user = prime_caches.then(check_first(function() {
         return CoughDrop.store.findRecord('user', user_id).then(function(user) {
-          return user.reload().then(null, function() {
+          return persistence.time_promise(user.reload(), 'reloading root user', 5000).then(null, function() {
             sync_reject({error: "failed to retrieve user details"});
           });
         }, function() {
@@ -1858,7 +1858,7 @@ var persistence = EmberObject.extend({
         });
         var reload_supervisee = find_supervisee.then(function(record) {
           if(!record.get('fresh') || force) {
-            return record.reload();
+            return persistence.time_promise(record.reload(), 'reload supervisor', 5000);
           } else {
             return record;
           }
@@ -2007,7 +2007,7 @@ var persistence = EmberObject.extend({
           } else {
             board_statuses.push({id: id, key: record.get('key'), status: 're-downloaded'});
             record.set('button_set_needs_reload', true);
-            return record.reload();
+            return persistence.time_promise(record.reload(), "reload board", 5000);
           }
         } else {
           board_statuses.push({id: id, key: record.get('key'), status: 'downloaded'});
@@ -2530,7 +2530,7 @@ var persistence = EmberObject.extend({
   sync_user: function(user, importantIds) {
     return new RSVP.Promise(function(resolve, reject) {
       importantIds.push('user_' + user.get('id'));
-      var find_user = user.reload().then(function(u) {
+      var find_user = persistence.time_promise(RSVP.resolve(user), "already reloaded user for sync", 5000).then(function(u) {
         if(persistence.get('sync_progress.root_user') == u.get('id')) {
           persistence.set('sync_progress.last_sync_stamp', u.get('sync_stamp'));
         }
@@ -2619,7 +2619,7 @@ var persistence = EmberObject.extend({
               if(!record.get('id') && (item.store == 'image' || item.store == 'sound')) {
                 record.set('data_url', object.data_url);
                 return contentGrabbers.save_record(record).then(function() {
-                  return record.reload();
+                  return persistence.time_promise(record.reload(), "reload changed record", 10000);
                 });
               } else {
                 return record.save();
@@ -3007,9 +3007,7 @@ persistence.DSExtend = {
               error.skip = true;
               error({error: 'timeout'});
             }, 15000)
-            if(type.modelName == 'user') { debugger }
             return _super.call(_this, store, type, id).then(function(record) {
-              if(type.modelName == 'user') { debugger }
               // DEBUGGER HERE, when wifi is off this still gets
               // called a couple times, but eats the promise for some reason
               // TODO: maybe check if it's a problem in persistence.ajax
@@ -3044,7 +3042,6 @@ persistence.DSExtend = {
               error(err);
             });
           } else {
-            if(type.modelName == 'user') { debugger }
             if(skip_db) {
               return find_reject(persistence.offline_reject());
             } else {
