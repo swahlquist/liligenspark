@@ -1198,9 +1198,6 @@ var app_state = EmberObject.extend({
           scanning_auto_select: _this.get('currentUser.preferences.device.scanning_auto_select'),
           audio: _this.get('currentUser.preferences.device.scanning_prompt')
         });
-        runLater(function() {
-          app_state.retry_images();
-        }, 1000);
       } else {
         buttonTracker.scanning_enabled = false;
         // this was breaking the "find button" interface when you get to the second board
@@ -1208,6 +1205,9 @@ var app_state = EmberObject.extend({
           scanner.stop();
         }
       }
+      runLater(function() {
+        app_state.retry_images();
+      }, 1000);
       buttonTracker.multi_touch_modeling = _this.get('currentUser.preferences.multi_touch_modeling');
       buttonTracker.keyboard_listen = _this.get('currentUser.preferences.device.external_keyboard');
       buttonTracker.dwell_modeling = false;
@@ -2038,9 +2038,9 @@ var app_state = EmberObject.extend({
   superProtectedSpeakMode: computed('speak_mode', 'embedded', function() {
     return this.get('speak_mode') && this.get('embedded');
   }),
-  retry_images: observer('medium_refresh_stamp', function() {
+  retry_images: observer('medium_refresh_stamp', 'persistence.online', function() {
     document.querySelectorAll('img.broken_image').forEach(function(img) {
-      if(img.getAttribute('rel-url')) {
+      if(img.getAttribute('rel-url') && img.src.match(/square\.svg/)) {
         // try to recover images from being broken
         var i = new Image();
         i.onload = function() {
@@ -2052,7 +2052,9 @@ var app_state = EmberObject.extend({
           if(i.src.match(/^file/) || i.src.match(/^localhost/)) {
             for(var key in persistence.url_cache) {
               if(persistence.url_cache[key] == i.src) {
-                i.src = key;
+                setTimeout(function() {
+                  i.src = key;
+                }, 10);
               }
             }
           } else {
