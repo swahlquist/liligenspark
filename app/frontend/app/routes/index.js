@@ -128,7 +128,7 @@ export default Route.extend({
         var meta = persistence.meta('user', null);
         controller.set('triedToSave', false);
         user.set('password', null);
-        _this.transitionTo('index');
+        app_state.return_to_index();
         if(meta && meta.access_token) {
           session.override(meta);
         }

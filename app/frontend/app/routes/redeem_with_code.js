@@ -20,7 +20,7 @@ export default Route.extend({
   setupController: function(controller, model) {
     var _this = this;
     if(!app_state.get('domain_settings.full_domain')) {
-      controller.transitionToRoute('index');
+      app_state.return_to_index();
       return;
     }
 

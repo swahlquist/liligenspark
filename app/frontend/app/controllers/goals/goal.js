@@ -123,7 +123,7 @@ export default Controller.extend({
       var _this = this;
       _this.set('status', {deleting: true});
       goal.save().then(function(r) {
-        _this.transitionToRoute('index');
+        app_state.return_to_index();
       }, function(err) {
         _this.set('status', {delete_error: true});
       });

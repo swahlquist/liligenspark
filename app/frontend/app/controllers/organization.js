@@ -5,6 +5,7 @@ import session from '../utils/session';
 import persistence from '../utils/persistence';
 import CoughDrop from '../app';
 import { later as runLater } from '@ember/runloop';
+import app_state from '../utils/app_state';
 
 export default Controller.extend({
   actions: {
@@ -32,7 +33,7 @@ export default Controller.extend({
           data.as_user_id = user_name;
           data.user_name = user_name;
           session.persist(data).then(function() {
-            _this.transitionToRoute('index');
+            app_state.return_to_index();
             runLater(function() {
               location.reload();
             });

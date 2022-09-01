@@ -2,6 +2,7 @@ import modal from '../utils/modal';
 import RSVP from 'rsvp';
 import BoardHierarchy from '../utils/board_hierarchy';
 import { computed } from '@ember/object';
+import app_state from '../utils/app_state';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -70,7 +71,7 @@ export default modal.ModalController.extend({
 
       delete_others.then(function() {
         if(_this.get('model.redirect')) {
-          _this.transitionToRoute('index');
+          app_state.return_to_index();
         }
         modal.close({update: true});
       }, function() {

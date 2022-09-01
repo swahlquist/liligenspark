@@ -33,6 +33,7 @@ import { htmlSafe } from '@ember/string';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
 import sync from './sync';
+import persistence from './persistence';
 
 // tracks:
 // current mode (edit mode, speak mode, default)
@@ -485,6 +486,9 @@ var app_state = EmberObject.extend({
     actions.last_action = type;
     this.set('depth_actions', actions);
   },
+  return_to_index: function() {
+    _this.controller.transitionToRoute('index');
+  },
   jump_to_board: function(new_state, old_state) {
     buttonTracker.transitioning = true;
     if(new_state && old_state && new_state.id && (new_state.id == old_state.id || new_state.key == old_state.key)) {
@@ -700,7 +704,7 @@ var app_state = EmberObject.extend({
         do_log = current && current.key && state.key != current.key;
       }
     } else if(index_as_fallback) {
-      this.controller.transitionToRoute('index');
+      this.return_to_index();
       do_log = current && current.key;
     }
     if(do_log) {

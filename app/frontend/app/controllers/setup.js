@@ -603,7 +603,7 @@ export default Controller.extend({
       }
     },
     home: function(plus_video) {
-      this.transitionToRoute('index');
+      app_state.return_to_index();
       if(plus_video) {
         modal.open('inline-video', {video: {type: 'youtube', id: "U1vBg36zVpg"}, hide_overlay: true});
         if(window.ga) {
@@ -643,7 +643,7 @@ export default Controller.extend({
       this.transitionToRoute('home-boards');
     },
     done: function() {
-      this.transitionToRoute('index');
+      app_state.return_to_index();
     },
     show_advanced: function() {
       this.set('advanced_mine', false);

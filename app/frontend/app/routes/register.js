@@ -13,7 +13,7 @@ export default Route.extend({
     controller.set('model', model);
     controller.set('user', model);
     if(!app_state.get('domain_settings.full_domain')) {
-      controller.transitionToRoute('index');
+      app_state.return_to_index();
       return;
     }
   },
@@ -34,7 +34,7 @@ export default Route.extend({
         controller.set('registering', null);
         user.set('password', null);
         controller.set('triedToSave', false);
-        _this.transitionTo('index');
+        app_state.return_to_index();
         var meta = persistence.meta('user', null);
         if(meta && meta.access_token) {
           _this.get('session').override(meta);

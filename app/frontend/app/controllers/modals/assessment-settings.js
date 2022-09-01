@@ -160,7 +160,7 @@ export default modal.ModalController.extend({
         if(app_state.get('speak_mode')) {
           app_state.toggle_speak_mode();
         }
-        this.transitionToRoute('index');
+        app_state.return_to_index();
       } else {
         this.set('aborting', true);
       }

@@ -10,7 +10,7 @@ export default app_state.ScrollTopRoute.extend({
       return;
     }
     if(!app_state.get('domain_settings.full_domain')) {
-      controller.transitionToRoute('index');
+      app_state.return_to_index();
       return;
     }
     controller.set('model', model);

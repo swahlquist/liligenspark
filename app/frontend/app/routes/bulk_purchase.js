@@ -8,7 +8,7 @@ export default Route.extend({
   },
   setupController: function(controller, model) {
     if(!app_state.get('domain_settings.full_domain')) {
-      controller.transitionToRoute('index');
+      app_state.return_to_index();
       return;
     }
     controller.load_gift(this.get('gift_id'));

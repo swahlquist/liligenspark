@@ -294,7 +294,7 @@ export default Controller.extend({
       persistence.cancel_sync();
     },
     index: function() {
-      this.transitionToRoute('index');
+      app_state.return_to_index();
     },
     support: function() {
       modal.open('support');
@@ -1054,7 +1054,7 @@ export default Controller.extend({
       if(app_state.get('from_route')) {
         this.transitionToRoute.apply(this, app_state.get('from_route'));
       } else {
-        this.transitionToRoute('index');
+        app_state.return_to_index();
       }
     },
     suggestions: function() {

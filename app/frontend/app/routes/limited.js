@@ -12,7 +12,7 @@ export default Route.extend({
     } else if(location.href.match(/terms/)) {
       controller.transitionToRoute('terms');
     } else {
-      controller.transitionToRoute('index');
+      app_state.return_to_index();
     }
   }
 });

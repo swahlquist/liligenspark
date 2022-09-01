@@ -12,9 +12,9 @@ var extra_types = ['NW', 'N', 'NE', 'W', 'E', 'SW', 'S', 'SE'];
 export default Controller.extend({
   abort_if_unauthorized: observer('session.isAuthenticated', 'app_state.currentUser', function() {
     if(!session.get('isAuthenticated')) {
-      this.transitionToRoute('index');
+      app_state.return_to_index();
     } else if(app_state.get('currentUser') && !app_state.get('currentUser.permissions.admin_support_actions')) {
-      this.transitionToRoute('index');
+      app_state.return_to_index();
     } else if(app_state.get('currentUser') && !this.get('word')) {
       this.load_word();
     }
