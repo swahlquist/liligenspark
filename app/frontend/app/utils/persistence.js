@@ -2926,114 +2926,130 @@ persistence.DSExtend = {
     var _this = this;
     var _super = this._super;
     return new RSVP.Promise(function(find_resolve, find_reject) {
-      // first, try looking up the record locally
-      var start_with_local = true; 
-      var skip_db = false;
-      // persistence.find(type.modelName, id, true);
-      // original_find.then(function(data) { original_find.data = data; });
-      // var find = original_find;
+      var after_data = function(local_data) {
+        // first, try looking up the record locally
+        var start_with_local = true; 
+        var skip_db = false;
+        // persistence.find(type.modelName, id, true);
+        // original_find.then(function(data) { original_find.data = data; });
+        // var find = original_find;
 
-      var full_id = type.modelName + "_" + id;
-      // force_reload should always hit the server, though it can return local data if there's a token error (i.e. session expired)
-      if(persistence.force_reload == full_id) { start_with_local = false; } //find.then(null, function() { }); find = RSVP.reject(); }
-      // private browsing mode gets really messed up when you try to query local db, so just don't.
-      else if(!stashes.get('enabled')) { skip_db = true; } //find.then(null, function() { }); find = RSVP.reject(); original_find = RSVP.reject(); }
+        var full_id = type.modelName + "_" + id;
+        // force_reload should always hit the server, though it can return local data if there's a token error (i.e. session expired)
+        if(persistence.force_reload == full_id && persistence.get('online')) { start_with_local = false; } //find.then(null, function() { }); find = RSVP.reject(); }
+        // private browsing mode gets really messed up when you try to query local db, so just don't.
+        else if(!stashes.get('enabled')) { skip_db = true; } //find.then(null, function() { }); find = RSVP.reject(); original_find = RSVP.reject(); }
 
-      // this method will be called if a local result is found, or a force reload
-      // is called but there wasn't a result available from the remote system
-      var local_processed = function(data) {
-        data.meta = data.meta || {};
-        data.meta.local_result = true;
-        if(data[type.modelName] && data.meta && data.meta.local_result) {
-          data[type.modelName].local_result = true;
-        }
-        coughDropExtras.meta_push({
-          method: 'GET',
-          model: type.modelName,
-          id: id,
-          meta: data.meta
-        });
-        find_resolve(data);
-        // return RSVP.resolve(data);
-      };
-
-      var check_remote = function() {
-        // if nothing found locally and system is online (and it's not a local-only id), make a remote request
-        if(persistence.get('online') && !id.match(/^tmp[_\/]/)) {
-          persistence.remember_access('find', type.modelName, id);
-          return _super.call(_this, store, type, id).then(function(record) {
-            // mark the retrieved timestamp for freshness checks
-            if(record[type.modelName]) {
-              delete record[type.modelName].local_result;
-              var now = (new Date()).getTime();
-              record[type.modelName].retrieved = now;
-              if(record.images) {
-                record.images.forEach(function(i) { i.retrieved = now; });
-              }
-              if(record.sounds) {
-                record.sounds.forEach(function(i) { i.retrieved = now; });
-              }
-            }
-            var ref_id = null;
-            if(type.modelName == 'user' && id == 'self') {
-              ref_id = 'self';
-            }
-            // store the result locally for future offline access
-            return persistence.store_eventually(type.modelName, record, ref_id).then(function() {
-              find_resolve(record);
-              // return RSVP.resolve(record);
-            }, function() {
-              find_reject({error: "failed to delayed-persist to local db"});
-            });
-          }, function(err) {
-            var local_fallback = false;
-            if(err && (err.invalid_token || (err.result && err.result.invalid_token))) {
-              // for expired tokens, allow local results as a fallback
-              local_fallback = true;
-            } else if(err && err.errors && err.errors[0] && err.errors[0].status && err.errors[0].status.toString().substring(0, 1) == '5') {
-              // for server errors, allow local results as a fallback
-              local_fallback = true;
-            } else if(err && err.fakeXHR && err.fakeXHR.status === 0) {
-              // for connection errors, allow local results as a fallback
-              local_fallback = true;
-            } else if(err && err.fakeXHR && err.fakeXHR.status && err.fakeXHR.status.toString().substring(0, 1) == '5') {
-              // for other 500 errors, allow local results as a fallback
-              local_fallback = true;
-            } else {
-              // any other exceptions?
-            }
-            if(err && !err.error && err.errors) {
-              err.error = err.errors[0];
-            }
-            if(local_fallback) {
-              if(skip_db) {
-                find_reject(err);
-              } else {
-                return persistence.find(type.modelName, id, true).then(function(data) { return local_processed(data); }, function() { return find_reject(err); });
-              }
-            } else {
-              return find_reject(err);
-            }
-          });
-        } else {
-          if(skip_db) {
-            return find_reject(persistence.offline_reject());
-          } else {
-            return persistence.find(type.modelName, id, true).then(function(data) { return local_processed(data); }, function() { return find_reject(persistence.offline_reject()); });
+        // this method will be called if a local result is found, or a force reload
+        // is called but there wasn't a result available from the remote system
+        var local_processed = function(data) {
+          data.meta = data.meta || {};
+          data.meta.local_result = true;
+          if(data[type.modelName] && data.meta && data.meta.local_result) {
+            data[type.modelName].local_result = true;
           }
+          coughDropExtras.meta_push({
+            method: 'GET',
+            model: type.modelName,
+            id: id,
+            meta: data.meta
+          });
+          find_resolve(data);
+          // return RSVP.resolve(data);
+        };
+
+        var check_remote = function() {
+          // if nothing found locally and system is online (and it's not a local-only id), make a remote request
+          if(persistence.get('online') && !id.match(/^tmp[_\/]/)) {
+            persistence.remember_access('find', type.modelName, id);
+            return _super.call(_this, store, type, id).then(function(record) {
+              // mark the retrieved timestamp for freshness checks
+              if(record[type.modelName]) {
+                delete record[type.modelName].local_result;
+                var now = (new Date()).getTime();
+                record[type.modelName].retrieved = now;
+                if(record.images) {
+                  record.images.forEach(function(i) { i.retrieved = now; });
+                }
+                if(record.sounds) {
+                  record.sounds.forEach(function(i) { i.retrieved = now; });
+                }
+              }
+              var ref_id = null;
+              if(type.modelName == 'user' && id == 'self') {
+                ref_id = 'self';
+              }
+              // store the result locally for future offline access
+              return persistence.store_eventually(type.modelName, record, ref_id).then(function() {
+                find_resolve(record);
+                // return RSVP.resolve(record);
+              }, function() {
+                find_reject({error: "failed to delayed-persist to local db"});
+              });
+            }, function(err) {
+              var local_fallback = false;
+              if(err && (err.invalid_token || (err.result && err.result.invalid_token))) {
+                // for expired tokens, allow local results as a fallback
+                local_fallback = true;
+              } else if(err && err.errors && err.errors[0] && err.errors[0].status && err.errors[0].status.toString().substring(0, 1) == '5') {
+                // for server errors, allow local results as a fallback
+                local_fallback = true;
+              } else if(err && err.fakeXHR && err.fakeXHR.status === 0) {
+                // for connection errors, allow local results as a fallback
+                local_fallback = true;
+              } else if(err && err.fakeXHR && err.fakeXHR.status && err.fakeXHR.status.toString().substring(0, 1) == '5') {
+                // for other 500 errors, allow local results as a fallback
+                local_fallback = true;
+              } else {
+                // any other exceptions?
+              }
+              if(err && !err.error && err.errors) {
+                err.error = err.errors[0];
+              }
+              if(local_fallback) {
+                if(skip_db) {
+                  find_reject(err);
+                } else {
+                  if(local_data) {
+                    return local_processed(local_data)
+                  } else {
+                    return find_reject(err);
+                  }
+                }
+              } else {
+                return find_reject(err);
+              }
+            });
+          } else {
+            if(skip_db) {
+              return find_reject(persistence.offline_reject());
+            } else {
+              if(local_data) {
+                return local_processed(local_data)
+              } else {
+                return find_reject(persistence.offline_reject());
+              }
+            }
+          }
+        };
+
+        if(start_with_local && !skip_db) {
+          if(local_data) {
+            return local_processed(local_data);
+          } else {
+            skip_db = true; // already checked db
+            return check_remote();
+          }
+        } else {
+          return check_remote();
         }
       };
 
-      if(start_with_local && !skip_db) {
-        return persistence.find(type.modelName, id, true).then(function(data) {
-          return local_processed(data);
-        }, function(err) {
-          skip_db = true; // already checked db
-          return check_remote();
-        });
-      } else {
-        return check_remote();
-      }
+      persistence.find(type.modelName, id, true).then(function(data) {
+        after_data(data);
+      }, function(err) {
+        after_data(null);
+      })
     });
   },
   createRecord: function(store, type, obj) {
