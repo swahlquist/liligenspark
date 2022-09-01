@@ -981,14 +981,21 @@ var speecher = EmberObject.extend({
   assert_audio: function(url) {
     speecher.sounds = speecher.sounds || {};
     var now = (new Date()).getTime();
+    var load_url = url;
+    if(capabilities.installed_app && load_url.match(/localhost/)) {
+      load_url = load_url + "?cr=" + Math.random();
+    }
     if(!speecher.sounds[url]) {
       var audio = new Audio();
-      audio.src = url;
+      audio.src = load_url;
       audio.load();
       speecher.sounds[url] = {
         audio: audio,
         updated: now
       };
+    } else if(load_url != audio.src) {
+      audio.src = load_url;
+      audio.load();
     }
     var ref = speecher.sounds[url];
     if(ref) {

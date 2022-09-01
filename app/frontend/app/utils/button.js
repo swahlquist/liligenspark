@@ -853,9 +853,31 @@ Button.button_styling = function(button, board, pos) {
   return res;
 };
 
-Button.broken_image = function(image) {
+Button.broken_image = function(image, skip_server_reattempt) {
   image.already_broken = image.already_broken || {};
   if(image.already_broken[image.src]) { return; }
+  if(capabilities.installed_app && image.src && image.src.match(/localhost/) && !skip_server_reattempt) {
+    // Apparently the local server just returns a blank response
+    // sometimes, even though there's data there
+    var tmp_image = new Image();
+    tmp_image.onload = function() {
+      tmp_image.done = true;
+      // Got an error cached
+      image.src = tmp_image.src;
+    };
+    tmp_image.onerror = function() {
+      if(tmp_image.done) { return; }
+      tmp_image.done = true;
+      Button.broken_image(image, true);
+    };
+    setTimeout(function() {
+      if(tmp_image.done) { return; }
+      tmp_image.done = true;
+      Button.broken_image(image, true);
+    }, 2000);
+    tmp_image.src = image.src + "?cr=" + Math.random();
+    return;
+  }
   image.already_broken[image.src] = true;
   var fallback = Ember.templateHelpers.path('images/square.svg');
   var error_listen = function(img, callback) {
