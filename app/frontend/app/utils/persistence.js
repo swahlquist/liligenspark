@@ -2930,10 +2930,9 @@ persistence.DSExtend = {
 
     var full_id = type.modelName + "_" + id;
     // force_reload should always hit the server, though it can return local data if there's a token error (i.e. session expired)
-    if(persistence.force_reload == full_id) { find = function() { return RSVP.reject(); } }
-      // find.then(null, function() { }); find = RSVP.reject(); }
+    if(persistence.force_reload == full_id) { find.then(null, function() { }); find = RSVP.reject(); }
     // private browsing mode gets really messed up when you try to query local db, so just don't.
-    else if(!stashes.get('enabled')) { find = function() { return RSVP.reject(); }; original_find = function() { return RSVP.reject(); }; }//find.then(null, function() { }); find = RSVP.reject(); original_find = RSVP.reject(); }
+    else if(!stashes.get('enabled')) { find.then(null, function() { }); find = RSVP.reject(); original_find = RSVP.reject(); }
 
     // this method will be called if a local result is found, or a force reload
     // is called but there wasn't a result available from the remote system
