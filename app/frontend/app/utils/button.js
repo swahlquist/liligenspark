@@ -873,7 +873,10 @@ Button.broken_image = function(image) {
   if(image.src && image.src != fallback && !image.src.match(/^data/)) {
     var bad_src = image.src;
     console.log("bad image url: " + bad_src);
-    image.setAttribute('rel', image.src);
+    if(!image.getAttribute('rel-url')) {
+      image.setAttribute('rel-url', image.src);
+    }
+    image.classList.add('broken_image');
     var original_error = function() { };
     if(image.getAttribute('data-fallback')) {
       var original_fallback = fallback;

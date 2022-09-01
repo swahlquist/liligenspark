@@ -1198,6 +1198,9 @@ var app_state = EmberObject.extend({
           scanning_auto_select: _this.get('currentUser.preferences.device.scanning_auto_select'),
           audio: _this.get('currentUser.preferences.device.scanning_prompt')
         });
+        runLater(function() {
+          app_state.retry_images();
+        }, 1000);
       } else {
         buttonTracker.scanning_enabled = false;
         // this was breaking the "find button" interface when you get to the second board
@@ -2034,6 +2037,33 @@ var app_state = EmberObject.extend({
   ),
   superProtectedSpeakMode: computed('speak_mode', 'embedded', function() {
     return this.get('speak_mode') && this.get('embedded');
+  }),
+  retry_images: observer('medium_refresh_stamp', function() {
+    document.querySelectorAll('img.broken_image').forEach(function(img) {
+      if(img.getAttribute('rel-url')) {
+        // try to recover images from being broken
+        var i = new Image();
+        i.onload = function() {
+          img.src = i.src;
+        };
+        i.onerror = function() {
+          if(i.already_errored) { return; }
+          i.already_errored = true;
+          if(i.src.match(/^file/) || i.src.match(/^localhost/)) {
+            for(var key in persistence.url_cache) {
+              if(persistence.url_cache[key] == i.src) {
+                i.src = key;
+              }
+            }
+          } else {
+            persistence.find_url(i.src).then(function(data_uri) {
+              i.src = data_uri;
+            })
+          }
+        };
+        i.src = img.getAttribute('rel');
+      }
+    })
   }),
   auto_exit_speak_mode: observer('speak_mode_started', 'medium_refresh_stamp', function() {
     var now = (new Date()).getTime();

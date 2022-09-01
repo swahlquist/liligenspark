@@ -193,6 +193,8 @@ import app_state from './app_state';
 //     });
 //     args.push(clean_options);
 
+    // Had to change this to a single promise because iOS 
+    // seems to fail silently on chained promises sometimes
     return new RSVP.Promise(function(ajax_resolve, ajax_reject) {
       var prefix = location.protocol + "//" + location.host;
       if(capabilities.installed_app && capabilities.api_host) {
