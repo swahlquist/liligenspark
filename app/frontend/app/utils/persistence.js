@@ -2096,6 +2096,9 @@ var persistence = EmberObject.extend({
         fresh_revisions = res;
         return res;
       }, function() {
+        if(!persistence.get('online')) {
+          return RSVP.reject({error: 'could not retrieve board revisions'})
+        }
         return RSVP.resolve({});
       });
     }
@@ -2423,7 +2426,7 @@ var persistence = EmberObject.extend({
               });
 
               if(safely_cached && content_promises > 0) {
-                console.log("EXPECTED NO BOARD CONTENT SAVES BUT THERE WERE " + promise.promise_name);
+                console.log("EXPECTED NO BOARD CONTENT SAVES BUT THERE WERE " + content_promises);
               }
               RSVP.all_wait(visited_board_promises).then(function() {
                 full_set_revisions[board.get('id')] = board.get('full_set_revision');
@@ -2924,15 +2927,17 @@ persistence.DSExtend = {
     var _super = this._super;
 
     // first, try looking up the record locally
-    var original_find = persistence.find(type.modelName, id, true)
-    original_find.then(function(data) { original_find.data = data; });
-    var find = original_find;
+    var start_with_local = true; 
+    var skip_db = false;
+    // persistence.find(type.modelName, id, true);
+    // original_find.then(function(data) { original_find.data = data; });
+    // var find = original_find;
 
     var full_id = type.modelName + "_" + id;
     // force_reload should always hit the server, though it can return local data if there's a token error (i.e. session expired)
-    if(persistence.force_reload == full_id) { find.then(null, function() { }); find = RSVP.reject(); }
+    if(persistence.force_reload == full_id) { start_with_local = false; } //find.then(null, function() { }); find = RSVP.reject(); }
     // private browsing mode gets really messed up when you try to query local db, so just don't.
-    else if(!stashes.get('enabled')) { find.then(null, function() { }); find = RSVP.reject(); original_find = RSVP.reject(); }
+    else if(!stashes.get('enabled')) { skip_db = true; } //find.then(null, function() { }); find = RSVP.reject(); original_find = RSVP.reject(); }
 
     // this method will be called if a local result is found, or a force reload
     // is called but there wasn't a result available from the remote system
@@ -2951,8 +2956,7 @@ persistence.DSExtend = {
       return RSVP.resolve(data);
     };
 
-
-    return find.then(local_processed, function() {
+    var check_remote = function() {
       // if nothing found locally and system is online (and it's not a local-only id), make a remote request
       if(persistence.get('online') && !id.match(/^tmp[_\/]/)) {
         persistence.remember_access('find', type.modelName, id);
@@ -3000,23 +3004,34 @@ persistence.DSExtend = {
             err.error = err.errors[0];
           }
           if(local_fallback) {
-            if(original_find.data) {
-              return local_processed(original_find.data);
+            if(skip_db) {
+              return RSVP.reject(err);
             } else {
-              return original_find.then(local_processed, function() { return RSVP.reject(err); });
+              return persistence.find(type.modelName, id, true).then(function(data) { return local_processed(data); }, function() { return RSVP.reject(err); });
             }
           } else {
             return RSVP.reject(err);
           }
         });
       } else {
-        if(original_find.data) {
-          return local_processed(original_find.data);
+        if(skip_db) {
+          return persistence.offline_reject();
         } else {
-          return original_find.then(local_processed, persistence.offline_reject);
+          return persistence.find(type.modelName, id, true).then(function(data) { return local_processed(data); }, function() { return persistence.offline_reject() });
         }
       }
-    });
+    };
+
+    if(start_with_local && !skip_db) {
+      return persistence.find(type.modelName, id, true).then(function(data) {
+        return local_processed(data);
+      }, function(err) {
+        skip_db = true; // already checked db
+        return check_remote();
+      });
+    } else {
+      return check_remote();
+    }
   },
   createRecord: function(store, type, obj) {
     var _this = this;
