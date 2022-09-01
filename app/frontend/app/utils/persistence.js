@@ -632,7 +632,7 @@ var persistence = EmberObject.extend({
             reject({error: "No JSON dataURI result"});
           }
         } else if(typeof(uri) == 'string') {
-          var res = _this.ajax(uri, {type: 'GET', dataType: 'json'});
+          var res = _this.ajax(uri + "?cr=" + Math.random(), {type: 'GET', dataType: 'json'});
           res.then(function(res) {
             resolve(res);
           }, function(err) {
@@ -892,6 +892,24 @@ var persistence = EmberObject.extend({
                 img2.onload = function() {
                   _this.url_cache[key] = img2.src;
                 }
+                img2.onerror = function() {
+                  setTimeout(function() {
+                    var img3 = new Image();
+                    img3.onload = function() {
+                      _this.url_cache[key] = img3.src;
+                      if(_this.url_uncache) {
+                        delete _this.url_uncache[key];
+                      }
+                    }
+                    // Sometimes the server returns a blank
+                    // response for a valid resource, so we
+                    // look it up again to make sure it's
+                    // not actually missing
+                    img3.src = capabilities.storage.fix_url(url, false) + "?cr=" + Math.random();
+                  }, 50);
+
+                }
+                // Some URLs are legacy-broken unless encoded
                 img2.src = encodeURI(url);
                 runLater(next, 10); 
               }

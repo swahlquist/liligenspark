@@ -338,6 +338,8 @@ export default Controller.extend({
           persistence.find_url(sup.avatar_url, 'image').then(function(url) {
             emberSet(sup, 'local_avatar_url', url);
           }, function(err) { });
+        } else if(sup.local_avatar_url && sup.local_avatar_url.match(/localhost/)) {
+          emberSet(sup, 'local_avatar_url', capabilities.storage.fix_url(sup.local_avatar_url));
         }
         sups.push(sup);
       });

@@ -875,7 +875,7 @@ Button.broken_image = function(image, skip_server_reattempt) {
       tmp_image.done = true;
       Button.broken_image(image, true);
     }, 2000);
-    tmp_image.src = image.src + "?cr=" + Math.random();
+    tmp_image.src = capabilities.storage.fix_url(image.src, false) + "?cr=" + Math.random();
     return;
   }
   image.already_broken[image.src] = true;
