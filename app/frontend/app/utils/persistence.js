@@ -2942,18 +2942,22 @@ persistence.DSExtend = {
     // this method will be called if a local result is found, or a force reload
     // is called but there wasn't a result available from the remote system
     var local_processed = function(data) {
-      data.meta = data.meta || {};
-      data.meta.local_result = true;
-      if(data[type.modelName] && data.meta && data.meta.local_result) {
-        data[type.modelName].local_result = true;
-      }
-      coughDropExtras.meta_push({
-        method: 'GET',
-        model: type.modelName,
-        id: id,
-        meta: data.meta
+      return RSVP.Promise(function(res, rej) {
+        data.meta = data.meta || {};
+        data.meta.local_result = true;
+        if(data[type.modelName] && data.meta && data.meta.local_result) {
+          data[type.modelName].local_result = true;
+        }
+        coughDropExtras.meta_push({
+          method: 'GET',
+          model: type.modelName,
+          id: id,
+          meta: data.meta
+        });
+        setTimeout(function() {
+          res(data);
+        }, 0)
       });
-      return RSVP.resolve(data);
     };
 
     var check_remote = function() {
