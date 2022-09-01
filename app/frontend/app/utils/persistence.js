@@ -2530,7 +2530,8 @@ var persistence = EmberObject.extend({
   sync_user: function(user, importantIds) {
     return new RSVP.Promise(function(resolve, reject) {
       importantIds.push('user_' + user.get('id'));
-      var find_user = persistence.time_promise(RSVP.resolve(user), "already reloaded user for sync", 5000).then(function(u) {
+      var lookup = persistence.time_promise(user.get('fresh') ? RSVP.resolve(user) : user.reload(), "getting latest user details", 5000);
+      var find_user = lookup.then(function(u) {
         if(persistence.get('sync_progress.root_user') == u.get('id')) {
           persistence.set('sync_progress.last_sync_stamp', u.get('sync_stamp'));
         }

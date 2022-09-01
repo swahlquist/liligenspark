@@ -609,7 +609,8 @@ var Button = EmberObject.extend({
     return new RSVP.Promise(function(resolve, reject) {
       var promises = [];
       if(_this.image_id && _this.image_url && persistence.url_cache && persistence.url_cache[_this.image_url] && (!persistence.url_uncache || !persistence.url_uncache[_this.image_url])) {
-        _this.set('local_image_url', persistence.url_cache[_this.image_url]);
+        var unvarianted_image_url = _this.image_url.replace(/\.variant-.+\.(png|svg)$/, '');
+        _this.set('local_image_url', persistence.url_cache[_this.image_url] || persistence.url_cache[unvarianted_image_url]);
         _this.set('original_image_url', _this.image_url);
         promises.push(RSVP.resolve());
       } else if(_this.image_id) {

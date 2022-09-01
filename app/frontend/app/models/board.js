@@ -1359,7 +1359,8 @@ CoughDrop.Board = DS.Model.extend({
       var res = "";
 
       var original_image_url = (_this.variant_image_urls(size.skin) || {})[button.image_id];
-      var local_image_url = persistence.url_cache[original_image_url || 'none'] || original_image_url || 'none';
+      var unvarianted_image_url = original_image_url.replace(/\.variant-.+\.(png|svg)$/, '');
+      var local_image_url = persistence.url_cache[original_image_url || 'none'] || persistence.url_cache[unvarianted_image_url || 'none'] || original_image_url || 'none';
       var hc = !!(_this.get('hc_image_ids') || {})[button.image_id];
       var local_sound_url = persistence.url_cache[(_this.get('sound_urls') || {})[button.sound_id] || 'none'] || (_this.get('sound_urls') || {})[button.sound_id] || 'none';
       var opts = Button.button_styling(button, _this, pos);

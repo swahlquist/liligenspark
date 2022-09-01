@@ -102,6 +102,21 @@ CoughDrop.Image = DS.Model.extend({
           img.src = data_uri;
         }
         return _this;
+      }, function(err) {
+        var unvarianted_image_url = _this.get('personalized_url').replace(/\.variant-.+\.(png|svg)$/, '');
+        if(unvarianted_image_url != _this.get('personalized_url')) {
+          return persistence.find_url(unvarianted_image_url, 'image').then(function(data_uri) {
+            _this.set('data_url', data_uri);
+            if(data_uri && data_uri.match(/^file/)) {
+              var img = new Image();
+              img.src = data_uri;
+            }
+            return _this;
+          });    
+        } else {
+          return RSVP.reject(err);
+        }
+        
       });
     } else if(this.get('url') && this.get('url').match(/^data/)) {
       return RSVP.resolve(this);

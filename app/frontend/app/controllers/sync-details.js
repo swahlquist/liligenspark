@@ -25,7 +25,8 @@ export default modal.ModalController.extend({
           } else if(!a.error && b.error) {
             return 1;
           } else {
-            return a.idx - b.idx;
+            return a.key.localeCompare(b.key);
+            // return a.idx - b.idx;
           }        
         }));
         sync.statuses.forEach(function(s) {

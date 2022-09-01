@@ -487,7 +487,7 @@ var app_state = EmberObject.extend({
     this.set('depth_actions', actions);
   },
   return_to_index: function() {
-    _this.controller.transitionToRoute('index');
+    this.controller.transitionToRoute('index');
   },
   jump_to_board: function(new_state, old_state) {
     buttonTracker.transitioning = true;
@@ -2044,6 +2044,7 @@ var app_state = EmberObject.extend({
         // try to recover images from being broken
         var i = new Image();
         i.onload = function() {
+          img.classList.remove('broken_image');
           img.src = i.src;
         };
         i.onerror = function() {
@@ -2060,10 +2061,18 @@ var app_state = EmberObject.extend({
           } else {
             persistence.find_url(i.src).then(function(data_uri) {
               i.src = data_uri;
-            })
+            }, function() {
+              // try falling back to variant-less
+              var alt = i.src.replace(/\.variant-.+\.(png|svg)$/, '');
+              if(alt != i.src) {
+                persistence.find_url(alt).then(function(data_uri) {
+                  i.src = data_uri;
+                });
+              }
+            });
           }
         };
-        i.src = img.getAttribute('rel');
+        i.src = img.getAttribute('rel-url');
       }
     })
   }),
