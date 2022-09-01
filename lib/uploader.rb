@@ -489,10 +489,12 @@ module Uploader
           }          
         }
       end
-      Worker.schedule_for(batch ? :whenever : :slow, ButtonImage, :perform_action, {
-        'method' => 'assert_cached_copies',
-        'arguments' => [list.map{|r| r['url'] }]
-      })
+      if list.length > 0
+        Worker.schedule_for(batch ? :whenever : :slow, ButtonImage, :perform_action, {
+          'method' => 'assert_cached_copies',
+          'arguments' => [list.map{|r| r['url'] }]
+        })
+      end
     elsif ['pixabay_vectors', 'pixabay_photos'].include?(library)
       type = library.match(/vector/) ? 'vector' : 'photo'
       key = ENV['PIXABAY_KEY']
