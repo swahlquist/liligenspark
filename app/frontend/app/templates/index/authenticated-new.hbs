@@ -345,7 +345,7 @@
             <div style='float: left; position: relative;'>
               {{#link-to 'user' supervisee.user_name}}
                 {{#if supervisee.local_avatar_url}}
-                  <img src={{supervisee.local_avatar_url}} onerror="button_broken_image(this);" class='fit_image' style="height: 80px; width: 80px; margin: 25px 10px 0 -10px;"/>
+                  <img src={{supervisee.local_avatar_url}} rel-url={{supervisee.avatar_url}} onerror="button_broken_image(this);" class='fit_image' style="height: 80px; width: 80px; margin: 25px 10px 0 -10px;"/>
                 {{else}}
                   <img src={{supervisee.avatar_url}} onerror="button_broken_image(this);" class='fit_image' style="height: 80px; width: 80px; margin: 25px 10px 0 -10px;"/>
                 {{/if}}
