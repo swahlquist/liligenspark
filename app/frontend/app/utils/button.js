@@ -931,6 +931,19 @@ Button.broken_image = function(image, skip_server_reattempt) {
           });
           image.src = data_uri;
         }
+
+        var now = (new Date()).getTime() / 1000;
+        if((now - persistence.get('last_sync_at')) < (1 * 24 * 60 * 60)) {
+          if(image.classList.contains('symbol') && !Button.image_fail_reported) {
+            Button.image_fail_reported = true;
+  
+            var error = {
+              type: 'image_failed',
+              url: bad_src,
+              sync_stale: now - persistence.get('last_sync_at')
+            };
+          }  
+        }
       }, function() {
         CoughDrop.track_error("failed to find local image fallback:\n" + image.getAttribute('rel'));
       });  

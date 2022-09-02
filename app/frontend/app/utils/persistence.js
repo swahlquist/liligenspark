@@ -2109,6 +2109,14 @@ var persistence = EmberObject.extend({
     if(persistence.get('sync_progress.full_set_revisions')) {
       full_set_revisions = persistence.get('sync_progress.full_set_revisions');
     }
+    var all_image_urls = persistence.get('sync_progress.all_image_urls') || {};
+    if(persistence.get('sync_progress')) {
+      persistence.set('sync_progress.all_image_urls', all_image_urls);
+    }
+    var all_sound_urls = persistence.get('sync_progress.all_sound_urls') || {};
+    if(persistence.get('sync_progress')) {
+      persistence.set('sync_progress.all_sound_urls', all_sound_urls);
+    }
 
     var get_remote_revisions = RSVP.resolve({});
     if(user) {
@@ -2124,32 +2132,36 @@ var persistence = EmberObject.extend({
     }
 
     // all_image_urls is a hash of base urls, not skinned urls
-    var all_image_urls = {};
     var get_images = get_remote_revisions.then(function() {
       return persistence.queue_sync_action('find_all_image_urls', sync_id, function() {
-        // This will only include images that were loaded
-        // via store.findRecord('image', image_id) not those
-        // fast-loaded from board.image_urls
-        return coughDropExtras.storage.find_all('image').then(function(list) {
-          list.forEach(function(img) {
-            if(img.data && img.data.id && img.data.raw && img.data.raw.url) {
-              all_image_urls[img.data.id] = img.data.raw.url;
-            }
+        if(Object.keys(all_image_urls).length == 0) {
+          return coughDropExtras.storage.find_all('image').then(function(list) {
+            list.forEach(function(img) {
+              if(img.data && img.data.id && img.data.raw && img.data.raw.url) {
+                all_image_urls[img.data.id] = img.data.raw.url;
+              }
+            });
           });
-        });
+        } else {
+          return RSVP.resolve();
+        }
       });
     });
 
     var all_sound_urls = {};
     var get_sounds = get_images.then(function() {
       return persistence.queue_sync_action('find_all_sound_urls', sync_id, function() {
-        return coughDropExtras.storage.find_all('sound').then(function(list) {
-          list.forEach(function(snd) {
-            if(snd.data && snd.data.id && snd.data.raw && snd.data.raw.url) {
-              all_sound_urls[snd.data.id] = snd.data.raw.url;
-            }
+        if(Object.keys(all_sound_urls).length == 0) {
+          return coughDropExtras.storage.find_all('sound').then(function(list) {
+            list.forEach(function(snd) {
+              if(snd.data && snd.data.id && snd.data.raw && snd.data.raw.url) {
+                all_sound_urls[snd.data.id] = snd.data.raw.url;
+              }
+            });
           });
-        });
+        } else {
+          return RSVP.resolve();
+        }
       });
     });
 
