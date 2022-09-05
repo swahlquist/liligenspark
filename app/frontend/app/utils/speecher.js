@@ -993,9 +993,9 @@ var speecher = EmberObject.extend({
         audio: audio,
         updated: now
       };
-    } else if(load_url != audio.src) {
-      audio.src = load_url;
-      audio.load();
+    } else if(speecher.sounds[url].audio && load_url != speecher.sounds[url].audio.src) {
+      speecher.sounds[url].audio.src = load_url;
+      speecher.sounds[url].audio.load();
     }
     var ref = speecher.sounds[url];
     if(ref) {
