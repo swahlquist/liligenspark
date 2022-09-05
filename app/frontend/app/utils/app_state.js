@@ -2063,7 +2063,7 @@ var app_state = EmberObject.extend({
               i.src = data_uri;
             }, function() {
               // try falling back to variant-less
-              var alt = i.src.replace(/\.variant-.+\.(png|svg)$/, '');
+              var alt = i.src && i.src.replace(/\.variant-.+\.(png|svg)$/, '');
               if(alt != i.src) {
                 persistence.find_url(alt).then(function(data_uri) {
                   i.src = data_uri;
