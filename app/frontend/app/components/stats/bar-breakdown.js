@@ -17,7 +17,6 @@ export default Component.extend({
   rows: computed('hash', 'order', function() {
     var list = [];
     var hash = this.get('hash');
-    console.log("HASH", hash);
     var max = 0;
     var statuses = {};
     if(this.get('order') == 'status') {
@@ -57,7 +56,6 @@ export default Component.extend({
       }
     }
     list.forEach(function(item) {
-      console.log(item.score, max);
       var color = colors[color_index % colors.length];
       item.style = htmlSafe('width: ' + Math.round(item.score / max * 100) + '%; border: 2px solid ' + color[0] + '; background: ' + color[1] + '; height: 40px; border-radius: 5px; color: #fff; font-size: 12px; padding-left: 3px;');
       color_index++;

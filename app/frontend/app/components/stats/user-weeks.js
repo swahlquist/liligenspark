@@ -143,8 +143,10 @@ export default Component.extend({
               var now = window.moment();
               var n_recent = 0;
               user.profile_history.forEach(function(p) {
+                var set_as_prof = false;
                 if(!prof) {
                   prof = p;
+                  set_as_prof = true;
                   var expected = window.moment(p.expected * 1000);
                   if(p.expected && expected < now) {
                     user.profile_class = htmlSafe('btn btn-default weeks_profile overdue');
@@ -155,7 +157,7 @@ export default Component.extend({
                   }
                 }
                 var added = window.moment(p.added * 1000);
-                if(added > now.add(-18, 'month')) {
+                if(added > now.add(-18, 'month') && !set_as_prof) {
                   n_recent++;
                   if(!user.first_profile_history) {
                     user.first_profile_history = true;
