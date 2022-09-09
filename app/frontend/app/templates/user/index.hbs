@@ -186,11 +186,13 @@
           {{#if model.managing_org}}
             {{#if model.permissions.edit}}
               {{#unless model.permissions.delete}}
-                <div class='col-sm-3 col-xs-6 big_button_holder'>
-                  <button class='btn big_button btn-default lesser_button' {{action 'external_device'}} style='height: 100px;'>
-                    {{t "Update Device"}}
-                  </button>
-                </div>
+                {{#if external_device_or_no_home}}
+                  <div class='col-sm-3 col-xs-6 big_button_holder'>
+                    <button class='btn big_button btn-default lesser_button' {{action 'external_device'}} style='height: 100px;'>
+                      {{t "Update Device"}}
+                    </button>
+                  </div>
+                {{/if}}
               {{/unless}}
             {{/if}}
           {{/if}}

@@ -430,6 +430,9 @@ export default Controller.extend({
       }
     }
   }),
+  external_device_or_no_home: computed('model.external_device', 'model.preference.home_board', function() {
+    return this.get('model.external_device') || this.get('model.preferences.home_board');
+  }),
   actions: {
     sync: function() {
       console.debug('syncing because manually triggered');
