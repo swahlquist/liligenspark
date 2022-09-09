@@ -168,7 +168,10 @@ class Api::UnitsController < ApplicationController
       end
     end
     word_cutoff = user_count < 5 ? user_count / 3 : 3
-    goal_word_counts = word_user_ids.to_a.map{|arr| [arr[0], arr[1].length] }.sort_by{|arr| [0 - arr[1], arr[0]]}.select{|arr| arr[1] > word_cutoff}[0, 30]
+    words = word_user_ids.to_a.map{|arr| [arr[0], arr[1].length] }.sort_by{|arr| [0 - arr[1], arr[0]]}
+    common_words = words.select{|arr| arr[1] > word_cutoff}
+    common_words = words if common_words.length < 3
+    goal_word_counts = common_words[0, 15]
 
     word_counts = {}
     total_words = 0
