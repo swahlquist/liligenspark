@@ -177,7 +177,7 @@ import app_state from './app_state';
     }
     if(!options.timeout) {
       if(original_options.attempt <= 1 && options.type == 'GET') {
-        options.timeout = 10000;
+        options.timeout = 8000;
       } else {
         options.timeout = 20000;
       }

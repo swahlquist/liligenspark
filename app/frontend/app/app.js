@@ -296,7 +296,8 @@ CoughDrop.user_statuses = [
   {id: 'bell'},
   {id: 'flash'},
   {id: 'calendar'},
-  {id: 'education'},
+  {id: 'apple'},
+  {id: 'blackboard'},
 ];
 CoughDrop.access_methods = {
   touch: 'hand-up',
