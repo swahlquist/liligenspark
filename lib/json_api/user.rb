@@ -161,6 +161,7 @@ module JsonApi::User
       if !args[:paginated]
         extra = user.user_extra
         if extra
+          json['lesson_ids'] = (extra.settings['lessons'] || []).map{|l| l['id'] }
           tags = (extra.settings['board_tags'] || {}).to_a.map(&:first).sort
           json['board_tags'] = tags if !tags.blank?
           json['focus_words'] = extra.active_focus_words
@@ -251,6 +252,17 @@ module JsonApi::User
     elsif args[:include_subscription]
       json['subscription'] = user.subscription_hash
     end
+
+    if json['permissions'] && json['permissions']['model'] && !args[:paginate]
+      all_lesson_ids = []
+      json['organizations'].each{|o| all_lesson_ids += o['lesson_ids'] || [] }
+      all_lesson_ids += json['lesson_ids'] || []
+      (json['supervised_units'] || []).each{|o| all_lesson_ids += ['lesson_ids'] || [] }
+      all_lesson_ids += json['supervisee_lesson_ids'] || []
+      lessons = ::Lesson.find_all_by_global_id(all_lesson_ids.uniq)
+      json['lessons'] = lessons.map{|l| JsonApi::Lesson.as_json(l) }
+    end
+    
     
     if args[:limited_identity]
       json['name'] = user.settings['name']

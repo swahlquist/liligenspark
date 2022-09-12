@@ -787,6 +787,7 @@ class Organization < ActiveRecord::Base
           'sponsored' => !!link['state']['sponsored']
         }
         e['profile'] = org.settings['communicator_profile'].slice('profile_id', 'template_id', 'frequency') if org.settings['communicator_profile']
+        e['lesson_ids'] = (org.settings['lessons'] || []).select{|l| l['types'].include?('user') }.map{|l| l['id'] }
         e['status'] = link['state']['status']
         e['status'] ||= (user.settings['preferences'] && user.settings['preferences']['home_board'] ? 'tree-deciduous' : 'unchecked')
         e['external_auth'] = true if org.settings['saml_metadata_url']
@@ -807,6 +808,7 @@ class Organization < ActiveRecord::Base
           'full_manager' => !!link['state']['full_manager'],
           'admin' => !!org.admin
         }
+        e['lesson_ids'] = (org.settings['lessons'] || []).select{|l| l['types'].include?('manager') }.map{|l| l['id'] }
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
@@ -825,6 +827,7 @@ class Organization < ActiveRecord::Base
           'added' => link['state']['added'],
           'pending' => !!link['state']['pending']
         }
+        e['lesson_ids'] = (org.settings['lessons'] || []).select{|l| l['types'].include?('supervisor') }.map{|l| l['id'] }
         e['profile'] = org.settings['supervisor_profile'].slice('profile_id', 'template_id', 'frequency') if org.settings['supervisor_profile']
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]

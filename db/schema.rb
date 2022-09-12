@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20220617203749) do
+ActiveRecord::Schema.define(version: 20220906174244) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -149,7 +149,7 @@ ActiveRecord::Schema.define(version: 20220617203749) do
     t.datetime "updated_at"
     t.string   "cluster_type", limit: 255
     t.string   "cluster_hash", limit: 255
-    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_cluster_hash", unique: true, using: :btree
+    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_hash", unique: true, using: :btree
   end
 
   create_table "contact_messages", force: :cascade do |t|
@@ -220,6 +220,17 @@ ActiveRecord::Schema.define(version: 20220617203749) do
     t.integer  "user_id"
     t.index ["created_at"], name: "index_job_stashes_on_created_at", using: :btree
     t.index ["user_id", "log_session_id"], name: "index_job_stashes_on_user_id_and_log_session_id", using: :btree
+  end
+
+  create_table "lessons", force: :cascade do |t|
+    t.text     "settings"
+    t.integer  "user_id"
+    t.integer  "organization_id"
+    t.integer  "organization_unit_id"
+    t.boolean  "public"
+    t.integer  "popularity"
+    t.datetime "created_at",           null: false
+    t.datetime "updated_at",           null: false
   end
 
   create_table "library_caches", force: :cascade do |t|
