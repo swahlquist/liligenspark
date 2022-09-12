@@ -15,7 +15,7 @@
         {{input type='text' class='form-control' id='board_name' value=board_name placeholder="Name for board copy"}}
       </span>
     </div>
-    {{#if model.known_supervisees}}
+    {{#if has_supervisees}}
       <p>{{t "For which user would you like to make a copy of this board? If you are planning to use this board for multiple communicators, you should probably copy it for yourself and manually add it for each communicator." key='which-user'}}</p>
       {{user-select select_id="currently_selected_id" buttons=true selection=currently_selected_id action=(action (mut currently_selected_id)) }}
     {{/if}}

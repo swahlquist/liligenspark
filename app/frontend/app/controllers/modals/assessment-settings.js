@@ -50,6 +50,11 @@ export default modal.ModalController.extend({
             _this.set('settings.for_user.user_name', u.user_name);
           }
         });
+        var u = CoughDrop.store.peekRecord('user', user_id);
+        u = u || (app_state.get('quick_users') || {})[user_id];
+        if(u) {
+          _this.set('settings.for_user.user_name', u.user_name);
+        }
       }
     }
   }),

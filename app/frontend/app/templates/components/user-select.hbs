@@ -13,6 +13,32 @@
         </button>
       </div>
     {{/each}}
+    {{#if has_extra_users}}
+      <div class="col-md-3 col-sm-4 col-xs-6">
+        <div class="btn-group dropup" style='width: 100%;'>
+          <button type="button" class={{if extra_user "btn btn-info dropdown-toggle" "btn btn-default dropdown-toggle"}} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="width: 100%; padding-top: 10px; padding-bottom: 10px; margin-bottom: 20px;">
+            {{#if extra_user}}
+              {{extra_user.user_name}}<br/>
+              <img src={{extra_user.avatar_url}} style='width: 60px; height: 60px; object-fit: contain;'/>
+            {{else}}
+              {{t "Other User" key='other_user'}} 
+            {{/if}}
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" style='max-height: 190px; overflow: auto;'>
+            {{#if extra_users.loading}}
+              <li><a>{{t "Loading Users..." key='loading_users'}}</a></li>
+            {{else if exta_users.errors}}
+              <li><a>{{t "Error Loading Users" key='error_loading_users'}}</a></li>
+            {{else}}
+              {{#each extra_users as |user|}}
+                <li class={{if user.edit_permission '' 'disabled'}}><a href='#' {{action 'set_extra_user' user}}><img src={{user.avatar_url}} style='width: 20px; height: 20px; object-fit: contain;'/> {{user.user_name}}</a></li>
+              {{/each}}
+            {{/if}}
+          </ul>
+        </div>
+      </div>
+    {{/if}}
   </div>
 {{else}}
   {{#if for_user_image}}
@@ -21,6 +47,8 @@
     </span>
   {{/if}}
   <span style="display: inline-block; width: calc(100% - 40px);">
-    {{bound-select select_class="form-control" select_id=select_id content=users selection=selection action=action }}
+    {{bound-select select_class="form-control" select_id=select_id content=users_with_extras selection=selection action=action }}
+    <!-- TODO: support extra_users in this dropdown, which entails
+    ensuring all user-select callees can handle non-sup users -->
   </span>
 {{/if}}

@@ -202,6 +202,8 @@ export default modal.ModalController.extend({
         this.set('model.user', app_state.get('currentUser'));
       } else {
         var u = (app_state.get('currentUser.known_supervisees') || []).find(function(u) { return u.id == for_user_id; });
+        u = u || CoughDrop.store.peekRecord('user', for_user_id);
+        u = u || (app_state.get('quick_users') || {})[for_user_id];
         this.set('model.user', u);
       }
       this.load_recordings(true);

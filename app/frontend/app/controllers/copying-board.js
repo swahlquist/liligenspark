@@ -39,7 +39,7 @@ export default modal.ModalController.extend({
     if(this.get('model.default_locale') && this.get('model.board.locale') != this.get('model.default_locale')) {
       _this.set('model.board.default_locale', this.get('model.default_locale'));
     }
-    editManager.copy_board(_this.get('model.board'), _this.get('model.action'), _this.get('model.user'), _this.get('model.make_public'), _this.get('model.new_owner'), _this.get('model.disconnect')).then(function(board) {
+    editManager.copy_board(_this.get('model.board'), _this.get('model.action'), _this.get('model.user'), _this.get('model.make_public'), _this.get('model.symbol_library'), _this.get('model.new_owner'), _this.get('model.disconnect')).then(function(board) {
       var next = RSVP.resolve();
       var new_board_ids = board_ids_to_include ? board.get('new_board_ids') : null;
       if(_this.get('model.shares') && _this.get('model.shares').length > 0) {

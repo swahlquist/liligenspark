@@ -4,7 +4,7 @@ import modal from '../utils/modal';
 import app_state from '../utils/app_state';
 import i18n from '../utils/i18n';
 import { observer } from '@ember/object';
-import { computed } from '@ember/object';
+import { computed, get as emberGet } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -40,6 +40,9 @@ export default modal.ModalController.extend({
     }
     this.set('model.known_supervisees', supervisees);
   },
+  has_supervisees: computed('model.known_supervisees', 'model.managed_orgs', function() {
+    return this.get('model.known_supervisees.length') > 0 || this.get('model.managed_orgs.length') > 0;
+  }),
   linked: computed('model.board.buttons', function() {
     return (this.get('model.board.linked_boards') || []).length > 0;
   }),

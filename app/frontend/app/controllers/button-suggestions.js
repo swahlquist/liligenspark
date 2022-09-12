@@ -9,6 +9,7 @@ import contentGrabbers from '../utils/content_grabbers';
 import i18n from '../utils/i18n';
 import Utils from '../utils/misc';
 import { observer } from '@ember/object';
+import CoughDrop from '../app';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -87,17 +88,18 @@ export default modal.ModalController.extend({
     if(app_state.get('currentUser.currently_premium')) {
       _this.set('premium_ideas', true);
     }
+    var user = null;
     if(app_state.get('currentUser.known_supervisees')) {
       app_state.get('currentUser.known_supervisees').forEach(function(sup) {
         if(sup.id == _this.get('for_user_id')) {
-          _this.set('user', sup);
+          user = sup;
         }
-        // TODO: A supervisor with any premium supervisees is good to use the extra, is that ok?
-//        if(sup.id == _this.get('for_user_id') || _this.get('for_user_id') == 'self' || _this.get('for_user_id') == app_state.get('currentUser.id')) {
-          if(sup.premium) { _this.set('premium_ideas', true); }
- //       }
+        if(sup.premium) { _this.set('premium_ideas', true); }
       });
     }
+    user = user || CoughDrop.store.peekRecord('user', _this.get('for_user_id'));
+    user = user || (app_state.get('quick_users') || {})[_this.get('for_user_id')];
+    _this.set('user', user);
   }),
   update_list: observer('list_type', 'user', function() {
     var type = this.get('list_type');

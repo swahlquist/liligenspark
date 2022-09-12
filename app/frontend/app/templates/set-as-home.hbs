@@ -18,9 +18,14 @@
       {{/unless}}
     {{else}}
       <p style='margin-top: 20px;'>
-        {{t "This board is owned by someone else. You will probably want to make a new copy to allow for personalization and edits, but you can also just use the existing board if you don't plan to make changes." key='copy_or_keep'}}
+        {{t "This board is not owned by the user. You will probably want to make a new copy to allow for personalization and edits, but you can also just use the existing board if you don't plan to make changes." key='copy_or_keep'}}
       </p>
     {{/if}}
+
+    <label for="symbol_library"><strong>{{t "Preferred Symbols" key='preferred_symbols'}}</strong></label><br/>
+    <p class='text-muted'>{{t "Select the symbol library to display for the user's new copy:" key='symbol_library_explainer'}}</p>
+    {{bound-select select_class="form-control" select_id="symbol_library" content=symbol_libraries selection=symbol_library action=(action (mut symbol_library)) }}
+
     {{#if model.board.levels}}
       {{#if app_state.feature_flags.board_levels}}
         <label for="board_level"><strong>{{t "Communication Level" key='communication_level'}}</strong></label><br/>
@@ -40,7 +45,7 @@
           {{t "Make My Own Copy" key='make_my_own_copy'}}
         {{/if}}
       </button>
-      <button {{action 'set_as_home'}} disabled={{pending}} class='btn btn-default'>{{t "Use the Existing Board" key='dont_copy_just_set_as_home_board'}}</button>
+      <button {{action 'set_as_home'}} disabled={{pending_or_copy_only}} class='btn btn-default'>{{t "Use the Existing Board" key='dont_copy_just_set_as_home_board'}}</button>
     {{/if}}
     <button {{action "close"}} class="btn btn-default">{{t "Cancel" key='cancel'}}</button>
     {{#if status.errored}}

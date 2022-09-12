@@ -193,9 +193,37 @@ module JsonApi::User
           {
             'id' => ou.global_id,
             'organization_id' => ou.related_global_id(ou.organization_id),
-            'name' => ou.settings['name']
+            'name' => ou.settings['name'],
+            'lesson_ids' => (ou.settings['lessons'] || []).map{|l| l['id']}
           }
         }
+        if json['supervised_units'].empty?
+          # If a parent is supervising some communicators,
+          # then they should be assigned org/unit-level lessons as well
+          json['supervisee_lesson_ids'] = []
+          user_ids = supervisees[0, 10].map(&:global_id)
+          unit_links = UserLink.where(user_id: User.local_ids(user_ids)).select{|l| l.record_code.match(/OrganizationUnit/)}
+          user_links = {}
+          sup_links = {}
+          ids = []
+          unit_links.each do |link|
+            id = link.record_code.split(/:/)[1]
+            ids << id
+            if link.data['type'] == 'org_unit_communicator'
+              user_links[id] = true 
+            elsif link.data['type'] == 'org_unit_supervisor'
+              sup_links[id] = true
+            end
+          end
+          OrganizationUnit.find_all_by_global_id(ids.uniq).each do |unit|
+            if user_links[unit.global_id] && unit.settings['lesson'] && unit.settings['lesson']['types'].include?('user')
+              json['supervisee_lesson_ids'] << unit.settings['lesson']['id']
+            elsif sup_links[unit.global_id] && unit.settings['lesson'] && unit.settings['lesson']['types'].include?('supervisor')
+              json['supervisee_lesson_ids'] << unit.settings['lesson']['id']
+            end
+          end
+          json['supervisee_lesson_ids'] += (sup.organization_hash['lesson_ids'] || [])
+        end
       elsif user.supporter_role?
         json['supervisees'] = []
       end
