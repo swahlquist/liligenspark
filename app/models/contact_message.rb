@@ -68,9 +68,39 @@ class ContactMessage < ActiveRecord::Base
     body += "locale: #{self.settings['locale']}" + '<br/>' if self.settings['locale']
     body += (self.settings['ip_address'] ? "ip address: #{self.settings['ip_address']}" : 'no IP address found') + '<br/>'
     body += (self.settings['version'] ? "app version: #{self.settings['version']}" : 'no app version found') + '<br/>'
-    body += (self.settings['user_agent'] ? "browser: #{self.settings['user_agent']}" : 'no user agent found') + "</span>"
+    body += (self.settings['user_agent'] ? "browser: #{self.settings['user_agent']}" : 'no user agent found') + "</span><br/>"
     basic_auth = "#{ENV['ZENDESK_USER']}/token:#{ENV['ZENDESK_TOKEN']}"
     endpoint = "https://#{ENV['ZENDESK_DOMAIN']}/api/v2/tickets.json"
+
+    # Check for org-level setting to add user account 
+    # to all tickets for that org (and parent orgs)
+    users = []
+    users = [User.find_by_global_id(self.settings['user_id']), User.find_by_global_id(self.settings['supervisor_id'])].compact if self.settings['user_id']
+    users = User.find_by_email(self.settings['email']) if users.empty?
+    org_targets = {}
+    org_list = []
+    users.each do |user|
+      Organization.attached_orgs(user, true).each do |org|
+        if org['org']
+          str = org['org'].settings['name']
+          str += " (premium)" if org['premium']
+        end
+        if !org['pending'] && org['org'] && org['premium']
+          if org['org'].settings['support_target']
+            org_targets[org['org'].settings['support_target']['email']] ||= org['org'].settings['support_target']['name']
+          end
+          org['org'].upstream_orgs.each do |o|
+            if o.settings['premium'] && o.settings['support_target']
+              org_targets[o.settings['support_target']['email']] ||= o.settings['support_target']['name']
+            end
+          end
+        end
+      end
+    end
+    if org_list.length > 0
+      body += org_list.join(', ')
+    end
+
     json = {
       'ticket' => {
         'requester' => {
@@ -84,26 +114,6 @@ class ContactMessage < ActiveRecord::Base
       }
     }
 
-    # Check for org-level setting to add user account 
-    # to all tickets for that org (and parent orgs)
-    users = []
-    users = [User.find_by_global_id(self.settings['user_id']), User.find_by_global_id(self.settings['supervisor_id'])].compact if self.settings['user_id']
-    users = User.find_by_email(self.settings['email']) if users.empty?
-    org_targets = {}
-    users.each do |user|
-      Organization.attached_orgs(user, true).each do |org|
-        if !org['pending'] && org['org'] && org['premium']
-          if org['org'].settings['support_target']
-            org_targets[org['org'].settings['support_target']['email']] ||= org['org'].settings['support_target']['name']
-          end
-          org['org'].upstream_orgs.each do |o|
-            if o.settings['premium'] && o.settings['support_target']
-              org_targets[o.settings['support_target']['email']] ||= o.settings['support_target']['name']
-            end
-          end
-        end
-      end
-    end
     org_targets.each do |email, name|
       json['ticket']['email_ccs'] ||= []
       json['ticket']['email_ccs'] << {'user_email' => email, 'user_name' => name, 'action' => 'put'}
