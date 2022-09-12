@@ -259,6 +259,10 @@ module JsonApi::User
       json['unread_alerts'] = user.settings['unread_alerts'] || 0
       json['email'] = user.settings['email'] if args[:include_email]
       json['remote_modeling'] = !!user.settings['preferences']['remote_modeling']
+      if user.settings['external_device']
+        json['external_device'] = user.settings['external_device']
+      end
+      json['preferred_symbols'] = user.settings['preferences']['preferred_symbols']
       if args[:supervisor]
         json['edit_permission'] = args[:supervisor].edit_permission_for?(user)
         json['modeling_only'] = args[:supervisor].modeling_only_for?(user)

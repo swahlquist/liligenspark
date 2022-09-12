@@ -17,6 +17,7 @@ export default modal.ModalController.extend({
     this.set('in_board_set', null);
     this.set('in_sidebar_set', null);
     this.set('disconnect', null);
+    this.set('symbol_library', 'original');
     this.set('new_owner', null);
     this.set('show_more_options', false);
     this.set('default_locale', app_state.get('label_locale') || this.get('model.board.locale'));
@@ -55,6 +56,24 @@ export default modal.ModalController.extend({
     res.push({name: i18n.t('unspecified', "Unspecified"), id: ''});
     return res;
   }),
+  symbol_libraries: computed('current_user', function() {
+    var u = this.get('current_user');
+    var list = [];
+    list.push({name: i18n.t('original_symbols', "Use the board's original symbols"), id: 'original'});
+    list.push({name: i18n.t('use_opensymbols', "Opensymbols.org free symbol libraries"), id: 'opensymbols'});
+
+    if(u && (emberGet(u, 'extras_enabled') || emberGet(u, 'subscription.extras_enabled'))) {
+      list.push({name: i18n.t('use_lessonpix', "LessonPix symbol library"), id: 'lessonpix'});
+      list.push({name: i18n.t('use_symbolstix', "SymbolStix Symbols"), id: 'symbolstix'});
+      list.push({name: i18n.t('use_pcs', "PCS Symbols by Tobii Dynavox"), id: 'pcs'});  
+    }
+
+    list.push({name: i18n.t('use_twemoji', "Emoji icons (authored by Twitter)"), id: 'twemoji'});
+    list.push({name: i18n.t('use_noun-project', "The Noun Project black outlines"), id: 'noun-project'});
+    list.push({name: i18n.t('use_arasaac', "ARASAAC free symbols"), id: 'arasaac'});
+    list.push({name: i18n.t('use_tawasol', "Tawasol symbol library"), id: 'tawasol'});
+    return list;
+  }),
   user_board: observer('currently_selected_id', 'model.known_supervisees', function() {
     var for_user_id = this.get('currently_selected_id');
     this.set('self_currently_selected', for_user_id == 'self');
@@ -85,6 +104,10 @@ export default modal.ModalController.extend({
       find_user.then(function(user) {
         var in_board_set = (user.get('stats.board_set_ids') || []).indexOf(_this.get('model.board.id')) >= 0;
         _this.set('current_user', user);
+        _this.set('symbol_library', user.get('preferences.preferred_symbols'));
+        setTimeout(function() {
+          _this.set('symbol_library', user.get('preferences.preferred_symbols'));
+        }, 100);
         _this.set('loading', false);
         _this.set('in_board_set', !!in_board_set);
         var sidebar_keys = (user.get('preferences.sidebar_boards') || []).map(function(b) { return b.key; });
@@ -154,12 +177,14 @@ export default modal.ModalController.extend({
       if(this.get('board_prefix') && name.indexOf(this.get('board_prefix')) != 0) {
         name = this.get('board_prefix') + " " + name;
       }
+      var lib =  this.get('symbol_library') || 'original';
       modal.close({
         action: decision, 
         user: this.get('current_user'), 
         shares: shares, 
         board_name: name, 
         board_prefix: this.get('board_prefix'), 
+        symbol_library: lib,
         disconnect: this.get('disconnect'),
         new_owner: this.get('new_owner'),
         make_public: this.get('public'), 

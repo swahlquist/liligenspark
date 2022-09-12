@@ -1661,6 +1661,7 @@ class Board < ActiveRecord::Base
     copy_id = copy_id.split(/:/)[1] if copy_id
     return {done: true, swapped: false, reason: 'mismatched user'} if user_local_id != self.user_id
     return {done: true, swapped: false, reason: 'no library specified'} if !library || library.blank?
+    return {done: true, swapped: true, reason: 'kept same'} if library == 'original' || library == 'default'
     return {done: true, swapped: false, reason: 'author required'} unless author
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'pcs' && (!author || !author.subscription_hash['extras_enabled'])
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'symbolstix' && (!author || !author.subscription_hash['extras_enabled'])

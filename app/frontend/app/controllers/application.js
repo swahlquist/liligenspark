@@ -82,6 +82,7 @@ export default Controller.extend({
       action: decision.action, 
       user: decision.user, 
       shares: decision.shares, 
+      symbol_library: decision.symbol_library,
       make_public: decision.make_public, 
       default_locale: decision.default_locale, 
       translate_locale: decision.translate_locale,

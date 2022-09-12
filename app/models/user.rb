@@ -1558,7 +1558,7 @@ class User < ActiveRecord::Base
       'affected_board_ids' => ids.uniq,
       'new_board_ids' => updated_ids.uniq
     }
-    if swap_library
+    if swap_library && swap_library != 'default' && swap_library != 'original'
       ids = res['new_board_ids']
       ids.instance_variable_set('@skip_keyboard', true)
       starting_new_board.swap_images(swap_library, self, ids)
