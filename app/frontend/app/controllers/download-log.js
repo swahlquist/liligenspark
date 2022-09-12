@@ -24,8 +24,8 @@ export default modal.ModalController.extend({
             _this.set('status', {errored: true});
           } else if(event.status == 'finished') {
             _this.set('status', {
-              url: event.result,
-              file_name: event.result.split(/\//).pop()
+              url: event.result.url,
+              file_name: event.result.url.split(/\//).pop()
             });
           }
         });
