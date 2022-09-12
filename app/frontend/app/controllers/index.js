@@ -490,7 +490,9 @@ export default Controller.extend({
     },
     record_note: function(user) {
       user = user || app_state.get('currentUser');
-      emberSet(user, 'avatar_url_with_fallback', emberGet(user, 'avatar_url'));
+      if(!emberGet(user, 'avatar_url_with_fallback')) {
+        emberSet(user, 'avatar_url_with_fallback', emberGet(user, 'avatar_url'));
+      }
       app_state.check_for_needing_purchase().then(function() {
         modal.open('record-note', {note_type: 'text', user: user}).then(function() {
           runLater(function() {

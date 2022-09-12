@@ -525,6 +525,8 @@ CoughDrop.User = DS.Model.extend({
       });
     } else if(url && url.match(/^data/)) {
       return RSVP.resolve(this);
+    } else if(url && (url.match(/^file/) || url.match(/localhost/))) {
+      return RSVP.resolve(capabilities.storage.fix_url(url, true));
     }
     return RSVP.reject('no user data url');
   },
@@ -596,9 +598,9 @@ CoughDrop.User = DS.Model.extend({
             emberSet(sup, 'original_avatar_url', sup.avatar_url);
             emberSet(sup, 'avatar_url', uri);
           }, function() { });
-        } else if(sup.avatar_url) {
+        } else if(sup.avatar_url && (sup.avatar_url.match(/^file:/) || sup.avatar_url.match(/localhost/))) {
           emberSet(sup, 'avatar_url', capabilities.storage.fix_url(sup.avatar_url, true));
-        }
+        } 
       });
     };
     if(this.get('load_all_connections') && (!this.get('all_connections.loaded') || this.get('all_connections.stamp') != this.get('sync_stamp'))) {

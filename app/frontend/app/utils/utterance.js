@@ -218,7 +218,16 @@ var utterance = EmberObject.extend({
           visualButton.set('original_image', button.image);
           persistence.find_url(button.image, 'image').then(function(data_uri) {
             visualButton.set('image', data_uri);
-          }, function() { });
+          }, function() { 
+            if(button.image.match(/\.variant/)) {
+              var unskin = button.image.replace(/\.variant-.+\.(png|svg)$/, '');
+              persistence.find_url(unskin, 'image').then(function(data_uri) {
+                visualButton.set('image', data_uri);
+              }, function() {
+
+              });
+            }
+          });
         }
         if(button.sound && button.sound.match(/^http/)) {
           visualButton.set('original_sound', button.sound);
