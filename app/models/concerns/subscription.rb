@@ -109,28 +109,22 @@ module Subscription
         end
       end
       self.settings['subscription']['added_to_organization'] = Time.now.iso8601
+      self.settings['subscription']['added_org_id'] = new_org.global_id if new_org
       self.settings['subscription']['eval_account'] = true if eval_account
       self.settings['preferences'] ||= {}
       self.settings['preferences']['role'] = 'communicator'
-      
-      # Organizations can define a default home board for their users
-      if new_org && new_org.settings['default_home_board'] && !self.settings['preferences']['home_board']
-        home_board = Board.find_by_path(new_org.settings['default_home_board']['id'])
-        self.assert_current_record!
-        self.process_home_board({'id' => home_board.global_id}, {'updater' => home_board.user, 'async' => true}) if home_board
-      end
-      
-      self.settings['pending'] = false
+
       if new_org
         link = UserLink.generate(self, new_org, 'org_user')
         if link.id && !link.data['state']['pending']
           pending = false
         end
-        self.log_subscription_event(:log => 'org added user', :args => {org_id: new_org.global_id, pending: pending, sponsored: sponsored, eval_account: eval_account})
         link.data['state']['added'] ||= Time.now.iso8601
         link.data['state']['pending'] = !!pending unless pending == nil
         link.data['state']['sponsored'] = !!sponsored unless sponsored == nil
         link.data['state']['eval'] = !!eval_account unless eval_account == nil
+        link.save
+        self.log_subscription_event(:log => 'org added user', :args => {org_id: new_org.global_id, pending: pending, sponsored: sponsored, eval_account: eval_account, link_id: link.id})
         new_org.schedule(:org_assertions, self.global_id, 'user')
 
         if sponsored && !pending
@@ -138,12 +132,25 @@ module Subscription
           self.schedule(:process_subscription_token, 'token', 'unsubscribe')
         end
       end
+
+      # Organizations can define a default home board for their users
+      if new_org && new_org.settings['default_home_board'] && !self.settings['preferences']['home_board'] && !self.settings['external_device']
+        home_board = Board.find_by_path(new_org.settings['default_home_board']['id'])
+
+        self.assert_current_record!
+        # TODO: make a copy of the home board (possibly multiple options) for the user
+        # TODO: also set the user's preferred library based on the org, 
+        # and swap images as well
+        self.process_home_board({'id' => home_board.global_id}, {'updater' => home_board.user, 'async' => true}) if home_board
+      end
+      
+      self.settings['pending'] = false
+
       if !prior_org || prior_org != new_org
         UserMailer.schedule_delivery(:organization_assigned, self.global_id, new_org && new_org.global_id)
       end
       self.assert_current_record!
       res = self.save_with_sync('org_sub')
-      link.save if link
       return res
     else
       was_sponsored = self.org_sponsored?
@@ -160,6 +167,7 @@ module Subscription
       end
       self.using(:master).reload
       self.settings['subscription'] ||= {}
+      self.settings['subscription']['org_detach'] = org_id
       self.clear_existing_subscription(:allow_grace_period => true, removed_org_links: removed_links) if was_sponsored && !self.org_sponsored?
       self.save_with_sync('org_sub_cancel')
       # self.schedule(:update_subscription, {'resume' => true})
@@ -167,7 +175,8 @@ module Subscription
     self.schedule(:audit_protected_sources)
   rescue ActiveRecord::StaleObjectError
     puts "stale :-/"
-    self.schedule(:update_subscription_organization, org_id, pending, sponsored)
+    self.log_subscription_event(:log => 'org stale update', :args => {org_id: org_id, pending: pending, sponsored: sponsored, eval_account: eval_account})
+    self.schedule(:update_subscription_organization, org_id, pending, sponsored, eval_account)
   end
   
   def transfer_subscription_to(user, skip_remote_update=false)

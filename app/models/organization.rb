@@ -505,6 +505,7 @@ class Organization < ActiveRecord::Base
     elsif user_type == 'manager'
       key = 'manager_for'
     end
+    user.log_subscription_event(:log => 'org detached', :args => {type: user_type})
     if key && user.settings[key] && user.settings[key][self.global_id]
       user.settings[key].delete(self.global_id)
       user.save
