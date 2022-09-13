@@ -162,9 +162,9 @@ module Stats
     end
     res = {}
     # number of people using in their board set
-    res[:uses] = board.settings['uses']
+    res[:uses] = board.settings['uses'] + (board.settings['forks'] || 0)
     # number of people using as their home board
-    res[:home_uses] = board.settings['home_uses']
+    res[:home_uses] = board.settings['home_uses'] + (board.settings['home_forks'] || 0)
     # number of stars
     res[:stars] = board.stars
     # number of forks

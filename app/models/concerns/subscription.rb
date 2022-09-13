@@ -123,7 +123,7 @@ module Subscription
         link.data['state']['pending'] = !!pending unless pending == nil
         link.data['state']['sponsored'] = !!sponsored unless sponsored == nil
         link.data['state']['eval'] = !!eval_account unless eval_account == nil
-        link.save
+        @link_to_save = link
         self.log_subscription_event(:log => 'org added user', :args => {org_id: new_org.global_id, pending: pending, sponsored: sponsored, eval_account: eval_account, link_id: link.id})
         new_org.schedule(:org_assertions, self.global_id, 'user')
 
@@ -150,6 +150,8 @@ module Subscription
         UserMailer.schedule_delivery(:organization_assigned, self.global_id, new_org && new_org.global_id)
       end
       self.assert_current_record!
+      link.save if link
+      @link_to_save = nil
       res = self.save_with_sync('org_sub')
       return res
     else
@@ -175,6 +177,11 @@ module Subscription
     self.schedule(:audit_protected_sources)
   rescue ActiveRecord::StaleObjectError
     puts "stale :-/"
+    if @link_to_save
+      # Ensure user gets linked to org, even if other settings have to be re-processed
+      @link_to_save.save
+      @link_to_save = nil
+    end
     self.log_subscription_event(:log => 'org stale update', :args => {org_id: org_id, pending: pending, sponsored: sponsored, eval_account: eval_account})
     self.schedule(:update_subscription_organization, org_id, pending, sponsored, eval_account)
   end
@@ -953,7 +960,7 @@ module Subscription
         json['expires'] = self.expires_at && self.expires_at.iso8601
       end
       json['grace_period'] = true if self.grace_period?
-      json['grace_trial_period'] = true if json['grace_period'] && [:trialing_communicator,:trialing_supporter].include?(self.billing_state)
+      json['grace_trial_period'] = true if json['grace_period'] && [:trialing_communicator,:trialing_supporter].include?(billing_state)
       json['modeling_only'] = true if self.modeling_only?
       if billing_state == :subscribed_communicator
         # active subcsription for a full communicator
@@ -979,7 +986,7 @@ module Subscription
     json['free_premium'] = true if self.legacy_free_premium?
     json['extras_enabled'] = true if self.settings['subscription']['extras'] && self.settings['subscription']['extras']['enabled']
     # Allow premium symbols during the free trial, with a note about temporary status
-    json['extras_enabled'] = true if json['grace_trial_period'] && !self.settings['extras_disabled']
+    json['extras_enabled'] = true if (json['grace_trial_period'] || billing_state == :trialing_supporter) && !self.settings['extras_disabled']
     json
   end
   

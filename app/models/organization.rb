@@ -750,6 +750,17 @@ class Organization < ActiveRecord::Base
     orgs = Organization.where(id: org_ids).where('external_auth_key IS NOT NULL').order('id ASC')
     orgs.detect{|o| o.settings['saml_metadata_url'] && (o.settings['saml_enforced'] || allow_unenforced) }
   end
+
+  def home_board_keys
+    res = []
+    if self.settings['default_home_boards']
+      res = self.settings['default_home_boards']
+    elsif self.settings['default_home_board']
+      res = [self.settings['default_home_board']]
+    else
+    end
+    res
+  end
   
   def self.attached_orgs(user, include_org=false)
     return [] unless user
@@ -809,6 +820,7 @@ class Organization < ActiveRecord::Base
           'admin' => !!org.admin
         }
         e['lesson_ids'] = (org.settings['lessons'] || []).select{|l| l['types'].include?('manager') }.map{|l| l['id'] }
+        e['home_board_keys'] = org.home_board_keys
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
@@ -827,6 +839,7 @@ class Organization < ActiveRecord::Base
           'added' => link['state']['added'],
           'pending' => !!link['state']['pending']
         }
+        e['home_board_keys'] = org.home_board_keys
         e['lesson_ids'] = (org.settings['lessons'] || []).select{|l| l['types'].include?('supervisor') }.map{|l| l['id'] }
         e['profile'] = org.settings['supervisor_profile'].slice('profile_id', 'template_id', 'frequency') if org.settings['supervisor_profile']
         e['external_auth'] = true if org.settings['saml_metadata_url']
@@ -1214,29 +1227,32 @@ class Organization < ActiveRecord::Base
         self.schedule(:assert_profile, prof)
       end
     end
-    
-    if params[:home_board_key]
-      key = params[:home_board_key]
-      if key.match(/^https?:\/\/[^\/]+\//)
-        key = key.sub(/^https?:\/\/[^\/]+\//, '')
-      end
-    
-      board = Board.find_by_path(key)
-      if board && board.public
-        self.settings['default_home_board'] = {
-          'id' => board.global_id,
-          'key' => board.key
-        }
-      elsif board
-        management_ids = self.managers.map(&:global_id) + self.supervisors.map(&:global_id)
-        # if any of the managers or supervisors own the board, then it's ok
-        if management_ids.include?(board.user.global_id)
-          self.settings['default_home_board'] = {
+    # TODO: Orgs can have a default symbol library?
+    if params[:home_board_key] || params[:home_board_keys]
+      keys = params[:home_board_keys] || [params[:home_board_key]]
+      self.settings.delete('default_home_board')
+      self.settings['default_home_boards'] = []
+      keys.each do |key|
+        if key.match(/^https?:\/\/[^\/]+\//)
+          key = key.sub(/^https?:\/\/[^\/]+\//, '')
+        end
+        board = Board.find_by_path(key)
+        if board && board.public
+          self.settings['default_home_boards'] << {
             'id' => board.global_id,
             'key' => board.key
           }
+        elsif board
+          management_ids = self.managers.map(&:global_id) + self.supervisors.map(&:global_id)
+          # if any of the managers or supervisors own the board, then it's ok
+          if management_ids.include?(board.user.global_id)
+            self.settings['default_home_boards'] << {
+              'id' => board.global_id,
+              'key' => board.key
+            }
+          end
         end
-      end
+      end    
     end
     
     if params[:management_action]

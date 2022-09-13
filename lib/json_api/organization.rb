@@ -87,7 +87,7 @@ module JsonApi::Organization
     end
     if json['permissions'] && json['permissions']['view']
       json['default_home_board'] = org.settings['default_home_board']
-      json['home_board_key'] = org.settings['default_home_board'] && org.settings['default_home_board']['key']
+      json['home_board_keys'] = org.home_board_keys
     end
     if json['permissions'] && json['permissions']['manage_subscription']
       json['purchase_history'] = org.purchase_history

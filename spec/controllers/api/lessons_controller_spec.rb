@@ -1,5 +1,4 @@
-require 'rails_helper'
+require 'spec_helper'
 
-RSpec.describe Api::LessonsController, type: :controller do
-
+describe Api::LessonsController, :type => :controller do
 end

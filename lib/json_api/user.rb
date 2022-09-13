@@ -223,7 +223,9 @@ module JsonApi::User
               json['supervisee_lesson_ids'] << unit.settings['lesson']['id']
             end
           end
-          json['supervisee_lesson_ids'] += (sup.organization_hash['lesson_ids'] || [])
+          supervisees.each do |sup|
+            json['supervisee_lesson_ids'] += (sup.organization_hash['lesson_ids'] || [])
+          end
         end
       elsif user.supporter_role?
         json['supervisees'] = []
