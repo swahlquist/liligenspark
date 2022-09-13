@@ -138,16 +138,18 @@ class Board < ActiveRecord::Base
   end
 
   def self.refresh_stats(board_ids)
-    board_ids.each_slice(25) do |ids|
-      Board.find_all_by_global_id(ids).each do |board|
-        board.generate_stats
-        board.save_without_post_processing
+    Board.find_batches_by_global_id(board_ids, batch_size: 25) do |board|
+      board.generate_stats
+      board.save_without_post_processing
+      upper = board.parent_board
+      if upper && upper != board
+        upper.generate_stats
+        upper.save_without_post_processing
       end
     end
   end
   
   def generate_stats
-    # TODO: only recount these when necessary
     self.settings['stars'] = (self.settings['starred_user_ids'] || []).length
     self.settings['locale_stars'] = {}
 
@@ -174,10 +176,12 @@ class Board < ActiveRecord::Base
     self.settings['forks'] = child_board_ids.length
     child_conns = UserBoardConnection.where(:board_id => child_board_ids)
     self.settings['locale_home_forks'] = {}
+    self.settings['non_author_uses'] = 0
     if child_conns.count > 20
       self.settings['home_forks'] = child_conns.where(home: true).count
       self.settings['recent_forks'] = child_conns.where(['updated_at > ?', 30.days.ago]).count
       self.settings['recent_home_forks']  = child_conns.where(home: true).where(['updated_at > ?', 30.days.ago]).count
+      self.settings['non_author_uses'] += conns.where(['user_id != ?', self.user_id]).count
       child_conns.where('locale IS NULL').each do |ubc|
         if !ubc.locale && ubc.board && ubc.board.settings
           UserBoardConnection.where(id: ubc.id).update_all(locale: ubc.board.settings['locale'])
@@ -216,7 +220,7 @@ class Board < ActiveRecord::Base
       self.settings['recent_home_uses'] = conns.where(home: true).where(['updated_at > ?', 30.days.ago]).count
       self.settings['uses'] = conns.count
       self.settings['recent_uses'] = conns.where(['updated_at > ?', 30.days.ago]).count
-      self.settings['non_author_uses'] = conns.where(['user_id != ?', self.user_id]).count
+      self.settings['non_author_uses'] += conns.where(['user_id != ?', self.user_id]).count
       conns.group('locale').count('home').each do |lang, count|
         loc = (lang || 'en').split(/_|-/)[0]
         self.settings['locale_home_uses'][lang] = (self.settings['locale_home_uses'][lang] || 0) + count
@@ -227,7 +231,6 @@ class Board < ActiveRecord::Base
       self.settings['recent_home_uses'] = 0
       self.settings['uses'] = 0
       self.settings['recent_uses'] = 0
-      self.settings['non_author_uses'] = 0
       conns.each do |ubc|
         if !ubc.locale && ubc.board && ubc.board.settings
           UserBoardConnection.where(id: ubc.id).update_all(locale: ubc.board.settings['locale'])
@@ -249,14 +252,24 @@ class Board < ActiveRecord::Base
       self.home_popularity = -1
     else
       # TODO: a real algorithm perchance?
-      self.popularity = (self.settings['stars'] * 10) + self.settings['uses'] + (self.settings['forks'] * 2) + (self.settings['recent_uses'] * 3) + (self.settings['recent_forks'] * 3)
-      self.home_popularity = (self.any_upstream ? 0 : 10) + (self.any_upstream ? 0 : self.settings['stars'] * 3) + self.settings['home_uses'] + (self.settings['home_forks'] * 2) + (self.settings['recent_home_uses'] * 5) + (self.settings['recent_home_forks'] * 5)
+      self.popularity = (self.settings['stars'] * 10) + self.settings['uses'] + (self.settings['forks']) + (self.settings['recent_uses'] * 3) + (self.settings['recent_forks'] * 3)
+      self.home_popularity = (self.any_upstream ? 0 : 10) + (self.any_upstream ? 0 : self.settings['stars'] * 3) + self.settings['home_uses'] + (self.settings['home_forks']) + (self.settings['recent_home_uses'] * 5) + (self.settings['recent_home_forks'] * 5)
       if self.settings['home_board']
-        self.home_popularity *= 5
+        self.home_popularity *= 10
+        self.popularity *= 8
       end
       if self.parent_board_id
         self.popularity /= 3
         self.home_popularity /= 3
+      end
+      if self.settings['copy_id']
+        if self.settings['copy_id'] == self.global_id
+          self.popularity /= 2
+          self.home_popularity /= 2
+        else
+          self.popularity /= 3
+          self.home_popularity /= 3
+        end
       end
     end
     found_locales = {}
