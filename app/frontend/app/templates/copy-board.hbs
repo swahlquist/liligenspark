@@ -15,6 +15,20 @@
         {{input type='text' class='form-control' id='board_name' value=board_name placeholder="Name for board copy"}}
       </span>
     </div>
+    <div>
+      <span style='width: 100%; display: inline-block;'>
+        <span class='checkbox big_checkbox' style='margin-top: -5px;'>
+          <label>
+            {{#if has_supervisees}}
+              {{t "Set as the User's Home Board (required for offline syncing)" key='set_as_new_home_board'}}
+            {{else}}
+              {{t "Set as My Home Board (required for offline syncing)" key='set_as_new_home_board'}}
+            {{/if}}
+            {{input type='checkbox' checked=set_as_home}}
+          </label>
+        </span>
+      </span>
+    </div>
     {{#if has_supervisees}}
       <p>{{t "For which user would you like to make a copy of this board? If you are planning to use this board for multiple communicators, you should probably copy it for yourself and manually add it for each communicator." key='which-user'}}</p>
       {{user-select select_id="currently_selected_id" buttons=true selection=currently_selected_id action=(action (mut currently_selected_id)) }}
@@ -24,6 +38,7 @@
         {{t "Checking user..." key='checking_user'}}
       {{else if error}}
         {{t "User lookup failed, please try again" key='user_lookup_failed'}}
+      {{else if set_as_home }}
       {{else if home_board}}
         {{t "This board is currently the user's home board. Do you want to use the new copy as the user's new home board?" key='copy_home_board'}}
       {{else if in_board_set}}
@@ -45,11 +60,13 @@
           <ul class='list-unstyled' style='margin-top: 10px; margin-left: 30px;'>
             {{#each model.known_supervisees as |supervisee|}}
               <li>
-                <label style={{if supervisee.share 'font-weight: bold;' 'font-weight: normal;'}}>
+                <div class="checkbox big_checkbox" style='margin: 0;'>
+                <label style={{if supervisee.share 'font-weight: bold; margin-top: -5px;' 'font-weight: normal;; margin-top: -5px;'}}>
                   {{input type='checkbox' checked=supervisee.share}}
                   <img src={{supervisee.avatar_url}} style="height: 30px; max-width: 30px;"/>
                   {{supervisee.user_name}}
                 </label>
+                </div>
               </li>
             {{/each}}
           </ul>
@@ -74,38 +91,46 @@
         </span>
         <span style='font-style: italic;'>{{t "applied to all copied boards" key='applied_to_all_copied_boards'}}</span>
       </div>
-      <div class="row" style='margin-top: 20px;'>
-        <label style='font-weight: normal; color: #888;' class="col-sm-12">
-          {{input type='checkbox' checked=public}}
-          &nbsp;&nbsp;{{t "Make the copied board(s) public to share changes with others" key='make_copies_public'}}
-        </label>
+      <div class="row">
+        <div class='col-sm-12'><div class="checkbox big_checkbox">
+          <label style='font-weight: normal;'>
+            {{input type='checkbox' checked=public}}
+            &nbsp;&nbsp;{{t "Make the copied board(s) public to share changes with others" key='make_copies_public'}}
+          </label>
+        </div></div>
       </div>
-      <div class="row" style='margin-top: 20px;'>
-        <label style='font-weight: normal; color: #888;' class="col-sm-12">
-          {{input type='checkbox' checked=translate}}
-          &nbsp;&nbsp;{{t "Translate the copied board(s) into a different language" key='translate_boards_to_language'}}
-        </label>
+      <div class="row">
+        <div class='col-sm-12'><div class="checkbox big_checkbox">
+          <label style='font-weight: normal;'>
+            {{input type='checkbox' checked=translate}}
+            &nbsp;&nbsp;{{t "Translate the copied board(s) into a different language" key='translate_boards_to_language'}}
+          </label>
+        </div></div>
       </div>
       {{#if model.board.copying_state.limited}}
         {{#if model.board.permissions.edit}}
-          <div class="row" style='margin-top: 20px;'>
-            <label style='font-weight: normal; color: #888;' class="col-sm-12">
-              {{input type='checkbox' checked=new_owner}}
-              &nbsp;&nbsp;{{t "Allow this user to make copies of the protected board for others" key='allow_sub_copies'}}
-            </label>
+          <div class="row">
+            <div class='col-sm-12'><div class="checkbox big_checkbox">
+              <label style='font-weight: normal; color: #888;'>
+                {{input type='checkbox' checked=new_owner}}
+                &nbsp;&nbsp;{{t "Allow this user to make copies of the protected board for others" key='allow_sub_copies'}}
+              </label>
+            </div></div>
           </div>
         {{/if}}
       {{/if}}
       {{#if model.board.permissions.edit}}
-        <div class="row" style='margin-top: 20px;'>
-          <label style='font-weight: normal; color: #888;' class="col-sm-12">
-            {{input type='checkbox' checked=disconnect}}
-            &nbsp;&nbsp;{{t "Mark this copy as unrelated to the original" key='disconnect_from_original'}}
-          </label>
+        <div class="row">
+          <div class='col-sm-12'><div class="checkbox big_checkbox">
+            <label style='font-weight: normal; color: #888;'>
+              {{input type='checkbox' checked=disconnect}}
+              &nbsp;&nbsp;{{t "Mark this copy as unrelated to the original" key='disconnect_from_original'}}
+            </label>
+          </div></div>
         </div>
       {{/if}}
       {{#if translate}}
-        <div class="row">
+        <div class="row" style='margin-top: 30px;'>
           <label class="col-sm-4 control-label" for="translate_locale">
             {{t "Language:" key='language_colon'}}
           </label>
@@ -135,7 +160,9 @@
     {{/if}}
   </div>
   <div class="modal-footer">
-    {{#if home_board}}
+    {{#if set_as_home}}
+      <button class='btn btn-primary' {{action 'tweakBoard' "links_copy_as_home"}}>{{t "Copy as Full Board Set" key='copy_linked_boards'}}</button>
+    {{else if home_board}}
       <div class="btn-group dropup">
         <button class='btn btn-primary' {{action 'tweakBoard' "links_copy_as_home"}}>{{t "Copy as New Home Board" key='copy_linked_boards_as_home'}}</button>
       </div>

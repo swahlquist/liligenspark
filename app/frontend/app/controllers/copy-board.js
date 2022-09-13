@@ -17,6 +17,7 @@ export default modal.ModalController.extend({
     this.set('in_board_set', null);
     this.set('in_sidebar_set', null);
     this.set('disconnect', null);
+    this.set('set_as_home', false);
     this.set('symbol_library', 'original');
     this.set('new_owner', null);
     this.set('show_more_options', false);

@@ -32,6 +32,7 @@ export default Component.extend({
     this.set('max_level', null);
     this.set('levels', null);
     this.set('current_level', null);
+    this.set('org_board', null);
     this.set('base_level', null);
     this.set('board_style', null);
     this.set('app_state', app_state);
@@ -60,22 +61,26 @@ export default Component.extend({
       }, function() { });
     }
   }),
-  update_current_board: observer('sorted_boards', 'current_index', 'board_style', function() {
+  update_current_board: observer('sorted_boards', 'current_index', 'board_style', 'org_board', function() {
     this.size_element();
-    if(this.get('current_index') == undefined && this.get('sorted_boards.length')) {
-      var _this = this;
-      var index = 0;
-      this.get('sorted_boards').forEach(function(b, idx) {
-        if(b.get('grid.rows') * b.get('grid.columns') > 40 && index === 0) {
-          index = idx;
-        } else if(index == 0 && idx == _this.get('sorted_boards').length - 1) {
-          index = idx;
-        }
-      });
-      _this.set('current_index', index);
-    }
-    this.set('current_board', this.get('sorted_boards')[this.get('current_index')]);
     var _this = this;
+    if(this.get('org_board')) {
+      this.set('current_board', this.get('org_board'));
+    } else {
+      if(this.get('current_index') == undefined && this.get('sorted_boards.length')) {
+        var _this = this;
+        var index = 0;
+        this.get('sorted_boards').forEach(function(b, idx) {
+          if(b.get('grid.rows') * b.get('grid.columns') > 40 && index === 0) {
+            index = idx;
+          } else if(index == 0 && idx == _this.get('sorted_boards').length - 1) {
+            index = idx;
+          }
+        });
+        _this.set('current_index', index);
+      }
+      this.set('current_board', this.get('sorted_boards')[this.get('current_index')]);
+    }
     if(this.get('current_board')) {
       this.get('current_board').load_button_set().then(function(bs) {
         _this.set('current_button_set', bs);
@@ -171,8 +176,8 @@ export default Component.extend({
   board_style_available: computed('boards', 'board_styles', function() {
     return (this.get('board_styles') || []).length > 0;
   }),
-  board_style_needed: computed('boards', 'board_style', 'board_style_available', 'board_styles', 'base_level', function() {
-    return this.get('base_level') && (!this.get('boards') || this.get('board_style_available')) && !this.get('board_style');
+  board_style_needed: computed('boards', 'board_style', 'board_style_available', 'board_styles', 'base_level', 'org_board', function() {
+    return this.get('base_level') && (!this.get('boards') || this.get('board_style_available')) && !this.get('board_style') && !this.get('org_board');
   }),
   base_level_and_style: computed('board_style', 'boards', 'board_style_available', 'base_level', function() {
     return this.get('base_level') && this.get('boards') && (!this.get('board_style_available') || this.get('board_style'));
@@ -303,6 +308,18 @@ export default Component.extend({
     deselect: function() {
       this.set('level_select', false);
       this.set('current_level', null);
+    },
+    set_org_board: function(brd) {
+      var _this = this;
+      CoughDrop.store.findRecord('board', brd.id).then(function(board) {
+        _this.set('org_board', board)
+        runLater(function() {
+          _this.send('select');
+        });
+      }, function(err) {
+        modal.error(i18n.t('error_loading_board', "Error loading board"));
+        _this.set('org_board', null);
+      });
     },
     set_base_level: function(level) {
       this.set('base_level', level);

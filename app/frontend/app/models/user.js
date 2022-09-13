@@ -116,6 +116,15 @@ CoughDrop.User = DS.Model.extend({
   managing_org: computed('organizations', function() {
     return (this.get('organizations') || []).find(function(o) { return o.type == 'user'; });
   }),
+  org_boards: computed('organizations', function() {
+    var res = [];
+    (this.get('organizations') || []).forEach(function(org) {
+      if(org.home_board_keys) {
+        res = res.concat(org.home_board_keys);
+      }
+    })
+    return Utils.uniq(res, function(r) { return r.id; });
+  }),
   manages_multiple_orgs: computed('managed_orgs', function() {
     return this.get('managed_orgs').length > 1;
   }),

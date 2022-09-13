@@ -1067,16 +1067,19 @@ export default Controller.extend({
       var current_index = order.indexOf(current) || 0;
       var wait = RSVP.resolve();
       if(direction == 'forward') {
+        var u = app_state.get('setup_user') || app_state.get('currentUser');
         if(order[current_index + 1] == 'board_category') {
           // Skip board selection if a home board is already
           // set and this was an auto-launch
-          if(app_state.get('auto_setup') && app_state.get('currentUser.preferences.home_board')) {
+          if(app_state.get('auto_setup') && u &&u.get('preferences.home_board')) {
             current_index++;
           }
         }
-        if(order[current_index] == 'symbols' && app_state.get('currentUser.preferred_symbols_changed') && app_state.get('currentUser.preferences.preferred_symbols') != 'original') {
-          var promise = app_state.get('currentUser').swap_home_board_images();
-          if(promise.wait) { wait = promise; }
+        if(order[current_index] == 'symbols') {
+          if(u && u.get('preferred_symbols_changed') && u.get('preferences.preferred_symbols') != 'original') {
+            var promise = u.swap_home_board_images();
+            if(promise.wait) { wait = promise; }
+          }
         }
         current_index = Math.min(current_index + 1, order.length - 1);
         if(window.ga && current_index > (this.get('max_index') || 0)) {

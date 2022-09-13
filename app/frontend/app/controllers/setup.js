@@ -465,10 +465,12 @@ export default Controller.extend({
       if(_this.get('user_id') != _this.get('setup_user.id')) {
         _this.set('other_user', {loading: true});
         _this.set('setup_user', null);
+        app_state.set('setup_user', null);
         CoughDrop.store.findRecord('user', _this.get('user_id')).then(function(user) {
           if(user.get('permissions.edit')) {
             _this.set('other_user', null);
             _this.set('setup_user', user);  
+            app_state.set('setup_user', user);
           } else {
             app_state.controller.set('setup_user_id', null);
             _this.set('other_user', {error: true, user_id: _this.get('user_id')});  
@@ -481,6 +483,7 @@ export default Controller.extend({
     } else {
       _this.set('other_user', null);
       _this.set('setup_user', app_state.get('currentUser') || _this.get('fake_user'));
+      app_state.set('setup_user', app_state.get('currentUser'));
     }
     if(this.get('setup_user')) {
       this.set('cell', this.get('setup_user.cell_phone'));
@@ -564,6 +567,7 @@ export default Controller.extend({
         }
         user.set('preferences.' + preference, value);
         user.set('preferred_symbols_changed', user.get('preferred_symbols') != user.get('original_preferred_symbols'));
+        app_state.set('setup_user', user);
       } else if(preference == 'device.symbol_background') {
         if(value == 'black_with_high_contrast') {
           user.set('preferences.device.symbol_background', 'black');

@@ -7,6 +7,7 @@ import evaluation from '../../utils/eval';
 import { set as emberSet } from '@ember/object';
 import { computed } from '@ember/object';
 import { observer } from '@ember/object';
+import CoughDrop from '../../app';
 
 export default modal.ModalController.extend({
   opening: function() {
