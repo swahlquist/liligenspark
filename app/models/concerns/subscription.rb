@@ -81,7 +81,7 @@ module Subscription
     true
   end
   
-  def update_subscription_organization(org_id, pending=false, sponsored=true, eval_account=false)
+  def update_subscription_organization(org_id, pending=false, sponsored=true, eval_account=false, assignment_action=nil)
     # used to pause subscription when the user is adopted by an organization, 
     # and possibly to resume the subscription when the user is dropped by an organization.
     prior_org = self.managing_organization
@@ -134,13 +134,16 @@ module Subscription
       end
 
       # Organizations can define a default home board for their users
-      if new_org && new_org.settings['default_home_board'] && !self.settings['preferences']['home_board'] && !self.settings['external_device']
+      if new_org && assignment_action && !self.settings['preferences']['home_board'] && !self.settings['external_device']
+        type, key, symbols = assignment_action.split(/:/)
+        if type == 'copy_board' && (new_org.home_board_keys || []).include?(key)
+          home_board = Board.find_by_path(key)
+          self.process_home_board({'id' => home_board.global_id, 'copy' => true, 'symbol_library' => symbols}, {'updater' => home_board.user, 'org' => new_org, 'async' => true}) if home_board
+        end
+      elsif new_org && new_org.settings['default_home_board'] && !self.settings['preferences']['home_board'] && !self.settings['external_device']
         home_board = Board.find_by_path(new_org.settings['default_home_board']['id'])
 
         self.assert_current_record!
-        # TODO: make a copy of the home board (possibly multiple options) for the user
-        # TODO: also set the user's preferred library based on the org, 
-        # and swap images as well
         self.process_home_board({'id' => home_board.global_id}, {'updater' => home_board.user, 'async' => true}) if home_board
       end
       
@@ -182,8 +185,8 @@ module Subscription
       @link_to_save.save
       @link_to_save = nil
     end
-    self.log_subscription_event(:log => 'org stale update', :args => {org_id: org_id, pending: pending, sponsored: sponsored, eval_account: eval_account})
-    self.schedule(:update_subscription_organization, org_id, pending, sponsored, eval_account)
+    self.log_subscription_event(:log => 'org stale update', :args => {org_id: org_id, pending: pending, sponsored: sponsored, eval_account: eval_account, assignment_action: assignment_action})
+    self.schedule(:update_subscription_organization, org_id, pending, sponsored, eval_account, assignment_action)
   end
   
   def transfer_subscription_to(user, skip_remote_update=false)

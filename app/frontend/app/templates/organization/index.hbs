@@ -56,7 +56,18 @@
             <button class='btn btn-default' {{action 'edit_org'}}>{{t "Settings" key='settings'}}</button>
           </div>
         {{/if}}
-        {{#if model.default_home_board}}
+        {{#if multi_home_boards}}
+          <div class="btn-group">
+            <button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              {{t "Default Home Boards" key='default_home_boards'}} ({{model.home_board_keys.length}}) <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu">
+              {{#each model.home_board_keys as |key|}}
+                <li>{{#link-to 'board' key}}{{key}}{{/link-to}}</li>
+              {{/each}}
+            </ul>
+          </div>
+        {{else if model.default_home_board}}
           <div class='text-muted'>
             {{t "default home board:" key='default_home_board'}}
             {{#link-to 'board' model.default_home_board.key}}{{model.default_home_board.key}}{{/link-to}}

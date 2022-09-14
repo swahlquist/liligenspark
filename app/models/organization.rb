@@ -757,9 +757,8 @@ class Organization < ActiveRecord::Base
       res = self.settings['default_home_boards']
     elsif self.settings['default_home_board']
       res = [self.settings['default_home_board']]
-    else
     end
-    res
+    res.map{|b| b['key'] }
   end
   
   def self.attached_orgs(user, include_org=false)
@@ -893,7 +892,7 @@ class Organization < ActiveRecord::Base
       sponsored_user_count = self.sponsored_users(false).count
       raise "no licenses available" if sponsored && ((self.settings || {})['total_licenses'] || 0) <= sponsored_user_count
     end
-    user.update_subscription_organization(self, pending, sponsored, eval_account)
+    user.update_subscription_organization(self, pending, sponsored, eval_account, @assignment_action)
     true
   end
   
@@ -1264,8 +1263,10 @@ class Organization < ActiveRecord::Base
       action, key = params[:management_action].split(/-/, 2)
       begin
         if action == 'add_user'
+          @assignment_action = params[:assignment_action]
           self.add_user(key, true, true, false)
         elsif action == 'add_unsponsored_user' || action == 'add_external_user'
+          @assignment_action = params[:assignment_action]
           self.add_user(key, true, false, false)
         elsif action == 'add_eval'
           self.add_user(key, true, true, true)
@@ -1290,6 +1291,7 @@ class Organization < ActiveRecord::Base
         add_processing_error("user management action failed: #{e.message}")
         return false
       end
+      @assignment_action = nil
     end
     @processed = true
     true

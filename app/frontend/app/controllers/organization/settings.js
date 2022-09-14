@@ -1,6 +1,8 @@
 import Controller from '@ember/controller';
 import modal from '../../utils/modal';
 import { computed } from '@ember/object';
+import i18n from '../../utils/i18n';
+import { htmlSafe } from '@ember/string';
 
 export default Controller.extend({
   opening: function() {
@@ -20,6 +22,13 @@ export default Controller.extend({
     var id = this.get('model.supervisor_profile_id');
     return !!(id == 'none' || id == '' || !id);
   }),
+  home_board_key_lines: computed('model.home_board_keys', function() {
+    return (this.get('model.home_board_keys') || []).join('\n');
+  }),
+  board_keys_placeholder: computed(function() {
+  return htmlSafe(i18n.t('board_keys_examples', "board keys or URLS\none per line"));
+}),
+
   actions: {
     cancel: function() {
       this.transitionToRoute('organization', this.get('model.id'));
@@ -29,6 +38,9 @@ export default Controller.extend({
       if(!_this.get('external_auth')) {
         _this.set('model.saml_metadata_url', null);
         _this.set('model.saml_sso_url', null);
+      }
+      if(_this.get('home_board_key_lines.length') > 0) {
+        _this.set('model.home_board_keys', _this.get('home_board_key_lines').split(/\n/));
       }
       _this.set('model.support_target', null);
       if(_this.get('allow_support_target') && _this.get('support_email')) {

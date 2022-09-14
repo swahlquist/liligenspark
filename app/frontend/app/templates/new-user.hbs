@@ -41,6 +41,12 @@
       </div>
       {{#if communicator_new_user}}
         {{#if board_options}}
+          <div class="form-group">
+            <label for="home_board" class="col-sm-4 control-label">{{t "Home Board" key='home_board'}}</label>
+            <div class="col-sm-6">
+              {{bound-select select_class="form-control" select_id="home_board" content=board_options selection=model.user.home_board_template action=(action (mut model.user.home_board_template)) }}
+            </div>
+          </div>
         {{/if}}
       {{else if third_party_new_user}}
         <div class="form-group">

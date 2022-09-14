@@ -1117,19 +1117,59 @@ class User < ActiveRecord::Base
       end
     end
   end
+
+  def copy_to_home_board(home_board, updater_id, symbol_library)
+    original = home_board && Board.find_by_path(home_board['id'])
+    updater = User.find_by_path(updater_id)
+    return unless original
+    # First, if the user already has a copy as their home board, then stop
+    current_home = self.settings['preferences']['home_board'] && Board.find_by_path(self.settings['preferences']['home_board']['id'])
+    if current_home && current_home.parent_board == original && ((current_home.settings['swapped_library'] || 'original') == (symbol_library || 'original'))
+      return true
+    end
+    # Second, if the user already has a copy not as their home bord, then set that
+    home = self.boards.where(parent_board: original).order('id DESC').first
+    if home && ((home.settings['swapped_library'] || 'original') == (symbol_library || 'original'))
+      self.settings['preferences']['home_board'] = {
+        'id' => home.global_id,
+        'key' => home.key
+      }
+      self.settings['preferences']['home_board']['locale'] = home_board['locale'] || home.settings['locale']
+      self.settings['preferences']['home_board']['level'] = home_board['level'] if home_board['level']
+      self.save
+      self.schedule(:audit_protected_sources)
+      return true
+    end
+    # Finally, create a brand new copy
+    new_home = original.copy_for(self)
+    self.copy_board_links(old_board_id: original.global_id, new_board_id: new_home.global_id, ids_to_copy: [], user_for_paper_trail: "user:#{updater.global_id}", copier_id: updater.global_id, swap_library: symbol_library)
+    self.settings['preferences']['home_board'] = {
+      'id' => new_home.global_id,
+      'key' => new_home.key
+    }
+    self.settings['preferences']['home_board']['locale'] = home_board['locale'] || new_home.settings['locale']
+    self.settings['preferences']['home_board']['level'] = home_board['level'] if home_board['level']
+    self.save
+    self.schedule(:audit_protected_sources)
+  return true
+  end
   
   def process_home_board(home_board, non_user_params)
     board = Board.find_by_path(home_board['id'])
     json = (self.settings['preferences']['home_board'] || {}).slice('id', 'key').to_json
-    if board && board.allows?(self, 'view')
+    org_allowed_board = non_user_params['org'] && (non_user_params['org'].home_board_keys || []).include?(board.key)
+    if board && board.allows?(self, 'view') && !home_board['copy']
       self.settings['preferences']['home_board'] = {
         'id' => board.global_id,
         'key' => board.key
       }
       self.settings['preferences']['home_board']['locale'] = home_board['locale'] || board.settings['locale']
       self.settings['preferences']['home_board']['level'] = home_board['level'] if home_board['level']
-    elsif board && non_user_params['updater'] && board.allows?(non_user_params['updater'], 'share')
-      if non_user_params['async']
+    elsif board && non_user_params['updater'] && (org_allowed_board || board.allows?(non_user_params['updater'], 'share'))
+      if home_board['copy'] && non_user_params['async']
+        Progress.schedule(self, :copy_to_home_board, home_board, non_user_params['updater'].global_id, home_board['symbol_library'])
+        return
+      elsif non_user_params['async']
         board.schedule(:process_share, "add_deep-#{self.global_id}", non_user_params['updater'].global_id)
       else
         board.share_with(self, true)

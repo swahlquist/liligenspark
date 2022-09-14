@@ -1739,6 +1739,7 @@ class Board < ActiveRecord::Base
       PaperTrail.request.whodunnit = "user:#{author.global_id}.board.swap_images"
       if @buttons_changed
         self.settings['buttons'] = buttons
+        self.settings['swapped_library'] = library
         @map_later = true
         self.save 
       end

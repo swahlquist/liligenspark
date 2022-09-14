@@ -88,6 +88,20 @@ export default modal.ModalController.extend({
   communicator_new_user: computed('model.user.org_management_action', function() {
     return this.get('model.user.org_management_action') == 'add_user' || this.get('model.user.org_management_action') == 'add_unsponsored_user';
   }),
+  board_options: computed('model.org.home_board_keys', function() {
+    var res = [];
+    (this.get('model.org.home_board_keys') || []).forEach(function(key) {
+      res.push({
+        name: i18n.t('copy_of_key', "Copy of %{key}", {key: key}),
+        id: key
+      })
+    });
+    res.push({
+      name: i18n.t('no_board_now', "[ Don't Set a Home Board Now ]"),
+      id: 'none'
+    });
+    return res;
+  }),
   device_options: computed(function() {
     return [].concat(CoughDrop.User.devices).concat({id: 'other', name: i18n.t('other', "Other")});
   }),
@@ -125,6 +139,7 @@ export default modal.ModalController.extend({
       controller.set('linking', true);
       var user = this.get('model.user');
       if(!user.get('user_name') || user.get('user_name').length < 2) {
+        controller.set('linking', false);
         return;
       }
 
@@ -163,6 +178,10 @@ export default modal.ModalController.extend({
         dev.vocab_size = parseInt(this.get('external_vocab_size'), 10) || null;
         user.set('external_device', dev);
       }
+      var home_board = null;
+      if(this.get('board_options.length')) {
+        home_board = user.get('home_board_template') || this.get('board_options')[0].id;
+      }
       var get_user_name = user.save().then(function(user) {
         return user.get('user_name');
       }, function() {
@@ -173,6 +192,7 @@ export default modal.ModalController.extend({
       get_user_name.then(function(user_name) {
         var user = controller.get('model.user');
         user.set('org_management_action', action);
+        user.set('home_board_template', home_board);
         modal.close({
           created: true,
           user: user

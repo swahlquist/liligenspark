@@ -180,6 +180,9 @@ export default Controller.extend({
         }
     });
   }),
+  multi_home_boards: computed('model.home_board_keys', function() {
+    return (this.get('model.home_board_keys') || []).length > 1;
+  }),
   alphabetized_orgs: computed('sorted_orgs', function() {
     var orgs = this.get('sorted_orgs') || [];
     var letters = [];
@@ -291,23 +294,15 @@ export default Controller.extend({
     new_user: function(attr) {
       var _this = this;
 
-      modal.open('new-user', {default_org_management_action: attr, organization_id: this.get('model.id'), no_licenses: this.get('no_licenses'), no_supervisor_licenses: this.get('no_supervisor_licenses'), premium: this.get('model.premium'), no_eval_licenses: this.get('no_eval_licenses')}).then(function(res) {
+      modal.open('new-user', {default_org_management_action: attr, organization_id: this.get('model.id'), org: this.get('model'), no_licenses: this.get('no_licenses'), no_supervisor_licenses: this.get('no_supervisor_licenses'), premium: this.get('model.premium'), no_eval_licenses: this.get('no_eval_licenses')}).then(function(res) {
         if(res && res.created) {
           if(res.user && res.user.get('org_management_action')) {
-            // because of the way we hash all user/org settings, this doesn't always get
-            // updated reliably, so we repeat ourselves rather than risk losing the result.
-            _this.send('management_action', res.user.get('org_management_action'), res.user.get('user_name'));
-//             runLater(function() {
-//               _this.send('management_action', res.user.get('org_management_action'), res.user.get('user_name'));
-//             }, 1000);
-//             runLater(function() {
-//               _this.send('management_action', res.user.get('org_management_action'), res.user.get('user_name'));
-//             }, 5000);
+            _this.send('management_action', res.user.get('org_management_action'), res.user.get('user_name'), null, res.user.get('home_board_template'), res.user.get('home_board_symbols'));
           }
         }
       });
     },
-    management_action: function(action, user_name, decision) {
+    management_action: function(action, user_name, decision, home_board, symbol_library) {
       var model = this.get('model');
       var _this = this;
       _this.set('missing_user_name', null);
@@ -316,6 +311,14 @@ export default Controller.extend({
         modal.open('modals/confirm-org-action', {action: action, user_name: user_name}).then(function(res) {
           if(res && res.confirmed) {
             _this.send('management_action', action, user_name, true);
+          }
+        });
+        return;
+      } else if(action && action.match(/add_.*user/) && _this.get('model.home_board_keys.length') > 0 && !home_board) {
+        user_name = this.get('user_user_name');
+        modal.open('modals/confirm-org-action', {action: 'add_home', org: _this.get('model'), user_name: user_name}).then(function(res) {
+          if(res && res.home) {
+            _this.send('management_action', action, user_name, true, res.home, res.symbols);
           }
         });
         return;
@@ -343,7 +346,15 @@ export default Controller.extend({
       }
       if(!user_name) { return; }
       model.set('management_action', action + '-' + user_name);
+      if(home_board) {
+        model.set('assignment_action', 'copy_board:' + home_board + ':' + (symbol_library || 'original'));
+      }
       model.save().then(function() {
+        if(home_board) {
+          runLater(function() {
+            model.reload();
+          }, 15000);
+        }
         if(action.match(/user/)) {
           _this.refresh_users();
         } else if(action.match(/eval/)) {

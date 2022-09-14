@@ -1,49 +1,75 @@
 {{#modal-dialog action="close" opening='opening' closing='closing'}}
   <div class="modal-header">
     <button type="button" class="close" {{action 'close'}}>&times;</button>
-    <h3>{{t "Confirm Remove" key='confirm_remove'}}</h3>
+    {{#if set_home_board}}
+      <h3>{{t "Set Home Board?" key='set_home_board'}}</h3>
+    {{else}}
+      <h3>{{t "Confirm Remove" key='confirm_remove'}}</h3>
+    {{/if}}
   </div>
   <div class="modal-body">
     <div class="form-horizontal">
       <div class="form-group">
         <div class="col-sm-8 col-sm-offset-2">
           <p class="form-control-static">
-            {{#if model.user_name}}
-              {{t "Are you sure you want to remove the user %{user_name} from the org?" user_name=model.user_name key='confirm_remove_user'}}
+            {{#if set_home_board}}
+              {{t "Would you like to set a home board for the user <b>%{user_name}</b>, if they don't already have one set?" user_name=model.user_name key='confirm_set_home_board'}}
+            {{else if model.user_name}}
+              {{t "Are you sure you want to remove the user<b>%{user_name}</b> from the org?" user_name=model.user_name key='confirm_remove_user'}}
             {{else if model.unit_user_name}}
               {{t "Are you sure you want to remove the user from the room?" user_name=model.user_name key='confirm_remove_unit_user'}}
             {{else if model.org_name}}
-              {{t "Are you sure you want to delete the org %{org_name} permanently? This cannot be undone. If so, please type \"confirmed\" in the box below." org_name=model.org_name key='confirm_remove_org'}}
+              {{t "Are you sure you want to delete the org <b>%{org_name}</b> permanently? This cannot be undone. If so, please type \"confirmed\" in the box below." org_name=model.org_name key='confirm_remove_org'}}
             {{else}}
               {{t "Are you sure you want to remove this? If so, please type \"confirmed\" in the box below." key='confirm_remove_other'}}
             {{/if}}
           </p>
         </div>
       </div>
-      {{#unless model.user_name}}
-        {{#unless model.unit_user_name}}
-          <div class="form-group">
-            <div class="col-sm-8 col-sm-offset-2">
-              {{input value=confirmed class="form-control" placeholder="..."}}
-            </div>
+      {{#if set_home_board}}
+        <div class='form-group'>
+          <label for='home_board' class='col-sm-offset-1 col-sm-3'>
+            {{t "Home Board:" key='home_board_colon'}}
+          </label>
+          <div class='col-sm-6'>
+            {{bound-select select_class="form-control" select_id="home_board" content=board_options selection=home_board_template action=(action (mut home_board_template)) }}
           </div>
+        </div>
+      {{else}}
+        {{#unless model.user_name}}
+          {{#unless model.unit_user_name}}
+            <div class="form-group">
+              <div class="col-sm-8 col-sm-offset-2">
+                {{input value=confirmed class="form-control" placeholder="..."}}
+              </div>
+            </div>
+          {{/unless}}
         {{/unless}}
-      {{/unless}}
+      {{/if}}
     </div>
   </div>
   <div class="modal-header">
-    <button class='btn btn-default btn-lg' {{action 'confirm'}}>
-      {{#if model.user_name}}
-        {{t "Remove User" key='remove_user'}}
-      {{else if model.unit_user_name}}
-        {{t "Remove User" key='remove_user'}}
-      {{else if model.org_name}}
-        {{t "Delete Account" key='delete_account'}}
-      {{else}}
-        {{t "Delete" key='delete'}}
-      {{/if}}
-    </button>
-    <button class='btn btn-primary btn-lg' {{action 'close'}}>{{t "Cancel" key='cancel'}}</button>
+    {{#if set_home_board}}
+      <button class='btn btn-primary btn-lg' {{action 'confirm'}}>
+        {{t "Continue" key='continue'}}
+      </button>
+      <button class='btn btn-default btn-lg' {{action 'close'}}>{{t "Cancel" key='cancel'}}</button>
+    {{else}}
+      <button class='btn btn-default btn-lg' {{action 'confirm'}}>
+        {{#if set_home_board}}
+          {{t "Continue" key='continue'}}
+        {{else if model.user_name}}
+          {{t "Remove User" key='remove_user'}}
+        {{else if model.unit_user_name}}
+          {{t "Remove User" key='remove_user'}}
+        {{else if model.org_name}}
+          {{t "Delete Account" key='delete_account'}}
+        {{else}}
+          {{t "Delete" key='delete'}}
+        {{/if}}
+      </button>
+      <button class='btn btn-primary btn-lg' {{action 'close'}}>{{t "Cancel" key='cancel'}}</button>
+    {{/if}}
     {{#if error}}
       <p class='text-danger'>{{error}}</p>
     {{/if}}
