@@ -230,7 +230,7 @@ var modal = EmberObject.extend({
       outlet: 'flash-message',
       parentView: 'application'
     });
-    this.settings_for['flash'] = {type: type, text: text, sticky: sticky};
+    this.settings_for['flash'] = {type: type, text: text, sticky: sticky, action: (opts || {}).action};
     if(below_header) {
       this.settings_for['flash'].below_header = below_header;
     }

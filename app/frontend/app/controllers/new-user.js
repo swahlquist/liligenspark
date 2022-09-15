@@ -82,6 +82,25 @@ export default modal.ModalController.extend({
       {name: i18n.t('other', "Other"), id: 'other'},
     ]
   }),
+  symbols_list: computed(function() {
+    var list = [
+      {name: i18n.t('original_symbols', "Use the board's original symbols"), id: 'original'},
+      {name: i18n.t('use_opensymbols', "Opensymbols.org free symbol libraries"), id: 'opensymbols'},
+
+      {name: i18n.t('use_lessonpix', "LessonPix symbol library"), id: 'lessonpix'},
+      {name: i18n.t('use_symbolstix', "SymbolStix Symbols"), id: 'symbolstix'},
+      {name: i18n.t('use_pcs', "PCS Symbols by Tobii Dynavox"), id: 'pcs'},
+
+      {name: i18n.t('use_twemoji', "Emoji icons (authored by Twitter)"), id: 'twemoji'},
+      {name: i18n.t('use_noun-project', "The Noun Project black outlines"), id: 'noun-project'},
+      {name: i18n.t('use_arasaac', "ARASAAC free symbols"), id: 'arasaac'},
+      {name: i18n.t('use_tawasol', "Tawasol symbol library"), id: 'tawasol'},
+    ];
+    return list;
+  }),
+  premium_symbol_library: computed('symbols_list', 'model.user.preferences.preferred_symbols', function() {
+    return ['pcs', 'lessonpix', 'symbolstix'].indexOf(this.get('model.user.preferences.preferred_symbols')) != -1;
+  }),
   third_party_new_user: computed('model.user.org_management_action', function() {
     return this.get('model.user.org_management_action') == 'add_external_user';
   }),
@@ -101,6 +120,10 @@ export default modal.ModalController.extend({
       id: 'none'
     });
     return res;
+  }),
+  board_will_copy: computed('model.user.home_board_template', function() {
+    var template = this.get('model.user.home_board_template') || ((this.get('board_options') || [])[0] || {}).id;
+    return template != 'none';
   }),
   device_options: computed(function() {
     return [].concat(CoughDrop.User.devices).concat({id: 'other', name: i18n.t('other', "Other")});
@@ -179,20 +202,30 @@ export default modal.ModalController.extend({
         user.set('external_device', dev);
       }
       var home_board = null;
+      var symbols = null;
       if(this.get('board_options.length')) {
         home_board = user.get('home_board_template') || this.get('board_options')[0].id;
+        symbols = user.get('preferences.preferred_symbols');
       }
+      var add_symbols = user.get('add_symbols') && this.get('model.org.extras_available');
+      var action = user.get('org_management_action');
       var get_user_name = user.save().then(function(user) {
         return user.get('user_name');
       }, function() {
         return RSVP.reject(i18n.t('creating_user_failed', "Failed to create a new user with the given settings"));
       });
 
-      var action = user.get('org_management_action');
       get_user_name.then(function(user_name) {
         var user = controller.get('model.user');
+        if(add_symbols) {
+          action = action + "-plus_extras";
+        }
         user.set('org_management_action', action);
         user.set('home_board_template', home_board);
+        user.set('home_board_symbols', symbols);
+        if(controller.get('model.org') && add_symbols) {
+          controller.get('model.org').reload();
+        }
         modal.close({
           created: true,
           user: user

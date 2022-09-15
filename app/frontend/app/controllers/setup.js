@@ -609,7 +609,7 @@ export default Controller.extend({
     home: function(plus_video) {
       app_state.return_to_index();
       if(plus_video) {
-        modal.open('inline-video', {video: {type: 'youtube', id: "U1vBg36zVpg"}, hide_overlay: true});
+        modal.open('inline-video', {video: {type: 'youtube', id: "TSlGz7g9LIs"}, hide_overlay: true});
         if(window.ga) {
           window.ga('send', 'event', 'Setup', 'video', 'Setup Video Launched');
         }

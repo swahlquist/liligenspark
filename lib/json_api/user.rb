@@ -224,7 +224,7 @@ module JsonApi::User
             end
           end
           supervisees.each do |sup|
-            json['supervisee_lesson_ids'] += (sup.organization_hash['lesson_ids'] || [])
+            json['supervisee_lesson_ids'] += (sup.organization_hash.map{|h| h['lesson_ids'] || []})
           end
         end
       elsif user.supporter_role?

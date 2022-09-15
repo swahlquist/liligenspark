@@ -892,8 +892,8 @@ class Organization < ActiveRecord::Base
       sponsored_user_count = self.sponsored_users(false).count
       raise "no licenses available" if sponsored && ((self.settings || {})['total_licenses'] || 0) <= sponsored_user_count
     end
-    user.update_subscription_organization(self, pending, sponsored, eval_account, @assignment_action)
-    true
+    user.update_subscription_organization(self, pending, sponsored, eval_account)
+    user
   end
   
   def remove_user(user_key)
@@ -1074,6 +1074,7 @@ class Organization < ActiveRecord::Base
     self.settings['inactivity_timeout'] = params['inactivity_timeout'].to_i if params['inactivity_timeout']
     self.settings.delete('inactivity_timeout') if (self.settings['inactivity_timeout'] || 0) < 10
     self.settings['image_url'] = process_string(params['image_url']) if params['image_url']
+    self.settings['preferred_symbols'] = process_string(params['preferred_symbols']) if params['preferred_symbols']
     self.settings['status_overrides'] = params['status_overrides']
     self.settings['extra_colors'] = params['extra_colors']
     self.settings['support_target'] = params['support_target']
@@ -1251,7 +1252,8 @@ class Organization < ActiveRecord::Base
             }
           end
         end
-      end    
+      end
+      self.settings.delete('default_home_boards') if self.settings['default_home_boards'].empty?    
     end
     
     if params[:management_action]
@@ -1260,16 +1262,19 @@ class Organization < ActiveRecord::Base
         return false
       end
 
-      action, key = params[:management_action].split(/-/, 2)
+      plus_extras = params[:management_action].match(/-plus_extras/)
+      action, key = params[:management_action].sub(/-plus_extras/, '').split(/-/, 2)
+      plus_error = nil
       begin
+        new_user = nil
         if action == 'add_user'
           @assignment_action = params[:assignment_action]
-          self.add_user(key, true, true, false)
+          new_user = self.add_user(key, true, true, false)
         elsif action == 'add_unsponsored_user' || action == 'add_external_user'
           @assignment_action = params[:assignment_action]
-          self.add_user(key, true, false, false)
+          new_user = self.add_user(key, true, false, false)
         elsif action == 'add_eval'
-          self.add_user(key, true, true, true)
+          new_user = self.add_user(key, true, true, true)
         elsif action == 'add_supervisor'
           self.add_supervisor(key, true)
         elsif action == 'add_premium_supervisor'
@@ -1287,11 +1292,38 @@ class Organization < ActiveRecord::Base
         elsif action == 'remove_extras'
           self.remove_extras_from_user(key)
         end
+
+        if plus_extras
+          begin
+            self.reload.add_extras_to_user(key)
+          rescue => e
+            plus_error = e
+          end
+        end
+
+        if @assignment_action && new_user
+          # Organizations can define a default home board for their users
+          if !new_user.settings['preferences']['home_board'] && !new_user.settings['external_device']
+            type, key, symbols = @assignment_action.split(/:/)
+            if type == 'copy_board' && (self.home_board_keys || []).include?(key)
+              home_board = Board.find_by_path(key)
+              new_user.process_home_board({'id' => home_board.global_id, 'copy' => true, 'symbol_library' => symbols}, {'updater' => home_board.user, 'org' => self, 'async' => true}) if home_board
+            end
+          elsif self.settings['default_home_board'] && !new_user.settings['preferences']['home_board'] && !new_user.settings['external_device']
+            home_board = Board.find_by_path(self.settings['default_home_board']['id'])
+            new_user.process_home_board({'id' => home_board.global_id}, {'updater' => home_board.user, 'async' => true}) if home_board
+          end
+        end
+
       rescue => e
         add_processing_error("user management action failed: #{e.message}")
         return false
       end
       @assignment_action = nil
+      if plus_error
+        add_processing_error("user management extras action failed: #{plus_error.message}")
+        return false
+      end
     end
     @processed = true
     true

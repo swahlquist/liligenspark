@@ -365,7 +365,7 @@ describe Organization, :type => :model do
       
       res = o.add_user(u.user_name, true)
       u.reload
-      expect(res).to eq(true)
+      expect(!!res).to eq(true)
       expect(o.sponsored_user?(u)).to eq(true)
     end
     
@@ -396,7 +396,7 @@ describe Organization, :type => :model do
       u = User.create(:expires_at => Time.now + 100)
       expect(u.expires_at) == Time.now + 100
       res = o.add_user(u.user_name, false)
-      expect(res).to eq(true)
+      expect(!!res).to eq(true)
       u.reload
       expect(o.managed_user?(u)).to eq(true)
       expect(o2.managed_user?(u)).to eq(false)
@@ -413,7 +413,7 @@ describe Organization, :type => :model do
       expect(UserMailer).to receive(:schedule_delivery).with(:organization_assigned, u.global_id, o.global_id)
       res = o.add_user(u.user_name, true)
       u.reload
-      expect(res).to eq(true)
+      expect(!!res).to eq(true)
       expect(o.sponsored_user?(u)).to eq(true)
     end
     
@@ -435,7 +435,7 @@ describe Organization, :type => :model do
       
       res = o.add_user(u.user_name, false)
       u.reload
-      expect(res).to eq(true)
+      expect(!!res).to eq(true)
       expect(o.sponsored_user?(u)).to eq(true)
       
       res = o.remove_user(u.user_name)
@@ -505,7 +505,7 @@ describe Organization, :type => :model do
       
       res = o.add_user(u.user_name, false)
       u.reload
-      expect(res).to eq(true)
+      expect(!!res).to eq(true)
       expect(o.user?(u)).to eq(true)
       
       expect(UserMailer).to receive(:schedule_delivery).with(:organization_unassigned, u.global_id, o.global_id)
@@ -577,7 +577,7 @@ describe Organization, :type => :model do
       u = User.create
       b = Board.create(user: u)
       u2 = User.create
-      o = Organization.create(settings: {'total_licenses' => 1, 'default_home_board' => {'key' => b.key, 'id' => b.global_id}})
+      o = Organization.create(settings: {'total_licenses' => 1, 'home_board_keys' => [b.key]})
       u2.reload
       o.add_user(u2.user_name, false, true)
       Worker.process_queues
@@ -971,15 +971,15 @@ describe Organization, :type => :model do
       b = Board.create(user: u, public: true)
       o = Organization.create
       o.process({:home_board_key => b.key}, {updater: u})
-      expect(o.settings['default_home_board']).to eq({'key' => b.key, 'id' => b.global_id})
+      expect(o.settings['default_home_boards']).to eq([{'key' => b.key, 'id' => b.global_id}])
     end
     
     it "should not allow setting a private home board" do
       u = User.create
       b = Board.create(user: u)
       o = Organization.create
-      o.process({:home_board_key => b.key}, {updater: u})
-      expect(o.settings['default_home_board']).to eq(nil)
+      o.process({:home_board_keys => [b.key]}, {updater: u})
+      expect(o.settings['default_home_boards']).to eq(nil)
     end
     
     it "should allow setting a private home board if owned by a manager" do
@@ -987,8 +987,8 @@ describe Organization, :type => :model do
       b = Board.create(user: u)
       o = Organization.create
       o.add_manager(u.user_name, true)
-      o.process({:home_board_key => b.key}, {updater: u})
-      expect(o.settings['default_home_board']).to eq({'key' => b.key, 'id' => b.global_id})
+      o.process({:home_board_keys => [b.key]}, {updater: u})
+      expect(o.settings['default_home_boards']).to eq([{'key' => b.key, 'id' => b.global_id}])
     end
     
     it "should allow setting a private home board if owned by a supervisor" do
@@ -997,7 +997,7 @@ describe Organization, :type => :model do
       o = Organization.create
       o.add_supervisor(u.user_name, false)
       o.process({:home_board_key => b.key}, {updater: u})
-      expect(o.settings['default_home_board']).to eq({'key' => b.key, 'id' => b.global_id})
+      expect(o.settings['default_home_boards']).to eq([{'key' => b.key, 'id' => b.global_id}])
     end
 
     it "should parse hosting settings" do
@@ -1333,7 +1333,7 @@ describe Organization, :type => :model do
       u = User.create
     
       res = o.add_user(u.user_name, true)
-      expect(res).to eq(true)
+      expect(!!res).to eq(true)
       expect(o.reload.users.count).to eq(1)
     
       u.reload
@@ -1347,7 +1347,7 @@ describe Organization, :type => :model do
       u = User.create
     
       res = o.add_user(u.user_name, true)
-      expect(res).to eq(true)
+      expect(!!res).to eq(true)
       expect(o.reload.users.count).to eq(1)
       expect(o.pending_user?(u.reload)).to eq(true)
       expect(o.managed_user?(u)).to eq(true)
@@ -1361,7 +1361,7 @@ describe Organization, :type => :model do
       u = User.create
     
       res = o.add_user(u.user_name, false, false)
-      expect(res).to eq(true)
+      expect(!!res).to eq(true)
       expect(o.reload.users.count).to eq(1)
       expect(o.managed_user?(u.reload)).to eq(true)
       expect(o.pending_user?(u)).to eq(false)

@@ -34,6 +34,15 @@
             <p class='form-control-static'>
               {{t "All other settings are controlled from the user's Preferences page" key='other_settings_on_preferences'}}
             </p>
+            {{#if model.user.preferences.home_board}}
+              <p>
+                {{t "Current Home Board:" key='current_home_board'}}
+                <b>{{model.user.preferences.home_board.key}}</b>
+              </p>
+              <div style='margin-top: 20px;'>
+                <button class='btn btn-default' {{action 'clear_home_board'}}>{{t "Clear Home Board" key='clear_home_board'}}</button>
+              </div>
+            {{/if}}
           </div>
         </div>
       {{else}}

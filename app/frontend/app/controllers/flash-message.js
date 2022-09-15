@@ -19,6 +19,7 @@ export default Controller.extend({
 
       this.set('message', settings.text);
       this.set('sticky', settings.sticky);
+      this.set('action', settings.action);
       this.set('subscribe', settings.subscribe);
       this.set('redirect', settings.redirect);
       var class_name = 'alert-info';
@@ -32,11 +33,13 @@ export default Controller.extend({
     },
     closing: function() {
     },
-    confirm: function() {
+    confirm: function(temp_action) {
       if(this.get('redirect')) {
         if(this.get('redirect.subscribe') && !capabilities.installed_app) {
           this.transitionToRoute('user.subscription', app_state.get('currentUser.user_name'));
         }
+      } else if(this.get('action.callback')) {
+        this.get('action').callback();
       }
     },
     contact: function() {

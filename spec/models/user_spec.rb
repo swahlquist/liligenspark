@@ -113,6 +113,22 @@ describe User, :type => :model do
       expect(perms['supervise']).to eq(nil)
       expect(perms['model']).to eq(nil)
     end
+
+    it "should not allow managers to retrieve pending user information in their org" do
+      u = User.create
+      u2 = User.create
+      o = Organization.create(:settings => {'total_licenses' => 1})
+      o.add_manager(u2.user_name, true)
+      o.add_user(u.user_name, true, false)
+      u.reload
+      u2.reload
+      expect(Organization.manager_for?(u2, u, true)).to eq(false)
+
+      perms = u.reload.permissions_for(u2.reload)
+      expect(perms['edit']).to eq(nil)
+      expect(perms['supervise']).to eq(nil)
+      expect(perms['model']).to eq(nil)
+    end
     
     it "should only allow managers view_deleted_boards" do
       u = User.create

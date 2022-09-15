@@ -52,6 +52,7 @@ CoughDrop.Organization = DS.Model.extend({
   children_orgs: DS.attr('raw'),
   management_action: DS.attr('string'),
   assignment_action: DS.attr('string'),
+  preferred_symbols: DS.attr('string'),
   custom_domain: DS.attr('boolean'),
   supervisor_profile_id: DS.attr('string'),
   supervisor_profile_frequency: DS.attr('number'),
@@ -75,6 +76,9 @@ CoughDrop.Organization = DS.Model.extend({
   }),
   supervisor_licenses_available: computed('allotted_supervisor_licenses', 'used_supervisors', function() {
     return (this.get('allotted_supervisor_licenses') || 0) > (this.get('used_supervisors') || 0);
+  }),
+  extras_available_count: computed('allotted_extras', 'used_extras', function() {
+    return (this.get('allotted_extras') || 0) - (this.get('used_extras') || 0);
   }),
   extras_available: computed('allotted_extras', 'used_extras', function() {
     return (this.get('allotted_extras') || 0) > (this.get('used_extras') || 0);

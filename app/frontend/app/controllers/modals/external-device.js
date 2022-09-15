@@ -45,6 +45,13 @@ export default modal.ModalController.extend({
     return this.get('system') != 'default';
   }),
   actions: {
+    clear_home_board: function() {
+      var user = this.get('model.user');;
+      if(user) {
+        user.set('preferences.home_board', {id: 'none'});
+        user.save();
+      }
+    },
     set_system: function(id) {
       this.set('system', id);
     },

@@ -40,6 +40,20 @@
         </div>
       </div>
       {{#if communicator_new_user}}
+        {{#if model.org.extras_available}}
+          <div class="form-group">
+            <label for="extras" class="col-sm-4 control-label">{{t "Premium Symbols" key='symbols'}}</label>
+            <div class="col-sm-6">
+              <div class="checkbox big_checkbox">
+                <label>
+                  {{input type="checkbox" id='extras' checked=model.user.add_symbols}}
+                  {{t "Grant user premium symbol access" key='grand_premium_symbols'}}
+                  <br/>({{model.org.extras_available_count}} {{t "left" key='left'}})
+                </label>
+              </div>
+            </div>
+          </div>
+        {{/if}}
         {{#if board_options}}
           <div class="form-group">
             <label for="home_board" class="col-sm-4 control-label">{{t "Home Board" key='home_board'}}</label>
@@ -47,6 +61,21 @@
               {{bound-select select_class="form-control" select_id="home_board" content=board_options selection=model.user.home_board_template action=(action (mut model.user.home_board_template)) }}
             </div>
           </div>
+          {{#if board_will_copy}}
+            <div class="form-group">
+              <label for="symbols" class="col-sm-4 control-label">{{t "Preferred Symbols" key='preferred_symbols'}}</label>
+              <div class="col-sm-6">
+                {{bound-select select_class="form-control" select_id="preferred_symbols" content=symbols_list selection=model.user.preferences.preferred_symbols action=(action (mut model.user.preferences.preferred_symbols)) }}
+                {{#if premium_symbol_library}}
+                  {{#unless model.user.add_symbols}}
+                    <div class='text-danger' style='margin-left: 10px;'>
+                      {{t "(will not apply without premium symbols access)" key='wont_apply_without_premium_symbols'}}            
+                    </div>
+                  {{/unless}}
+                {{/if}}
+              </div>
+            </div>
+          {{/if}}
         {{/if}}
       {{else if third_party_new_user}}
         <div class="form-group">

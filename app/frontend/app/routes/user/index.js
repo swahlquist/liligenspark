@@ -11,6 +11,7 @@ export default Route.extend({
     return model;
   },
   setupController: function(controller, model) {
+    if(model) { model.reload(); }
     controller.set('model', model);
     controller.set('extras', coughDropExtras);
     controller.set('parent_object', null);

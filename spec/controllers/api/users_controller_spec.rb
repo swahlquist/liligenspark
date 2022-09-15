@@ -34,6 +34,26 @@ describe Api::UsersController, :type => :controller do
       expect(json['user']['user_token']).to eq(nil)
     end
 
+    it "should allow org managers to look up basic info on pending users" do
+      token_user
+      u = User.create
+      o = Organization.create(:settings => {'total_licenses' => 1})
+      o.add_manager(@user.user_name, true)
+      o.add_user(u.user_name, true, false)
+      u.reload
+      @user.reload
+      expect(Organization.manager_for?(@user, u, true)).to eq(false)
+
+      perms = u.reload.permissions_for(@user.reload)
+      expect(perms['edit']).to eq(nil)
+      expect(perms['supervise']).to eq(nil)
+      expect(perms['model']).to eq(nil)
+      get :show,  params: {:id => u.user_name}
+      json = assert_success_json
+      expect(json['user']['id']).to eq(u.global_id)
+      expect(json['user']['user_name']).to eq(u.user_name)
+    end
+
     it "should return a valid object" do
       u = User.create
       get :show, params: {:id => u.global_id}

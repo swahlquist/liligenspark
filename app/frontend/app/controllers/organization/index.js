@@ -7,6 +7,7 @@ import i18n from '../../utils/i18n';
 import { set as emberSet, get as emberGet } from '@ember/object';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import CoughDrop from '../../app';
 
 export default Controller.extend({
   refresh_lists: function() {
@@ -318,6 +319,9 @@ export default Controller.extend({
         user_name = this.get('user_user_name');
         modal.open('modals/confirm-org-action', {action: 'add_home', org: _this.get('model'), user_name: user_name}).then(function(res) {
           if(res && res.home) {
+            if(res.extras) {
+              action = action + "-plus_extras";
+            }
             _this.send('management_action', action, user_name, true, res.home, res.symbols);
           }
         });
@@ -335,7 +339,9 @@ export default Controller.extend({
           cleanup = function() { _this.set('supervisor_user_name', ''); };
         } else if(action == 'add_user' || action == 'add_unsponsored_user') {
           user_name = this.get('user_user_name');
-          cleanup = function() { _this.set('user_user_name', ''); };
+          cleanup = function() { 
+            _this.set('user_user_name', ''); 
+          };
         } else if(action == 'add_eval') {
           user_name = this.get('eval_user_name');
           cleanup = function() { _this.set('eval_user_name', ''); };
@@ -357,6 +363,9 @@ export default Controller.extend({
         }
         if(action.match(/user/)) {
           _this.refresh_users();
+          if(action.match(/plus_extras/)) {
+            _this.refresh_extras();
+          }
         } else if(action.match(/eval/)) {
           _this.refresh_evals();
         } else if(action.match(/extra/)) {
@@ -365,6 +374,25 @@ export default Controller.extend({
           _this.refresh_managers();
         } else if(action.match(/supervisor/)) {
           _this.refresh_supervisors();
+        }
+        if(action.match(/add_.*user/)) {
+          CoughDrop.store.findRecord('user', user_name).then(function(user) {
+            user.reload().then(function(user) {
+              var opts = {};
+              if(user.get('permissions.edit')) {
+                opts = {
+                  timeout: 5000, 
+                  action: {
+                    text: i18n.t('run_setup', "Run Setup Wizard"), 
+                    callback: function() {
+                      _this.transitionToRoute('setup', {queryParams: {user_id: user.get('id')}});
+                    }
+                  }
+                };
+              }
+              modal.success(i18n.t('user_added', "User \"%{un}\" added!", {un: user_name}), false, false, opts);
+            });
+          });
         }
         cleanup();
       }, function(err) {
