@@ -181,7 +181,7 @@ class Board < ActiveRecord::Base
       self.settings['home_forks'] = child_conns.where(home: true).count
       self.settings['recent_forks'] = child_conns.where(['updated_at > ?', 30.days.ago]).count
       self.settings['recent_home_forks']  = child_conns.where(home: true).where(['updated_at > ?', 30.days.ago]).count
-      self.settings['non_author_uses'] += conns.where(['user_id != ?', self.user_id]).count
+      self.settings['non_author_uses'] += child_conns.where(['user_id != ?', self.user_id]).count
       child_conns.where('locale IS NULL').each do |ubc|
         if !ubc.locale && ubc.board && ubc.board.settings
           UserBoardConnection.where(id: ubc.id).update_all(locale: ubc.board.settings['locale'])

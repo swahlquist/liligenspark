@@ -9,8 +9,8 @@ export default modal.ModalController.extend({
   opening: function() {
     var user = CoughDrop.store.createRecord('user', {
       preferences: {
-        registration_type: 'manually-added-org-user'
-        
+        registration_type: 'manually-added-org-user',
+        preferred_symbols: this.get('model.org.preferred_symbols') || 'original'
       },
       authored_organization_id: this.get('model.organization_id'),
       org_management_action: 'add_manager'
