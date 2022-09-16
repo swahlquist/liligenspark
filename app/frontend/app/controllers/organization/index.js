@@ -381,7 +381,7 @@ export default Controller.extend({
               var opts = {};
               if(user.get('permissions.edit')) {
                 opts = {
-                  timeout: 5000, 
+                  timeout: 15000, 
                   action: {
                     text: i18n.t('run_setup', "Run Setup Wizard"), 
                     callback: function() {

@@ -2052,6 +2052,29 @@ var editManager = EmberObject.extend({
           }, function() {
             reject(i18n.t('re_linking_failed', "Board re-linking failed unexpectedly"));
           });
+        } else if((decision == 'remove_links' || decision == 'keep_links') && swap_library && swap_library != 'original') {
+          persistence.ajax('/api/v1/boards/' + board.get('id') + '/swap_images', {
+            type: 'POST',
+            data: {
+              library: swap_library,
+              board_ids_to_convert: [board.get('id')]
+            }
+          }).then(function(res) {
+            progress_tracker.track(res.progress, function(event) {
+              if(event.status == 'errored') {
+                reject(i18n.t('swap_imaged_failed2', "Swapping images for new board failed unexpectedly"));
+              } else if(event.status == 'finished') {
+                board.reload(true).then(function() {
+                  app_state.set('board_reload_key', Math.random() + "-" + (new Date()).getTime());
+                  done_callback();
+                }, function() {
+                  done_callback();
+                });
+              }
+            });
+          }, function(res) {
+            reject(i18n.t('swap_imaged_failed', "Swapping images for new board failed"));
+          });
         } else {
           done_callback();
         }
