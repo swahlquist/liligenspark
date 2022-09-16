@@ -78,6 +78,8 @@ export default modal.ModalController.extend({
               }
             });
           });
+        } else if(_this.get('model.symbol_library') && _this.get('model.symbol_library') != 'original') {
+          return board.reload(true)
         } else {
           return RSVP.resolve();
         }

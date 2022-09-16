@@ -8,6 +8,7 @@ import { computed } from '@ember/object';
 export default Component.extend({
   willInsertElement: function() {
     this.set('include_canvas', window.outerWidth > 800);
+    this.set('app_state', app_state);
     this.set('model', {loading: true});
     var _this = this;
     if(_this.get('key')) {
@@ -46,6 +47,30 @@ export default Component.extend({
     visit: function() {
       app_state.set('referenced_board', {id: this.get('model.id'), key: this.get('model.key'), locale: this.get('locale')});
       app_state.controller.transitionToRoute('board', this.get('model.key'));
+    },
+    copy: function() {
+      var oldBoard = this.get('model');
+      modal.close_board_preview();
+      modal.open('copy-board', {board: oldBoard, for_editing: false}).then(function(decision) {
+        decision = decision || {};
+        decision.user = decision.user || app_state.get('currentUser');
+        decision.action = decision.action || "nothing";
+        oldBoard.set('copy_name', decision.board_name);
+        oldBoard.set('copy_prefix', decision.board_prefix);
+        return modal.open('copying-board', {
+          board: oldBoard, 
+          action: decision.action, 
+          user: decision.user, 
+          shares: decision.shares, 
+          symbol_library: decision.symbol_library,
+          make_public: decision.make_public, 
+          default_locale: decision.default_locale, 
+          translate_locale: decision.translate_locale,
+          disconnect: decision.disconnect,
+          new_owner: decision.new_owner
+        });
+      });
+
     }
   }
 });

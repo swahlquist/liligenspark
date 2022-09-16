@@ -277,7 +277,7 @@ var modal = EmberObject.extend({
     if(modal.component) {
       modal.component.set('auto_close', false);      
     }
-},
+  },
   close_board_preview: function() {
     if(modal.route) {
       modal.route.disconnectOutlet({

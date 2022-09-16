@@ -21,6 +21,11 @@
         {{t "Board Actions" key='board_actions'}}
       </button>
     {{/if}}
+    {{#if app_state.currentUser.supervisees}}
+      <button class='btn btn-default' style='width: 100%; margin-top: 2px;' {{action 'copy'}}>
+        {{t "Copy For..." key='copy_for_ellipses'}}
+      </button>
+    {{/if}}
     {{#if model.loading}}
       {{t "Loading board..." key='loading_board'}}
     {{else if model.error}}
