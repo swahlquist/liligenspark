@@ -10,7 +10,7 @@
     {{else}}
       <p style='margin-top: 10px;'>{{t "button" count=empty key='n_buttons'}} {{t "available" key='available'}}</p>
     {{/if}}
-    {{#if app_state.currentUser.supervisees}}
+    {{#if has_supervisees}}
       <div class='row' style='margin-bottom: 5px;'>
         <div class='col-sm-3'>
           <label for='for_user_id' style='margin-top: 5px;'>

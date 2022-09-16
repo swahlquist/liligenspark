@@ -11,7 +11,7 @@ import { computed } from '@ember/object';
 export default modal.ModalController.extend({
   opening: function() {
     var supervisees = [];
-    this.set('has_supervisees', app_state.get('sessionUser.supervisees.length') > 0);
+    this.set('has_supervisees', app_state.get('sessionUser.supervisees.length') > 0 || app_state.get('sessionUser.managed_orgs.length') > 0);
     this.set('loading', false);
     this.set('error', false);
     this.set('app_state', app_state);

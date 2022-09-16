@@ -11,7 +11,7 @@ export default modal.ModalController.extend({
     if(this.get('model.modeling') == 'ask') {
       this.set('model.keep_as_self', true);
     }
-    this.set('has_supervisees', app_state.get('sessionUser.supervisees.length') > 0);
+    this.set('has_supervisees', app_state.get('sessionUser.supervisees.length') > 0 || app_state.get('sessionUser.managed_orgs.length') > 0);
     this.set('currently_selected_id', null);
   },
   self_currently_selected: computed('app_state.currentUser.id', function() {

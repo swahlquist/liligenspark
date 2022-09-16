@@ -42,8 +42,8 @@ export default modal.ModalController.extend({
     }
     this.set('model.known_supervisees', supervisees);
   },
-  has_supervisees: computed('model.known_supervisees', 'model.managed_orgs', function() {
-    return this.get('model.known_supervisees.length') > 0 || this.get('model.managed_orgs.length') > 0;
+  has_supervisees: computed('model.known_supervisees', 'app_state.sessionUser.managed_orgs', function() {
+    return this.get('model.known_supervisees.length') > 0 || this.get('app_state.sessionUser.managed_orgs.length') > 0;
   }),
   linked: computed('model.board.buttons', function() {
     return (this.get('model.board.linked_boards') || []).length > 0;

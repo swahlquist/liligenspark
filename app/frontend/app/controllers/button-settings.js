@@ -108,8 +108,7 @@ export default modal.ModalController.extend({
     }
     this.set('model.image_field', this.get('model.label'));
 
-    var supervisees = [];
-    this.set('has_supervisees', app_state.get('sessionUser.supervisees.length') > 0);
+    this.set('has_supervisees', app_state.get('sessionUser.supervisees.length') > 0 || app_state.get('sessionUser.managed_orgs.length') > 0);
     var _this = this;
     _this.set('premium_symbols', app_state.get('currentUser.subscription.extras_enabled'));
     (app_state.get('currentUser.supervisees') || []).forEach(function(sup) {

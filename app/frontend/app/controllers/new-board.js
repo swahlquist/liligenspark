@@ -49,7 +49,7 @@ export default modal.ModalController.extend({
     });
     this.set('board_categories', res);
 
-    this.set('has_supervisees', app_state.get('sessionUser.supervisees.length') > 0);
+    this.set('has_supervisees', app_state.get('sessionUser.supervisees.length') > 0 || app_state.get('sessionUser.managed_orgs.length') > 0);
   },
   locales: computed(function() {
     var list = i18n.get('locales');

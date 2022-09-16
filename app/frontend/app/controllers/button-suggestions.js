@@ -8,7 +8,7 @@ import editManager from '../utils/edit_manager';
 import contentGrabbers from '../utils/content_grabbers';
 import i18n from '../utils/i18n';
 import Utils from '../utils/misc';
-import { observer } from '@ember/object';
+import { observer, computed } from '@ember/object';
 import CoughDrop from '../app';
 
 export default modal.ModalController.extend({
@@ -82,6 +82,9 @@ export default modal.ModalController.extend({
     }
     return found;
   },
+  has_supervisees: computed('app_state.currentUser.supervisees', 'app_state.currentUser.managed_orgs', function() {
+    return app_state.get('currentUser.supervisees.length') > 0 || app_state.get('currentUser.managed_orgs.length') > 0;
+  }),
   update_user: observer('for_user_id', 'user', function() {
     var _this = this;
     _this.set('premium_ideas', false);

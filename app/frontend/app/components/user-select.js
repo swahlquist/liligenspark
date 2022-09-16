@@ -36,7 +36,7 @@ export default Component.extend({
           }, function(err) { });
         }
       });
-      if(supervisees.length > 0) {
+      if(supervisees.length > 0 || _this.get('has_extra_users')) {
         supervisees.unshift({
           name: i18n.t('me', "me"),
           id: 'self',
@@ -60,8 +60,6 @@ export default Component.extend({
   users_with_extras: computed('users', 'extra_users', 'extra_users.loading', 'extra_users.error', 'extra_users.length', function() {
     var _this = this;
     var res = [].concat(this.get('users') || []);
-    console.log("EU", this.get('extra_users'));
-    debugger
     if(this.get('extra_users.loading')) {
       res.push({
         name: i18n.t('loading_more_users', "Loading More Users..."),
@@ -136,7 +134,7 @@ export default Component.extend({
         }
       });
       if(found) {
-        // TODO: user-select needs to handle when set id is from the extras list
+        // NOTE: user-select needs to handle when set id is from the extras list
         this.sendAction('action', id);
       }
     },
