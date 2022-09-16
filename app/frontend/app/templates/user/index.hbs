@@ -222,6 +222,9 @@
                   <!-- allow supervisors to run setup for a supervisee -->
                   <li><a href="#" {{action 'setup'}}>{{t "Getting Started Wizard" key='getting_started_wizard'}}</a></li>
                 {{/if}}
+                {{#if model.permissions.support_actions}}
+                  <li><a href="#" {{action 'masquerade'}}>{{t "Masquerade as User" key='masquerade_as_user'}}</a></li>
+                {{/if}}
               </ul>
             </div>
           </div>

@@ -19,6 +19,7 @@ export default modal.ModalController.extend({
     this.set('external_vocab', null);
     this.set('external_vocab_size', null);
     this.set('external_access_method', null);
+
     this.set('linking', false);
     this.set('error', null);
     user.set('watch_user_name_and_cookies', true);

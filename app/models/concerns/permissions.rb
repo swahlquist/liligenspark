@@ -19,7 +19,7 @@ module Permissions
     end
   end
 
-  def self.setex(redis, key, timeout, value, requied=false)
+  def self.setex(redis, key, timeout, value, required=false)
     return false if ENV['STOP_CACHING']
     begin
       redis.setex(key, timeout, value)

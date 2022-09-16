@@ -87,6 +87,23 @@ class ApplicationController < ActionController::Base
           @linked_user.permission_scopes = @api_user.permission_scopes
           @api_user = @linked_user
           PaperTrail.request.whodunnit = "user:#{@true_user.global_id}:as:#{@api_user.global_id}"
+        elsif @linked_user
+          masq_key = "masq/#{@api_user.global_id}/#{@api_user.updated_at.to_i}/#{@linked_user.global_id}/#{@linked_user.updated_at.to_i}"
+          masq_ok = RedisInit.default.get(masq_key)
+          if masq_ok != 'true'
+            managed_ids = Organization.attached_orgs(@api_user).select{|o| o['type'] == 'manager' && o['full_manager'] }.map{|o| o['id'] }
+            attached_ids = Organization.attached_orgs(@linked_user).select{|o| ['user', 'supervisor'].include?(o['type']) && !o['pending'] }.map{|o| o['id'] }
+            masq_ok = ((managed_ids & attached_ids).length > 0) && 'store'
+          end
+          if masq_ok
+            Permissions.setex(RedisInit.default, masq_key, 30.minutes.to_i, 'true') if masq_ok == 'store'
+            @true_user = @api_user
+            @linked_user.permission_scopes = @api_user.permission_scopes
+            @api_user = @linked_user
+            PaperTrail.request.whodunnit = "user:#{@true_user.global_id}:as:#{@api_user.global_id}"
+          else
+            api_error 400, {error: "Invalid masquerade attempt", token: token, user_id: as_user}
+          end
         else
           api_error 400, {error: "Invalid masquerade attempt", token: token, user_id: as_user}
         end

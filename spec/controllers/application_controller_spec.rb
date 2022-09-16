@@ -79,6 +79,71 @@ describe ApplicationController, :type => :controller do
       expect(response).to be_successful
     end
 
+    it "should allow masquerading as a user if a global manager" do
+      o = Organization.create(:admin => true)
+      u = User.create
+      u2 = User.create
+      o.add_manager(u.user_name, true)
+      d = Device.create(:user => u)
+      request.headers['Authorization'] = "Bearer #{d.tokens[0]}"
+      get :index, params: {:check_token => true, :as_user_id => u2.global_id}
+      expect(assigns[:api_device_id]).to eq(d.global_id)
+      expect(assigns[:api_user]).to eq(u2)
+      expect(assigns[:true_user]).to eq(u)
+      expect(response).to be_successful
+    end
+
+    it "should allow an org manager to masquerade as users in their org" do
+      o = Organization.create()
+      u = User.create
+      u2 = User.create
+      o.add_manager(u.user_name, true)
+      o.add_user(u2.user_name, false, false)
+      d = Device.create(:user => u)
+      request.headers['Authorization'] = "Bearer #{d.tokens[0]}"
+      get :index, params: {:check_token => true, :as_user_id => u2.global_id}
+      expect(response).to be_successful
+      expect(assigns[:api_device_id]).to eq(d.global_id)
+      expect(assigns[:api_user]).to eq(u2)
+      expect(assigns[:true_user]).to eq(u)
+    end
+
+    it "should not allow an org manager to masquerade as users not in their org" do
+      o = Organization.create()
+      u = User.create
+      u2 = User.create
+      o.add_manager(u.user_name, true)
+      d = Device.create(:user => u)
+      request.headers['Authorization'] = "Bearer #{d.tokens[0]}"
+      get :index, params: {:check_token => true, :as_user_id => u2.global_id}
+      assert_error("Invalid masquerade attempt")
+    end
+
+    it "should not allow an org manager to masquerade as pending users in their org" do
+      o = Organization.create()
+      u = User.create
+      u2 = User.create
+      o.add_manager(u.user_name, true)
+      o.add_user(u2.user_name, true, false)
+      d = Device.create(:user => u)
+      request.headers['Authorization'] = "Bearer #{d.tokens[0]}"
+      get :index, params: {:check_token => true, :as_user_id => u2.global_id}
+      assert_error("Invalid masquerade attempt")
+    end
+
+    it "should not allow an org manager to masquerade as users not in their org via cache lookup" do
+      u = User.create
+      u2 = User.create
+      RedisInit.default.setex("masq/#{u.global_id}/#{u.updated_at.to_i}/#{u2.global_id}/#{u2.updated_at.to_i}", 5.minutes.to_i, "true")
+      d = Device.create(:user => u)
+      request.headers['Authorization'] = "Bearer #{d.tokens[0]}"
+      get :index, params: {:check_token => true, :as_user_id => u2.global_id}
+      expect(response).to be_successful
+      expect(assigns[:api_device_id]).to eq(d.global_id)
+      expect(assigns[:api_user]).to eq(u2)
+      expect(assigns[:true_user]).to eq(u)
+    end
+
     it "should allow tmp_token for specific routes" do
       u = User.create
       d = Device.create(:user => u)

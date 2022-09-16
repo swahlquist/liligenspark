@@ -12,6 +12,7 @@ import Subscription from '../../utils/subscription';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
 import { htmlSafe } from '@ember/string';
+import session from '../../utils/session';
 
 export default Controller.extend({
   title: computed('model.user_name', function() {
@@ -482,6 +483,12 @@ export default Controller.extend({
     },
     view_devices: function() {
       modal.open('device-settings', this.get('model'));
+    },
+    masquerade: function() {
+      var user_id = this.get('model.id');
+      if(this.get('model.permissions.support_actions')) {
+        modal.open('modals/masquerade', {user: this.get('model')});
+      }
     },
     run_eval: function() {
       var _this = this;
