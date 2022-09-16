@@ -185,7 +185,6 @@ module JsonApi::User
       if supervisees.length > 0
         json['premium_voices']['claimed'] ||= []
         # Supervisors can download voices activated by supervisees
-        # TODO: Limit usage of supervisee-activated voices?
         supervisees.each do |sup|
           json['premium_voices']['claimed'] = json['premium_voices']['claimed'] | ((sup.settings['premium_voices'] || {})['claimed'] || [])
         end

@@ -268,20 +268,26 @@ class User < ActiveRecord::Base
     voices = {}.merge(self.settings['premium_voices'] || {})
     voices['claimed'] ||= self.default_premium_voices['claimed']
     voices['allowed'] ||= self.default_premium_voices['allowed']
+    
+    claimed_by_supervisee = user.supervisees.detect do |sup|
+      ((sup.settings['premium_voices'] || {})['claimed'] || []).include?(voice_id)
+    end
 
     is_admin = Organization.admin_manager?(self)
     new_voice = !voices['claimed'].include?(voice_id)
-    voices['claimed'] = voices['claimed'] | [voice_id]
+    if !claimed_by_supervisee
+      voices['claimed'] = voices['claimed'] | [voice_id]
+    end
     if is_admin
-      voices['allowed'] = voices['claimed'].length + 1
+      voices['allowed'] = [voices['allowed'] || 0, voices['claimed'].length + 1].max
     end
     if voices['claimed'].length > voices['allowed']
       return false
     else
       self.settings['premium_voices'] = voices
       self.save
-      if new_voice && !is_admin
-        # Log voice claims for payment, unless an admin user
+      if new_voice && !is_admin && !claimed_by_supervisee
+        # Log voice claims for payment, unless an admin user or supervisor
         data = {
           :user_id => self.global_id,
           :user_name => self.user_name,
