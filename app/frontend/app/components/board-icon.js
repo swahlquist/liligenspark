@@ -66,6 +66,9 @@ export default Component.extend({
     if(this.get('children')) {
       res = res + ' folder';
     }
+    if(this.get('noop')) {
+      res = res + ' unlinked';
+    }
 
     return htmlSafe(res);
   }),
@@ -89,7 +92,9 @@ export default Component.extend({
     },
     pick_board: function(board) {
       var _this = this;
-      if(_this.get('action_override')) {
+      if(_this.get('noop')) {
+
+      } else if(_this.get('action_override')) {
         _this.sendAction('action_override', this.get('board_record.key'));
       } else if(this.get('children')) {
         _this.sendAction('action', this.get('board'));

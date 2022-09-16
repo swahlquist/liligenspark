@@ -3206,6 +3206,9 @@ $nav_extras: #eee;
       border-color: #aaa #eee;
     }
   }
+  &.unlinked {
+    cursor: default;
+  }
 }
 .big_buttons {
   .big_button_holder {

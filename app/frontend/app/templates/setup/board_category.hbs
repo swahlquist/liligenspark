@@ -19,6 +19,17 @@
       <p>{{t "Nervous you'll pick the wrong board? Don't fret! You can easily change things later." key='easy_to_change_later'}}</p>
     </div>
     {{board-picker include_mine=advanced_mine}}
+  {{else if already_have_board}}
+    <div class='col-sm-6 col-sm-offset-3' style='margin-top: 10px;'>
+      <p>{{t "Next we'd be happy to help you set up a home board. It looks like you've already got one selected, so you can skip this step unless you'd like to set up a different home board" key='already_home_board'}}</p>
+    </div>
+    <div class='col-sm-2 col-sm-offset-5' style='margin-top: 10px;'>
+      {{board-icon noinfo=true noop=true board=app_state.currentUser.preferences.home_board localized=true}}
+    </div>
+    <div class='col-sm-6 col-sm-offset-3' style='margin-top: 10px; text-align: center;'>
+      <button class='btn btn-default' {{action 'find_new_board'}}>{{t "Pick a Different Home Board" key='pick_a_different_home_board'}}</button>
+    </div>
+
   {{else}}
     {{board-selection-tool load_error='show_advanced' mine='show_mine' advanced='show_advanced' select='select_board' update_scroll=(action 'update_scroll')}}
   {{/if}}

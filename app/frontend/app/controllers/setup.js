@@ -448,7 +448,7 @@ export default Controller.extend({
   for_self: computed('app_state.currentUser.id', 'setup_user.id', function() {
     return this.get('setup_user') && this.get('setup_user.id') == app_state.get('currentUser.id');
   }),
-  update_on_page_change: observer('page', 'user_id', function() {
+  update_on_page_change: observer('page', 'user_id', 'app_state.currentUser', function() {
     var _this = this;
     if(!_this.get('fake_user')) {
       _this.set('fake_user', EmberObject.create({
@@ -539,7 +539,16 @@ export default Controller.extend({
       }
     });
   },
+  already_have_board: computed('setup_user.preferences.home_board', 'do_find_board', function() {
+    return this.get('setup_user.preferences.home_board') && !this.get('do_find_board');
+  }),
   actions: {
+    noop: function() {
+
+    },
+    find_new_board: function() {
+      this.set('do_find_board', true);
+    },
     set_preference: function(preference, value) {
       var user = this.get('setup_user') || this.get('fake_user');
       if(preference == 'access') {
