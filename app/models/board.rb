@@ -1691,7 +1691,9 @@ class Board < ActiveRecord::Base
           if ['arasaac', 'twemoji', 'noun-project', 'sclera', 'mulberry', 'tawasol'].include?(lib)
             votes['opensymbols'] = (votes['opensymbols'] || 0) + 1
           end            
-          votes[lib] = (votes[lib] || 0) + 1
+          if lib != 'unknown'
+            votes[lib] = (votes[lib] || 0) + 1
+          end
         end
         sorted = votes.to_a.sort_by{|a, b| b}
         if sorted[-1]

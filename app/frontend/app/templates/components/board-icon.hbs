@@ -13,6 +13,11 @@
       {{/if}}
     </a>
   {{/unless}}
+  {{#if flag_home }}
+    {{#if board_record.home_board}}
+      <div style='position: absolute; top: 0; left: 5px; color: #888;'><span class='glyphicon glyphicon-home'></span></div>
+    {{/if}}
+  {{/if}}
   {{#if override_count}}
     <img src={{board_record.style.image_url}} onerror="button_broken_image(this);"/>
   {{else}}
