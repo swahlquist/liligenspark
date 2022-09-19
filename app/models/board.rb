@@ -752,6 +752,7 @@ class Board < ActiveRecord::Base
       self.schedule(:restore_urls)
     end
     schedule(:update_affected_users, @brand_new) if content_changed
+    schedule(:current_library, true) if content_changed
 
     schedule_downstream_checks(Board.last_scheduled_stamp)
   end
@@ -1664,6 +1665,52 @@ class Board < ActiveRecord::Base
     end
     self.schedule_update_available_boards('all') if self.id
     {done: true, privacy_level: privacy_level, board_ids: board_ids, visited: visited_board_ids.uniq, updated: updated_board_ids.uniq}
+  end
+
+  def current_library(frd=nil)
+    if self.settings && self.settings['swapped_library']
+      return self.settings['swapped_library']
+    else
+      return self.settings['common_library'] if self.settings['common_library'] && frd == false
+      if frd
+        votes = {}
+        res = 'opensymbols'
+        self.known_button_images.each do |bi|
+          lib = 'unknown'
+          if bi.settings['license'] && bi.settings['license']['uneditable'] && bi.settings['license']['author_name'] && bi.settings['license']['author_url']
+            lib = 'arasaac' if bi.settings['license']['author_url'].match(/arasaac/i)
+            lib = 'twemoji' if bi.settings['license']['author_name'].match(/twitter/i)
+            lib = 'mulberry' if bi.settings['license']['author_name'].match(/paxtoncrafts/i)
+            lib = 'noun-project' if bi.settings['license']['author_url'].match(/thenounproject/i)
+            lib = 'sclera' if bi.settings['license']['author_name'].match(/sclera/i)
+            lib = 'tawasol' if bi.settings['license']['author_name'].match(/mada/i)
+            lib = 'symbolstix' if bi.settings['license']['author_name'].match(/news2you/i)
+            lib = 'pcs' if bi.settings['license']['author_name'].match(/tobii/i)
+            lib = 'lessonpix' if bi.settings['license']['author_name'].match(/lessonpix/i)
+          end
+          if ['arasaac', 'twemoji', 'noun-project', 'sclera', 'mulberry', 'tawasol'].include?(lib)
+            votes['opensymbols'] = (votes['opensymbols'] || 0) + 1
+          end            
+          votes[lib] = (votes[lib] || 0) + 1
+        end
+        sorted = votes.to_a.sort_by{|a, b| b}
+        if sorted[-1]
+          res = sorted[-1][0]
+          if res == 'opensymbols' && sorted[-2]
+            if sorted[-2][1] > (sorted[-1][1] / 3) && ['arasaac', 'tawasol', 'twemoji', 'mulberry', 'noun-project'].include?(sorted[-1][0])
+              # TODO: way to prefer one library over others when searching opensymbols
+              #       then we can track more fine-grained here and show in search results
+              # res = sorted[-2][0]
+            end
+          end
+        end
+        self.settings['common_library'] = res
+        self.save
+      else
+        self.schedule(:current_library, true)
+      end
+    end
+    'opensymbols'
   end
   
   def swap_images(library, author, board_ids, user_local_id=nil, visited_board_ids=[], updated_board_ids=[])

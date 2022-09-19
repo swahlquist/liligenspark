@@ -68,7 +68,7 @@ class ContactMessage < ActiveRecord::Base
     body += "locale: #{self.settings['locale']}" + '<br/>' if self.settings['locale']
     body += (self.settings['ip_address'] ? "ip address: #{self.settings['ip_address']}" : 'no IP address found') + '<br/>'
     body += (self.settings['version'] ? "app version: #{self.settings['version']}" : 'no app version found') + '<br/>'
-    body += (self.settings['user_agent'] ? "browser: #{self.settings['user_agent']}" : 'no user agent found') + "</span><br/>"
+    body += (self.settings['user_agent'] ? "browser: #{self.settings['user_agent']}" : 'no user agent found') + "</span>"
     basic_auth = "#{ENV['ZENDESK_USER']}/token:#{ENV['ZENDESK_TOKEN']}"
     endpoint = "https://#{ENV['ZENDESK_DOMAIN']}/api/v2/tickets.json"
 
@@ -98,7 +98,7 @@ class ContactMessage < ActiveRecord::Base
       end
     end
     if org_list.length > 0
-      body += org_list.join(', ')
+      body += "<br/>" + org_list.join(', ')
     end
 
     json = {

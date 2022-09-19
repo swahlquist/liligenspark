@@ -1854,6 +1854,13 @@ var editManager = EmberObject.extend({
   },
   lucky_symbols: function(ids) {
     var _this = this;
+    var board = _this.controller.get('model');
+    var library = (app_state.get('currentUser') && app_state.get('currentUser').preferred_symbol_library(board)) || 'opensymbols';
+    var now = (new Date()).getTime();
+    var lookup = parseInt(stashes.get('last_image_library_at') || 0, 10);
+    if(lookup > (now - (15 * 60 * 1000) && !(stashes.get('last_image_library') || "").match(/required/))) {
+      library = stashes.get('last_image_library');
+    }
     ids.forEach(function(id) {
       var board_id = _this.controller.get('model.id');
       var button = _this.find_button(id);
@@ -1866,7 +1873,7 @@ var editManager = EmberObject.extend({
           button.check_for_parts_of_speech();
         }
         var locale = _this.controller.get('model.locale') || 'en';
-        contentGrabbers.pictureGrabber.picture_search(stashes.get('last_image_library'), button.label, _this.controller.get('model.user_name'), locale, true, true, null).then(function(data) {
+        contentGrabbers.pictureGrabber.picture_search(library, button.label, _this.controller.get('model.user_name'), locale, true, true, null).then(function(data) {
           button = _this.find_button(id);
           var image = data[0];
           if(image && button && button.label && (!button.image || force_refresh)) {

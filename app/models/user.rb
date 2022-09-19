@@ -269,7 +269,7 @@ class User < ActiveRecord::Base
     voices['claimed'] ||= self.default_premium_voices['claimed']
     voices['allowed'] ||= self.default_premium_voices['allowed']
     
-    claimed_by_supervisee = user.supervisees.detect do |sup|
+    claimed_by_supervisee = self.supervisees.detect do |sup|
       ((sup.settings['premium_voices'] || {})['claimed'] || []).include?(voice_id)
     end
 

@@ -374,7 +374,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
               end
               local_board_id = root_board.id
               board_key = root_board.key || user.settings['preferences']['home_board']['key']
-              home_boards[board_key] = (home_boards[board_key] || []) + [user.global_id] if root_board && root_board.public
+              home_boards[board_key] = (home_boards[board_key] || []) + [user.global_id] if root_board && root_board.fully_listed?
               board_user_ids[local_board_id] ||= []
               board_user_ids[local_board_id] << user.global_id
             end

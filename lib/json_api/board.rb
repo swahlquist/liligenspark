@@ -62,6 +62,7 @@ module JsonApi::Board
     json['unlinked_buttons'] = board.settings['unlinked_buttons']
     json['downstream_boards'] = (board.settings['downstream_board_ids'] || []).length
     json['immediately_upstream_boards'] = (board.settings['immediately_upstream_board_ids'] || []).length
+    json['current_library'] = board.current_library(false)
     json['user_name'] = board.cached_user_name
     self.trace_execution_scoped(['json/board/parent_board']) do
       parent_board = nil

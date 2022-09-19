@@ -90,6 +90,8 @@ var stashes = EmberObject.extend({
       'logging_paused_at': null,
       'last_stream_id': null,
       'last_sync_status': null,
+      'last_image_library': null,
+      'last_image_library_at': null,
       'protected_user': false,
       'allow_local_filesystem_request': true,
       'display_lang': null,

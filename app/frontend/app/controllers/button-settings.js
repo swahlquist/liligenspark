@@ -101,10 +101,13 @@ export default modal.ModalController.extend({
       fallback = 'current_user';
     }
     this.set('board_search_type', stashes.get('last_board_search_type') || fallback);
-    if(!(stashes.get('last_image_library') || "").match(/required/)) {
+    var unstashed_library = (app_state.get('currentUser') && app_state.get('currentUser').preferred_symbol_library(this.get('board'))) || 'opensymbols';
+    var now = (new Date()).getTime();
+    var lookup = parseInt(stashes.get('last_image_library_at') || 0, 10);
+    if(lookup > (now - (15 * 60 * 1000) && !(stashes.get('last_image_library') || "").match(/required/))) {
       this.set('image_library', stashes.get('last_image_library'));
     } else if(app_state.get('currentUser.preferences.preferred_symbols')) {
-      this.set('image_library', app_state.get('currentUser.preferences.preferred_symbols'));
+      this.set('image_library', unstashed_library);
     }
     this.set('model.image_field', this.get('model.label'));
 
@@ -897,7 +900,13 @@ export default modal.ModalController.extend({
         this.set('model.image_field', this.get('model.label'));
         text = this.get('model.label');
       }
-      stashes.persist('last_image_library', this.get('image_library'));
+      if(this.get('image_library') == app_state.get('currentUser').preferred_symbol_library(this.get('board'))) {
+        stashes.persist('last_image_library', null);
+        stashes.persist('last_image_library_at', null);  
+      } else {
+        stashes.persist('last_image_library', this.get('image_library'));
+        stashes.persist('last_image_library_at', (new Date()).getTime());  
+      }
       var locale = this.get('search_locale') || this.get('board.locale') || 'en';
       contentGrabbers.pictureGrabber.find_picture(text, this.get('board.user_name'), locale);
     },

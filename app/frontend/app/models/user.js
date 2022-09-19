@@ -481,6 +481,29 @@ CoughDrop.User = DS.Model.extend({
       return this.get('preferences.device.button_text') == 'text_only' || this.get('preferences.device.button_text_position') == 'text_only';
     }
   ),
+  preferred_symbol_library: function(board) {
+    if(board && board.get('user_name')) {
+      if(board.get('user_name') == this.get('user_name')) {
+        // On my boards, default to my preferred symbols
+        return this.get('preferences.preferred_symbols') || 'opensymbols';
+      } else {
+        // On a supervisee's boards, default to their preferred symbols if set
+        var sup = this.get('known_supervisees').find(function(s) { return s.user_name == board.get('user_name'); });
+        var symbols = sup && (emberGet(sup, 'preferred_symbols') || emberGet(sup, 'preferences.preferred_symbols'));
+        if(symbols) {
+          return symbols;
+        }
+      }
+    }
+    if(board.get('current_library')) {
+      // If the board has a proprietary library, use that
+      if(['pcs', 'symbolstix', 'lessonpix'].indexOf(board.get('current_library'))) {
+        return board.get('current_library');
+      }
+    }
+    // Fall back to the user's preferred symbols
+    return this.get('preferences.preferred_symbols') || 'opensymbols';
+  },
   remove_device: function(id) {
     var url = '/api/v1/users/' + this.get('user_name') + '/devices/' + id;
     var _this = this;
