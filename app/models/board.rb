@@ -294,7 +294,7 @@ class Board < ActiveRecord::Base
     self.settings['total_buttons'] = (self.buttons || []).length + (self.settings['total_downstream_buttons'] || 0)
     self.settings['unlinked_buttons'] = (self.buttons || []).select{|btn| !btn['load_board'] }.length + (self.settings['unlinked_downstream_buttons'] || 0)
     if self.id
-      if self.public
+      if self.fully_listed?
         found_locales.each do |locale, nvmd|
           bl = BoardLocale.find_or_create_by(board_id: self.id, locale: locale)
           bl.search_string = self.search_string_for(locale)
