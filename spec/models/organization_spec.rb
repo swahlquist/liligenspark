@@ -2584,16 +2584,16 @@ describe Organization, :type => :model do
       o3.add_manager(u2.user_name, false)
       expect(Organization.attached_orgs(u1).map{|o| o.except('added')}.sort_by{|o| o['id'] }).to eq([
         {
-          'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'status' => 'unchecked', 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name']
+          'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'status' => 'unchecked', 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => []
         }, {
-          'id' => o2.global_id, 'type' => 'supervisor', 'extra_colors' => nil, 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name']
+          'id' => o2.global_id, 'type' => 'supervisor', 'extra_colors' => nil, 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => [], 'home_board_keys' => []
         }, {
-          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => true, "image_url"=>nil, 'name' => o1.settings['name']        
+          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => true, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => [], 'home_board_keys' => []
         }
       ])
       expect(Organization.attached_orgs(u2).map{|o| o.except('added')}).to eq([
         {
-          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => false, "image_url"=>nil, 'name' => o1.settings['name']          
+          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => [], 'home_board_keys' => []     
         }
       ])
     end
@@ -2644,13 +2644,13 @@ describe Organization, :type => :model do
       expect(Organization.attached_orgs(u1.reload).map{|o| o.except('added')}.sort_by{|o| o['id'] }).to eq([
         {
           'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'status' => 'unchecked', 'pending' => false, 'name' => o1.settings['name'],"image_url"=>nil,
-          'external_auth' => true, 'external_auth_connected' => true, 'external_auth_alias' => 'bob@example.com'
+          'external_auth' => true, 'external_auth_connected' => true, 'external_auth_alias' => 'bob@example.com', 'lesson_ids' => []
         }, {
           'id' => o2.global_id, 'type' => 'supervisor', 'extra_colors' => nil, 'pending' => false, 'name' => o1.settings['name'],"image_url"=>nil,
-          'external_auth' => true, 'external_auth_connected' => true, 'external_auth_alias' => 'bob'
+          'external_auth' => true, 'external_auth_connected' => true, 'external_auth_alias' => 'bob', 'lesson_ids' => [], 'home_board_keys' => []
         }, {
           'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => true, 'name' => o1.settings['name'],"image_url"=>nil,
-          'external_auth' => true, 'external_auth_alias' => 'bobby@example.com'
+          'external_auth' => true, 'external_auth_alias' => 'bobby@example.com', 'lesson_ids' => [], 'home_board_keys' => []
         }
       ])
     end
@@ -2674,13 +2674,13 @@ describe Organization, :type => :model do
         {
           'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'status' => 'unchecked', 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'profile' => {
             'profile_id' => 'squinch', 'template_id' => '1_1111', 'frequency' => 1000
-          }
+          }, 'lesson_ids' => []
         }, {
           'id' => o2.global_id, 'type' => 'supervisor', 'extra_colors' => nil, 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'profile' => {
             'profile_id' => 'squib', 'template_id' => '1_22222', 'frequency' => 2000
-          }
+          }, 'lesson_ids' => [], 'home_board_keys' => []
         }, {
-          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => true, "image_url"=>nil, 'name' => o1.settings['name']        
+          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => true, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => [], 'home_board_keys' => []
         }
       ])
     end
