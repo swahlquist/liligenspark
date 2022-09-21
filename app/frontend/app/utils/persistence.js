@@ -3167,7 +3167,7 @@ persistence.DSExtend = {
   //         record.set('id', null);
   //         obj = record._createSnapshot();
   //       }
-        this._super(store, type, obj).then(function(record) {
+        _this._super(store, type, obj).then(function(record) {
           if(obj.record && obj.record.tmp_key) {
             record[type.modelName].tmp_key = obj.record.tmp_key;
           }
@@ -3210,16 +3210,17 @@ persistence.DSExtend = {
     }
   },
   updateRecord: function(store, type, obj) {
+    var _this = this;
     return new RSVP.Promise(function(update_resolve, update_reject) {
       if(persistence.get('online')) {      
         if(obj.id.match(/^tmp[_\/]/)) {
-          this.createRecord(store, type, obj).then(function(res) {
+          _this.createRecord(store, type, obj).then(function(res) {
             update_resolve(res);
           }, function(err) {
             update_reject(err);
           });
         } else {
-          this._super(store, type, obj).then(function(record) {
+          _this._super(store, type, obj).then(function(record) {
             persistence.store(type.modelName, record).then(function() {
               update_resolve(record);
             }, function() {
@@ -3242,9 +3243,10 @@ persistence.DSExtend = {
   },
   deleteRecord: function(store, type, obj) {
     // need raw object
+    var _this = this;
     return new RSVP.Promise(function(delete_resolve, delete_reject) {
       if(persistence.get('online')) {
-        this._super(store, type, obj).then(function(record) {
+        _this._super(store, type, obj).then(function(record) {
           persistence.remove(type.modelName, record).then(function() {
             delete_resolve(record);
           }, function() {
