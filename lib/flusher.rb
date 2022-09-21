@@ -180,7 +180,7 @@ module Flusher
     target.touch
   end
 
-  def self.flush_user_content(user_id, user_name, except_device=nil)
+  def self.flush_user_content(user_id, user_name, except_device=nil, except_org_links=false)
     user = find_user(user_id, user_name)
     flush_user_logs(user_id, user_name)
     flush_user_boards(user_id, user_name)
@@ -210,7 +210,7 @@ module Flusher
       flush_record(conn)
     end
     UserLink.where(user_id: user.id).each do |link|
-      flush_record(link)
+      flush_record(link) unless except_org_links && link.record_code && link.record_code.match(/^Organization/)
     end
   end
   

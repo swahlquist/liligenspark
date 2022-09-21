@@ -3088,8 +3088,12 @@ persistence.DSExtend = {
               if(error.skip) { return; }
               error.skip = true;
               error({error: 'timeout'});
-            }, 15000)
-            return _super.call(_this, store, type, id).then(function(record) {
+            }, 15000);
+            var id_or_key = id;
+            if(persistence.force_reload == full_id && type.modelName == 'board' && local_data && local_data.board && local_data.board.key) {
+              id_or_key = local_data.board.key;
+            }
+            return _super.call(_this, store, type, id_or_key).then(function(record) {
               // DEBUGGER HERE, when wifi is off this still gets
               // called a couple times, but eats the promise for some reason
               // TODO: maybe check if it's a problem in persistence.ajax

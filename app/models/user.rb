@@ -813,7 +813,7 @@ class User < ActiveRecord::Base
         self.settings['eval_reset'] ||= {}
         self.settings['eval_reset']['email'] = params['preferences']['eval']['email']
         self.settings['eval_reset']['home_board']  = params['preferences']['eval']['home_board']
-        self.settings['eval_reset']['password'] = params['preferences']['eval']['password']
+        self.settings['eval_reset']['password'] = GoSecure.generate_password(params['preferences']['eval']['password'])
         self.settings['eval_reset']['duration'] = params['preferences']['eval']['duration'].to_i
         self.settings['eval_reset']['duration'] = nil if self.settings['eval_reset']['duration'] == 0
       end
@@ -1172,8 +1172,12 @@ class User < ActiveRecord::Base
       self.settings['preferences']['home_board']['locale'] = home_board['locale'] || board.settings['locale']
       self.settings['preferences']['home_board']['level'] = home_board['level'] if home_board['level']
     elsif board && non_user_params['updater'] && (org_allowed_board || board.allows?(non_user_params['updater'], 'share'))
-      if home_board['copy'] && non_user_params['async']
-        Progress.schedule(self, :copy_to_home_board, home_board, non_user_params['updater'].global_id, home_board['symbol_library'])
+      if home_board['copy']
+        if non_user_params['async']
+          Progress.schedule(self, :copy_to_home_board, home_board, non_user_params['updater'].global_id, home_board['symbol_library'])
+        else
+          self.copy_to_home_board(home_board, non_user_params['updater'].global_id, home_board['symbol_library'])
+        end
         return
       elsif non_user_params['async']
         board.schedule(:process_share, "add_deep-#{self.global_id}", non_user_params['updater'].global_id)

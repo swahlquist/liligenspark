@@ -97,7 +97,7 @@ module Subscription
       end
       if sponsored
         self.clear_existing_subscription(:track_seconds_left => true)
-      elsif org_sponsored?
+      elsif org_sponsored? && sponsored == false
         # If we are being re-added to the sponsored org as
         # unsponsored, then we need to remove the sponsorship
         links = UserLink.links_for(self)
@@ -126,6 +126,17 @@ module Subscription
         @link_to_save = link
         self.log_subscription_event(:log => 'org added user', :args => {org_id: new_org.global_id, pending: pending, sponsored: sponsored, eval_account: eval_account, link_id: link.id})
         new_org.schedule(:org_assertions, self.global_id, 'user')
+
+        if !pending
+          if !self.settings['eval_reset']
+            self.settings['eval_reset'] = {
+              'email' => self.settings['email'],
+              'home_board' => nil,
+              'password' => self.settings['password'],
+              'duration' => nil
+            }
+          end
+        end
 
         if sponsored && !pending
           self.expires_at = nil
@@ -566,7 +577,8 @@ module Subscription
     self.settings['all_home_boards'] = nil
     self.generate_defaults
 
-    Flusher.flush_user_content(self.global_id, self.user_name, current_device)
+    # DON'T flush org links
+    Flusher.flush_user_content(self.global_id, self.user_name, current_device, true)
     # restore the last home board, in case it's a default (can be changed easily)
     if self.settings['last_preferences']['home_board'] && self.settings['last_preferences']['home_board']['key'] && !self.settings['last_preferences']['home_board']['key'].match(/^#{self.user_name}\/}/)
       self.settings['preferences']['home_board'] = self.settings['last_preferences']['home_board']
@@ -577,9 +589,24 @@ module Subscription
       self.settings['preferences']['password'] = self.settings['eval_reset']['password'] if self.settings['eval_reset']['pasword']
     end
     if opts
-      self.settings['email'] = opts['email'] if opts['email']
+      self.settings['email'] = opts['email'] if !opts['email'].blank?
       if opts['expires']
         self.settings['subscription']['eval_expires'] = Date.parse(opts['expires']).iso8601 rescue nil
+      end
+      if !opts['password'].blank?
+        self.generate_password(opts['password'])
+      end
+      org_link = Organization.attached_orgs(self, true).detect{|o| o['type'] == 'user' && o['eval'] && !o['pending']}
+      org = org_link && org_link['org']
+      if org_link && !opts['home_board_key']
+        opts['home_board_key'] = (org.home_board_keys || [])[0]
+      end
+      if !opts['home_board_key'].blank?
+        board = Board.find_by_path(opts['home_board_key'])
+        if board && (board.public || (org && (org.home_board_keys || []).include?(opts['home_board_key'])))
+          symbols = opts['symbol_library'] || (org && org.settings['preferred_symbols']) || 'original'
+          self.process_home_board({'id' => board.global_id, 'copy' => true, 'symbol_library' => symbols}, {'updater' => board.user, 'org' => org, 'async' => false})
+        end
       end
     end
     # log out of all other devices (and remove them for privacy)

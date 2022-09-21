@@ -39,7 +39,7 @@
           {{bound-select select_class="form-control" select_id="user_type" content=user_types selection=model.user.org_management_action action=(action (mut model.user.org_management_action)) }}
         </div>
       </div>
-      {{#if communicator_new_user}}
+      {{#if boarded_new_user}}
         {{#if model.org.extras_available}}
           <div class="form-group">
             <label for="extras" class="col-sm-4 control-label">{{t "Premium Symbols" key='symbols'}}</label>

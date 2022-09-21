@@ -103,11 +103,11 @@
             </button>
           </div>
         {{/each}}
-        {{#if app_state.currentUser.org_boards}}
+        {{#if app_state.currentUser.org_board_keys}}
           <div class='col-sm-8 col-sm-offset-2' style='margin-bottom: 100px; margin-top: 20px;'>
             Organization-Provided Boards
             <ul class="list-group" style="max-width: 350px;">
-              {{#each app_state.currentUser.org_boards as |board|}}
+              {{#each app_state.currentUser.org_board_keys as |board|}}
                 <li class="list-group-item">
                   <a href="#" {{action 'set_org_board' board}}>{{board.key}}</a>
                 </li>

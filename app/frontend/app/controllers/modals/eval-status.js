@@ -4,6 +4,8 @@ import { later as runLater } from '@ember/runloop';
 import persistence from '../../utils/persistence';
 import session from '../../utils/session';
 import progress_tracker from '../../utils/progress_tracker';
+import { computed, get as emberGet } from '@ember/object';
+import RSVP from 'rsvp';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -11,6 +13,10 @@ export default modal.ModalController.extend({
     var choice = {};
     choice[this.get('modal.action')] = true;
     this.set('choice', choice);
+    this.set('home_board_key', null);
+    if(this.get('user.org_board_keys')) {
+      this.set('home_board_key', this.get('user.org_board_keys')[0]);
+    }
     this.set('extend_date', window.moment(this.get('user.subscription.eval_expires')).add(7, 'day').toISOString().substring(0, 10));
     var days = this.get('user.preferences.eval.duration') || 90;
     this.set('eval_expires', window.moment().add(days, 'day').toISOString().substring(0, 10));
@@ -18,6 +24,36 @@ export default modal.ModalController.extend({
       this.get('user').reload();
     }
   },
+  org_board_keys: computed('user.org_board_keys', function() {
+    var res = [];
+    (this.get('user.org_board_keys') || []).forEach(function(key) {
+      res.push({id: key, name: i18n.t('copy_of_board_key', "Copy of %{k}", {k: key})});
+    })
+    if(res.length == 0) { return null; }
+    res.push({id: 'none', name: i18n.t('none_set', "[ Don't Set a Home Board ]")});
+    return res;
+  }),
+  org_board_set: computed('home_board_key', function() {
+    return this.get('home_board_key') && this.get('home_board_key') != 'none';
+  }),
+  symbol_libraries: computed('user', function() {
+    var u = this.get('user');
+    var list = [];
+    list.push({name: i18n.t('original_symbols', "Use the board's original symbols"), id: 'original'});
+    list.push({name: i18n.t('use_opensymbols', "Opensymbols.org free symbol libraries"), id: 'opensymbols'});
+
+    if(u && (emberGet(u, 'extras_enabled') || emberGet(u, 'subscription.extras_enabled'))) {
+      list.push({name: i18n.t('use_lessonpix', "LessonPix symbol library"), id: 'lessonpix'});
+      list.push({name: i18n.t('use_symbolstix', "SymbolStix Symbols"), id: 'symbolstix'});
+      list.push({name: i18n.t('use_pcs', "PCS Symbols by Tobii Dynavox"), id: 'pcs'});  
+    }
+
+    list.push({name: i18n.t('use_twemoji', "Emoji icons (authored by Twitter)"), id: 'twemoji'});
+    list.push({name: i18n.t('use_noun-project', "The Noun Project black outlines"), id: 'noun-project'});
+    list.push({name: i18n.t('use_arasaac', "ARASAAC free symbols"), id: 'arasaac'});
+    list.push({name: i18n.t('use_tawasol', "Tawasol symbol library"), id: 'tawasol'});
+    return list;
+  }),
   actions: {
     choose: function(action) {
       var choice = {};
@@ -62,31 +98,42 @@ export default modal.ModalController.extend({
     reset: function() {
       var _this = this;
       if(_this.get('user.can_reset_eval')) {
-        if(_this.get('user.email') == _this.get('reset_email')) {
+        if(!_this.get('reset_email') || _this.get('user.email') == _this.get('reset_email')) {
           _this.set('status', {reset_email_used: true});
         } else if(_this.get('user.user_name') != _this.get('reset_user_name')) {
           return
         } else {
           _this.set('status', {resetting: true});
-          persistence.ajax('/api/v1/users/' + _this.get('user.id') + '/evals/reset', {
-            type: 'POST',
-            data: {
-              expires: _this.get('eval_expires'),
-              password: _this.set('reset_password'),
-              email: _this.get('reset_email')
-            }
-          }).then(function(res) {
-            progress_tracker.track(res.progress, function(event) {
-              if(event.status == 'errored') {
-                _this.set('status', {reset_error: true});
-              } else if(event.status == 'finished') {
-                _this.set('status', {reset_finished: true});
-                runLater(function() {
-                  location.reload();
-                }, 2000);
+          var pw_gen = RSVP.resolve(null);
+          var pw = _this.get('reset_password');
+          if(_this.get('reset_password')) {
+            pw_gen = session.hashed_password(_this.set('reset_password'));
+          }
+          pw_gen.then(function(password) {
+            persistence.ajax('/api/v1/users/' + _this.get('user.id') + '/evals/reset', {
+              type: 'POST',
+              data: {
+                expires: _this.get('eval_expires'),
+                password: pw,
+                email: _this.get('reset_email'),
+                symbol_library: _this.get('symbol_library'),
+                home_board_key: _this.get('home_board_key')
               }
+            }).then(function(res) {
+              progress_tracker.track(res.progress, function(event) {
+                if(event.status == 'errored') {
+                  _this.set('status', {reset_error: true});
+                } else if(event.status == 'finished') {
+                  _this.set('status', {reset_finished: true});
+                  runLater(function() {
+                    location.reload();
+                  }, 2000);
+                }
+              });
+            }, function(error) {
+              _this.set('status', {reset_error: true});
             });
-          }, function(error) {
+          }, function(err) {
             _this.set('status', {reset_error: true});
           });
           // api/v1/users/id/evals/reset

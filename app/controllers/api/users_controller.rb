@@ -736,11 +736,18 @@ class Api::UsersController < ApplicationController
     return allowed?(user, 'never_allow') unless user.eval_account?
     # if user has supervisors, then only the supervisor can reset the eval
     return allowed?(user, 'never_allow') if user == @api_user && !user.supervisors.blank?
+    # if user has a managed org, then they can't reset their own eval
+    return allowed?(user, 'never_allow') if user == @api_user && Organization.managed?(user)
     if !params['email'] || params['email'] == user.settings['email']
       return api_error(400, {error: 'new email cannot match previous email'})
     end
 
-    opts = {'email' => params['email']}
+    opts = {
+      'email' => params['email'], 
+      'password' => params['password'], 
+      'home_board_key' => params['home_board_key'],
+      'symbol_library' => params['symbol_library']
+    }
     if params['expires']
       opts['expires'] = params['expires']
     end

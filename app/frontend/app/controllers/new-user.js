@@ -105,10 +105,12 @@ export default modal.ModalController.extend({
   third_party_new_user: computed('model.user.org_management_action', function() {
     return this.get('model.user.org_management_action') == 'add_external_user';
   }),
-  communicator_new_user: computed('model.user.org_management_action', function() {
-    return this.get('model.user.org_management_action') == 'add_user' || this.get('model.user.org_management_action') == 'add_unsponsored_user';
+  boarded_new_user: computed('model.user.org_management_action', function() {
+    var action = this.get('model.user.org_management_action');
+    return ['add_user', 'add_unsponsored_user', 'add_supervisor', 'add_premium_supervisor', 'add_eval'].indexOf(action) != -1;
   }),
-  board_options: computed('model.org.home_board_keys', function() {
+  board_options: computed('model.org.home_board_keys', 'boarded_new_user', function() {
+    if(!this.get('boarded_new_user')) { return null; }
     var res = [];
     (this.get('model.org.home_board_keys') || []).forEach(function(key) {
       res.push({

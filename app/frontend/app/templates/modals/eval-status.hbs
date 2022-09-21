@@ -12,7 +12,7 @@
           {{t "Are you sure you want to reset the evaluation period for the account, <b>%{user_name}</b>? This will erase any personalizations and logs created on the account before now." user_name=user.user_name key='confirm_reset_eval'}}
         </p>
         <p>
-          {{t "To confirm the reset, please enter the user name for this evaluation account (%{user_name}), as well as a new email address and to be used during the next eval." key='parameters_for_reset' user_name=user.user_name}}
+          {{t "To confirm the reset, please enter the user name for this evaluation account (%{user_name}), as well as a new email address to be used during the next eval." key='parameters_for_reset' user_name=user.user_name}}
           {{t "NOTE: You should also change the password on the account for each new eval, otherwise previous trial users would be able to log in and see content and logs for the current trial user." key='password_should_be_reset'}}
         </p>
         <form class="form-horizontal">
@@ -31,6 +31,22 @@
               {{/if}}
             </div>
           </div>
+          {{#if org_board_keys}}
+            <div class='form-group'>
+              <label class='control-label col-sm-5' for='home_board'>{{t "New Home Board" key='new_home_board'}}</label>
+              <div class='col-sm-6'>
+                {{bound-select select_class="form-control" select_id="home_board" content=org_board_keys selection=home_board_key action=(action (mut home_board_key)) }}
+              </div>
+            </div>
+            {{#if org_board_set}}
+              <div class='form-group'>
+                <label class='control-label col-sm-5' for="symbol_library">{{t "Preferred Symbols:" key='preferred_symbols_colon'}}</label>
+                <div class='col-sm-6'>
+                  {{bound-select select_class="form-control" select_id="symbol_library" content=symbol_libraries selection=symbol_library action=(action (mut symbol_library)) }}
+                </div>
+              </div>
+            {{/if}}
+          {{/if}}
           <div class='form-group'>
             <label class='control-label col-sm-5'>{{t "New Expiration" key='new_expiration'}}</label>
             <div class='col-sm-6'>
@@ -134,9 +150,9 @@
         {{#if status.reset_error}}
           {{t "Reset Failed" key='reset_failed'}}
         {{else if status.resetting}}
-          {{t "Resetting!" key='resetting'}}
+          {{t "Resetting..." key='resetting'}}
         {{else if status.reset_finished}}
-          {{t "Reset Complete!" key='reset_complete'}}
+          {{t "Reset Complete! Waiting to reload..." key='reset_complete'}}
         {{else}}
           {{t "Confirm Reset" key='confirm_reset'}}
         {{/if}}

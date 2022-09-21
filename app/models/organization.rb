@@ -800,6 +800,8 @@ class Organization < ActiveRecord::Base
         e['lesson_ids'] = (org.settings['lessons'] || []).select{|l| l['types'].include?('user') }.map{|l| l['id'] }
         e['status'] = link['state']['status']
         e['status'] ||= (user.settings['preferences'] && user.settings['preferences']['home_board'] ? 'tree-deciduous' : 'unchecked')
+        e['eval'] = link['state']['eval']
+        e['home_board_keys'] = org.home_board_keys if e['eval'] && !e['pending']
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
@@ -838,7 +840,7 @@ class Organization < ActiveRecord::Base
           'added' => link['state']['added'],
           'pending' => !!link['state']['pending']
         }
-        e['home_board_keys'] = org.home_board_keys
+        e['home_board_keys'] = org.home_board_keys && !e['pending']
         e['lesson_ids'] = (org.settings['lessons'] || []).select{|l| l['types'].include?('supervisor') }.map{|l| l['id'] }
         e['profile'] = org.settings['supervisor_profile'].slice('profile_id', 'template_id', 'frequency') if org.settings['supervisor_profile']
         e['external_auth'] = true if org.settings['saml_metadata_url']

@@ -116,14 +116,14 @@ CoughDrop.User = DS.Model.extend({
   managing_org: computed('organizations', function() {
     return (this.get('organizations') || []).find(function(o) { return o.type == 'user'; });
   }),
-  org_boards: computed('organizations', function() {
+  org_board_keys: computed('organizations', function() {
     var res = [];
     (this.get('organizations') || []).forEach(function(org) {
       if(org.home_board_keys) {
         res = res.concat(org.home_board_keys);
       }
     })
-    return Utils.uniq(res, function(r) { return r.id; });
+    return res.uniq();
   }),
   manages_multiple_orgs: computed('managed_orgs', function() {
     return this.get('managed_orgs').length > 1;
@@ -394,8 +394,8 @@ CoughDrop.User = DS.Model.extend({
   eval_ending_soon: computed('subscription.eval_account', 'subscription.eval_expires', 'app_state.refresh_stamp', function() {
     return this.eval_ending(14) && !this.eval_ending(0);
   }),
-  can_reset_eval: computed('subscription.eval_account', 'supervisors', 'supervisors.length', 'permissions.supervise', 'permissions.user_id', function() {
-    return !!(this.get('subscription.eval_account') && ((this.get('supervisors') || []).length == 0) || (this.get('permissions.supervise') && this.get('permissions.user_id') != this.get('id')));
+  can_reset_eval: computed('subscription.eval_account', 'is_managed', 'supervisors', 'supervisors.length', 'permissions.supervise', 'permissions.user_id', function() {
+    return !!(this.get('subscription.eval_account') && (((this.get('supervisors') || []).length == 0) && !this.get('is_managed')) || (this.get('permissions.supervise') && this.get('permissions.user_id') != this.get('id')));
   }),
   joined_within_24_hours: computed('app_state.refresh_stamp', 'joined', function() {
     var one_day_ago = window.moment().add(-1, 'day');
