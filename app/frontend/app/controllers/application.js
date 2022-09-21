@@ -1382,7 +1382,7 @@ export default Controller.extend({
       if(text_position == 'text_only' || show_always || flipped) {
         res = res + "text_only ";
       }
-      if(app_state.get('curentUser.preferences.high_contrast')) {
+      if(app_state.get('currentUser.preferences.high_contrast')) {
         res = res + 'high_contrast ';
       }
 
