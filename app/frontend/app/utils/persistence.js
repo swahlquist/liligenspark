@@ -3158,34 +3158,38 @@ persistence.DSExtend = {
   createRecord: function(store, type, obj) {
     var _this = this;
     if(persistence.get('online')) {
-      var tmp_id = null, tmp_key = null;
-//       if(obj.id && obj.id.match(/^tmp[_\/]/)) {
-//         tmp_id = obj.id;
-//         tmp_key = obj.attr('key');
-//         var record = obj.record;
-//         record.set('id', null);
-//         obj = record._createSnapshot();
-//       }
-      return this._super(store, type, obj).then(function(record) {
-        if(obj.record && obj.record.tmp_key) {
-          record[type.modelName].tmp_key = obj.record.tmp_key;
-        }
-        return persistence.store(type.modelName, record).then(function() {
-          if(tmp_id) {
-            return persistence.remove('board', {}, tmp_id).then(function() {
-              return RSVP.resolve(record);
-            }, function() {
-              return RSVP.reject({error: "failed to remove temporary record"});
-            });
-          } else {
-            return RSVP.resolve(record);
+      return new RSVP.Promise(function(create_resolve, create_reject) {
+        var tmp_id = null, tmp_key = null;
+  //       if(obj.id && obj.id.match(/^tmp[_\/]/)) {
+  //         tmp_id = obj.id;
+  //         tmp_key = obj.attr('key');
+  //         var record = obj.record;
+  //         record.set('id', null);
+  //         obj = record._createSnapshot();
+  //       }
+        this._super(store, type, obj).then(function(record) {
+          if(obj.record && obj.record.tmp_key) {
+            record[type.modelName].tmp_key = obj.record.tmp_key;
           }
-        }, function() {
-          if(capabilities.installed_app || persistence.get('auto_sync')) {
-            return RSVP.reject({error: "failed to create in local db"});
-          } else {
-            return RSVP.resolve(record);
-          }
+          persistence.store(type.modelName, record).then(function() {
+            if(tmp_id) {
+              persistence.remove('board', {}, tmp_id).then(function() {
+                create_resolve(record);
+              }, function() {
+                create_reject({error: "failed to remove temporary record"});
+              });
+            } else {
+              create_resolve(record);
+            }
+          }, function() {
+            if(capabilities.installed_app || persistence.get('auto_sync')) {
+              create_reject({error: "failed to create in local db"});
+            } else {
+              create_resolve(record);
+            }
+          });
+        }, function(err) {
+          create_reject(err);
         });
       });
     } else {
@@ -3206,44 +3210,58 @@ persistence.DSExtend = {
     }
   },
   updateRecord: function(store, type, obj) {
-    if(persistence.get('online')) {
-      if(obj.id.match(/^tmp[_\/]/)) {
-        return this.createRecord(store, type, obj);
-      } else {
-        return this._super(store, type, obj).then(function(record) {
-          return persistence.store(type.modelName, record).then(function() {
-            return RSVP.resolve(record);
-          }, function() {
-            return RSVP.reject({error: "failed to update to local db"});
+    return new RSVP.Promise(function(update_resolve, update_reject) {
+      if(persistence.get('online')) {      
+        if(obj.id.match(/^tmp[_\/]/)) {
+          this.createRecord(store, type, obj).then(function(res) {
+            update_resolve(res);
+          }, function(err) {
+            update_reject(err);
           });
+        } else {
+          this._super(store, type, obj).then(function(record) {
+            persistence.store(type.modelName, record).then(function() {
+              update_resolve(record);
+            }, function() {
+              update_reject({error: "failed to update to local db"});
+            });
+          }, function(err) {
+            update_reject(err);
+          });
+        }  
+      } else {
+        var record = persistence.convert_model_to_json(store, type.modelName, obj);
+        record[type.modelName].changed = true;
+        persistence.store(type.modelName, record).then(function() {
+          update_resolve(record);
+        }, function() {
+          update_reject({offline: true, error: "not online"});
         });
       }
-    } else {
-      var record = persistence.convert_model_to_json(store, type.modelName, obj);
-      record[type.modelName].changed = true;
-      return persistence.store(type.modelName, record).then(function() {
-        RSVP.resolve(record);
-      }, function() {
-        return persistence.offline_reject();
-      });
-    }
+    });
   },
   deleteRecord: function(store, type, obj) {
     // need raw object
-    if(persistence.get('online')) {
-      return this._super(store, type, obj).then(function(record) {
-        return persistence.remove(type.modelName, record).then(function() {
-          return RSVP.resolve(record);
-        }, function() {
-          return RSVP.reject({error: "failed to delete in local db"});
+    return new RSVP.Promise(function(delete_resolve, delete_reject) {
+      if(persistence.get('online')) {
+        this._super(store, type, obj).then(function(record) {
+          persistence.remove(type.modelName, record).then(function() {
+            delete_resolve(record);
+          }, function() {
+            delete_reject({error: "failed to delete in local db"});
+          });
+        }, function(err) {
+          delete_reject(err);
         });
-      });
-    } else {
-      var record = persistence.convert_model_to_json(store, type.modelName, obj);
-      return persistence.remove(type.modelName, record, null, true).then(function() {
-        return RSVP.resolve(record);
-      });
-    }
+      } else {
+        var record = persistence.convert_model_to_json(store, type.modelName, obj);
+        persistence.remove(type.modelName, record, null, true).then(function() {
+          delete_resolve(record);
+        }, function(err) {
+          delete_reject(err);
+        });
+      }
+    });
   },
   findAll: function(store, type, id) {
     debugger;

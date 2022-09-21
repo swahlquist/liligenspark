@@ -841,7 +841,6 @@ var speecher = EmberObject.extend({
     console.log("PLAY", ref);
     var audio = ref.audio;
     if(audio.lastListener || (capabilities.mobile && capabilities.browser == "Safari")) {
-      console.log("CLONE!");
       audio = audio.cloneNode();
       audio.className = 'throwaway';
     }

@@ -148,7 +148,7 @@ class Board < ActiveRecord::Base
       end
     end
   end
-  
+
   def generate_stats
     self.settings['stars'] = (self.settings['starred_user_ids'] || []).length
     self.settings['locale_stars'] = {}
@@ -1150,6 +1150,7 @@ class Board < ActiveRecord::Base
       end
       self.public = !!params['public'] 
     end
+
     if self.copyable_if_authorized?(ref_user)
       if (self.settings['categories'] || []).include?('protected_vocabulary')
         self.settings['protected'] ||= {}

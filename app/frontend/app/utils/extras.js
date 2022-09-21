@@ -328,7 +328,7 @@ import app_state from './app_state';
         if(xhr.responseJSON && xhr.responseJSON.error) {
           result = xhr.responseJSON.error;
         }
-        console.log("ember ajax error: " + xhr.status + ": " + result + " (" + options.url + ")");
+        console.log("ember ajax error: " + options.type + " " + xhr.status + ": " + result + " (" + options.url + ")");
         if(error && xhr.responseJSON) {
           error.call(this, xhr, message, result);
         }
