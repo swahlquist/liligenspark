@@ -91,6 +91,7 @@ module Relinking
     board.settings['intro']['unapproved'] = true if board.settings['intro']
     board.settings['never_edited'] = true
     board.public = true if make_public
+    board.settings.delete('unlisted') if make_public
     BoardContent.apply_clone(self, board) if self.board_content_id
     # board.map_images has to create a record for each image in the
     # board, and while that is useful for tracking, it's actually redundant

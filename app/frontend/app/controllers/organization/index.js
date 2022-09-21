@@ -315,9 +315,12 @@ export default Controller.extend({
           }
         });
         return;
-      } else if(action && action.match(/add_.*user/) && _this.get('model.home_board_keys.length') > 0 && !home_board) {
+      } else if(action && (action.match(/add_.*user/) || action.match(/add_\.*supervisor/)) && _this.get('model.home_board_keys.length') > 0 && !home_board) {
         user_name = this.get('user_user_name');
-        modal.open('modals/confirm-org-action', {action: 'add_home', org: _this.get('model'), user_name: user_name}).then(function(res) {
+        if(action.match(/supervisor/)) {
+          user_name = this.get('supervisor_user_name');
+        }
+        modal.open('modals/confirm-org-action', {action: 'add_home', for_supervisor: !!action.match(/supervisor/), org: _this.get('model'), user_name: user_name}).then(function(res) {
           if(res && res.home) {
             if(res.extras) {
               action = action + "-plus_extras";

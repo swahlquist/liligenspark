@@ -59,6 +59,7 @@ export default modal.ModalController.extend({
     make_public: function(action) {
       if(action == 'confirm') {
         var board = this.get('board');
+        board.set('visibility', 'public')
         board.set('public', true);
         var _this = this;
         board.save().then(function() {

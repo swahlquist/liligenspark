@@ -11,9 +11,16 @@ export default modal.ModalController.extend({
   set_home_board: computed('model.action', function() {
     return this.get('model.action') == 'add_home';
   }),
-  set_default_home_board_template: observer('model.action', 'model.org', 'home_board_template', function() {
-    if(this.get('board_options') && !this.get('home_board_template')) {
-      this.set('home_board_template', this.get('board_options')[0].id);
+  set_default_home_board_template: observer('model.action', 'model.org', 'home_board_template', 'model.for_supervisor', function() {
+    var change_anyway = this.get('last_for_supervisor') != this.get('model.for_supervisor');
+    if(!this.get('home_board_template') || change_anyway) {
+      if(this.get('model.for_supervisor')) {
+        this.set('home_board_template', 'none');
+        this.set('last_for_supervisor', true);
+      } else if(this.get('board_options')) {
+        this.set('home_board_template', this.get('board_options')[0].id);
+        this.set('last_for_supervisor', false);
+      }
     }
   }),
   board_options: computed('model.action', 'model.org', function() {
