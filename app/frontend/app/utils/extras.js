@@ -322,6 +322,7 @@ import app_state from './app_state';
                 });
               }, 500);
             // });
+            return;
           }
         }
         error_prep(xhr, message, result);
@@ -329,7 +330,9 @@ import app_state from './app_state';
           result = xhr.responseJSON.error;
         }
         console.log("ember ajax error: " + xhr.status + ": " + result + " (" + options.type + " " + options.url + ")");
-        if(error && xhr.responseJSON) {
+        if(error) {
+          xhr.responseJSON = xhr.responseJSON || {error: 'unknown error ' + result};
+          // Ember is expecting an error message, even if the response isn't JSON
           error.call(this, xhr, message, result);
         }
         ajax_reject({
