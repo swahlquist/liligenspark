@@ -10,7 +10,7 @@ Coughdrop::RESERVED_ROUTES ||= [
   'about', 'contact', 'info', 'docs', 'purchase', 'pricing', 'careers', 
   'news', 'styleguide', 'tour', 'compare', 'guides', 'partners', 
   'privacy', 'terms', 'hipaa', 'accessibility', 'history',
-  'js', 'css', 'scripts', 'script', 'pics', 'images',
+  'js', 'css', 'scripts', 'script', 'pics', 'images', 'lessons', 'lesson', 
   'find', 'unknown', 'nobody', 'goals', 'notes', 'rooms', 'coughdrop', 'cough_drop',
   'mycoughdrop', 'inflection', 'inflections', 'saml'
 ]
@@ -61,6 +61,8 @@ Coughdrop::Application.routes.draw do
   post 'api/v1/token/refresh' => 'session#oauth_token_refresh'
   post 'token' => 'session#token'
   post 'wait/token' => 'session#token_wait'
+
+  get 'lessons/:lesson_id/:lesson_code/:user_token' => 'boards#lesson'
   
   # if Rails.env.production?
   # TODO: need to catch the update event to post a note encouraging the user to reload
@@ -259,7 +261,14 @@ Coughdrop::Application.routes.draw do
       post 'note'
     end
     resources :snapshots
-    
+
+    resources :lessons do
+      get 'recent'
+      post 'assign'
+      post 'unassign'
+      post 'complete'
+    end
+
     resources :organizations do
       get 'managers'
       get 'evals'

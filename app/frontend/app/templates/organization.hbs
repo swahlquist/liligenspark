@@ -29,6 +29,11 @@
         {{#link-to 'organization.index' model.id class='btn btn-default'}}{{t "Admin" key='admin'}}{{/link-to}}
         {{#link-to 'organization.reports' model.id class='btn btn-default'}}{{t "Reports" key='reports'}}{{/link-to}}
         {{#link-to 'organization.rooms' model.id class='btn btn-default'}}{{t "Rooms" key='rooms'}}{{/link-to}}
+        {{#if model.premium}}
+          {{#if app_state.feature_flags.lessons}}
+            {{#link-to 'organization.lessons' model.id class='btn btn-default'}}{{t "Lessons" key='lessons'}}{{/link-to}}
+          {{/if}}
+        {{/if}}
 
         {{#if model.admin}}
           {{#link-to 'organization.extras' model.id class='btn btn-default'}}{{t "Extras" key='extras'}}{{/link-to}}

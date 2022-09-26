@@ -18,6 +18,13 @@
       <li role="presentation">
         {{#link-to 'user.goals' model.user_name}}{{t "goals" key='goals_lower'}}{{/link-to}}
       </li>
+      {{#if app_state.feature_flags.lessons}}
+        {{#if model.organizations.length}}
+          <li role="presentation">
+            {{#link-to 'user.lessons' model.user_name}}{{t "lessons" key='lessons'}}{{/link-to}}
+          </li>
+        {{/if}}
+      {{/if}}
       <li role="presentation">
         {{#link-to 'user.recordings' model.user_name}}{{t "recordings" key='recordings_lower'}}{{/link-to}}
       </li>
@@ -52,6 +59,11 @@
         {{#link-to 'user.index' model.user_name class="btn btn-default"}}{{t "summary" key='summary_lower'}}{{/link-to}}
         {{#link-to 'user.stats' model.user_name (query-params highlighted=null start=null end=null location_id=null device_id=null split=null start2=null end2=null device_id2=null location_id2=null) class="btn btn-default"}}{{t "reports" key='reports_lower'}}{{/link-to}}
         {{#link-to 'user.goals' model.user_name class='btn btn-default'}}{{t "goals" key='goals_lower'}}{{/link-to}}
+        {{#if app_state.feature_flags.lessons}}
+          {{#if model.organizations.length}}
+            {{#link-to 'user.lessons' model.user_name class='btn btn-default'}}{{t "lessons" key='lessons'}}{{/link-to}}
+          {{/if}}
+        {{/if}}
         {{#link-to 'user.recordings' model.user_name class='btn btn-default'}}{{t "recordings" key='recordings_lower'}}{{/link-to}}
         {{#if model.permissions.edit}}
           {{#link-to 'user.edit' model.user_name class="btn btn-default"}}{{t "profile" key='profile'}}{{/link-to}}

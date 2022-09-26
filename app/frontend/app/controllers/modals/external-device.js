@@ -46,7 +46,7 @@ export default modal.ModalController.extend({
   }),
   actions: {
     clear_home_board: function() {
-      var user = this.get('model.user');;
+      var user = this.get('model.user');
       if(user) {
         user.set('preferences.home_board', {id: 'none'});
         user.save();

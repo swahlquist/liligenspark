@@ -1,31 +1,78 @@
 class Api::LessonsController < ApplicationController
-  before_action :require_api_token, :except => [:index, :show]
+  before_action :require_api_token, :except => [:index, :show, :complete]
   def index
+    user = nil
+    if params['user_id']
+      user = User.find_by_path(params['user_id'])
+      return unless allowed?(user, 'supervise')
+    end 
     lessons = Lesson.all
+    # When a user has no assigned lessons, see if there are some
+    # public lessons that they haven't taken yet that they can review
+    obj = nil
     if params['organization_id']
       org = Organization.find_by_path(params['organization_id'])
       return unless exists?(org, params['organization_id'])
-      return unless authorized?(org, 'manage')
-      lessons = lessons.where(organization_id: org.id)
+      return unless allowed?(org, 'edit')
+      obj = org
+      lessons = Lesson.where(id: Lesson.local_ids((org.settings['lessons'] || []).map{|l| l['id'] }))
     elsif params['organization_unit_id']
       unit = OrganizationUnit.find_by_path(params['organization_unit_id'])
       return unless exists?(unit, params['organization_unit_id'])
-      return unless authorized?(unit, 'edit')
+      return unless allowed?(unit, 'edit')
+      obj = unit
       lessons = lessons.where(organization_unit_id: unit.id)
     else
       lessons = lessons.where(public: true)
     end
+    completed_hash = {}
     if params['active']
     elsif params['concluded']
     end
-    render json: JsonApi::Organization.paginate(params, lessons)
+    if params['history_check'] && obj
+      lessons.each{|lesson| lesson.history_check(obj) }
+    end
+    json = JsonApi::Lesson.paginate(params, lessons, {obj: obj})
+    json['lesson'] = Lesson.decorate_completion(user, json['lesson']) if user
+    render json: json
+  end
+
+  def create
+    initial_target = nil
+    if params['lesson']['organization_id']
+      org = Organization.find_by_path(params['lesson']['organization_id'])
+      return unless exists?(org, params['lesson']['organization_id'])
+      return unless allowed?(org, 'edit')
+      initial_target = org
+    elsif params['lesson']['organization_unit_id']
+      unit = OrganizationUnit.find_by_path(params['lesson']['organization_unit_id'])
+      return unless exists?(unit, params['lesson']['organization_unit_id'])
+      return unless allowed?(unit, 'edit')
+      initial_target = unit
+    elsif params['lesson']['user_id']
+      user = User.find_by_path(params['lesson']['user_id'])
+      return unless exists(user, params['lesson']['user_id'])
+      return unless allowed?(user, 'supervise')
+      initial_target = user
+    end
+    lesson = Lesson.process_new(params['lesson'], {'author' => @api_user, 'target' => initial_target})
+    Lesson.assign(lesson, initial_target, params['lesson']['target_types'], @api_user) if initial_target
+    render json: JsonApi::Lesson.as_json(lesson, {wrapper: true, permissions: @api_user})
+  end
+
+  def recent
+    # List of lessons recently authored by the user or their org or unit
+
   end
 
   def show
-    lesson = Lesson.find_by_path(params['id'])
-    return unless exists?(lesson, params['id'])
-    return unless authorized?(lesson, 'view')
-    render json: JsonApi::Lesson.as_json(lesson, {wrapper: true, permissions: @api_user})
+    lesson_id, lesson_code, user_token = params['id'].split(/:/)
+    lesson = Lesson.find_by_path(lesson_id)
+    return unless exists?(lesson, lesson_id)
+    return unless lesson.nonce == lesson_code || allowed?(lesson, 'view')
+    user = User.find_by_token(user_token)
+    # TODO: send completion status if already completed
+    render json: JsonApi::Lesson.as_json(lesson, {wrapper: true, permissions: @api_user, extra_user: user})
   end
 
   def update
@@ -33,6 +80,21 @@ class Api::LessonsController < ApplicationController
     return unless exists?(lesson, params['lesson_id'])
     return unless authorized?(lesson, 'edit')
     render json: JsonApi::Lesson.as_json(lesson, {wrapper: true, permissions: @api_user})
+  end
+
+  def complete
+    lesson_id, lesson_code, user_token = params['lesson_id'].split(/:/)
+    lesson = Lesson.find_by_path(lesson_id)
+    return unless exists?(lesson, lesson_id)
+    if lesson.settings['nonce'] != lesson_code
+      return allowed?(lesson, 'never_allow')
+    end
+    user = User.find_by_token(user_token)
+    return unless exists?(user, user_token)
+
+    Lesson.complete(lesson, user, params['rating'].to_i)
+
+    render json: JsonApi::Lesson.as_json(lesson, {wrapper: true, extra_user: user, permissions: user})
   end
 
   def assign
@@ -43,17 +105,40 @@ class Api::LessonsController < ApplicationController
       user = User.find_by_path(params['user_id'])
       return unless exists?(user, params['user_id'])
       return unless authorized?(user, 'supervise')
-      Lesson.assign(lesson, user, @api_user)
+      Lesson.assign(lesson, user, nil, @api_user)
     elsif params['organization_id']
       org = Organization.find_by_path(params['organization_id'])
       return unless exists?(org, params['organization_id'])
       return unless authorized?(org, 'manage')
-      Lesson.assign(lesson, org, @api_user)
+      Lesson.assign(lesson, org, nil, @api_user)
     elsif params['organization_unit_id']
       unit = OrganizationUnit.find_by_path(params['organization_unit_id'])
       return unless exists?(unit, params['organization_unit_id'])
       return unless authorized?(unit, 'edit')
-      Lesson.assign(lesson, unit, @api_user)
+      Lesson.assign(lesson, unit, nil, @api_user)
+    end
+    render json: JsonApi::Lesson.as_json(lesson, {wrapper: true, permissions: @api_user})
+  end
+
+  def unassign
+    lesson = Lesson.find_by_path(params['lesson_id'])
+    return unless exists?(lesson, params['lesson_id'])
+    return unless allowed?(lesson, 'view')
+    if params['user_id']
+      user = User.find_by_path(params['user_id'])
+      return unless exists?(user, params['user_id'])
+      return unless allowed?(user, 'supervise')
+      Lesson.unassign(lesson, user)
+    elsif params['organization_id']
+      org = Organization.find_by_path(params['organization_id'])
+      return unless exists?(org, params['organization_id'])
+      return unless allowed?(org, 'manage')
+      Lesson.unassign(lesson, org)
+    elsif params['organization_unit_id']
+      unit = OrganizationUnit.find_by_path(params['organization_unit_id'])
+      return unless exists?(unit, params['organization_unit_id'])
+      return unless allowed?(unit, 'edit')
+      Lesson.unassign(lesson, unit)
     end
     render json: JsonApi::Lesson.as_json(lesson, {wrapper: true, permissions: @api_user})
   end

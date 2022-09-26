@@ -461,9 +461,21 @@ export default Controller.extend({
         modal.open('premium-required', {user_name: user.user_name, action: 'quick_assessment', reason: 'not_currently_premium'});
       }
     },
+    lessons: function(user) {
+      if(user == 'pick') {
+        if(app_state.get('sessionUser.supporter_role') && (app_state.get('sessionUser.known_supervisees.length') > 0 || app_state.get('currentUser.managed_orgs.length') > 0)) {
+          app_state.controller.send('switch_communicators', {header: i18n.t('select_user_to_review_lessons', "Select User to Review Lesons")})
+          return;
+        } else {
+          user = app_state.get('currentUser');
+        }
+      }
+      user = user || app_state.get('currentUser');
+      this.transitionToRoute('user.lessons', emberGet(user, 'id'));
+    },
     run_eval: function(user) {
       if(user == 'pick') {
-        if(app_state.get('currentUser.supporter_role')) {
+        if(app_state.get('sessionUser.supporter_role') && (app_state.get('sessionUser.known_supervisees.length') > 0 || app_state.get('currentUser.managed_orgs.length') > 0)) {
           var prompt = i18n.t('select_user_for_eval', "Select User for Evaluation");
           app_state.controller.send('switch_communicators', {stay: true, modeling: false, skip_me: !app_state.get('currentUser.subscription.premium_supporter_plus_communicator'), header: prompt, eval: true});
           return;
@@ -597,7 +609,7 @@ export default Controller.extend({
       this.transitionToRoute('user.stats', user_name, {queryParams: {start: null, end: null, device_id: null, location_id: null, split: null, start2: null, end2: null, devicde_id2: null, location_id2: null}});
     },
     goals: function() {
-      if((app_state.get('currentUser.supervisees') || []).length > 0) {
+      if(app_state.get('sessionUser.supporter_role') && (app_state.get('sessionUser.known_supervisees.length') > 0 || app_state.get('currentUser.managed_orgs.length') > 0)) {
         var prompt = i18n.t('select_user_for_goals', "Select User for Goals");
         app_state.controller.send('switch_communicators', {stay: true, modeling: true, skip_me: !app_state.get('currentUser.subscription.premium_supporter_plus_communicator'), route: 'user.goals', header: prompt});
         return;
@@ -637,6 +649,16 @@ export default Controller.extend({
     },
     update_evaluation: function(action) {
       modal.open('modals/eval-status', {action: action, user: app_state.get('sessionUser')});
+    },
+    next_lesson: function() {
+      var lesson = app_state.get('sessionUser.first_incomplete_lesson');
+      if(lesson) {
+        var prefix = location.protocol + "//" + location.host;
+        if(capabilities.installed_app && capabilities.api_host) {
+          prefix = capabilities.api_host;
+        }
+        window.open(prefix + '/lessons/' + lesson.id + '/' + lesson.lesson_code + '/' + app_state.get('sessionUser.user_token'), '_blank');
+      }
     },
     launch_rating: function() {
       var user = app_state.get('sessionUser');

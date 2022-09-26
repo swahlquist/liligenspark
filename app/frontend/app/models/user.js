@@ -66,6 +66,7 @@ CoughDrop.User = DS.Model.extend({
   valet_long_term: DS.attr('boolean'),
   valet_prevent_disable: DS.attr('boolean'),
   has_logging_code: DS.attr('boolean'),
+  lessons: DS.attr('raw'),
   last_message_read: DS.attr('number'),
   last_alert_access: DS.attr('number'),
   last_access: DS.attr('date'),
@@ -440,6 +441,33 @@ CoughDrop.User = DS.Model.extend({
   }),
   profile_url: computed('user_name', function() {
     return location.protocol + '//' + location.host + '/' + this.get('user_name');
+  }),
+  first_incomplete_lesson: computed('sorted_lessons', function() {
+    return (this.get('sorted_lessons') || []).find(function(l) { return !l.completed; });
+  }),
+  sorted_lessons: computed('lessons', function() {
+    var source_scores = {org: 1, unit: 2, user: 4, supervisee: 3};
+    return (this.get('lessons') || []).sort(function(a, b) {
+      var a_score = source_scores[a.source] || 0;
+      var b_score = source_scores[a.source] || 0;
+      if(a.required && !b.required) {
+        return -1;
+      } else if(b.required && !a.required) {
+        return 1;
+      }
+      if(a_score != b_score) {
+        return b_score - a_score;
+      }
+      if(a.due_ts && !b.due_ts) {
+        return -1;
+      } else if(b.due_ts && !a.due_ts) {
+        return 1;
+      } else if(a.due_ts != b.due_ts) {
+        return b.due_ts - a.due_ts;
+      } else {
+        return a.title.localeCompare(b.title);
+      }
+    });
   }),
   multiple_devices: computed('devices', function() {
     return (this.get('devices') || []).length > 1;

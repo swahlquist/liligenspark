@@ -21,7 +21,7 @@ module JsonApi::User
       json['permissions'] = user.permissions_for(args[:permissions])
       json['admin'] = true if ::Organization.admin_manager?(user)
     end
-    
+        
     if json['permissions'] && json['permissions']['model']
       json['needs_billing_update'] = !!user.settings['purchase_bounced']
       json['sync_stamp'] = (user.sync_stamp || user.updated_at).utc.iso8601
@@ -256,12 +256,37 @@ module JsonApi::User
 
     if json['permissions'] && json['permissions']['model'] && !args[:paginate]
       all_lesson_ids = []
-      json['organizations'].each{|o| all_lesson_ids += o['lesson_ids'] || [] }
-      all_lesson_ids += json['lesson_ids'] || []
-      (json['supervised_units'] || []).each{|o| all_lesson_ids += ['lesson_ids'] || [] }
-      all_lesson_ids += json['supervisee_lesson_ids'] || []
-      lessons = ::Lesson.find_all_by_global_id(all_lesson_ids.uniq)
+      sources = {}
+      json['organizations'].each{|o| 
+        (o['lesson_ids'] || []).each do |id|
+          all_lesson_ids << id
+          sources[id] = 'org'
+        end
+      }
+      all_lesson_ids += 
+      (json['lesson_ids'] || []).each do |id|
+        sources[id] = 'user'
+        all_lesson_ids << id
+      end
+      (json['supervised_units'] || []).each{|o| 
+        (o['lesson_ids'] || []).each do |id|
+          sources[id] = 'unit'
+          all_lesson_ids << id
+        end
+      }
+      (json['supervisee_lesson_ids'] || []).each do |id|
+        sources[id] = 'supervisee'
+        all_lesson_ids << id
+      end
+      lessons = []
+      if all_lesson_ids.length > 0
+        lessons = ::Lesson.find_all_by_global_id(all_lesson_ids.uniq)
+      end
       json['lessons'] = lessons.map{|l| JsonApi::Lesson.as_json(l) }
+      if json['lessons'].length > 0
+        json['lessons'].each{|l| l['source'] = sources[l['id']] || 'unknown' }
+        json['lessons'] = ::Lesson.decorate_completion(user, json['lessons'])
+      end
     end
     
     

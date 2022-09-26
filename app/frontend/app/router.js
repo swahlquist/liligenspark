@@ -68,10 +68,12 @@ Router.map(function() {
   this.route('limited', {path: '/limited'});
   this.route('utterance', { path: '/utterances/:id' });
   this.route('admin', { path: '/admin' });
+  this.route('lesson', { path: '/lessons/:lesson_id/:lesson_code/:user_token'});
   this.route('organization', { path: '/organizations/:id' }, function() {
     this.route('reports');
     this.route('subscription');
     this.route('extras');
+    this.route('lessons');
     this.route('rooms');
     this.route('settings');
     this.route('room', { path: '/rooms/:room_id' });
@@ -99,6 +101,7 @@ Router.map(function() {
     this.route('badges');
     this.route('device');
     this.route('history');
+    this.route('lessons');
     this.route('focus');
     this.route('confirm_registration', { path: '/confirm_registration/:code' });
     this.route('password_reset', { path: '/password_reset/:code' });

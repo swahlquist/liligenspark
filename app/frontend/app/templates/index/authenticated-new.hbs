@@ -503,6 +503,19 @@
           <div>
             {{badge-earned badge=model.earned_badge big=true}}
           </div>
+        {{else if model.first_incomplete_lesson}}
+          {{#if app_state.feature_flags.lessons}}
+          <div style='margin-left: 10px; margin-bottom: 10px;'>
+            <button class='btn btn-lg btn-default' {{action 'next_lesson'}}>
+            <span class='glyphicon glyphicon-education'></span>
+            {{t "Next Lesson: " key='next_lesson'}}
+            {{model.first_incomplete_lesson.title}}
+            {{#if model.first_incomplete_lesson.due_at}}
+              <div style='font-size: 14px;'>due {{date model.first_incomplete_lesson.due_at}}</div>
+            {{/if}}
+            </button>
+          </div>
+          {{/if}}
         {{else if rating_allowed}}
           <div>
             <button {{action 'launch_rating'}} class='purchase_link' style='font-size: 20px;'>
@@ -667,6 +680,16 @@
                 {{t "Basic Access" key='critical_access'}}
               {{/link-to}}
             </div>
+          {{/if}}
+          {{#if app_state.feature_flags.lessons}}
+            {{#if app_state.currentUser.currently_premium_or_fully_purchased}}
+              <div class='col-md-3 col-xs-4 big_button_holder'>
+                <button class='btn big_button btn-default bottom_row' {{action 'lessons'  'pick'}}>
+                  <span class='glyphicon glyphicon-education'></span>
+                  {{t "Lessons" key='lessons'}}
+                </button>
+              </div>
+            {{/if}}
           {{/if}}
         {{else if persistence.online}}
           {{#if app_state.currentUser.current_badge}}

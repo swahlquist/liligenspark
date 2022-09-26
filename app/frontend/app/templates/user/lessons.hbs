@@ -1,0 +1,42 @@
+{{#if session.isAuthenticated}}
+  <h2>
+    {{t "Current Lessons" key='current_lessons'}}
+  </h2>
+  {{#if styled_lessons}}
+    {{#each styled_lessons as |lesson|}}
+      <div class='well lesson'>
+        <span class='summary'>
+          <span style='display: inline-block; width: 20px; vertical-align: middle;'>
+            {{#if lesson.rating_class}}
+              <span class='face_label'><span class={{lesson.rating_class}}></span></span>
+            {{else if lesson.completed}}
+              <span class='glyphicon glyphicon-ok'></span>
+            {{/if}}
+          </span>
+          {{lesson.title}}
+        </span>
+        <div style='float: right;'>
+          {{#if lesson.completed}}
+            <button class='btn btn-sm btn-default' {{action 'launch' lesson}}>{{t "Re-Take" key='re_take'}}</button>
+          {{else if lesson.due_at}}
+            <button class={{if lesson.required 'btn btn-primary' 'btn btn-default'}} {{action 'launch' lesson}}>{{t "Start Lesson" key='start_lesson'}}</button>
+          {{/if}}
+        </div>
+        <div class='details'>
+          {{#if lesson.completed_ts}}
+            {{t "finished" key='finished'}} {{date_ago lesson.completed_ts}}
+          {{else if lesson.due_at}}
+            {{t "due" key='due' }} {{date_ago lesson.due_ts}}
+          {{/if}}
+        </div>
+        <div class='description text-muted'>
+          {{lesson.description}}
+        </div>
+      </div>
+    {{/each}}
+  {{else}}
+    {{t "Organization managers can define continuing education lessons for your benefit and improvement. When lessons have been added they will appear on a user's dashboard and here on their list of lessons. Each lesson can be launched, and then rated once completed to provide feedback and to track usage. Organizations can use these lessons to help everyone develop the skills and knowledge that can help them best support AAC users." key='user_lessons_explainer'}}
+  {{/if}}
+{{else}}
+  {{login-form left=true prompt=true return=true}}
+{{/if}}

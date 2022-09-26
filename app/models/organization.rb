@@ -95,6 +95,15 @@ class Organization < ActiveRecord::Base
         user.save
       end
     end
+    links = UserLink.where(record_code: Webhook.get_record_code(org))
+    # TODO: Sharding
+    user_ids = User.where(id: links.map(&:user_id)).map(&:id)
+    links.each do |link|
+      if !user_ids.include?(link.user_id)
+        # User is missing from the db, remove the link
+        link.destroy
+      end
+    end
     if user_type == 'user' || user_type == 'supervisor' || user_id == 'all'  
       if self.settings['include_extras']
         # users = []

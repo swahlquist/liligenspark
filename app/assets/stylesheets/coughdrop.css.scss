@@ -1757,7 +1757,23 @@ body > .popover.bottom {
     font-size: 12px;
   }
 }
-
+.lesson {
+  .summary {
+    font-weight: bold;
+    font-size: 18px;
+  }
+  .details {
+    font-size: 12px;
+  }
+  .description {
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    max-width: 200px;
+    max-width: calc(100% - 200px);
+    font-size: 12px;
+  }
+}
 .big_checkbox {
   position: relative;
   display: inline-block;

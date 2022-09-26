@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+  <body style='padding: 0; margin: 0;'>
+    <div style='position: fixed: top: 0; left: 0; right: 0; height: 100px; background: #000; color: #eee;'>
+      LESSON MAGIC
+      <button>Open in New Window</button>
+    </div>
+    <iframe id='frame' style='position: fixed; top: 100px; left: 0; right: 0; bottom: 0; width: 100%; height: calc(100% - 100px)' frameborder='0'></iframe>
+
+    <script>
+      var iframe = document.querySelector('#frame')
+      iframe.addEventListener('load', function(e) {
+        debugger;
+      });
+      // https://labs.w0s.jp/http/x-frame-options/deny.html?iframe
+      iframe.src = "https://labs.w0s.jp/http/x-frame-options/deny.html?iframe";
+    </script>
+  </body>
+</html>

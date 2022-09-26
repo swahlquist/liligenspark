@@ -75,6 +75,17 @@ class BoardsController < ApplicationController
     end
     render :index
   end
+
+  def lesson
+    @lesson = Lesson.find_by_path(params['lesson_id'])
+    @lesson = nil unless @lesson.nonce == params['lesson_code']
+    @user = User.find_by_token(params['user_token'])
+    if !@user || !@lesson
+      return redirect_to '/404'
+    end
+    render :index
+    #render :lesson, :layout => false
+  end
   
   def user
     user = User.find_by_possibly_old_path(params['id'])
