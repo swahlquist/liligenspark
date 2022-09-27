@@ -9,6 +9,8 @@ class Organization < ActiveRecord::Base
   before_save :generate_defaults
   after_save :touch_parent
   include Replicate
+
+  # UserLink.joins("LEFT OUTER JOIN users on users.id = user_links.user_id").where('users.user_name IS NULL').map(&:id)
   
   # cache should be invalidated if:
   # - a manager/assistant is added or removed
