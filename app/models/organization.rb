@@ -95,7 +95,7 @@ class Organization < ActiveRecord::Base
         user.save
       end
     end
-    links = UserLink.where(record_code: Webhook.get_record_code(org))
+    links = UserLink.where(record_code: Webhook.get_record_code(self))
     # TODO: Sharding
     user_ids = User.where(id: links.map(&:user_id)).map(&:id)
     links.each do |link|
@@ -767,7 +767,7 @@ class Organization < ActiveRecord::Base
     elsif self.settings['default_home_board']
       res = [self.settings['default_home_board']]
     end
-    res.map{|b| b['key'] }
+    return res.map{|b| b['key'] }
   end
   
   def self.attached_orgs(user, include_org=false)
@@ -849,7 +849,7 @@ class Organization < ActiveRecord::Base
           'added' => link['state']['added'],
           'pending' => !!link['state']['pending']
         }
-        e['home_board_keys'] = org.home_board_keys && !e['pending']
+        e['home_board_keys'] = org.home_board_keys if !e['pending']
         e['lesson_ids'] = (org.settings['lessons'] || []).select{|l| l['types'].include?('supervisor') }.map{|l| l['id'] }
         e['profile'] = org.settings['supervisor_profile'].slice('profile_id', 'template_id', 'frequency') if org.settings['supervisor_profile']
         e['external_auth'] = true if org.settings['saml_metadata_url']
