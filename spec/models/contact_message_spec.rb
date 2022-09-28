@@ -304,7 +304,7 @@ describe ContactMessage, :type => :model do
         'ticket' => {
           'requester' => {'name' => 'asdf@example.com', 'email' => 'asdf@example.com'},
           'subject' => "Ahem",
-          'comment' => {'html_body' => "<i>Source App: CoughDrop</i><br/>asdf<br/><br/><span style='font-style: italic;'>no IP address found<br/>no app version found<br/>no user agent found</span>"},
+          'comment' => {'html_body' => "<i>Source App: CoughDrop</i><br/>asdf<br/><br/><span style='font-style: italic;'>no IP address found<br/>no app version found<br/>no user agent found</span><br/>Unnamed Organization (premium), Unnamed Organization (premium), Unnamed Organization"},
           'email_ccs' => [
             {'user_name' => o1.settings['name'], 'user_email' => 'org1@example.com', 'action' => 'put'},
             {'user_name' => o2.settings['name'], 'user_email' => 'org2@example.com', 'action' => 'put'},
@@ -361,7 +361,66 @@ describe ContactMessage, :type => :model do
         'ticket' => {
           'requester' => {'name' => 'asdf@example.com', 'email' => 'asdf@example.com'},
           'subject' => "Ahem",
-          'comment' => {'html_body' => "<i>Source App: CoughDrop</i><br/>asdf<br/><br/><span style='font-style: italic;'>no IP address found<br/>no app version found<br/>no user agent found</span>"},
+          'comment' => {'html_body' => "<i>Source App: CoughDrop</i><br/>asdf<br/><br/><span style='font-style: italic;'>no IP address found<br/>no app version found<br/>no user agent found</span><br/>Unnamed Organization (premium)"},
+          'email_ccs' => [
+            {'user_name' => o1.settings['name'], 'user_email' => 'org1@example.com', 'action' => 'put'},
+            {'user_name' => o2.settings['name'], 'user_email' => 'org2@example.com', 'action' => 'put'},
+          ]
+        }
+      })
+    }.and_return(OpenStruct.new(:code => 201))
+    Worker.process_queues
+
+    ENV['ZENDESK_DOMAIN'] = orig_d
+    ENV['ZENDESK_USER'] = orig_u
+    ENV['ZENDESK_TOKEN'] = orig_t
+  end
+
+  it "should include org names in email body" do
+    orig_d = ENV['ZENDESK_DOMAIN']
+    orig_u = ENV['ZENDESK_USER']
+    orig_t = ENV['ZENDESK_TOKEN']
+    ENV['ZENDESK_DOMAIN'] = 'asdf'
+    ENV['ZENDESK_USER'] = "nunya@example.com"
+    ENV['ZENDESK_TOKEN'] = "q49t84awhg498gh34"
+
+    u1 = User.create
+    u1.settings['email'] = 'asdf@example.com'
+    u1.save
+    o1 = Organization.create
+    o1.settings['premium'] = true
+    o1.settings['name'] = "Origami"
+    o1.settings['support_target'] = {'email' => 'org1@example.com'}
+    o1.save
+    o1.add_user(u1.user_name, false, false)
+    o2 = Organization.create
+    o2.settings['premium'] = true
+    o2.settings['name'] = "Originality"
+    o2.settings['support_target'] = {'email' => 'org2@example.com'}
+    o2.save
+    o1.parent_organization_id = o2.id
+    o1.save
+    expect(o1.parent_org_id).to eq(o2.global_id)
+    expect(o1.upstream_orgs).to eq([o2])
+    
+    expect(AdminMailer).not_to receive(:schedule_delivery)
+    m = ContactMessage.process_new({
+      'message' => 'asdf', 
+      'email' => 'asdf@example.com',
+      'subject' => 'Ahem',
+      'recipient' => 'technical support'
+    })
+    expect(m.errored?).to eq(false)
+    expect(Typhoeus).to receive(:post){|endpoint, args|
+      expect(endpoint).to eq('https://asdf/api/v2/tickets.json')
+      expect(args[:headers]).to eq({'Content-Type' => 'application/json'})
+      expect(args[:userpwd]).to eq("nunya@example.com/token:q49t84awhg498gh34")
+      expect(args[:body]).to_not eq(nil)
+      expect(JSON.parse(args[:body])).to eq({
+        'ticket' => {
+          'requester' => {'name' => 'asdf@example.com', 'email' => 'asdf@example.com'},
+          'subject' => "Ahem",
+          'comment' => {'html_body' => "<i>Source App: CoughDrop</i><br/>asdf<br/><br/><span style='font-style: italic;'>no IP address found<br/>no app version found<br/>no user agent found</span><br/>Origami (premium)"},
           'email_ccs' => [
             {'user_name' => o1.settings['name'], 'user_email' => 'org1@example.com', 'action' => 'put'},
             {'user_name' => o2.settings['name'], 'user_email' => 'org2@example.com', 'action' => 'put'},

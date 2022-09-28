@@ -305,7 +305,7 @@ module Relinking
       starting_old_board = opts[:starting_old_board] || raise("starting_old_board required")
       starting_new_board = opts[:starting_new_board] || raise("starting_new_board required")
       make_public = opts[:make_public] || false
-      board_ids = starting_old_board.settings['downstream_board_ids']
+      board_ids = starting_old_board.settings['downstream_board_ids'] || []
       if opts[:valid_ids]
         board_ids = board_ids & opts[:valid_ids]
       end

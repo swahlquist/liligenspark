@@ -1700,15 +1700,16 @@ class Board < ActiveRecord::Base
         if sorted[-1]
           res = sorted[-1][0]
           if res == 'opensymbols' && sorted[-2]
-            if sorted[-2][1] > (sorted[-1][1] / 3) && ['arasaac', 'tawasol', 'twemoji', 'mulberry', 'noun-project'].include?(sorted[-1][0])
+            if sorted[-2][1] > (sorted[-1][1] * 3 / 4) && ['arasaac', 'tawasol', 'twemoji', 'mulberry', 'noun-project'].include?(sorted[-2][0])
               # TODO: way to prefer one library over others when searching opensymbols
               #       then we can track more fine-grained here and show in search results
-              # res = sorted[-2][0]
+              res = sorted[-2][0]
             end
           end
         end
         self.settings['common_library'] = res
         self.save
+        return res
       else
         self.schedule(:current_library, true)
       end

@@ -936,6 +936,119 @@ describe Organization, :type => :model do
       expect(links[0]['state']['added']).to_not eq(nil)
     end
 
+    # plus_extras = params[:management_action].match(/-plus_extras/)
+    # action, key = params[:management_action].sub(/-plus_extras/, '').split(/-/, 2)
+    # plus_error = nil
+    # begin
+    #   new_user = nil
+    #   if action == 'add_user'
+    #     @assignment_action = params[:assignment_action]
+    #     new_user = self.add_user(key, true, true, false)
+    #   elsif action == 'add_unsponsored_user' || action == 'add_external_user'
+    #     @assignment_action = params[:assignment_action]
+    #     new_user = self.add_user(key, true, false, false)
+    #   elsif action == 'add_eval'
+    #     new_user = self.add_user(key, true, true, true)
+    #   elsif action == 'add_supervisor'
+    #     self.add_supervisor(key, true)
+    #   elsif action == 'add_premium_supervisor'
+    #     self.add_supervisor(key, true, true)
+    #   elsif action == 'add_assistant' || action == 'add_manager'
+    #     self.add_manager(key, action == 'add_manager')
+    #   elsif action == 'add_extras'
+    #     self.add_extras_to_user(key)
+    #   elsif action == 'remove_user'
+    #     self.remove_user(key)
+    #   elsif action == 'remove_supervisor'
+    #     self.remove_supervisor(key)
+    #   elsif action == 'remove_assistant' || action == 'remove_manager'
+    #     self.remove_manager(key)
+    #   elsif action == 'remove_extras'
+    #     self.remove_extras_from_user(key)
+    #   end
+
+    #   if plus_extras
+    #     begin
+    #       self.reload.add_extras_to_user(key)
+    #     rescue => e
+    #       plus_error = e
+    #     end
+    #   end
+
+    #   if @assignment_action && new_user
+    #     # Organizations can define a default home board for their users
+    #     if !new_user.settings['preferences']['home_board'] && !new_user.settings['external_device']
+    #       type, key, symbols = @assignment_action.split(/:/)
+    #       if type == 'copy_board' && (self.home_board_keys || []).include?(key)
+    #         home_board = Board.find_by_path(key)
+    #         new_user.process_home_board({'id' => home_board.global_id, 'copy' => true, 'symbol_library' => symbols}, {'updater' => home_board.user, 'org' => self, 'async' => true}) if home_board
+    #       end
+    #     elsif self.settings['default_home_board'] && !new_user.settings['preferences']['home_board'] && !new_user.settings['external_device']
+    #       # TODO: legacy code that can be removed Jan 2023
+    #       home_board = Board.find_by_path(self.settings['default_home_board']['id'])
+    #       new_user.process_home_board({'id' => home_board.global_id}, {'updater' => home_board.user, 'async' => true}) if home_board
+    #     end
+    #   end
+
+    it "should not allow setting a home board not in the org's list" do
+      o = Organization.create(:settings => {'total_licenses' => 1})
+      u = User.create
+      u2 = User.create
+      b = Board.create(user: u2)
+      expect(o).to receive(:add_user).with(u.user_name, true, true, false).and_return(u)
+      expect(u).to_not receive(:process_home_board)
+      res = o.process({
+        :management_action => "add_user-#{u.user_name}",
+        :assignment_action => "copy_board:board_key:lessonpix"
+      }, {'updater' => User.create})
+      expect(res).to eq(true)
+    end
+
+    it "should pass assignment_action with management_action for adding users" do
+      o = Organization.create(:settings => {'total_licenses' => 1})
+      u = User.create
+      u2 = User.create
+      b = Board.create(user: u2)
+      o.settings['default_home_boards'] = [{'id' => b.global_id, 'key' => b.key}]
+      o.save
+      expect(o).to receive(:add_user).with(u.user_name, true, true, false).and_return(u)
+      expect(u).to_not receive(:process_home_board).with({'id' => b.global_id, 'copy' => true, 'symbol_library' => 'lessonpix'}, {'updater' => b.user, 'org' => o, 'async' => true})
+      res = o.process({
+        :management_action => "add_user-#{u.user_name}",
+        :assignment_action => "copy_board:board_key:lessonpix"
+      }, {'updater' => User.create})
+      expect(res).to eq(true)
+    end
+
+    it "should add premium symbols after adding a user if specified" do
+      o = Organization.create(:settings => {'total_licenses' => 1, 'total_extras' => 1})
+      u = User.create
+      u2 = User.create
+      b = Board.create(user: u2)
+      o.settings['default_home_boards'] = [{'id' => b.global_id, 'key' => b.key}]
+      o.save
+      res = o.process({
+        :management_action => "add_user-plus_extras-#{u.user_name}",
+        :assignment_action => "copy_board:board_key:lessonpix"
+      }, {'updater' => User.create})
+      expect(res).to eq(true)
+    end
+
+    it "should return extras-add error after adding user if it happens" do
+      o = Organization.create(:settings => {'total_licenses' => 1})
+      u = User.create
+      u2 = User.create
+      b = Board.create(user: u2)
+      o.settings['default_home_boards'] = [{'id' => b.global_id, 'key' => b.key}]
+      o.save
+      res = o.process({
+        :management_action => "add_user-plus_extras-#{u.user_name}",
+        :assignment_action => "copy_board:board_key:lessonpix"
+      }, {'updater' => User.create})
+      expect(res).to eq(false)
+      expect(o.processing_errors).to eq(["user management extras action failed: no extras available"])
+    end
+
     it "should process premium supporters" do
       o = Organization.create(:settings => {'total_supervisor_licenses' => 1})
       u = User.create
@@ -2856,6 +2969,39 @@ describe Organization, :type => :model do
       expect(ue4).to receive(:process_profile).with('bacon', pt.global_id, o)
       expect(ue5).to_not receive(:process_profile).with('bacon', pt.global_id, o)
       o.assert_profile('supervisor')
+    end
+  end
+
+  describe "home_board_keys" do
+    it "should return an empty list by default" do
+      o = Organization.create
+      expect(o.home_board_keys).to eq([])
+    end
+
+    it "should return legacy home board as single list" do
+      o = Organization.create
+      o.settings['default_home_board'] = {'key' => 'asdf'}
+      expect(o.home_board_keys).to eq(['asdf'])
+    end
+
+    it "should return latest home board list as parsed by user" do
+      o = Organization.create
+      o.settings['default_home_board'] = {'key' => 'old'}
+      o.settings['default_home_boards'] = [{'key' => 'new1'}, {'key' => 'new2'}]
+      expect(o.home_board_keys).to eq(['new1', 'new2'])
+    end
+
+    it "should delete the legacy hopme board when updating" do
+      o = Organization.create
+      o.settings['default_home_board'] = {'key' => 'asdf'}
+      o.save
+      u = User.create
+      b1 = Board.create(user: u, public: true)
+      b2 = Board.create(user: u, public: true)
+      b3 = Board.create(user: u)
+      o.process({'home_board_keys' => [b1.key, b2.key, b3.key]}, {'updater' => u})
+      expect(o.home_board_keys).to eq([b1.key, b2.key])
+      expect(o.settings['default_home_board']).to eq(nil)
     end
   end
 end

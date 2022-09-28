@@ -845,19 +845,6 @@ describe Subscription, :type => :model do
       })).to eq(false)
     end
     
-    it "should set the user's home board if not already set but defined for the org" do
-      u = User.create
-      b = Board.create(user: u, public: true)
-      o = Organization.create
-      o.settings['default_home_board'] = {'id' => b.global_id, 'key' => b.key}
-      o.save
-      
-      expect(UserMailer).to receive(:schedule_delivery).with(:organization_assigned, u.global_id, o.global_id)
-      u.update_subscription_organization(o.global_id)
-      expect(u.settings['subscription']['added_to_organization']).to eql(Time.now.iso8601)
-      expect(u.settings['preferences']['home_board']).to eq({'key' => b.key, 'id' => b.global_id, 'locale' => 'en'})
-    end
-    
     it "should set eval accounts as eval users" do
       u = User.create
       o = Organization.create(:settings => {'total_eval_licenses' => 1})
@@ -2944,20 +2931,6 @@ describe Subscription, :type => :model do
       expect(u.settings['subscription']['eval_started']).to be > 1.day.ago.iso8601
       expect(u.settings['subscription']['eval_expires']).to be > 1.week.from_now.iso8601
     end
-    
-    it "should revert to the org default home board if set" do
-      o = Organization.create(settings: {'total_eval_licenses' => 5})
-      u = User.create
-      d = Device.create(user: u)
-      b = Board.create(user: u, public: true)
-      o.settings['default_home_board'] = {'key' => b.key, 'id' => b.global_id}
-      o.save
-      o.add_user(u.user_name, false, true, true)
-      u.reload
-      u.settings['subscription'] = {'eval_account' => true}
-      u.reset_eval(d.global_id)
-      expect(u.settings['preferences']['home_board']).to eq({'key' => b.key, 'id' => b.global_id, 'locale' => 'en'})
-    end
 
     it "should delete all devices but the current device" do
       u = User.create
@@ -2998,9 +2971,195 @@ describe Subscription, :type => :model do
       5.times{|i| LogSession.create!(user: u, device: d, author: u) }
       expect(u.reload.log_sessions.count).to eq(5)
       u.settings['subscription'] = {'eval_account' => true}
-      expect(Flusher).to receive(:flush_user_content).with(u.global_id, u.user_name, d)
+      expect(Flusher).to receive(:flush_user_content).with(u.global_id, u.user_name, d, true)
       expect(u.reset_eval(d.global_id)).to eq(true)
       Worker.process_queues
+    end
+
+    it "should set a new password for the account if specified" do
+      u = User.create
+      u.settings['subscription'] = {'eval_started' => 2.weeks.ago.iso8601, 'eval_expires' => 1.week.ago.iso8601}
+      u.save
+      d = Device.create(user: u)
+      u.settings['subscription'] = {'eval_account' => true}
+      u.reset_eval(d.global_id, {'password' => 'bacon'})
+      expect(u.valid_password?('bacon')).to eq(true)
+    end
+
+  
+    it "should create a copy of the specified home board if public" do
+      o = Organization.create(settings: {'total_eval_licenses' => 1})
+      u = User.create
+      o.add_user(u.user_name, false, true, true)
+      u.reload
+      u2 = User.create
+      d = Device.create(user: u)
+      b = Board.create(user: u2, public: true)
+      b2 = Board.create(user: u2, public: true)
+      o.settings['default_home_boards'] = [{'id' => b.global_id, 'key' => b.key}]
+      o.save
+
+      u.settings['subscription'] = {'eval_account' => true}
+      u.save
+      u.reset_eval(d.global_id, {'home_board_key' => b2.key})
+      expect(u.settings['preferences']['home_board']).to_not eq(nil)
+      brd = Board.find_by_path(u.settings['preferences']['home_board']['id'])
+      expect(brd).to_not eq(nil)
+      expect(brd).to_not eq(b)
+      expect(brd).to_not eq(b2)
+      expect(brd.parent_board).to eq(b2)
+      expect(brd.user).to eq(u)
+    end
+
+    it "should not create a copy if home board set to 'none'" do
+      o = Organization.create(settings: {'total_eval_licenses' => 1})
+      u = User.create
+      o.add_user(u.user_name, false, true, true)
+      u.reload
+      u2 = User.create
+      d = Device.create(user: u)
+      b = Board.create(user: u2, public: true)
+      b2 = Board.create(user: u2, public: true)
+      o.settings['default_home_boards'] = [{'id' => b.global_id, 'key' => b.key}]
+      o.save
+
+      u.settings['subscription'] = {'eval_account' => true}
+      u.save
+      u.reset_eval(d.global_id, {'home_board_key' => 'none'})
+      expect(u.settings['preferences']['home_board']).to eq(nil)
+    end
+
+    it "should create a copy of the org default home board if nothing specified" do
+      o = Organization.create(settings: {'total_eval_licenses' => 1})
+      u = User.create
+      o.add_user(u.user_name, false, true, true)
+      u.reload
+      u2 = User.create
+      d = Device.create(user: u)
+      b = Board.create(user: u2, public: true)
+      b2 = Board.create(user: u2, public: true)
+      o.settings['default_home_boards'] = [{'id' => b.global_id, 'key' => b.key}]
+      o.save
+
+      u.settings['subscription'] = {'eval_account' => true}
+      u.save
+      u.reset_eval(d.global_id, {})
+      expect(u.settings['preferences']['home_board']).to_not eq(nil)
+      brd = Board.find_by_path(u.settings['preferences']['home_board']['id'])
+      expect(brd).to_not eq(nil)
+      expect(brd).to_not eq(b)
+      expect(brd).to_not eq(b2)
+      expect(brd.parent_board).to eq(b)
+      expect(brd.user).to eq(u)
+    end
+
+    it "should create a copy with the specified symbols" do
+      o = Organization.create(settings: {'total_eval_licenses' => 1})
+      u = User.create
+      o.add_user(u.user_name, false, true, true)
+      u.reload
+      u2 = User.create
+      d = Device.create(user: u)
+      b = Board.create(user: u2, public: true)
+      b2 = Board.create(user: u2, public: true)
+      bi = ButtonImage.create
+      o.settings['default_home_boards'] = [{'id' => b.global_id, 'key' => b.key}]
+      o.save
+
+      b2.settings['buttons'] = [{'id' => 'a', 'image_id' => bi.global_id, 'label' => 'frog'}]
+      b2.save
+
+      expect(Uploader).to receive(:default_images).with('twemoji', ['frog'], 'en', u, true, false).and_return({
+        'frog' => {'coughdrop_image_id' => bi.global_id}
+      })
+
+      u.settings['subscription'] = {'eval_account' => true}
+      u.save
+      u.reset_eval(d.global_id, {'home_board_key' => b2.key, 'symbol_library' => 'twemoji'})
+      expect(u.settings['preferences']['home_board']).to_not eq(nil)
+      brd = Board.find_by_path(u.settings['preferences']['home_board']['id'])
+      expect(brd).to_not eq(nil)
+      expect(brd).to_not eq(b)
+      expect(brd).to_not eq(b2)
+      expect(brd.parent_board).to eq(b2)
+      expect(brd.user).to eq(u)
+      expect(brd.settings['swapped_library']).to eq('twemoji')
+    end
+
+    it "should fall back to the org-specified default symbols when copying" do
+      o = Organization.create(settings: {'total_eval_licenses' => 1})
+      u = User.create
+      o.add_user(u.user_name, false, true, true)
+      u.reload
+      u2 = User.create
+      d = Device.create(user: u)
+      b = Board.create(user: u2, public: true)
+      b2 = Board.create(user: u2, public: true)
+      bi = ButtonImage.create
+      o.settings['default_home_boards'] = [{'id' => b.global_id, 'key' => b.key}]
+      o.settings['preferred_symbols'] = 'twemoji'
+      o.save
+
+      b2.settings['buttons'] = [{'id' => 'a', 'image_id' => bi.global_id, 'label' => 'frog'}]
+      b2.save
+
+      expect(Uploader).to receive(:default_images).with('twemoji', ['frog'], 'en', u, true, false).and_return({
+        'frog' => {'coughdrop_image_id' => bi.global_id}
+      })
+
+      u.settings['subscription'] = {'eval_account' => true}
+      u.save
+      u.reset_eval(d.global_id, {'home_board_key' => b2.key})
+      expect(u.settings['preferences']['home_board']).to_not eq(nil)
+      brd = Board.find_by_path(u.settings['preferences']['home_board']['id'])
+      expect(brd).to_not eq(nil)
+      expect(brd).to_not eq(b)
+      expect(brd).to_not eq(b2)
+      expect(brd.parent_board).to eq(b2)
+      expect(brd.user).to eq(u)
+      expect(brd.settings['swapped_library']).to eq('twemoji')
+    end
+
+    it "should create a copy of the specified home board if an org board" do
+      o = Organization.create(settings: {'total_eval_licenses' => 1})
+      u = User.create
+      o.add_user(u.user_name, false, true, true)
+      u.reload
+      u2 = User.create
+      d = Device.create(user: u)
+      b = Board.create(user: u2)
+      b2 = Board.create(user: u2)
+      o.settings['default_home_boards'] = [{'id' => b.global_id, 'key' => b.key}]
+      o.save
+
+      u.settings['subscription'] = {'eval_account' => true}
+      u.save
+      u.reset_eval(d.global_id, {'home_board_key' => b.key})
+      expect(u.settings['preferences']['home_board']).to_not eq(nil)
+      brd = Board.find_by_path(u.settings['preferences']['home_board']['id'])
+      expect(brd).to_not eq(nil)
+      expect(brd).to_not eq(b)
+      expect(brd).to_not eq(b2)
+      expect(brd.parent_board).to eq(b)
+      expect(brd.user).to eq(u)
+    end
+
+    it "should not create a copy of the specified home board if not managed by the org" do
+      o = Organization.create(settings: {'total_eval_licenses' => 1})
+      u = User.create
+      o.add_user(u.user_name, false, true, true)
+      u.reload
+      u2 = User.create
+      d = Device.create(user: u)
+      b = Board.create(user: u2)
+      b2 = Board.create(user: u2)
+      o.settings['default_home_boards'] = [{'id' => b.global_id, 'key' => b.key}]
+      o.save
+
+      u.settings['subscription'] = {'eval_account' => true}
+      u.save
+      u.reset_eval(d.global_id, {'home_board_key' => b2.key})
+      expect(u.settings['preferences']['home_board']).to eq(nil)
     end
   end  
 
@@ -3127,7 +3286,7 @@ describe Subscription, :type => :model do
       u2 = User.create
       d = Device.create(user: u, developer_key_id: 999)
       expect(Flusher).to receive(:transfer_user_content).with(u.global_id, u.user_name, u2.global_id, u2.user_name)
-      expect(Flusher).to receive(:flush_user_content).with(u.global_id, u.user_name, d)
+      expect(Flusher).to receive(:flush_user_content).with(u.global_id, u.user_name, d, true)
       u.transfer_eval_to(u2.global_id, d.global_id, true)
     end
   end

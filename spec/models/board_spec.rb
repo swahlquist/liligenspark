@@ -4470,4 +4470,80 @@ describe Board, :type => :model do
       expect(b2.copyable_if_authorized?(u2)).to eq(false)
     end
   end
+
+  describe "current_library" do
+    it "should return swapped_library if defined" do
+      b = Board.new
+      b.settings = {'swapped_library' => 'whatever'}
+      expect(b.current_library).to eq('whatever')
+    end
+
+    it "should return common_library if explicitly told to avoid lookup" do
+      b = Board.new
+      b.settings = {'swapped_library' => 'whatever'}
+      expect(b.current_library(false)).to eq('whatever')
+    end
+
+    it "should return opensymbols if needed to schdule a lookup" do
+      u = User.create
+      b = Board.create(user: u)
+      expect(b).to receive(:schedule).with(:current_library, true)
+      expect(b.current_library).to eq('opensymbols')
+    end
+
+    it "should find the most common library used on buttons if forced to lookup" do
+      u = User.create
+      b = Board.create(user: u)
+      list = []
+      10.times do |i|
+        bi = ButtonImage.create(settings: {'license' => {'author_name' => 'tobii', 'uneditable' => true, 'author_url' => ''}})
+        list << bi
+      end
+      expect(b).to receive(:button_images).and_return(list)
+      expect(b.current_library(true)).to eq('pcs')
+      expect(b.settings['common_library']).to eq('pcs')
+    end
+
+    it "should return opensymbols if a mix of different free libraries" do
+      u = User.create
+      b = Board.create(user: u)
+      list = []
+      3.times do |i|
+        bi = ButtonImage.create(settings: {'license' => {'author_name' => 'twitter', 'uneditable' => true, 'author_url' => ''}})
+        list << bi
+      end
+      3.times do |i|
+        bi = ButtonImage.create(settings: {'license' => {'author_name' => 'arasaac', 'uneditable' => true, 'author_url' => ''}})
+        list << bi
+      end
+      3.times do |i|
+        bi = ButtonImage.create(settings: {'license' => {'author_name' => 'paxtoncrafts', 'uneditable' => true, 'author_url' => ''}})
+        list << bi
+      end
+      expect(b).to receive(:button_images).and_return(list)
+      expect(b.current_library(true)).to eq('opensymbols')
+      expect(b.settings['common_library']).to eq('opensymbols')
+    end
+
+    it "should return specific opensymbols library if a majority match" do
+      u = User.create
+      b = Board.create(user: u)
+      list = []
+      30.times do |i|
+        bi = ButtonImage.create(settings: {'license' => {'author_name' => 'twitter', 'uneditable' => true, 'author_url' => ''}})
+        list << bi
+      end
+      3.times do |i|
+        bi = ButtonImage.create(settings: {'license' => {'author_name' => 'arasaac', 'uneditable' => true, 'author_url' => ''}})
+        list << bi
+      end
+      3.times do |i|
+        bi = ButtonImage.create(settings: {'license' => {'author_name' => 'paxtoncrafts', 'uneditable' => true, 'author_url' => ''}})
+        list << bi
+      end
+      expect(b).to receive(:button_images).and_return(list)
+      expect(b.current_library(true)).to eq('twemoji')
+      expect(b.settings['common_library']).to eq('twemoji')
+    end
+  end
 end

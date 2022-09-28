@@ -81,9 +81,10 @@ class ContactMessage < ActiveRecord::Base
     org_list = []
     users.each do |user|
       Organization.attached_orgs(user, true).each do |org|
-        if org['org']
+        if org['org'] && !org['pending']
           str = org['org'].settings['name']
           str += " (premium)" if org['premium']
+          org_list << str
         end
         if !org['pending'] && org['org'] && org['premium']
           if org['org'].settings['support_target']

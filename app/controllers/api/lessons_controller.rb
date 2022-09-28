@@ -21,7 +21,7 @@ class Api::LessonsController < ApplicationController
       return unless exists?(unit, params['organization_unit_id'])
       return unless allowed?(unit, 'edit')
       obj = unit
-      lessons = lessons.where(organization_unit_id: unit.id)
+      lessons = Lesson.where(id: Lesson.local_ids([(unit.settings['lesson'] || {})['id']]))
     else
       lessons = lessons.where(public: true)
     end
@@ -32,6 +32,7 @@ class Api::LessonsController < ApplicationController
     if params['history_check'] && obj
       lessons.each{|lesson| lesson.history_check(obj) }
     end
+    lessons = lessons.order('id DESC')
     json = JsonApi::Lesson.paginate(params, lessons, {obj: obj})
     json['lesson'] = Lesson.decorate_completion(user, json['lesson']) if user
     render json: json
@@ -51,9 +52,11 @@ class Api::LessonsController < ApplicationController
       initial_target = unit
     elsif params['lesson']['user_id']
       user = User.find_by_path(params['lesson']['user_id'])
-      return unless exists(user, params['lesson']['user_id'])
+      return unless exists?(user, params['lesson']['user_id'])
       return unless allowed?(user, 'supervise')
       initial_target = user
+    else
+      return allowed?(@api_user, 'never_allow')
     end
     lesson = Lesson.process_new(params['lesson'], {'author' => @api_user, 'target' => initial_target})
     Lesson.assign(lesson, initial_target, params['lesson']['target_types'], @api_user) if initial_target
@@ -98,24 +101,26 @@ class Api::LessonsController < ApplicationController
   end
 
   def assign
-    lesson = Lesson.find_by_path(params['id'])
-    return unless exists?(lesson, params['id'])
-    return unless authorized?(lesson, 'view')
+    lesson = Lesson.find_by_path(params['lesson_id'])
+    return unless exists?(lesson, params['lesson_id'])
+    return unless allowed?(lesson, 'view')
     if params['user_id']
       user = User.find_by_path(params['user_id'])
       return unless exists?(user, params['user_id'])
-      return unless authorized?(user, 'supervise')
+      return unless allowed?(user, 'supervise')
       Lesson.assign(lesson, user, nil, @api_user)
     elsif params['organization_id']
       org = Organization.find_by_path(params['organization_id'])
       return unless exists?(org, params['organization_id'])
-      return unless authorized?(org, 'manage')
+      return unless allowed?(org, 'edit')
       Lesson.assign(lesson, org, nil, @api_user)
     elsif params['organization_unit_id']
       unit = OrganizationUnit.find_by_path(params['organization_unit_id'])
       return unless exists?(unit, params['organization_unit_id'])
-      return unless authorized?(unit, 'edit')
+      return unless allowed?(unit, 'edit')
       Lesson.assign(lesson, unit, nil, @api_user)
+    else
+      return api_error(400, {error: 'no target specified'})
     end
     render json: JsonApi::Lesson.as_json(lesson, {wrapper: true, permissions: @api_user})
   end
@@ -132,13 +137,15 @@ class Api::LessonsController < ApplicationController
     elsif params['organization_id']
       org = Organization.find_by_path(params['organization_id'])
       return unless exists?(org, params['organization_id'])
-      return unless allowed?(org, 'manage')
+      return unless allowed?(org, 'edit')
       Lesson.unassign(lesson, org)
     elsif params['organization_unit_id']
       unit = OrganizationUnit.find_by_path(params['organization_unit_id'])
       return unless exists?(unit, params['organization_unit_id'])
       return unless allowed?(unit, 'edit')
       Lesson.unassign(lesson, unit)
+    else
+      return api_error(400, {error: 'no target specified'})
     end
     render json: JsonApi::Lesson.as_json(lesson, {wrapper: true, permissions: @api_user})
   end

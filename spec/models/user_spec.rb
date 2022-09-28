@@ -1454,7 +1454,7 @@ describe User, :type => :model do
       expect(AuditEvent.count).to eq(1)
     end
 
-    it "should always allow global admins to add voices, and its hould not generate AuditEvents for them" do
+    it "should always allow global admins to add voices, and it should not generate AuditEvents for them" do
       o = Organization.create(:admin => true, :settings => {'total_licenses' => 1})
       u = User.create
       
@@ -1466,6 +1466,24 @@ describe User, :type => :model do
       expect(res).to eq(true)
       expect(AuditEvent.count).to eq(0)
       expect(u.settings['premium_voices']).to eq({'allowed' => 2, 'claimed' => ['abcd']})
+    end
+
+    it "should allow supervisors to add voices, and it should not generate AuditEvents for them" do
+      o = Organization.create(:admin => true, :settings => {'total_licenses' => 1})
+      u1 = User.create
+      u2 = User.create
+      User.link_supervisor_to_user(u1, u2)
+      expect(AuditEvent.count).to eq(0)
+      u2.settings['premium_voices'] = {'claimed' => [], 'allowed' => 3}
+      res = u2.add_premium_voice('abcd', 'Windows')
+      expect(res).to eq(true)
+      expect(AuditEvent.count).to eq(1)
+      expect(u2.settings['premium_voices']).to eq({'allowed' => 3, 'claimed' => ['abcd']})
+
+      res = u1.add_premium_voice('abcd', 'Windows')
+      expect(res).to eq(true)
+      expect(AuditEvent.count).to eq(1)
+      expect(u1.settings['premium_voices']).to eq({'allowed' => 0, 'claimed' => []})
     end
   end
   

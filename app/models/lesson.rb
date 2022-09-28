@@ -17,10 +17,10 @@ class Lesson < ApplicationRecord
     if self.organization_id
       org = Organization.find(self.organization_id)
       org && org.allows?(user, 'edit')
-    elsif rec.organization_unit_id
+    elsif self.organization_unit_id
       unit = OrganizationUnit.find(self.organization_unit_id)
       unit && unit.allows?(user, 'edit')
-    elsif rec.user_id
+    elsif self.user_id
       user = User.find(self.user_id)
       user && user.allows?(user, 'supervise')
     else
@@ -29,18 +29,21 @@ class Lesson < ApplicationRecord
   }
   add_permissions('view') {|user| 
     # All usages get view permission
+    res = false
     (self.settings['usages'] || []).each do |use|
-      record_code = use['obj']
-      rec = Webhook.find_record(record_code) if record_code
-      if rec.is_a?(User)
-        return true if rec.allows?(user, 'supervise')
-      elsif rec.is_a?(Organization)
-        return true if rec.allows?(user, 'edit')
-      elsif rec.is_a?(OrganizationUnit)
-        return true if rec.allows?(user, 'edit')
+      if !res
+        record_code = use['obj']
+        rec = Webhook.find_record(record_code) if record_code
+        if rec.is_a?(User)
+          res = true if rec.allows?(user, 'supervise')
+        elsif rec.is_a?(Organization)
+          res = true if rec.allows?(user, 'edit')
+        elsif rec.is_a?(OrganizationUnit)
+          res = true if rec.allows?(user, 'edit')
+        end
       end
     end
-    return false
+    res
   }
   cache_permissions
 
@@ -151,7 +154,7 @@ class Lesson < ApplicationRecord
       comp['ts'] = Time.now.to_i
       comp['rating'] = rating
     else
-      extra.settings['completed_lessons'] << {'lesson_id' => lesson.global_id, 'url' => lesson.settings['url'], 'ts' => Time.now.to_i, 'rating' => rating}
+      extra.settings['completed_lessons'] << {'id' => lesson.global_id, 'url' => lesson.settings['url'], 'ts' => Time.now.to_i, 'rating' => rating}
     end
     extra.save
   end
@@ -258,11 +261,11 @@ class Lesson < ApplicationRecord
       rating_hash = {}
       if ue && ue.settings
         (ue.settings['completed_lessons'] || []).each do |comp|
-          if comp['lesson_id'] && comp['ts']
-            completed_hash[comp['lesson_id']] = [completed_hash[comp['lesson_id']] || 0, comp['ts']].max
+          if comp['id'] && comp['ts']
+            completed_hash[comp['id']] = [completed_hash[comp['id']] || 0, comp['ts']].max
             completed_hash[comp['url']] = [completed_hash[comp['url']] || 0, comp['ts']].max
             if comp['rating'] && comp['rating'] > 0
-              rating_hash[comp['lesson_id']] = [rating_hash[comp['lesson_id']] || 0, comp['rating']].max
+              rating_hash[comp['id']] = [rating_hash[comp['id']] || 0, comp['rating']].max
               rating_hash[comp['url']] = [rating_hash[comp['url']] || 0, comp['rating']].max
             end
           end
