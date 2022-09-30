@@ -14,6 +14,7 @@ class Api::ImagesController < ApplicationController
   
   def show
     image = ButtonImage.find_by_path(params['id'])
+    image = nil if params['id'].match(/^tmpimg/)
     return unless exists?(image)
     return unless allowed?(image, 'view')
     render json: JsonApi::Image.as_json(image, :wrapper => true, :permissions => @api_user).to_json

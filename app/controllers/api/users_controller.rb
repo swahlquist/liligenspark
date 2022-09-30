@@ -733,13 +733,14 @@ class Api::UsersController < ApplicationController
     user = User.find_by_path(params['user_id'])
     return unless exists?(user, params['user_id'])
     return unless allowed?(user, 'edit')
-    return allowed?(user, 'never_allow') unless user.eval_account?
     # if user has supervisors, then only the supervisor can reset the eval
     return allowed?(user, 'never_allow') if user == @api_user && !user.supervisors.blank?
     # if user has a managed org, then they can't reset their own eval
     return allowed?(user, 'never_allow') if user == @api_user && Organization.managed?(user)
+    return api_error(400, {error: "not an eval account"}) unless user.eval_account?
+
     if !params['email'] || params['email'] == user.settings['email']
-      return api_error(400, {error: 'new email cannot match previous email'})
+#      return api_error(400, {error: 'new email cannot match previous email'})
     end
 
     opts = {

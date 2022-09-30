@@ -813,7 +813,7 @@ class User < ActiveRecord::Base
         self.settings['eval_reset'] ||= {}
         self.settings['eval_reset']['email'] = params['preferences']['eval']['email']
         self.settings['eval_reset']['home_board']  = params['preferences']['eval']['home_board']
-        self.settings['eval_reset']['password'] = GoSecure.generate_password(params['preferences']['eval']['password'])
+        self.settings['eval_reset']['password'] = GoSecure.generate_password(params['preferences']['eval']['password']) if params['preferences']['eval']['password']
         self.settings['eval_reset']['duration'] = params['preferences']['eval']['duration'].to_i
         self.settings['eval_reset']['duration'] = nil if self.settings['eval_reset']['duration'] == 0
       end
