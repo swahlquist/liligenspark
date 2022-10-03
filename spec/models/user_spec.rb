@@ -2955,4 +2955,168 @@ describe User, :type => :model do
       expect(u.access_methods(d)).to eq(['touch'])
     end
   end
+
+  describe "process_home_board" do
+    it "should delete the current home board preference if not a valid option" do
+      u = User.create
+      u.settings['preferences']['home_board'] = {'id' => 1, 'a' => 1}
+      u.process_home_board({'id' => 'bacon'}, {})
+      expect(u.settings['preferences']['home_board']).to eq(nil)
+    end
+
+    it "should notify if the home board actually changed" do
+      u = User.create
+      u.settings['preferences']['home_board'] = {'id' => 1, 'a' => 1}
+      expect(u).to receive(:notify).with('home_board_changed')
+      u.process_home_board({'id' => 'bacon'}, {})
+      expect(u.settings['preferences']['home_board']).to eq(nil)
+      expect(Worker.scheduled?(User, :perform_action, {'id' => u.id, 'method' => 'audit_protected_sources', 'arguments' => []})).to eq(true)
+    end
+
+    it "should set as the home board if not specified as a copy" do
+      u = User.create
+      b = Board.create(user: u)
+      u.process_home_board({'id' => b.global_id}, {})
+      expect(u.settings['preferences']['home_board']).to eq({'id' => b.global_id, 'key' => b.key, 'locale' => 'en'})
+    end
+
+    it "should set the locale and level" do
+      u = User.create
+      b = Board.create(user: u)
+      u.process_home_board({'id' => b.global_id, 'locale' => 'fr', 'level' => 5}, {})
+      expect(u.settings['preferences']['home_board']).to eq({'id' => b.global_id, 'key' => b.key, 'locale' => 'fr', 'level' => 5})
+    end
+
+    it "should delete if target user can't view and updater can't share" do
+      u1 = User.create
+      u2 = User.create
+      u3 = User.create
+      b = Board.create(user: u3)
+      u1.settings['preferences']['home_board'] = {'id' => 1, 'a' => 1}
+      u1.process_home_board({'id' => b.global_id}, {'updater' => u2})
+      expect(u1.settings['preferences']['home_board']).to eq(nil)
+    end
+
+    it "should share if only updater is authorized to share" do
+      u1 = User.create
+      u2 = User.create
+      b = Board.create(user: u2)
+      u1.settings['preferences']['home_board'] = {'id' => 1, 'a' => 1}
+      u1.process_home_board({'id' => b.global_id}, {'updater' => u2})
+      expect(u1.settings['preferences']['home_board']).to eq({'id' => b.global_id, 'key' => b.key, 'locale' => 'en'})
+      link = UserLink.links_for(u1.reload).detect{|l| l['type'] == 'board_share' && l['state']['include_downstream'] == true && l['record_code'] == Webhook.get_record_code(b)}
+      expect(link).to_not eq(nil)
+    end
+
+    it "should share if async set" do
+      u1 = User.create
+      u2 = User.create
+      b = Board.create(user: u2)
+      u1.settings['preferences']['home_board'] = {'id' => 1, 'a' => 1}
+      u1.process_home_board({'id' => b.global_id}, {'updater' => u2, 'async' => true})
+      expect(u1.settings['preferences']['home_board']).to eq({'id' => b.global_id, 'key' => b.key, 'locale' => 'en'})
+      expect(Worker.scheduled?(Board, :perform_action, {'id' => b.id, 'method' => 'process_share', 'arguments' => ["add_deep-#{u1.global_id}", u2.global_id]})).to eq(true)
+    end
+
+    it "should allow copying an org-allowed board" do
+
+    end
+
+    it "should allow copying if the copier has permission" do
+      u1 = User.create
+      u2 = User.create
+      b = Board.create(user: u2)
+      u1.settings['preferences']['home_board'] = {'id' => 1, 'a' => 1}
+      expect(u1).to receive(:copy_to_home_board).with({'id' => b.global_id, 'copy' => true}, u2.global_id, nil)
+      u1.process_home_board({'id' => b.global_id, 'copy' => true}, {'updater' => u2})
+    end
+
+    it "should schedule copying if async" do
+      u1 = User.create
+      u2 = User.create
+      b = Board.create(user: u2)
+      u1.settings['preferences']['home_board'] = {'id' => 1, 'a' => 1}
+      expect(Progress).to receive(:schedule).with(u1, :copy_to_home_board, {'id' => b.global_id, 'copy' => true}, u2.global_id, nil)
+      u1.process_home_board({'id' => b.global_id, 'copy' => true}, {'updater' => u2, 'async' => true})
+    end
+
+    it "should not notify if the home board didn't actually change" do
+      u = User.create
+      b = Board.create(user: u)
+      u.settings['preferences']['home_board'] = {'id' => b.global_id, 'key' => b.key}
+      expect(u).to_not receive(:notify).with('home_board_changed')
+      u.process_home_board({'id' => b.global_id}, {})
+      expect(u.settings['preferences']['home_board']).to eq( {'id' => b.global_id, 'key' => b.key, 'locale' => 'en'})
+    end
+  end
+
+  describe "copy_to_home_board" do
+    it "should return without an valid original board" do
+      u = User.create
+      expect(u.copy_to_home_board({}, nil, nil)).to eq(nil)
+    end
+
+    it "should return if the current home board is already a copy with the correct library" do
+      u = User.create
+      b1 = Board.create(user: u)
+      b2 = b1.copy_for(u)
+      u.settings['preferences']['home_board'] = {'id' => b2.global_id, 'key' => b2.key}
+      expect(u.copy_to_home_board({'id' => b1.global_id}, u.global_id, nil)).to eq(true)
+      expect(u.settings['preferences']['home_board']['id']).to eq(b2.global_id)
+    end
+
+    it "should set a current copy with the correct libraries that the user already owns if it exists" do
+      u = User.create
+      b1 = Board.create(user: u)
+      b2 = b1.copy_for(u)
+      b2.settings['swapped_library'] = 'twemoji'
+      b2.save
+      expect(u.copy_to_home_board({'id' => b1.global_id}, u.global_id, 'twemoji')).to eq(true)
+      expect(u.settings['preferences']['home_board']['id']).to eq(b2.global_id)
+    end
+
+    it "should create a brand new copy if needed, including swapping images" do
+      u = User.create
+      b1 = Board.create(user: u)
+      
+      bi = ButtonImage.create
+      b1.process({'buttons' => [
+        {'id' => '1_2', 'label' => 'hat', 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ]}, {})
+      b2 = b1.copy_for(u)
+      b2.settings['swapped_library'] = 'twemoji'
+      b2.save
+      expect(u.copy_to_home_board({'id' => b1.global_id}, u.global_id, 'mulberry')).to eq(true)
+      expect(u.settings['preferences']['home_board']['id']).to_not eq(b2.global_id)
+      b3 = Board.find_by_path(u.settings['preferences']['home_board']['id'])
+      expect(b3.user).to eq(u)
+      expect(b3.parent_board).to eq(b1)
+      expect(b3.settings['swapped_library']).to eq('mulberry')
+    end
+    
+    it "should create a new copy if the current works except for the symbols" do
+      u = User.create
+      b1 = Board.create(user: u)
+      
+      bi = ButtonImage.create
+      b1.process({'buttons' => [
+        {'id' => '1_2', 'label' => 'hat', 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ]}, {})
+      b2 = b1.copy_for(u)
+      b2.settings['swapped_library'] = 'twemoji'
+      b2.save
+      expect(u).to receive(:copy_board_links) do |opts|
+        expect(opts[:old_board_id]).to eq(b1.global_id)
+        expect(opts[:new_board_id]).to_not eq(nil)
+        brd = Board.find_by_path(opts[:new_board_id])
+        expect(brd.parent_board).to eq(b1)
+        expect(opts[:ids_to_copy]).to eq([])
+        expect(opts[:copier_id]).to eq(u.global_id)
+        expect(opts[:swap_library]).to eq('mulberry')
+      end
+      expect(u.copy_to_home_board({'id' => b1.global_id}, u.global_id, 'mulberry')).to eq(true)
+    end
+  end
 end

@@ -4546,4 +4546,318 @@ describe Board, :type => :model do
       expect(b.settings['common_library']).to eq('twemoji')
     end
   end
+
+  describe "swap_images" do
+    it "should skip for various reasons" do
+      u1 = User.create
+      u2 = User.create
+      b = Board.create(user: u1)
+      u1.settings['extras_disabled'] = true
+      expect(b.swap_images('twemoji', nil, [], 'bacon', [], [])).to eq({done: true, swapped: false, reason: 'mismatched user'})
+      expect(b.swap_images(nil, nil, [], u1.id, [], [])).to eq({done: true, swapped: false, reason: 'no library specified'})
+      expect(b.swap_images('original', nil, [], u1.id, [], [])).to eq({done: true, swapped: true, reason: 'kept same'})
+      expect(b.swap_images('twemoji', nil, [], u1.id, [], [])).to eq({done: true, swapped: false, reason: 'author required'})
+      expect(b.swap_images('pcs', u1, [], u1.id, [], [])).to eq({done: true, swapped: false, reason: 'not authorized to access premium library'})
+      u1.settings['extras_disabled'] = false
+      expect(b.swap_images('pcs', u1, [], u1.id, [], [])).to eq({done: true, library: 'pcs', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+    end
+
+    it "should not swap images if there were previously no images on the button" do
+      u = User.create
+      b = Board.create(user: u)
+      b.process_buttons([
+        {'id' => '1_2', 'label' => 'hat'},
+        {'id' => '1_3', 'label' => 'cat'},
+      ], nil)
+      expect(Uploader).to receive(:default_images).with('twemoji', ['hat', 'cat'], 'en', u, true, false).and_return({
+        'cat' => {'url' => 'https://www.example.com/cat.png'},
+        'hat' => {'url' => 'https://www.example.com/hat.png'}
+      })
+      res = b.swap_images('twemoji', u, [], nil)
+      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      bis = ButtonImage.all.order('id ASC')
+      expect(bis.count).to eq(0)
+    end
+
+    it "should use cached library images if available" do
+      u = User.create
+      bi = ButtonImage.create
+      b = Board.create(user: u)
+      b.process_buttons([
+        {'id' => '1_2', 'label' => 'hat', 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ], nil)
+      expect(Uploader).to receive(:default_images).with('twemoji', ['hat', 'cat'], 'en', u, true, false).and_return({
+        'cat' => {'url' => 'https://www.example.com/cat.png'},
+        'hat' => {'url' => 'https://www.example.com/hat.png'}
+      })
+
+      b.settings['images_not_mapped'] = true
+      expect(b.known_button_images.length).to eq(1)
+      res = b.swap_images('twemoji', u, [], nil)
+      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      bis = ButtonImage.all.order('id ASC')
+      expect(bis.count).to eq(3)
+      expect(bis[1].url).to eq("https://www.example.com/hat.png")
+      expect(bis[2].url).to eq("https://www.example.com/cat.png")
+      expect(b.reload.buttons.map{|b| b['image_id'] }).to eq([bis[1].global_id, bis[2].global_id])
+    end
+
+    it "should use cached library button_image ids if available" do
+      u = User.create
+      bi = ButtonImage.create
+      bi2 = ButtonImage.create
+      b = Board.create(user: u)
+      b.process_buttons([
+        {'id' => '1_2', 'label' => 'hat', 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ], nil)
+      expect(Uploader).to receive(:default_images).with('twemoji', ['hat', 'cat'], 'en', u, true, false).and_return({
+        'cat' => {'coughdrop_image_id' => bi2.global_id},
+        'hat' => {'coughdrop_image_id' => bi2.global_id},
+      })
+      b.settings['images_not_mapped'] = true
+      res = b.swap_images('twemoji', u, [], nil)
+      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      bis = ButtonImage.all.order('id ASC')
+      expect(bis.count).to eq(2)
+      expect(b.reload.buttons.map{|b| b['image_id'] }).to eq([bi2.global_id, bi2.global_id])
+    end
+
+    it "should fall back to remote lookups if not in the cache" do
+      u = User.create
+      bi = ButtonImage.create
+      bi2 = ButtonImage.create
+      b = Board.create(user: u)
+      b.process_buttons([
+        {'id' => '1_2', 'label' => 'hat', 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ], nil)
+      expect(Uploader).to receive(:find_images).with('hat', 'twemoji', 'en', u, nil, true, false).and_return([{
+        'url' => 'https://www.example.com/cat2.png'
+      }])
+      expect(Uploader).to receive(:default_images).with('twemoji', ['hat', 'cat'], 'en', u, true, false).and_return({
+        'cat' => {'coughdrop_image_id' => bi2.global_id},
+      })
+      
+      b.settings['images_not_mapped'] = true
+      res = b.swap_images('twemoji', u, [], nil)
+      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      bis = ButtonImage.all.order('id ASC')
+      expect(bis.count).to eq(3)
+      expect(bis[2].url).to eq('https://www.example.com/cat2.png')
+      expect(b.reload.buttons.map{|b| b['image_id'] }).to eq([bis[2].global_id, bi2.global_id])
+    end
+
+    it "should not use fallback lookups if the image is known to be missing from the library" do
+      u = User.create
+      bi = ButtonImage.create
+      b = Board.create(user: u)
+      b.process_buttons([
+        {'id' => '1_2', 'label' => 'hat', 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ], nil)
+      expect(Uploader).to receive(:default_images).with('twemoji', ['hat', 'cat'], 'en', u, true, false).and_return({
+        'cat' => {'url' => 'https://www.example.com/cat.png'},
+        '_missing' => ['hat']
+      })
+
+      b.settings['images_not_mapped'] = true
+      res = b.swap_images('twemoji', u, [], nil)
+      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      bis = ButtonImage.all.order('id ASC')
+      expect(bis.count).to eq(2)
+      expect(bis[1].url).to eq("https://www.example.com/cat.png")
+      expect(b.reload.buttons.map{|b| b['image_id'] }).to eq([bi.global_id, bis[1].global_id])
+    end
+
+    it "should not swap images for user-uploaded buttons" do
+      u = User.create
+      bi = ButtonImage.create
+      bi2 = ButtonImage.create(url: 'https://www.example.com/coughdrop-usercontent/pic.png')
+      b = Board.create(user: u)
+      b.instance_variable_set('@map_later', true)
+      b.process_buttons([
+        {'id' => '1_2', 'label' => 'hat', 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi2.global_id},
+      ], nil)
+      expect(Uploader).to receive(:default_images).with('twemoji', ['hat', 'cat'], 'en', u, true, false).and_return({
+        'cat' => {'url' => 'https://www.example.com/cat.png'},
+        'hat' => {'url' => 'https://www.example.com/hat.png'}
+      })
+      b.settings['images_not_mapped'] = true
+      expect(b.known_button_images.length).to eq(2)
+
+      res = b.swap_images('twemoji', u, [], nil)
+      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      bis = ButtonImage.all.order('id ASC')
+      expect(bis.count).to eq(3)
+      expect(bis[2].url).to eq("https://www.example.com/hat.png")
+      expect(b.reload.buttons.map{|b| b['image_id'] }).to eq([bis[2].global_id, bi2.global_id])
+    end
+
+    it "should generate a button_image for any new images" do
+      u = User.create
+      bi = ButtonImage.create
+      b = Board.create(user: u)
+      b.process_buttons([
+        {'id' => '1_2', 'label' => 'hat', 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ], nil)
+      expect(Uploader).to receive(:default_images).with('twemoji', ['hat', 'cat'], 'en', u, true, false).and_return({
+        'cat' => {'url' => 'https://www.example.com/cat.png'},
+        'hat' => {'url' => 'https://www.example.com/hat.png'}
+      })
+
+      res = b.swap_images('twemoji', u, [], nil)
+      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      bis = ButtonImage.all.order('id ASC')
+      expect(bis.count).to eq(3)
+      expect(bis[1].url).to eq("https://www.example.com/hat.png")
+      expect(bis[2].url).to eq("https://www.example.com/cat.png")
+      expect(b.reload.buttons.map{|b| b['image_id'] }).to eq([bis[1].global_id, bis[2].global_id])
+    end
+
+    it "should only save if buttons have actually changed" do
+      u = User.create
+      bi = ButtonImage.create
+      b = Board.create(user: u)
+      b.process_buttons([
+        {'id' => '1_2', 'label' => 'hat', 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ], nil)
+      expect(Uploader).to receive(:default_images).with('twemoji', ['hat', 'cat'], 'en', u, true, false).and_return({
+        '_missing' => ['cat', 'hat']
+      })
+
+      b.settings['images_not_mapped'] = true
+      b.instance_variable_set('@buttons_changed', false)
+      res = b.swap_images('twemoji', u, [], nil)
+      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      bis = ButtonImage.all.order('id ASC')
+      expect(bis.count).to eq(1)
+      expect(b.settings['swapped_library']).to eq(nil)
+    end
+
+    it "should keep original images as fallbacks instead of finding new ones if the original images aren't protected" do
+      u = User.create
+      bi = ButtonImage.create(url: 'https://www.example.com/original.png')
+      b = Board.create(user: u)
+      b.process_buttons([
+        {'id' => '1_2', 'label' => 'hat', 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+        {'id' => '1_4', 'label' => 'frat', 'image_id' => bi.global_id},
+      ], nil)
+      expect(Uploader).to receive(:default_images).with('twemoji', ['hat', 'cat', 'frat'], 'en', u, true, false).and_return({
+        'cat' => {'url' => 'https://www.example.com/cat.png', 'protected' => true},
+        'hat' => {'url' => 'https://www.example.com/hat.png', 'protected' => true},
+        'frat' => {'url' => 'https://www.example.com/frat.png'}
+      })
+
+      b.settings['images_not_mapped'] = true
+      expect(b.known_button_images.length).to eq(1)
+      res = b.swap_images('twemoji', u, [], nil)
+      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      bis = ButtonImage.all.order('id ASC')
+      expect(bis.count).to eq(4)
+      expect(bis[1].url).to eq("https://www.example.com/hat.png")
+      expect(bis[1].settings['fallback']).to eq({'url' => "https://www.example.com/original.png", 'pending' => false, 'license' => {'type' => 'private'}})
+      expect(bis[2].url).to eq("https://www.example.com/cat.png")
+      expect(bis[2].settings['fallback']).to eq({'url' => "https://www.example.com/original.png", 'pending' => false, 'license' => {'type' => 'private'}})
+      expect(bis[3].url).to eq("https://www.example.com/frat.png")
+      expect(bis[3].settings['fallback']).to eq(nil)
+      expect(b.reload.buttons.map{|b| b['image_id'] }).to eq([bis[1].global_id, bis[2].global_id, bis[3].global_id])
+    end
+
+    it "should record what library it was swapped to" do
+      u = User.create
+      bi = ButtonImage.create
+      b = Board.create(user: u)
+      b.process_buttons([
+        {'id' => '1_2', 'label' => 'hat', 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ], nil)
+      expect(Uploader).to receive(:default_images).with('twemoji', ['hat', 'cat'], 'en', u, true, false).and_return({
+        'cat' => {'url' => 'https://www.example.com/cat.png'},
+        'hat' => {'url' => 'https://www.example.com/hat.png'}
+      })
+
+      res = b.swap_images('twemoji', u, [], nil)
+      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      bis = ButtonImage.all.order('id ASC')
+      expect(bis.count).to eq(3)
+      expect(bis[1].url).to eq("https://www.example.com/hat.png")
+      expect(bis[2].url).to eq("https://www.example.com/cat.png")
+      expect(b.reload.buttons.map{|b| b['image_id'] }).to eq([bis[1].global_id, bis[2].global_id])
+      expect(b.settings['swapped_library']).to eq('twemoji')
+    end
+
+    it "should recurse to downstream boards" do
+      u = User.create
+      bi = ButtonImage.create
+      b1 = Board.create(user: u)
+      b2 = Board.create(user: u)
+      b1.process({'buttons' => [
+        {'id' => '1_2', 'label' => 'hat', 'load_board' => {'key' => b2.key, 'id' => b2.global_id}, 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ]}, {user: u})
+      expect(b1.buttons[0]['load_board']).to_not eq(nil)
+      b2.process({'buttons' => [
+        {'id' => '1_2', 'label' => 'hat', 'load_board' => {'key' => b1.key, 'id' => b1.global_id}, 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ]}, {user: u})
+      Worker.process_queues
+      expect(b1.reload.settings['downstream_board_ids']).to eq([b2.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b1.global_id])
+
+      res = b1.swap_images('twemoji', u, [], nil)
+      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b1.global_id, b2.global_id], visited: [b1.global_id, b2.global_id]})
+    end
+
+    it "should stop at boards with a different author" do
+      u = User.create
+      u2 = User.create
+      bi = ButtonImage.create
+      b1 = Board.create(user: u, public: true)
+      b2 = Board.create(user: u2, public: true)
+      b3 = Board.create(user: u2, public: true)
+      b1.process({'buttons' => [
+        {'id' => '1_2', 'label' => 'hat', 'load_board' => {'key' => b2.key, 'id' => b2.global_id}, 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ]}, {user: u})
+      expect(b1.buttons[0]['load_board']).to_not eq(nil)
+      b2.process({'buttons' => [
+        {'id' => '1_2', 'label' => 'hat', 'load_board' => {'key' => b3.key, 'id' => b3.global_id}, 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ]}, {user: u})
+      Worker.process_queues
+      expect(b1.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
+
+      res = b1.swap_images('twemoji', u, [], nil)
+      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b1.global_id], visited: [b1.global_id, b2.global_id]})
+    end
+
+    it "should not get stuck in an infinite loop with circular references" do
+      u = User.create
+      bi = ButtonImage.create
+      b1 = Board.create(user: u)
+      b2 = Board.create(user: u)
+      b1.process({'buttons' => [
+        {'id' => '1_2', 'label' => 'hat', 'load_board' => {'key' => b2.key, 'id' => b2.global_id}, 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ]}, {user: u})
+      expect(b1.buttons[0]['load_board']).to_not eq(nil)
+      b2.process({'buttons' => [
+        {'id' => '1_2', 'label' => 'hat', 'load_board' => {'key' => b1.key, 'id' => b1.global_id}, 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ]}, {user: u})
+      Worker.process_queues
+      expect(b1.reload.settings['downstream_board_ids']).to eq([b2.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b1.global_id])
+
+      res = b1.swap_images('twemoji', u, [], nil)
+      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b1.global_id, b2.global_id], visited: [b1.global_id, b2.global_id]})
+    end
+  end
 end

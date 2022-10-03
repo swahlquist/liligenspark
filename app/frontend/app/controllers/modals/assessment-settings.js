@@ -65,7 +65,7 @@ export default modal.ModalController.extend({
   save_option: computed('model.action', function() {
     return this.get('model.action') == 'results';
   }),
-  symbol_libraries: computed(function() {
+  symbol_libraries: computed('app_state.currentUser.subscription.extras_enabled', 'app_state.currentUser.subscription.lessonpix', function() {
     var res = [
       {name: i18n.t('open_symbols', "OpenSymbols (default)"), id: 'default'},
       {name: i18n.t('photos', "Photos"), id: 'photos'},
@@ -98,11 +98,17 @@ export default modal.ModalController.extend({
         name: i18n.t('pcs_hc', "High-Contrast PCS (BoardMaker) symbols from Tobii-Dynavox"),
         id: 'pcs_hc'
       });
-      // TODO: add symbolstix to evals
       res.pushObject({
         name: i18n.t('symbolstix_images', "SymbolStix Symbols"),
         id: 'symbolstix'
       });
+      if(!lessonpix_added) {
+        lessonpix_added = true;
+        res.pushObject({
+          name: i18n.t('lessonpix_symbols', "LessonPix Symbols"),
+          id: 'lessonpix'
+        });
+      }
     }
     return res;
   }),

@@ -1762,24 +1762,27 @@ class Board < ActiveRecord::Base
         # skip buttons that don't currently have an image
         next button unless button['image_id']
         next button if button['label'] && button['label'].match(/CoughDrop/)
-        bi = bis.detect{|i| i.global_id == button['image_id'] }
+        old_bi = bis.detect{|i| i.global_id == button['image_id'] }
         # skip buttons that have manually-uploaded image
-        if bi && bi.url && bi.url.match(/coughdrop-usercontent/)
+        if old_bi && old_bi.url && old_bi.url.match(/coughdrop-usercontent/)
+          # puts "SAFE PIC"
         elsif (button['label'] || button['vocalization'])
           image_data = defaults[button['label'] || button['vocalization']]
           if !image_data && (!defaults['_missing'] || !defaults['_missing'].include?(button['label'] || button['vocalization']))
             # puts " SEARCHING FOR #{button['label']}"
             image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, 'en', author, nil, true, important_board) || [])[0]
           end
-          bi = ButtonImage.find_by_global_id(image_data['coughdrop_image_id']) if image_data && image_data['coughdrop_image_id']
-          if bi
-            button['image_id'] = bi.global_id
+          new_bi = ButtonImage.find_by_global_id(image_data['coughdrop_image_id']) if image_data && image_data['coughdrop_image_id']
+          if new_bi
+            button['image_id'] = new_bi.global_id
+            new_bi.assert_fallback(old_bi)
             @buttons_changed = 'swapped images'
           elsif image_data
             # puts " GENERATING BUTTONIMAGE"
             image_data['button_label'] = button['label']
-            bi = ButtonImage.process_new(image_data, {user: author})
-            button['image_id'] = bi.global_id
+            new_bi = ButtonImage.process_new(image_data, {user: author})
+            new_bi.assert_fallback(old_bi)
+            button['image_id'] = new_bi.global_id
             @buttons_changed = 'swapped images'
           end
         end

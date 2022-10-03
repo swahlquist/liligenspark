@@ -3044,7 +3044,7 @@ persistence.DSExtend = {
 
         var check_remote = function() {
           // if nothing found locally and system is online (and it's not a local-only id), make a remote request
-          if(persistence.get('online') && !id.match(/^tmp[_\/]/)) {
+          if(persistence.get('online') && !id.match(/^tmp[_\/]/) && !id.match(/^tmpimg_/)) {
             if(!persistence.get('syncing')) {
               persistence.remember_access('find', type.modelName, id);
             }

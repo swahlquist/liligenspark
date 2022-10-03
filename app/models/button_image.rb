@@ -68,6 +68,16 @@ class ButtonImage < ActiveRecord::Base
     true
   end
 
+  def assert_fallback(button_image)
+    if button_image && !button_image.settings['protected']
+      if self.settings['protected'] && !self.settings['fallback']
+        self.settings['fallback'] = button_image.settings.slice('pending', 'content_type', 'width', 'height', 'source_url', 'hc', 'license')
+        self.settings['fallback']['url'] = button_image.url
+        self.save
+      end
+    end
+  end
+
   def generate_fallback(force=false)
     if self.settings['protected'] && (!self.settings['fallback'] || force)
       term = self.settings['button_label'] || self.settings['search_term']

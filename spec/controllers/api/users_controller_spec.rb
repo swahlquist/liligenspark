@@ -2976,4 +2976,62 @@ describe Api::UsersController, :type => :controller do
       expect(@user.settings['2fa']['last_otp']).to_not eq(nil)
     end
   end
+
+  describe "reset_eval" do
+    it "should require a valid api token" do
+      post 'reset_eval', params: {user_id: 'asdf'}
+      assert_missing_token
+    end
+
+    it "should require a valid user" do
+      token_user
+      post 'reset_eval', params: {user_id: 'asdf'}
+      assert_not_found('asdf')
+    end
+
+    it "should not allow a supervised user to reset their own eval" do
+      sup = User.create
+      token_user
+      User.link_supervisor_to_user(sup, @user)
+      post 'reset_eval', params: {user_id: @user.global_id}
+      assert_unauthorized
+    end
+
+    it "should not allow an org-managed user to reset their own eval" do
+      o = Organization.create
+      token_user
+      o.add_user(@user.user_name, false, false)
+      @user.reload
+      post 'reset_eval', params: {user_id: @user.global_id}
+      assert_unauthorized
+    end
+
+    it "should error if not an eval account" do
+      token_user
+      post 'reset_eval', params: {user_id: @user.global_id}
+      assert_error("not an eval account", 400)
+    end
+
+    it "should allow a standalone eval to reset itself" do
+      token_user
+      @user.settings['subscription'] = {'eval_account' => true}
+      @user.save
+      expect(@user.eval_account?).to eq(true)
+      post 'reset_eval', params: {user_id: @user.global_id}
+      json = assert_success_json
+      expect(json['progress']).to_not eq(nil)
+    end
+
+    it "should return a progress object" do
+      token_user
+      @user.settings['subscription'] = {'eval_account' => true}
+      @user.save
+      expect(@user.eval_account?).to eq(true)
+      post 'reset_eval', params: {user_id: @user.global_id}
+      json = assert_success_json
+      expect(json['progress']).to_not eq(nil)
+      p = Progress.find_by_path(json['progress']['id'])
+      expect(p.settings).to eq({'class' => 'User', 'id' => @user.id, 'method' => 'reset_eval', 'state' => 'pending', 'arguments' => [@user.devices[0].global_id, {'email' => nil, 'home_board_key' => nil, 'password' => nil, 'symbol_library' => nil}]})
+    end
+  end
 end

@@ -100,7 +100,10 @@ class Lesson < ApplicationRecord
     completes = 0
     users.each{|u| lookups[u.global_id] = true }
     (self.settings['completions'] || []).each do |comp|
-      completes += 1 if lookups[comp['user_id']]
+      if lookups[comp['user_id']]
+        completes += 1 
+        lookups[comp['user_id']] = false
+      end
     end
     {total: users.length, complete: completes}
   end
@@ -112,7 +115,7 @@ class Lesson < ApplicationRecord
       return
     end
     res = Typhoeus.head(self.settings['url'], followlocation: true)
-    self.settings['checked_url'] = {'url' => self.settings['url']}
+    self.settings['checked_url'] = {'url' => self.settings['url'], 'ts' => Time.now.to_i}
     if res.code < 300 && res.code > 199
       if ['deny', 'sameorigin'].include?((res.headers['X-Frame-Options'] || '').downcase)
         self.settings['checked_url']['noframe'] = true
@@ -263,17 +266,17 @@ class Lesson < ApplicationRecord
         (ue.settings['completed_lessons'] || []).each do |comp|
           if comp['id'] && comp['ts']
             completed_hash[comp['id']] = [completed_hash[comp['id']] || 0, comp['ts']].max
-            completed_hash[comp['url']] = [completed_hash[comp['url']] || 0, comp['ts']].max
+            completed_hash[comp['url']] = [completed_hash[comp['url']] || 0, comp['ts']].max if comp['url']
             if comp['rating'] && comp['rating'] > 0
               rating_hash[comp['id']] = [rating_hash[comp['id']] || 0, comp['rating']].max
-              rating_hash[comp['url']] = [rating_hash[comp['url']] || 0, comp['rating']].max
+              rating_hash[comp['url']] = [rating_hash[comp['url']] || 0, comp['rating']].max if comp['url']
             end
           end
         end
       end
       lessons_json.each do |lesson|
-        if completed_hash[lesson['id']]
-          lesson['completed_ts'] = completed_hash[lesson['id']]
+        if completed_hash[lesson['id']] || completed_hash[lesson['url']]
+          lesson['completed_ts'] = completed_hash[lesson['id']] || completed_hash[lesson['url']]
         end
         if rating_hash[lesson['id']]
           lesson['rating'] = rating_hash[lesson['id']]
@@ -293,6 +296,9 @@ class Lesson < ApplicationRecord
   def process_params(params, non_user_params)
     self.settings ||= {}
     if non_user_params['target']
+      self.organization_id = nil
+      self.organization_unit_id = nil
+      self.user_id = nil
       if non_user_params['target'].is_a?(Organization)
         self.organization_id = non_user_params['target'].id
       elsif non_user_params['target'].is_a?(OrganizationUnit)
@@ -301,7 +307,7 @@ class Lesson < ApplicationRecord
         self.user_id = non_user_params['target'].id
       end        
     end
-    self.settings['author_id'] = non_user_params['author'].global_id
+    self.settings['author_id'] ||= non_user_params['author'].global_id
     self.settings['title'] = process_string(params['title']) if params['title']
     self.settings['description'] = process_string(params['description']) if params['description']
     self.settings['url'] = process_string(params['url']) if params['url']
@@ -316,6 +322,10 @@ class Lesson < ApplicationRecord
       self.settings['badge'] = params['badge']
     end
     true
+  end
+
+  def launch_url
+    self.settings['url']
   end
   
 end

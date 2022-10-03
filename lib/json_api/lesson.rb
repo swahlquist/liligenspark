@@ -30,7 +30,7 @@ module JsonApi::Lesson
       json['counts'] = lesson.user_counts(args[:obj])
       usage = lesson.settings['usages'].detect{|u| u['obj'] == Webhook.get_record_code(args[:obj])}
       if usage && args[:obj].is_a?(Organization)
-        json['target_types'] = (args[:obj].settings['lessons'].detect{|l| l['id'] == lesson.global_id } || {})['types'] || ['supervisor']
+        json['target_types'] = ((args[:obj].settings['lessons'] || []).detect{|l| l['id'] == lesson.global_id } || {})['types'] || ['supervisor']
       elsif usage && args[:obj].is_a?(OrganizationUnit)
         json['target_types'] = (args[:obj].settings['lesson'] || {})['types'] || ['supervisor']
       end

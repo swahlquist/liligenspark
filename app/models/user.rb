@@ -1157,7 +1157,7 @@ class User < ActiveRecord::Base
     self.settings['preferences']['home_board']['level'] = home_board['level'] if home_board['level']
     self.save
     self.schedule(:audit_protected_sources)
-  return true
+    return true
   end
   
   def process_home_board(home_board, non_user_params)
