@@ -847,9 +847,38 @@ var speecher = EmberObject.extend({
     // are all to help with that purpose.
     console.log("PLAY", ref);
     var audio = ref.audio;
+    var cleanup_audio = function(audio) {
+      if(audio.lastListener) {
+        var ll = audio.lastListener;
+        audio.removeEventListener('ended', audio.lastListener);
+        audio.removeEventListener('pause', audio.lastListener);
+        audio.removeEventListener('abort', audio.lastListener);
+        audio.removeEventListener('error', audio.lastListener);
+        // see above for justification of the timeout
+        setTimeout(function() {
+          if(audio.lastListener == ll) {
+            audio.lastListener = null;
+          }
+        }, 50);
+      }  
+    };
     if(audio.lastListener || (capabilities.mobile && capabilities.browser == "Safari")) {
-      audio = audio.cloneNode();
-      audio.className = 'throwaway';
+      // Audio files can get backed up
+      if(ref.skip_repeat) {
+        // We don't care if clicks or beeps get backed up,
+        // and garbage collection seems to hang badly on lots of
+        // audio files on iOS
+        audio.pause();
+        audio.currentTime = 0;
+        var url = audio.src;
+        // This resets the audio, which is required for replay on iOS (sad trombone)
+        audio.src = null;
+        audio.src = url;
+        audio.load()
+      } else {
+        audio = audio.cloneNode();
+        audio.className = 'throwaway';  
+      }
     }
 
     audio.pause();
@@ -857,19 +886,7 @@ var speecher = EmberObject.extend({
     audio.currentTime = 0;
     var _this = this;
     var speak_id = ref.speak_id;
-    if(audio.lastListener) {
-      var ll = audio.lastListener;
-      audio.removeEventListener('ended', audio.lastListener);
-      audio.removeEventListener('pause', audio.lastListener);
-      audio.removeEventListener('abort', audio.lastListener);
-      audio.removeEventListener('error', audio.lastListener);
-      // see above for justification of the timeout
-      setTimeout(function() {
-        if(audio.lastListener == ll) {
-          audio.lastListener = null;
-        }
-      }, 50);
-    }
+    cleanup_audio(audio);
     var audio_status = {init: (new Date()).getTime()};
     audio.speak_id = speak_id;
     var handler = function(event) {
@@ -880,6 +897,9 @@ var speecher = EmberObject.extend({
         audio.currentTime = 0;
         if(audio.media) {
           audio.media.pause();
+        }
+        if(audio.className == 'throwaway') {
+          audio.src = null;
         }
         _this.speak_end_handler(speak_id);    
       }
@@ -984,12 +1004,12 @@ var speecher = EmberObject.extend({
     runLater(check_status, 100);
     return audio;
   },
-  assert_audio: function(url) {
+  assert_audio: function(url, skippable) {
     speecher.sounds = speecher.sounds || {};
     var now = (new Date()).getTime();
     var load_url = url;
-    if(capabilities.installed_app && load_url.match(/localhost/)) {
-      load_url = load_url + "?cr=" + Math.random();
+    if(capabilities && capabilities.installed_app && capabilities.storage && load_url.match(/localhost/)) {
+      load_url = capabilities.storage.fix_url(load_url);
     }
     if(!speecher.sounds[url]) {
       var audio = new Audio();
@@ -999,11 +1019,16 @@ var speecher = EmberObject.extend({
         audio: audio,
         updated: now
       };
-    } else if(speecher.sounds[url].audio && load_url != speecher.sounds[url].audio.src) {
+    } else {
+      // Resetting the src or calling load() is apparently required for re-play to work on iOS (sad trombone)
+      speecher.sounds[url].audio.src = null;
       speecher.sounds[url].audio.src = load_url;
       speecher.sounds[url].audio.load();
     }
     var ref = speecher.sounds[url];
+    if(skippable) {
+      ref.skip_repeat = true;
+    }
     if(ref) {
       ref.audio.loop = false;
     }
@@ -1011,7 +1036,7 @@ var speecher = EmberObject.extend({
   },
   beep: function(opts) {
     opts = opts || {};
-    var beep = speecher.assert_audio(speecher.beep_url);
+    var beep = speecher.assert_audio(speecher.beep_url, true);
     if(beep) {
       this.play_audio(beep);
       stashes.log({
@@ -1024,7 +1049,7 @@ var speecher = EmberObject.extend({
   },
   click: function(click_type) {
     click_type = click_type || 'click';
-    var click = speecher.assert_audio(speecher[click_type + '_url'] || speecher.click_url); 
+    var click = speecher.assert_audio(speecher[click_type + '_url'] || speecher.click_url, true); 
     if(click) {
       this.play_audio(click);
     } else {
