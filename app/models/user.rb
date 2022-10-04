@@ -133,11 +133,11 @@ class User < ActiveRecord::Base
   end
   
   def default_premium_voices
-    User.default_premium_voices(self.full_premium?, self.eval_account?)
+    User.default_premium_voices(self.full_premium?(true), [:trialing_communicator].include?(self.billing_state), self.eval_account?)
   end
   
-  def self.default_premium_voices(communicator=true, eval_account=false)
-    if communicator
+  def self.default_premium_voices(full_premium=true, trial_period=false, eval_account=false)
+    if full_premium
       if eval_account
         {
           'claimed' => [],
@@ -149,6 +149,11 @@ class User < ActiveRecord::Base
           'allowed' => 2
         }
       end
+    elsif trial_period
+      {
+        'claimed' => [],
+        'allowed' => 1
+      }
     else
       {
         'claimed' => [],
@@ -163,6 +168,8 @@ class User < ActiveRecord::Base
     self.settings['premium_voices']['claimed'] ||= []
     self.settings['premium_voices']['allowed'] ||= 0
     self.settings['premium_voices']['allowed'] += 1
+    self.settings['premium_voices']['extra'] ||= 0
+    self.settings['premium_voices']['extra'] += 1
     self.save
   end
 
@@ -267,38 +274,53 @@ class User < ActiveRecord::Base
     # Limit the number of premium_voices users can download
     voices = {}.merge(self.settings['premium_voices'] || {})
     voices['claimed'] ||= self.default_premium_voices['claimed']
-    voices['allowed'] ||= self.default_premium_voices['allowed']
+    voices['allowed'] = [voices['allowed'] || 0, self.default_premium_voices['allowed']].max
     
     claimed_by_supervisee = self.supervisees.detect do |sup|
       ((sup.settings['premium_voices'] || {})['claimed'] || []).include?(voice_id)
     end
-
     is_admin = Organization.admin_manager?(self)
-    new_voice = !voices['claimed'].include?(voice_id)
-    if !claimed_by_supervisee
-      voices['claimed'] = voices['claimed'] | [voice_id]
-    end
+    pre_claimed = voices['claimed']
     if is_admin
       voices['allowed'] = [voices['allowed'] || 0, voices['claimed'].length + 1].max
+      voices['claimed'] = voices['claimed'] | [voice_id]
+      voices['allowed'] = [voices['allowed'] || 0, voices['claimed'].length + 1].max
+    elsif claimed_by_supervisee
+      voices['sup_claimed'] ||= []
+      voices['sup_claimed'] = voices['sup_claimed'] | [voice_id]
+    else
+      voices['claimed'] = voices['claimed'] | [voice_id]
     end
+
+    new_voice = !is_admin && voices['claimed'].include?(voice_id) && !pre_claimed.include?(voice_id)
     if voices['claimed'].length > voices['allowed']
       return false
     else
+      if new_voice
+        if [:trialing_communicator, :trialing_supervisor].include?(self.billing_state)
+          voices['trial_voices'] = (voices['trial_voices'] || []).select{|t| t['i'] != voice_id }
+          voices['trial_voices'] << {s: system_name, i: voice_id}
+        else
+          # Log voice claims for payment, unless an admin user or supervisor
+          self.track_voice_added(voice_id, system_name)
+        end
+      end
       self.settings['premium_voices'] = voices
       self.save
-      if new_voice && !is_admin && !claimed_by_supervisee
-        # Log voice claims for payment, unless an admin user or supervisor
-        data = {
-          :user_id => self.global_id,
-          :user_name => self.user_name,
-          :voice_id => voice_id,
-          :timestamp => Time.now.to_i,
-          :system => system_name
-        }
-        AuditEvent.create!(:event_type => 'voice_added', :summary => "#{self.user_name} added #{voice_id}", :data => data)
-      end
       return true
     end
+  end
+
+  def refresh_premium_voices
+    if !self.any_premium_or_grace_period?(true)
+      if !self.settings['premium_voices']['expired_state']
+        self.settings['premium_voices']['allowed'] = self.settings['premium_voices']['extra'] || 0
+        self.settings['premium_voices']['claimed'] = (self.settings['premium_voices']['claimed'] || [])[0, self.settings['premium_voices']['allowed']]
+        self.settings['premium_voices']['expired_state'] = true
+        self.save
+      end
+    end
+    self.settings['premium_voices']
   end
   
   def registration_code

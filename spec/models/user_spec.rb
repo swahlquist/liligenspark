@@ -1370,6 +1370,73 @@ describe User, :type => :model do
     end
     
   end
+
+  describe "default_premium_voices" do
+    it "should return the correct defaults" do
+      expect(User.default_premium_voices(true, true, true)).to eq({'claimed' => [], 'allowed' => 1})
+      expect(User.default_premium_voices(true, true, false)).to eq({'claimed' => [], 'allowed' => 2})
+      expect(User.default_premium_voices(true, false, false)).to eq({'claimed' => [], 'allowed' => 2})
+      expect(User.default_premium_voices(false, true, true)).to eq({'claimed' => [], 'allowed' => 1})
+      expect(User.default_premium_voices(false, false, true)).to eq({'claimed' => [], 'allowed' => 0})
+      expect(User.default_premium_voices(false, true, false)).to eq({'claimed' => [], 'allowed' => 1})
+      expect(User.default_premium_voices(true, false, true)).to eq({'claimed' => [], 'allowed' => 1})
+      expect(User.default_premium_voices(false, false, false)).to eq({'claimed' => [], 'allowed' => 0})
+
+      u = User.create
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 1})
+      u.settings['subscription']['expiration_source'] = 'bacon'
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 0})
+
+      u2 = User.create
+      u2.settings['preferences']['role'] = 'supporter'
+      u2.expires_at = 2.days.ago
+      u2.save
+      expect(u2.billing_state).to eq(:modeling_only)      
+      expect(u2.default_premium_voices).to eq({'claimed' => [], 'allowed' => 0})
+
+      u.settings['subscription'] = {'eval_account' => true}
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 1})
+      u.settings['subscription'] = {'never_expires' => true}
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 2})
+    end
+
+    it "should not allow paid supporters to download premium voices" do
+      u = User.create
+      u.settings['preferences']['role'] = 'supporter'
+      u.save
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 0})
+      
+      res = u.update_subscription({
+        'purchase' => true,
+        'customer_id' => '12345',
+        'plan_id' => 'slp_long_term_25',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 5.years.to_i
+      })
+      expect(u.settings['preferences']['role']).to eq('supporter')
+      expect(u.billing_state).to eq(:premium_supporter)      
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 0})
+    end
+
+    it "should allow a paid communicator in supporter role to download premium voices" do
+      u = User.create
+      expect(u.billing_state).to eq(:trialing_communicator)
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 1})
+      res = u.update_subscription({
+        'purchase' => true,
+        'customer_id' => '12345',
+        'plan_id' => 'long_term_200',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 5.years.to_i
+      })
+      expect(u.billing_state).to eq(:long_term_active_communicator)
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 2})
+
+      u.settings['preferences']['role'] = 'supporter'
+      expect(u.billing_state).to eq(:premium_supporter)      
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 2})
+    end
+  end
   
   describe "add_premium_voice" do
     it "should add the voice if not already claimed" do
@@ -1468,7 +1535,7 @@ describe User, :type => :model do
       expect(u.settings['premium_voices']).to eq({'allowed' => 2, 'claimed' => ['abcd']})
     end
 
-    it "should allow supervisors to add voices, and it should not generate AuditEvents for them" do
+    it "should allow supervisors to add supervisee voices, and it should not generate AuditEvents for them" do
       o = Organization.create(:admin => true, :settings => {'total_licenses' => 1})
       u1 = User.create
       u2 = User.create
@@ -1477,16 +1544,149 @@ describe User, :type => :model do
       u2.settings['premium_voices'] = {'claimed' => [], 'allowed' => 3}
       res = u2.add_premium_voice('abcd', 'Windows')
       expect(res).to eq(true)
-      expect(AuditEvent.count).to eq(1)
-      expect(u2.settings['premium_voices']).to eq({'allowed' => 3, 'claimed' => ['abcd']})
+      expect(AuditEvent.count).to eq(0)
+      expect(u1.settings['premium_voices']).to eq(nil)
+      expect(u2.settings['premium_voices']).to eq({'allowed' => 3, 'claimed' => ['abcd'], 'trial_voices' => [{'i' => 'abcd', 's' => 'Windows'}]})
 
       res = u1.add_premium_voice('abcd', 'Windows')
       expect(res).to eq(true)
+      expect(AuditEvent.count).to eq(0)
+      expect(u1.settings['premium_voices']).to eq({'allowed' => 0, 'claimed' => [], 'sup_claimed' => ['abcd']})
+    end
+
+    it "should allow trailing users to add a voice, but it should not generate an audit event at add time" do
+      u = User.create
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 1})
+      expect(AuditEvent.count).to eq(0)
+      res = u.add_premium_voice('abcd', 'Windows')
+      expect(u.settings['premium_voices']).to eq({'allowed' => 1, 'claimed' => ['abcd'], 'trial_voices' => [{'i' => 'abcd', 's' => 'Windows'}]})
+      expect(AuditEvent.count).to eq(0)
+    end
+
+    it "should not track trialing voices multiple times" do
+      u = User.create
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 1})
+      expect(AuditEvent.count).to eq(0)
+      res = u.add_premium_voice('abcd', 'Windows')
+      expect(res).to eq(true)
+      expect(u.settings['premium_voices']).to eq({'allowed' => 1, 'claimed' => ['abcd'], 'trial_voices' => [{'i' => 'abcd', 's' => 'Windows'}]})
+      expect(AuditEvent.count).to eq(0)
+
+      res = u.add_premium_voice('abcd', 'iOS')
+      expect(res).to eq(true)
+      expect(u.settings['premium_voices']).to eq({'allowed' => 1, 'claimed' => ['abcd'], 'trial_voices' => [{'i' => 'abcd', 's' => 'Windows'}]})
+      expect(AuditEvent.count).to eq(0)
+    end
+
+    it "should generate an audit event for trialing voices when the user actually subscribes" do
+      u = User.create
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 1})
+      expect(AuditEvent.count).to eq(0)
+      res = u.add_premium_voice('abcd', 'Windows')
+      expect(u.settings['premium_voices']).to eq({'allowed' => 1, 'claimed' => ['abcd'], 'trial_voices' => [{'i' => 'abcd', 's' => 'Windows'}]})
+      expect(AuditEvent.count).to eq(0)
+      res = u.update_subscription({
+        'subscribe' => true,
+        'subscription_id' => '12345',
+        'plan_id' => 'monthly_6'
+      })
+      expect(u.settings['premium_voices']).to eq({'allowed' => 2, 'claimed' => ['abcd']})
       expect(AuditEvent.count).to eq(1)
-      expect(u1.settings['premium_voices']).to eq({'allowed' => 0, 'claimed' => []})
+      ae = AuditEvent.last
+      expect(ae.event_type).to eq('voice_added')
+      expect(ae.data['voice_id']).to eq('abcd')
+      expect(ae.data['system']).to eq('Windows')
+    end
+
+    it "should generate an audit event for trialing voices when the user actually purchases" do
+      u = User.create
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 1})
+      expect(AuditEvent.count).to eq(0)
+      res = u.add_premium_voice('abcd', 'Windows')
+      expect(u.settings['premium_voices']).to eq({'allowed' => 1, 'claimed' => ['abcd'], 'trial_voices' => [{'i' => 'abcd', 's' => 'Windows'}]})
+      expect(AuditEvent.count).to eq(0)
+      res = u.update_subscription({
+        'purchase' => true,
+        'customer_id' => '12345',
+        'plan_id' => 'long_term_200',
+        'purchase_id' => '23456',
+        'seconds_to_add' => 8.weeks.to_i
+      })
+      expect(u.settings['premium_voices']).to eq({'allowed' => 2, 'claimed' => ['abcd']})
+      expect(AuditEvent.count).to eq(1)
+      ae = AuditEvent.last
+      expect(ae.event_type).to eq('voice_added')
+      expect(ae.data['voice_id']).to eq('abcd')
+      expect(ae.data['system']).to eq('Windows')
+    end
+
+
+    it "should not allow modeling_only accounts to download premium voices, even during the trial" do
+      u = User.create
+      expect(u.subscription_override('manual_modeler')).to eq(true)
+      expect(u.billing_state).to eq(:modeling_only)
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 0})
+      expect(u.settings['premium_voices']).to eq(nil)
+      expect(u.add_premium_voice('abcd', 'Windows')).to eq(false)
+    end
+
+    it "should not allow trialing supporters to download premium voices" do
+      u2 = User.create
+      u2.settings['preferences']['role'] = 'supporter'
+      u2.save
+      u2.reload
+      expect(u2.billing_state).to eq(:trialing_supporter)
+      expect(u2.default_premium_voices).to eq({'claimed' => [], 'allowed' => 0})
+      expect(u2.add_premium_voice('abcd', 'Windows')).to eq(false)
+    end
+
+    it "should not allow a trialing communicator to claim a voice, switch to modeling-only, and keep the voice" do
+      u = User.create
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 1})      
+      expect(u.add_premium_voice('abcd', 'Windows')).to eq(true)
+      expect(u.settings['premium_voices']).to eq({'claimed' => ['abcd'], 'allowed' => 1, "trial_voices" => [{"i"=>"abcd", "s"=>"Windows"}]})
+      expect(u.subscription_override('manual_modeler')).to eq(true)
+      expect(u.settings['premium_voices']).to eq({'claimed' => [], 'allowed' => 0})
+      expect(u.add_premium_voice('cdf', 'Windows')).to eq(false)
+      expect(u.add_premium_voice('abcd', 'Windows')).to eq(false)
+    end
+
+    it "should allow a modeling-only account to keep the voice that was manually granted" do
+      u = User.create
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 1})      
+      expect(u.settings['premium_voices']).to eq(nil)
+      expect(u.subscription_override('manual_modeler')).to eq(true)
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 0})      
+      expect(u.settings['premium_voices']).to eq(nil)
+      expect(u.add_premium_voice('abcd', 'Windows')).to eq(false)
+      expect(u.settings['premium_voices']).to eq(nil)
+      
+      u = User.create
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 1})      
+      expect(u.settings['premium_voices']).to eq(nil)
+      u.allow_additional_premium_voice!
+      u.allow_additional_premium_voice!
+      expect(u.settings['premium_voices']).to eq({'claimed' => [], 'allowed' => 2, 'extra' => 2})
+      expect(u.add_premium_voice('defg', 'Windows')).to eq(true)
+      expect(u.settings['premium_voices']).to eq({'claimed' => ['defg'], 'allowed' => 2, 'extra' => 2, "trial_voices" => [{"i"=>"defg", "s"=>"Windows"}]})
+      expect(u.subscription_override('manual_modeler')).to eq(true)
+      expect(u.settings['premium_voices']).to eq({'claimed' => ['defg'], 'allowed' => 2, 'extra' => 2})
+      expect(u.add_premium_voice('abcd', 'Windows')).to eq(true)
+      expect(u.settings['premium_voices']).to eq({'claimed' => ['defg', 'abcd'], 'allowed' => 2, 'extra' => 2})
+      expect(u.add_premium_voice('qwer', 'Windows')).to eq(false)
+    end
+
+    it "should not allow a trialing communicator to claim a voice, switch to a paid supporter, and keep the voice" do
+      u = User.create
+      expect(u.default_premium_voices).to eq({'claimed' => [], 'allowed' => 1})      
+      expect(u.add_premium_voice('abcd', 'Windows')).to eq(true)
+      expect(u.settings['premium_voices']).to eq({'claimed' => ['abcd'], 'allowed' => 1, "trial_voices"=>[{"i"=>"abcd", "s"=>"Windows"}]})
+      expect(u.subscription_override('manual_modeler')).to eq(true)
+      expect(u.settings['premium_voices']).to eq({'claimed' => [], 'allowed' => 0})
+      expect(u.add_premium_voice('cdf', 'Windows')).to eq(false)
+      expect(u.add_premium_voice('abcd', 'Windows')).to eq(false)
     end
   end
-  
 
   describe "process_sidebar_boards" do
     it "should work on an empty list" do

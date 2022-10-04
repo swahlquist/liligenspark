@@ -409,10 +409,15 @@ class Api::OrganizationsController < ApplicationController
     elsif params['report'] == 'premium_voices'
       voices = AuditEvent.where(['created_at > ? AND event_type = ?', 8.months.ago, 'voice_added'])
       stats = {}
+      repeats = {}
       voices.each do |event|
         str = "#{event.created_at.strftime('%m-%Y')} #{event.data['voice_id']} #{event.data['system'] || 'iOS'}"
-        stats[str] ||= 0
-        stats[str] += 1
+        if !repeats["#{event.data['user_id']}-#{event.data['voice_id']}-#{event.data['system']||'iOS'}"]
+          # There is a slight risk of replay audit on voice claiming
+          repeats["#{event.data['user_id']}-#{event.data['voice_id']}-#{event.data['system']||'iOS'}"] = true
+          stats[str] ||= 0
+          stats[str] += 1
+        end
       end
     elsif params['report'] == 'extras'
       extras = AuditEvent.where(['created_at > ? AND event_type = ?', 8.months.ago, 'extras_added'])

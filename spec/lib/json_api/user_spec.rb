@@ -62,7 +62,7 @@ describe JsonApi::User do
       
       u.settings['premium_voices'] = nil
       json = JsonApi::User.build_json(u, permissions: u)
-      expect(json['premium_voices']).to eq({'claimed' => [], 'allowed' => 0})
+      expect(json['premium_voices']).to eq({'claimed' => [], 'allowed' => 1})
     end
 
     it "should include supervisee claimed voices if any" do
@@ -74,6 +74,17 @@ describe JsonApi::User do
       User.link_supervisor_to_user(u, u3)
       json = JsonApi::User.build_json(u, permissions: u)
       expect(json['premium_voices']).to eq({'always_allowed' => true, 'claimed' => ["abc", "bcd", "cde", "def", "efg", "fgh"]})
+    end
+
+    it "should include claimed voices during the trial, and drop them when the trial expires" do
+      u = User.create(:settings => {'premium_voices' => {'claimed' => ['abc', 'bcd']}})
+      expect(u.any_premium_or_grace_period?(true)).to eq(true)
+      json = JsonApi::User.build_json(u, permissions: u)
+      expect(json['premium_voices']).to eq({'always_allowed' => true, 'claimed' => ["abc", "bcd"]})
+      u.expires_at = 5.weeks.ago
+      expect(u.billing_state).to eq(:expired_communicator)
+      json = JsonApi::User.build_json(u, permissions: u)
+      expect(json['premium_voices']).to eq({'allowed' => 0, 'claimed' => []})
     end
 
     it "should include user vocalizations (saved phrases)" do

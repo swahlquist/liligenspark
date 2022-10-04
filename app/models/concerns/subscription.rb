@@ -264,9 +264,25 @@ module Subscription
           self.settings['pending'] = false unless self.settings['subscription']['modeling_only']
           self.settings['preferences']['progress'] ||= {}
           self.settings['preferences']['progress']['subscription_set'] = true
+          if self.full_premium?
+            if ((self.settings['premium_voices'] || {})['trial_voices'] || []).length > 0
+              # When a user fully subscribes, activate any trialed premium voices
+              self.settings['premium_voices']['trial_voices'].each do |v| 
+                self.track_voice_added(v['i'], v['s']) 
+                self.settings['premium_voices']['allowed'] = [self.settings['premium_voices']['allowed'] || 0, self.default_premium_voices['allowed']].max
+              end
+              self.settings['premium_voices'].delete('trial_voices')
+            end
+          elsif self.modeling_only? && self.settings['premium_voices']
+            self.settings['premium_voices']['allowed'] = self.settings['premium_voices']['extra'] || 0
+            self.settings['premium_voices']['claimed'] = (self.settings['premium_voices']['claimed'] || [])[0, self.settings['premium_voices']['allowed']]
+            self.settings['premium_voices'].delete('trial_voices')
+          end
           self.expires_at = nil if self.settings['subscription']['started'] || args['plan_id'].match(/free|granted/)
           self.assert_current_record!
           self.save_with_sync('subscribe')
+
+            
           self.schedule(:remove_supervisors!) if self.premium_supporter? || self.modeling_only?
         end
       end
@@ -356,6 +372,21 @@ module Subscription
           self.expires_at = [self.expires_at, Time.now].compact.max
           self.expires_at += args['seconds_to_add'].to_i
           self.settings['subscription']['expiration_source'] = 'purchase' if args['seconds_to_add'].to_i > 0
+
+          if ((self.settings['premium_voices'] || {})['trial_voices'] || []).length > 0
+          if self.full_premium?
+            # When a user fully subscribes, activate any trialed premium voices
+            self.settings['premium_voices']['trial_voices'].each do |v| 
+              self.track_voice_added(v['i'], v['s']) 
+              self.settings['premium_voices']['allowed'] = [self.settings['premium_voices']['allowed'] || 0, self.default_premium_voices['allowed']].max
+            end
+            self.settings['premium_voices'].delete('trial_voices')
+          elsif self.modeling_only? && self.settings['premium_voices']
+            self.settings['premium_voices']['allowed'] = self.settings['premium_voices']['extra'] || 0
+            self.settings['premium_voices']['claimed'] = (self.settings['premium_voices']['claimed'] || [])[0, self.settings['premium_voices']['allowed']]
+            self.settings['premium_voices'].delete('trial_voices')
+          end
+          end
         end
       
         self.assert_current_record!
@@ -373,6 +404,17 @@ module Subscription
   
   def redeem_gift_token(code)
     Purchasing.redeem_gift(code, self)
+  end
+
+  def track_voice_added(voice_id, system_name)
+    data = {
+      :user_id => self.global_id,
+      :user_name => self.user_name,
+      :voice_id => voice_id,
+      :timestamp => Time.now.to_i,
+      :system => system_name
+    }
+    AuditEvent.create!(:event_type => 'voice_added', :summary => "#{self.user_name} added #{voice_id}", :data => data)
   end
 
   def process_subscription_token(token, type, code=nil)
@@ -910,7 +952,7 @@ module Subscription
     # !!(self.full_premium_or_fully_purchased? || self.grace_period? || self.premium_supporter? || self.org_supporter?)
   end
 
-  def full_premium?
+  def full_premium?(force_state=false)
     return [
       :never_expires_communicator, 
       :eval_communicator, 
@@ -918,7 +960,7 @@ module Subscription
       :long_term_active_communicator,
       :org_sponsored_communicator,
       :org_sponsored_supporter
-    ].include?(self.billing_state)
+    ].include?(self.billing_state(force_state ? 'communicator' : nil))
     # full_premium means paid for and active cloud extras
     # * not in a grace period *
     # Checks full_premium_or_fully_purchased?

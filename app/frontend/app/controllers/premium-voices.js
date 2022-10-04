@@ -18,7 +18,7 @@ export default modal.ModalController.extend({
     var _this = this;
     if(capabilities.installed_app) {
       capabilities.tts.status().then(function() {
-        if((app_state.get('currentUser.currently_premium') && !app_state.get('currentUser.grace_period')) || app_state.get('currentUser.premium_voices.always_allowed')) {
+        if((app_state.get('currentUser.currently_premium') && app_state.get('currentUser.premium_voices.allowed') > 0) || app_state.get('currentUser.premium_voices.always_allowed')) {
           _this.set('premium_available', true);
         }
       }, function() {
@@ -69,7 +69,7 @@ export default modal.ModalController.extend({
         _this.refresh_voices();
       }, function(err) {
         _this.refresh_voices();
-        _this.set('voice_error', i18n.t('error_downloading_voice', "There was an unexpected problem while trying to download the voice"));
+        _this.set('voice_error', (err && err.msg) || i18n.t('error_downloading_voice', "There was an unexpected problem while trying to download the voice"));
       });
     },
     delete_voice: function(voice) {
@@ -78,7 +78,7 @@ export default modal.ModalController.extend({
         _this.refresh_voices();
       }, function(err) {
         _this.refresh_voices();
-        _this.set('voice_error', i18n.t('error_deleting_voice', "There was an unexpected problem while trying to delete the voice"));
+        _this.set('voice_error', (err && err.msg) || i18n.t('error_deleting_voice', "There was an unexpected problem while trying to delete the voice"));
       });
     }
   }

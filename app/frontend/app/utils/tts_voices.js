@@ -83,20 +83,20 @@ var voices = EmberObject.extend({
           }, function(e) {
             console.error("error downloading voice", e);
             capabilities.wakelock('download_voice', false);
-            reject(i18n.t('error_downloading_voice', "There was an unexpected problem while trying to download the voice"));
+            reject({msg: i18n.t('error_downloading_voice', "There was an unexpected problem while trying to download the voice")});
           });
         }, function() {
           capabilities.wakelock('download_voice', false);
-          reject(i18n.t('error_updating_voice', "There was an unexpected problem while updating the user's voice settings"));
+          reject({msg: i18n.t('error_updating_voice', "There was an unexpected problem while updating the user's voice settings")});
         });
       }, function(err) {
         capabilities.wakelock('download_voice', false);
         if(err && err.result && err.result.error == 'no more voices available') {
-          reject('voice_error', i18n.t('no_more_voices', "This user has already claimed the maximum number of premium voices and can't claim any more."));
+          reject({msg: i18n.t('no_more_voices', "This user has already claimed the maximum number of premium voices and can't claim any more.")});
         } else if(!window.persistence || !window.persistence.get('online')) {
-          reject('voice_error', i18n.t('online_requiest', "You must be online in order to download premium voices."));
+          reject({msg: i18n.t('online_requiest', "You must be online in order to download premium voices.")});
         } else {
-          reject('voice_error', i18n.t('error_finding_voice', "There was an unexpected problem while trying to start downloading the voice."));
+          reject({msg: i18n.t('error_finding_voice', "There was an unexpected problem while trying to start downloading the voice.")});
         }
       });
     });

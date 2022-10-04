@@ -98,9 +98,11 @@ module JsonApi::User
       end
       nearest_device_key = (nearest_device && nearest_device.unique_device_key) || 'default'
       
-      json['premium_voices'] = user.settings['premium_voices'] if user.settings['premium_voices']
-      json['premium_voices']['always_allowed'] = true if json['premium_voices']
-      json['premium_voices'] ||= user.default_premium_voices
+      json['premium_voices'] = user.refresh_premium_voices
+      json['premium_voices'] = {}.merge(json['premium_voices']) if json['premium_voices']
+      json['premium_voices']['always_allowed'] = true if json['premium_voices'] && ((json['premium_voices']['allowed'] || 0) > 0 || (json['premium_voices']['claimed'] || []).length > 0)
+      json['premium_voices'] ||= {}.merge(user.default_premium_voices)
+      json['premium_voices'].delete('expired_state')
       json['preferences']['device'] = {}.merge(user.settings['preferences']['devices'][nearest_device_key] || {})
       json['preferences']['device'].delete('ever_synced')
       if args[:device] && user.settings['preferences']['devices'][args[:device].unique_device_key]
