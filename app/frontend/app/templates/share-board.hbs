@@ -47,6 +47,16 @@
           {{#if board.protected_material}}
             <p class='text-warning'>{{t "NOTE: This board has premium content, any users who access it without the same premium access will see free alternatives instead." key='protected_material_reminder'}}</p>
           {{/if}}
+          {{#if board.downstream_boards}}
+            <div>
+              <div class="checkbox big_checkbox">
+                <label>
+                  {{input checked=board.update_visibility_downstream type="checkbox"}}
+                  {{t "Make all linked boards public as well" key='make_all_public'}}
+                </label>
+              </div>
+            </div>
+          {{/if}}
           <button class='btn btn-default' {{action 'make_public' 'confirm'}}>{{t "Make the Board Public" key='make_it_public'}}</button>
           <button class='btn btn-default' {{action 'make_public' 'cancel'}}>{{t "Cancel" key='cancel'}}</button>
         {{else}}

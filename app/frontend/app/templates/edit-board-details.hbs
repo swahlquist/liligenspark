@@ -124,6 +124,18 @@
             {{/unless}}
           {{/if}}
         </div>
+        {{#if model.downstream_boards}}
+          {{#if visibility_changed}}
+            <div class="col-sm-9 col-sm-offset-3">
+              <div class="checkbox big_checkbox">
+                <label>
+                  {{input type="checkbox" checked=model.update_visibility_downstream}}
+                  {{t "Update all linked boards to the same visibility" key='update_downstream_visibility'}}
+                </label>
+              </div>
+            </div>
+          {{/if}}
+        {{/if}}
         {{#if model.visibility_setting.private}}
           <div class="col-sm-9 col-sm-offset-3">
             <div class="checkbox big_checkbox">

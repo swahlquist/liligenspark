@@ -62,7 +62,12 @@ export default modal.ModalController.extend({
         board.set('visibility', 'public')
         board.set('public', true);
         var _this = this;
+        var needs_refresh = board.get('update_visibility_downstream');
         board.save().then(function() {
+          board.set('update_visibility_downstream', false);
+          if(needs_refresh) {
+            app_state.set('board_reload_key', Math.random() + "-" + (new Date()).getTime());
+          }
           _this.set('confirm_public_board', false);
         }, function() {
           _this.set('confirm_public_board', false);
@@ -72,6 +77,7 @@ export default modal.ModalController.extend({
       } else if(action == 'cancel') {
         this.set('confirm_public_board', false);
       } else {
+        this.set('board.update_visibility_downstream', true);
         this.set('confirm_public_board', true);
       }
     },

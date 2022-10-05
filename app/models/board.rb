@@ -1116,6 +1116,9 @@ class Board < ActiveRecord::Base
     
     self.settings['grid'] = params['grid'] if params['grid']
     if params['visibility'] != nil && !self.unshareable?
+      if params['update_visibility_downstream']
+        Board.schedule_for(:priority, :batch_update_visibility, self.global_id, params['visibility'])
+      end
       if params['visibility'] == 'public'
         if !self.public || self.settings['unlisted']
           @edit_notes << "set to public"
@@ -1186,7 +1189,6 @@ class Board < ActiveRecord::Base
       self.settings['image_urls'] = params['image_urls']
       self.settings['sound_urls'] = params['sound_urls']
     end
-#    @edit_description = nil
     if self.id && @edit_notes.length > 0
       @edit_description = {
         'timestamp' => Time.now.to_f,
@@ -1194,6 +1196,25 @@ class Board < ActiveRecord::Base
       }
     end
     true
+  end
+
+  def self.batch_update_visibility(root_id, visibility)
+    root = Board.find_by_path(root_id)
+    return unless root
+    ids = root.settings['downstream_board_ids']
+    un = root.cached_user_name
+    Board.find_batches_by_global_id(ids) do |board|
+      if board.cached_user_name == un && board != root
+        board.instance_variable_set('@edit_description', {
+          'timestamp' => Time.now.to_f,
+          'notes' => 'batch set to public'
+        })
+        board.public = visibility != 'private'
+        board.settings['unlisted'] = visibility != 'public'
+        board.instance_variable_set('@map_later', true)
+        board.save
+      end
+    end
   end
   
   def categories

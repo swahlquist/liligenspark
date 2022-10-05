@@ -4,12 +4,14 @@ import app_state from '../utils/app_state';
 import i18n from '../utils/i18n';
 import modal from '../utils/modal';
 import { set as emberSet } from '@ember/object';
-import { computed } from '@ember/object';
+import { computed, observer } from '@ember/object';
 
 export default modal.ModalController.extend({
   opening: function() {
     var board = this.get('model.board');
     this.set('model', board);
+    this.set('starting_vis', board.get('visibility'));
+    this.set('visibility_changed', false);
     if(!board.get('button_locale')) {
       board.set('button_locale', app_state.get('label_locale') || board.get('locale'));
     }
@@ -38,6 +40,15 @@ export default modal.ModalController.extend({
       this.set('model.intro.unapproved', false);
     }
   },
+  update_visibility_changed: observer('starting_vis', 'model.visibility', function() {
+    if(this.get('starting_vis') != this.get('model.visibility')) {
+      this.set('visibility_changed', true);
+      this.set('model.update_visibility_downstream', true)
+    } else {
+      this.set('visibility_changed', false);
+      this.set('model.update_visibility_downstream', false)
+    }
+  }),
   board_categories: computed('model.home_board', 'model.id', 'model.categories', function() {
     var res = [];
     var _this = this;

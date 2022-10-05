@@ -185,12 +185,17 @@ export default Controller.extend({
     app_state.toggle_mode('edit');
 
     var board = this.get('model');
+    var needs_refresh = board.get('update_visibility_downstream');
     board.save().then(function(brd) {
       if(update_locale) {
         stashes.persist('label_locale', update_locale);
         app_state.set('label_locale', update_locale);
         stashes.persist('vocalization_locale', update_locale);
         app_state.set('vocalization_locale', update_locale);
+      }
+      board.set('update_visibility_downstream', false);
+      if(needs_refresh) {
+        app_state.set('board_reload_key', Math.random() + "-" + (new Date()).getTime());
       }
       editManager.process_for_displaying();
       if(brd.get('protected_material') && brd.get('visibility') != 'private') {
