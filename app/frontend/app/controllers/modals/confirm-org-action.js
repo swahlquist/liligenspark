@@ -69,7 +69,7 @@ export default modal.ModalController.extend({
         // Only add premium symbols on an existing user if copying board is selected and symbol-adding is checked
         var add = this.get('add_symbols') && this.get('model.org.extras_available') && this.get('board_will_copy');
         modal.close({confirmed: true, extras: add, home: this.get('home_board_template'), symbols: this.get('preferred_symbols')});
-      } else if(this.get('confirmed') == 'confirmed' || this.get('model.user_name') || this.get('model.unit_user_name')) {
+      } else if(this.get('confirmed') == 'confirmed' || this.get('model.user_name') || this.get('model.unit_user_name') || this.get('model.lesson_name')) {
         modal.close({confirmed: true});
       }
     }

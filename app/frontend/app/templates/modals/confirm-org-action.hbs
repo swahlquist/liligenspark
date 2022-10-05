@@ -20,6 +20,8 @@
               {{t "Are you sure you want to remove the user from the room?" user_name=model.user_name key='confirm_remove_unit_user'}}
             {{else if model.org_name}}
               {{t "Are you sure you want to delete the org <b>%{org_name}</b> permanently? This cannot be undone. If so, please type \"confirmed\" in the box below." org_name=model.org_name key='confirm_remove_org'}}
+            {{else if model.lesson_name}}
+              {{t "Are you sure you want to remove the lesson <b>%{ln}</b> from this organization?" ln=model.lesson_name key='confirm_remove_lesson'}}
             {{else}}
               {{t "Are you sure you want to remove this? If so, please type \"confirmed\" in the box below." key='confirm_remove_other'}}
             {{/if}}
@@ -69,11 +71,13 @@
       {{else}}
         {{#unless model.user_name}}
           {{#unless model.unit_user_name}}
-            <div class="form-group">
-              <div class="col-sm-8 col-sm-offset-2">
-                {{input value=confirmed class="form-control" placeholder="..."}}
+            {{#unless model.lesson_name}}
+              <div class="form-group">
+                <div class="col-sm-8 col-sm-offset-2">
+                  {{input value=confirmed class="form-control" placeholder="..."}}
+                </div>
               </div>
-            </div>
+            {{/unless}}
           {{/unless}}
         {{/unless}}
       {{/if}}
@@ -93,6 +97,8 @@
           {{t "Remove User" key='remove_user'}}
         {{else if model.unit_user_name}}
           {{t "Remove User" key='remove_user'}}
+        {{else if model.lesson_name}}
+          {{t "Remove Lesson" key='remove_lesson'}}
         {{else if model.org_name}}
           {{t "Delete Account" key='delete_account'}}
         {{else}}

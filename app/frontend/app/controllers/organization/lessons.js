@@ -138,11 +138,15 @@ export default Controller.extend({
     },
     delete: function(lesson) {
       var _this = this;
-      persistence.ajax('/api/v1/lessons/' + lesson.id + '/unassign', {type: 'POST', data: {organization_id: _this.get('model.id')}}).then(function() {
-        _this.load_lessons();
-      }, function(err) {
-        modal.error(i18n.t('error_removing_lesson', "There was an unxpected error when removing the lesson"));
-      })
+      modal.open('modals/confirm-org-action', {action: 'remove_lesson', org: _this.get('model'), lesson_name: lesson.title}).then(function(res) {
+        if(res && res.confirmed) {
+          persistence.ajax('/api/v1/lessons/' + lesson.id + '/unassign', {type: 'POST', data: {organization_id: _this.get('model.id')}}).then(function() {
+            _this.load_lessons();
+          }, function(err) {
+            modal.error(i18n.t('error_removing_lesson', "There was an unxpected error when removing the lesson"));
+          })
+        }
+      });
     }
   }
 });
