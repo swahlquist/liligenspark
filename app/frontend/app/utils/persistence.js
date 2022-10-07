@@ -1633,7 +1633,7 @@ var persistence = EmberObject.extend({
 
         // Step 8: Sync contacts
         spread_out(function() {
-          return persistence.time_promise(persistence.sync_contacts(user), "syncing contacts");
+          return persistence.time_promise(persistence.sync_contacts(user), "syncing contacts", 2 * 60 * 1000);
         }, "syncing contacts");
 
         // reject on any errors

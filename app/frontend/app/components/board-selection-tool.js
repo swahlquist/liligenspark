@@ -265,7 +265,7 @@ export default Component.extend({
     },
     select: function() {
       var _this = this;
-      var user = app_state.get('currentUser');
+      var user = app_state.get('setup_user') || app_state.get('currentUser');
       var board = _this.get('current_board');
       var max = null;
       var min = null;

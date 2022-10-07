@@ -12,6 +12,7 @@ export default Component.extend({
   },
   set_board_record: observer('board', 'board.key', 'board.children', 'board.children.length', function() {
     var board = this.get('board');
+    if(!board) { return; }
     if(board.children) {
       this.set('children', board.children);
       board = board.board;
