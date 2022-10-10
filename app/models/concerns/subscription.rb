@@ -607,6 +607,7 @@ module Subscription
     current_device = Device.find_by_global_id(current_device_id)
     return false unless current_device && self.eval_account?
     duration = self.eval_duration
+    prior_email = self.settings['email']
     self.settings['subscription'] ||= {}
     self.settings['subscription']['eval_account'] = true
     # reset the eval expiration clock
@@ -656,6 +657,9 @@ module Subscription
     # enable logging by default
     self.settings['preferences']['logging'] = true
     self.save_with_sync('reset_eval')
+    if self.settings['email'] != prior_email
+      UserMailer.schedule_delivery(:eval_welcome, self.global_id)
+    end
     true
   end
   

@@ -1,0 +1,30 @@
+Welcome to <%= app_name %>! Your evaluation period has officially begun!
+We're excited that you're ready use what we think is the most flexible, 
+usable communication tool out there! We 
+built <%= app_name %> to make things easier for 
+communicators and the support teams around them, so we hope the app can make a 
+difference for you.<br/><br/>
+
+Your evaluation is for an account with the user name <b><%= @user.display_user_name %></b>.
+<%= app_name %> comes with "cloud extras" features that include
+logging, reports, goals and badges, and your <%= app_name %> account will have access to these
+features throughout your evaluation, which concludes <b><%= @user.expires_at.to_s(:long_ordinal) %></b>. 
+<br/><br/>
+
+<%= app_name %> has a lot of great features, from eye tracking to switches to reports to badges, but 
+those features are all more than happy to
+wait patiently until you're ready for them. You can
+find walkthroughs and guides on the simple and advanced features available in the <%= app_name %> app
+by visiting
+<a href="<%= support_url %>">our support site</a> or
+<a href="<%= domain_settings['youtube_url'] %>">our YouTube channel</a>. 
+You can also <a href="<%= JsonApi::Json.current_host %>/contact">shoot us a message</a>
+there is you think something might be broken.<br/><br/>
+
+If you ever find something you think could be improved upon, we'd love
+to hear about it, so please <a href="<%= JsonApi::Json.current_host %>/contact">contact us</a>! 
+Our goal is to build something that can help enable communicators to succeed,
+and we're always looking for new ways to make that happen!<br/><br/><br/>
+
+Thanks!<br/>
+<%= email_signature %>

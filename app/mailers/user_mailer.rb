@@ -11,7 +11,7 @@ class UserMailer < ActionMailer::Base
       user.update_setting('email_disabled', true)
     end
   end
-  
+
   def new_user_registration(user_id)
     @user = User.find_by_global_id(user_id)
     d = @user.devices[0]
@@ -33,6 +33,10 @@ class UserMailer < ActionMailer::Base
     end
   end
 
+  def eval_welcome(user_id)
+    @user = User.find_by_path(user_id)
+  end
+  
   def password_changed(user_id)
     @user = User.find_by_global_id(user_id)
     mail_message(@user, "Password Changed")
