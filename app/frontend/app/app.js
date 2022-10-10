@@ -511,6 +511,11 @@ CoughDrop.Videos = {
       }, 5000);
     });
   },
+  untrack: function(dom_id, callback) {
+    var player = CoughDrop.Videos.players[dom_id];
+    player.removeListener(callback);
+    
+  },
   player_ready: function(dom, window) {
     if(!dom.id) { return; }
     if(CoughDrop.Videos.players[dom.id] && CoughDrop.Videos.players[dom.id]._dom == dom) {
@@ -537,8 +542,12 @@ CoughDrop.Videos = {
       },
       addListener: function(callback) {
         if(!callback) { return; }
-        player.listeners = [];
+        player.listeners = player.listeners || [];
         player.listeners.push(callback);
+      },
+      removeListener: function(callback) {
+        if(!callback) { return; }
+        player.listeners = (player.listeners || []).filter(function(c) { return c != callback; });
       },
       trigger: function(event) {
         (player.listeners || []).forEach(function(callback) {
@@ -554,7 +563,7 @@ CoughDrop.Videos = {
     CoughDrop.Videos.waiting[dom.id] = [];
   },
   player_status: function(event) {
-    var frame = event.source.frameElement;
+    var frame = event.source.frameElement || event.source.frameElementRef;
     if(!frame) {
       var frames = document.getElementsByTagName('IFRAME');
       for(var idx = 0; idx < frames.length; idx++) {
@@ -587,7 +596,7 @@ CoughDrop.Videos = {
 
 window.addEventListener('message', function(event) {
   if(event.data && event.data.video_status) {
-    var frame = event.source.frameElement;
+    var frame = event.source.frameElement || event.source.frameElementRef;
     if(!frame) {
       var frames = document.getElementsByTagName('IFRAME');
       for(var idx = 0; idx < frames.length; idx++) {
@@ -599,7 +608,7 @@ window.addEventListener('message', function(event) {
     if(frame && frame.id) {
       var dom_id = frame.id;
       var elem = frame;
-      event.source.frameElement = frame;
+      event.source.frameElementRef = frame;
       CoughDrop.Videos.player_status(event);
     }
   }

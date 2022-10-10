@@ -32,7 +32,7 @@ export default modal.ModalController.extend({
       this.set('video_url', url);
     }
 
-    CoughDrop.Videos.track('video_preview', function(event_type) {
+    this.set('video_callback', function(event_type) {
       if(event_type == 'ended') {
         _this.send('close');
       } else if(event_type == 'error') {
@@ -40,7 +40,8 @@ export default modal.ModalController.extend({
       } else if(event_type == 'embed_error') {
         _this.set('player', {error: true, embed_error: true});
       }
-    }).then(function(player) {
+    });
+    CoughDrop.Videos.track('video_preview', this.get('video_callback')).then(function(player) {
       _this.set('player', player);
     });
   },
@@ -48,6 +49,7 @@ export default modal.ModalController.extend({
     if(this.get('player') && this.get('player').cleanup) {
       this.get('player').cleanup();
     }
+    CoughDrop.Videos.untrack('video_preview', this.get('video_callback'));
   },
   actions: {
     toggle_video: function() {

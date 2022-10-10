@@ -22,6 +22,7 @@ CoughDrop.Lesson = DS.Model.extend({
   due_ts: DS.attr('number'),
   target_types: DS.attr('raw'),
   required: DS.attr('boolean'),
+  video: DS.attr('boolean'),
   description: DS.attr('string'),
   time_estimate: DS.attr('number'),
   past_cutoff: DS.attr('number'),

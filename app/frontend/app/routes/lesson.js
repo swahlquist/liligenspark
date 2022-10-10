@@ -13,8 +13,6 @@ export default Route.extend({
     controller.set('model', model);
     controller.set('user_token', this.get('user_token'));
     controller.set('lesson_code', this.get('lesson_code'));
-    controller.set('status', null);
-    controller.set('show_description', false);
-    controller.set('show_rating', false);
+    controller.setup_tracking();
   }
 });
