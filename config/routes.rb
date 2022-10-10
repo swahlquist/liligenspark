@@ -164,6 +164,7 @@ Coughdrop::Application.routes.draw do
       post 'imports' => 'boards#import', on: :collection
       post 'unlink' => 'boards#unlink', on: :collection
       post 'stars' => 'boards#star'
+      post 'slice_locales' => 'boards#slice_locales'
       delete 'stars' => 'boards#unstar'
       post 'download' => 'boards#download'
       post 'rename' => 'boards#rename'

@@ -1463,4 +1463,253 @@ describe Relinking, :type => :model do
       end
     end
   end
+
+  describe "slice_locales" do
+    it "should return without list of ids" do
+      u = User.create
+      b = Board.create(user: u)
+      expect(b.slice_locales([], [], nil)).to eq({sliced: false, reason: 'id not included'})
+    end
+
+    it "should return without any valid locales" do
+      u = User.create
+      b = Board.create(user: u)
+      expect(b.slice_locales([], [b.global_id], nil)).to eq({sliced: false, reason: 'no locales would be kept'})
+      expect(b.slice_locales(['fr'], [b.global_id], nil)).to eq({sliced: false, reason: 'no locales would be kept'})
+      expect(b.slice_locales(['zh', 'fr'], [b.global_id], nil)).to eq({sliced: false, reason: 'no locales would be kept'})
+    end
+
+    it "should return if already matches slice list and no sub-boards to check" do
+      u = User.create
+      b = Board.create(user: u)
+      expect(b.slice_locales(['en'], [b.global_id], nil)).to eq({sliced: true, ids: [b.global_id], reason: 'already includes only specified locales'})
+
+      b.process({'buttons' => [
+        {'id' => '1', 'label' => 'watch'},
+        {'id' => '2', 'label' => 'scotch'}
+      ]}, {'user' => u})
+      b.settings['translations'] = {'1' => {'fr' => 'heur', 'es' => 'dias'}, '2' => {'fr' => 'liquide'}}
+      b.save
+      expect(b.slice_locales(['en', 'fr', 'es'], [b.global_id], u)).to eq({sliced: true, ids: [b.global_id], reason: 'already includes only specified locales'})
+    end
+
+    it "should include only the specified locales" do
+      u = User.create
+      b = Board.create(user: u)
+      b.process({'buttons' => [
+        {'id' => '1', 'label' => 'watch'},
+        {'id' => '2', 'label' => 'scotch'}
+      ]}, {'user' => u})
+      b.settings['translations'] = {'1' => {'fr' => {'label' => 'heur'}, 'es' => {'label' => 'dias'}}, '2' => {'fr' => {'label' => 'liquide'}}}
+      b.save
+      expect(b.slice_locales(['en', 'fr'], [b.global_id], u)).to eq({sliced: true, ids: [b.global_id]})
+      expect(b.settings['translations']).to eq({'1' => {'fr' => {'label' => 'heur'}}, '2' => {'fr' => {'label' => 'liquide'}}})
+    end
+    
+    it "should set a new default locale if the prior one was removed" do
+      u = User.create
+      b = Board.create(user: u)
+      b.process({'buttons' => [
+        {'id' => '1', 'label' => 'watch'},
+        {'id' => '2', 'label' => 'scotch'}
+      ]}, {'user' => u})
+      b.settings['translations'] = {'1' => {'fr' => {'label' => 'heur'}, 'es' => {'label' => 'dias'}}, '2' => {'fr' => {'label' => 'liquide'}}}
+      b.save
+      expect(b.slice_locales(['fr'], [b.global_id], u)).to eq({sliced: true, ids: [b.global_id]})
+      expect(b.settings['locale']).to eq('fr')
+      expect(b.settings['translations']['default']).to eq('fr')
+      expect(b.buttons[0]['label']).to eq('heur')
+      expect(b.buttons[1]['label']).to eq('liquide')
+    end
+
+    it "should also update sub-boards if specified" do
+      u = User.create
+      b1 = Board.create(user: u)
+      b2 = Board.create(user: u)
+      b1.process({'buttons' => [
+        {'id' => '1', 'label' => 'watch', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}},
+        {'id' => '2', 'label' => 'scotch'}
+      ]}, {'user' => u})
+      b1.settings['translations'] = {'1' => {'fr' => {'label' => 'heur'}, 'es' => {'label' => 'dias'}}, '2' => {'fr' => {'label' => 'liquide'}}}
+      b1.save
+      expect(b1.buttons[0]['load_board']['id']).to eq(b2.global_id)
+      b2.process({'buttons' => [
+        {'id' => '1', 'label' => 'now'},
+        {'id' => '2', 'label' => 'never'}
+      ]}, {'user' => u})
+      b2.settings['translations'] = {'1' => {'fr' => {'label' => 'maintenant'}, 'de' => {'label' => 'da'}, 'es' => {'label' => 'dias'}}, '2' => {'fr' => {'label' => 'jamais'}}}
+      b2.save
+      Worker.process_queues
+
+      expect(b1.reload.slice_locales(['fr', 'de'], [b1.global_id, b2.global_id], u)).to eq({sliced: true, ids: [b1.global_id, b2.global_id]})
+      expect(b1.settings['locale']).to eq('fr')
+      expect(b1.settings['translations']['default']).to eq('fr')
+      expect(b1.buttons[0]['label']).to eq('heur')
+      expect(b1.buttons[1]['label']).to eq('liquide')
+      expect(b1.settings['translations']).to eq({
+        '1' => {'fr' => {'label' => 'heur'}},
+        '2' => {'fr' => {'label' => 'liquide'}},
+        'board_name' => {},
+        'current_label' => 'fr',
+        'current_vocalization' => 'fr',
+        'default' => 'fr'
+      })
+
+      expect(b2.reload.settings['locale']).to eq('fr')
+      expect(b2.settings['translations']['default']).to eq('fr')
+      expect(b2.buttons[0]['label']).to eq('maintenant')
+      expect(b2.buttons[1]['label']).to eq('jamais')
+      expect(b2.settings['translations']).to eq({
+        '1' => {'fr' => {'label' => 'maintenant'}, 'de' => {'label' => 'da'}},
+        '2' => {'fr' => {'label' => 'jamais'}},
+        'board_name' => {},
+        'current_label' => 'fr',
+        'current_vocalization' => 'fr',
+        'default' => 'fr'
+      })
+    end
+
+    it "should not update sub-boards that aren't specified" do
+      u = User.create
+      b1 = Board.create(user: u)
+      b2 = Board.create(user: u)
+      b3 = Board.create(user: u)
+      b1.process({'buttons' => [
+        {'id' => '1', 'label' => 'watch', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}},
+        {'id' => '2', 'label' => 'scotch', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ]}, {'user' => u})
+      b1.settings['translations'] = {'1' => {'fr' => {'label' => 'heur'}, 'es' => {'label' => 'dias'}}, '2' => {'fr' => {'label' => 'liquide'}}}
+      b1.save
+      expect(b1.buttons[0]['load_board']['id']).to eq(b2.global_id)
+
+      b2.process({'buttons' => [
+        {'id' => '1', 'label' => 'now'},
+        {'id' => '2', 'label' => 'never'}
+      ]}, {'user' => u})
+      b2.settings['translations'] = {'1' => {'de' => {'label' => 'maintenant'}, 'zh' => {'label' => 'da'}, 'es' => {'label' => 'dias'}}, '2' => {'de' => {'label' => 'jamais'}}}
+      b2.save
+
+      b3.process({'buttons' => [
+        {'id' => '1', 'label' => 'eat'},
+        {'id' => '2', 'label' => 'go'}
+      ]}, {'user' => u})
+      b3.settings['translations'] = {'1' => {'fr' => {'label' => 'mange'}, 'zh' => {'label' => 'da'}, 'es' => {'label' => 'dias'}}, '2' => {'fr' => {'label' => 'allez'}}}
+      b3.save
+      Worker.process_queues
+
+      expect(b1.reload.slice_locales(['fr', 'de'], [b1.global_id, b2.global_id], u)).to eq({sliced: true, ids: [b1.global_id, b2.global_id]})
+      expect(b1.settings['locale']).to eq('fr')
+      expect(b1.settings['translations']['default']).to eq('fr')
+      expect(b1.buttons[0]['label']).to eq('heur')
+      expect(b1.buttons[1]['label']).to eq('liquide')
+      expect(b1.settings['translations']).to eq({
+        '1' => {'fr' => {'label' => 'heur'}},
+        '2' => {'fr' => {'label' => 'liquide'}},
+        'board_name' => {},
+        'current_label' => 'fr',
+        'current_vocalization' => 'fr',
+        'default' => 'fr'
+      })
+
+      expect(b2.reload.settings['locale']).to eq('de')
+      expect(b2.settings['translations']['default']).to eq('de')
+      expect(b2.buttons[0]['label']).to eq('maintenant')
+      expect(b2.buttons[1]['label']).to eq('jamais')
+      expect(b2.settings['translations']).to eq({
+        '1' => {'de' => {'label' => 'maintenant'}},
+        '2' => {'de' => {'label' => 'jamais'}},
+        'board_name' => {},
+        'current_label' => 'de',
+        'current_vocalization' => 'de',
+        'default' => 'de'
+      })
+
+      expect(b3.reload.settings['locale']).to eq('en')
+      expect(b3.buttons[0]['label']).to eq('eat')
+      expect(b3.buttons[1]['label']).to eq('go')
+    end
+
+    it "should keep checking if already matches slice list but has sub-boards to check" do
+      u = User.create
+      b1 = Board.create(user: u)
+      b2 = Board.create(user: u)
+      b3 = Board.create(user: u)
+      b1.process({'buttons' => [
+        {'id' => '1', 'label' => 'watch', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}},
+        {'id' => '2', 'label' => 'scotch'}
+      ]}, {'user' => u})
+      b1.settings['translations'] = {'1' => {'fr' => {'label' => 'heur'}, 'es' => {'label' => 'dias'}}, '2' => {'fr' => {'label' => 'liquide'}}}
+      b1.save
+      expect(b1.buttons[0]['load_board']['id']).to eq(b2.global_id)
+
+      b2.process({'buttons' => [
+        {'id' => '1', 'label' => 'now'},
+        {'id' => '2', 'label' => 'never'}
+      ]}, {'user' => u})
+      b2.settings['translations'] = {'1' => {'de' => {'label' => 'maintenant'}, 'zh' => {'label' => 'da'}, 'es' => {'label' => 'dias'}}, '2' => {'de' => {'label' => 'jamais'}}}
+      b2.save
+      Worker.process_queues
+
+      expect(b1.reload.slice_locales(['fr', 'en', 'es'], [b1.global_id, b2.global_id], u)).to eq({sliced: true, ids: [b1.global_id, b2.global_id]})
+      expect(b1.settings['locale']).to eq('en')
+      expect(b1.settings['translations']['default']).to eq(nil)
+      expect(b1.buttons[0]['label']).to eq('watch')
+      expect(b1.buttons[1]['label']).to eq('scotch')
+      expect(b1.settings['translations']).to eq({
+        '1' => {'fr' => {'label' => 'heur'}, 'es' => {'label' => 'dias'}},
+        '2' => {'fr' => {'label' => 'liquide'}},
+      })
+
+      expect(b2.reload.settings['locale']).to eq('en')
+      expect(b2.settings['translations']['default']).to eq(nil)
+      expect(b2.buttons[0]['label']).to eq('now')
+      expect(b2.buttons[1]['label']).to eq('never')
+      expect(b2.settings['translations']).to eq({
+        '1' => {'es' => {'label' => 'dias'}},
+        '2' => {},
+      })
+    end
+
+    it "should not update sub-boards without proper authorization" do
+      u = User.create
+      b1 = Board.create(user: u)
+      b2 = Board.create(user: u)
+      b1.process({'buttons' => [
+        {'id' => '1', 'label' => 'watch', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}},
+        {'id' => '2', 'label' => 'scotch'}
+      ]}, {'user' => u})
+      b1.settings['translations'] = {'1' => {'fr' => {'label' => 'heur'}, 'es' => {'label' => 'dias'}}, '2' => {'fr' => {'label' => 'liquide'}}}
+      b1.save
+      expect(b1.buttons[0]['load_board']['id']).to eq(b2.global_id)
+      b2.process({'buttons' => [
+        {'id' => '1', 'label' => 'now'},
+        {'id' => '2', 'label' => 'never'}
+      ]}, {'user' => u})
+      b2.settings['translations'] = {'1' => {'fr' => {'label' => 'maintenant'}, 'de' => {'label' => 'da'}, 'es' => {'label' => 'dias'}}, '2' => {'fr' => {'label' => 'jamais'}}}
+      b2.save
+      Worker.process_queues
+      u2 = User.create
+      b2.user = u2
+      b2.save
+
+      expect(b1.reload.slice_locales(['fr', 'de'], [b1.global_id, b2.global_id], u)).to eq({sliced: true, ids: [b1.global_id]})
+      expect(b1.settings['locale']).to eq('fr')
+      expect(b1.settings['translations']['default']).to eq('fr')
+      expect(b1.buttons[0]['label']).to eq('heur')
+      expect(b1.buttons[1]['label']).to eq('liquide')
+      expect(b1.settings['translations']).to eq({
+        '1' => {'fr' => {'label' => 'heur'}},
+        '2' => {'fr' => {'label' => 'liquide'}},
+        'board_name' => {},
+        'current_label' => 'fr',
+        'current_vocalization' => 'fr',
+        'default' => 'fr'
+      })
+
+      expect(b2.reload.settings['locale']).to eq('en')
+      expect(b2.buttons[0]['label']).to eq('now')
+      expect(b2.buttons[1]['label']).to eq('never')
+      expect(b2.settings['translations']).to eq({'1' => {'fr' => {'label' => 'maintenant'}, 'de' => {'label' => 'da'}, 'es' => {'label' => 'dias'}}, '2' => {'fr' => {'label' => 'jamais'}}})     
+    end
+  end
 end

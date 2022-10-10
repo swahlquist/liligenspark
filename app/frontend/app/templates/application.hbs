@@ -622,9 +622,11 @@
                           <a role="menuitem" tabindex="-1" href="#" {{action "add_to_sidebar"}}>{{t "Add to Sidebar" key="add_to_sidebar"}}</a>
                       </li>
                     {{/if}}
+                    {{#unless app_state.feature_flags.other_menu}}
                     <li role="presentation">
                       <a role="menuitem" tabindex="-1" href="#" {{action "downloadBoard"}}>{{t "Download Board" key="download_board"}}</a>
                     </li>
+                    {{/unless}}
                     <li role="presentation">
                       <a role="menuitem" tabindex="-1" href="#" {{action "printBoard"}}>{{t "Print Board" key="print_board"}}</a>
                     </li>
@@ -650,6 +652,11 @@
                           </li>
                         {{/if}}
                       {{/if}}
+                    {{/if}}
+                    {{#if app_state.feature_flags.other_menu}}
+                      <li role="presentation">
+                        <a role="menuitem" tabindex="-1" href="#" {{action "board_actions"}}>{{t "Other Actions" key="other_actions"}}</a>
+                      </li>
                     {{/if}}
                   {{/unless}}
                 </ul>

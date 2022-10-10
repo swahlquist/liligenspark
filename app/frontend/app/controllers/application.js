@@ -865,6 +865,9 @@ export default Controller.extend({
     list_copies: function() {
       modal.open('board-copies', {board: this.get('board.model')});
     },
+    board_actions: function() {
+      modal.open('modals/board-actions', {board: this.get('board.model')})
+    },
     highlight_button: function(options) {
       options = options || {};
       // TODO: this and activateButton belong somewhere more testable

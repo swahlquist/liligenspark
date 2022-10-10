@@ -63,8 +63,12 @@ class Board < ActiveRecord::Base
   cache_permissions
 
   def starred_by?(user)
-    user_id = user && user.global_id
-    !!(user && user.global_id && !!(self.settings['starred_user_ids'] || []).detect{|id| id == user_id || id.to_s.match(/.+:#{user_id}/) })
+    user_id = user
+    if !user.is_a?(String)
+      user_id = user && user.global_id
+      user_id = 'bump' if user && user.user_name == 'star_bump'
+    end
+    !!(user && user_id && !!(self.settings['starred_user_ids'] || []).detect{|id| id == user_id || id.to_s.match(/.+:#{user_id}/) })
   end
   
   def star(user, star, locale=nil)
@@ -72,12 +76,13 @@ class Board < ActiveRecord::Base
     locale ||= self.settings['locale'] || 'en'
     self.settings['starred_user_ids'] ||= []
     if user
+      user_id = user.global_id
+      user_id = 'bump' if user.user_name == 'star_bump'
       if star
         if !starred_by?(user)
-          self.settings['starred_user_ids'] << "#{locale}:#{user.global_id}"
+          self.settings['starred_user_ids'] << "#{locale}:#{user_id}"
         end
       else
-        user_id = user.global_id
         self.settings['starred_user_ids'] = self.settings['starred_user_ids'].select{|id| id != user_id && !id.to_s.match(/.+:#{user_id}/) }
       end
       self.settings['never_edited'] = false
@@ -252,7 +257,7 @@ class Board < ActiveRecord::Base
       self.home_popularity = -1
     else
       # TODO: a real algorithm perchance?
-      self.popularity = (self.settings['stars'] * 10) + self.settings['uses'] + (self.settings['forks']) + (self.settings['recent_uses'] * 3) + (self.settings['recent_forks'] * 3)
+      self.popularity = (self.starred_by?('bump') ? 50 : 0) + (self.settings['stars'] * 10) + self.settings['uses'] + (self.settings['forks']) + (self.settings['recent_uses'] * 3) + (self.settings['recent_forks'] * 3)
       self.home_popularity = (self.any_upstream ? 0 : 10) + (self.any_upstream ? 0 : self.settings['stars'] * 3) + self.settings['home_uses'] + (self.settings['home_forks']) + (self.settings['recent_home_uses'] * 5) + (self.settings['recent_home_forks'] * 5)
       if self.settings['home_board']
         self.home_popularity *= 10
@@ -322,16 +327,17 @@ class Board < ActiveRecord::Base
     lang = (locale || 'en').split(/-|_/)[0]
     trans =  BoardContent.load_content(self, 'translations') || {}
     board_string = ""
-    val = nil
+    name = nil
     if trans['board_name']
-      val = trans['board_name'][locale] || trans['board_name'][lang]
-      if !val
+      name = trans['board_name'][locale] || trans['board_name'][lang]
+      if !name
         other = trans['board_name'].keys.detect{|l| l.match(/^#{lang}/)}
-        val = trans['board_name'][other] if other
+        name = trans['board_name'][other] if other
       end
     end
-    val ||= self.settings['name'] || ''
-    board_string += val
+    name ||= self.settings['name'] || ''
+    board_string += name
+    board_string += ' ' + name
     grid = BoardContent.load_content(self, 'grid')
     buttons = self.buttons
     if grid && buttons
@@ -351,6 +357,7 @@ class Board < ActiveRecord::Base
       end
     end
     board_string += " " + (self.key || '')
+    board_string += ' ' + name
     board_string += " " + (self.settings['name'] || "").downcase
     board_string += " " + (self.settings['description'] || "").downcase
     board_string

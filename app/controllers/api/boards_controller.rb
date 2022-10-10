@@ -440,6 +440,14 @@ class Api::BoardsController < ApplicationController
     star_or_unstar(true)
   end
 
+  def slice_locales
+    board = Board.find_by_path(params['board_id'])
+    return unless exists?(board, params['board_id'])
+    return unless allowed?(board, 'edit')
+    progress = Progress.schedule(board, :slice_locales, params['locales'], params['ids_to_update'], (@api_user && @api_user.global_id))
+    render json: JsonApi::Progress.as_json(progress, :wrapper => true).to_json
+  end
+
   def tag
     board = Board.find_by_path(params['board_id'])
     return unless exists?(board, params['board_id'])

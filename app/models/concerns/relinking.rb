@@ -166,6 +166,43 @@ module Relinking
     self.settings['downstream_board_ids'] = (self.settings['downstream_board_ids'] || []).map{|id| id == old_board.global_id ? new_board.global_id : id }
   end
 
+  def slice_locales(locales_to_keep, ids_to_update=[], updater=nil)
+    updater = User.find_by_path(updater) if updater.is_a?(String)
+    return {sliced: false, reason: 'id not included'} unless ids_to_update.include?(self.global_id)
+    all_locales = [self.settings['locale']]
+    trans = BoardContent.load_content(self, 'translations') || {}
+    trans.each do |key, hash|
+      next unless hash.is_a?(Hash)
+      all_locales += hash.keys
+    end
+    all_locales.uniq!
+    board_locales_to_keep = locales_to_keep & all_locales
+    return {sliced: false, reason: 'no locales would be kept'} if board_locales_to_keep.length == 0
+    return {sliced: true, ids: [self.global_id], reason: 'already includes only specified locales'} if locales_to_keep.sort == all_locales.sort && ids_to_update == [self.global_id]
+    if !board_locales_to_keep.include?(self.settings['locale'])
+      self.update_default_locale!(self.settings['locale'], board_locales_to_keep[0])
+    end
+    trans = self.settings['translations'] || trans
+    trans.each do |key, hash|
+      if hash.is_a?(Hash)
+        trans[key] = hash.slice(*board_locales_to_keep)
+      end
+    end
+    self.settings['translations'] = trans
+    self.instance_variable_set('@map_later', true)
+    self.save!
+    sliced_ids = [self.global_id]
+    if ids_to_update.length > 1
+      board_ids = ids_to_update & (self.settings['downstream_board_ids'] || [])
+      Board.find_batches_by_global_id(board_ids) do |board|
+        next unless board.allows?(updater, 'edit')
+        res = board.slice_locales(locales_to_keep, [board.global_id], updater)
+        sliced_ids << board.global_id if res[:sliced]
+      end
+    end
+    return {sliced: true, ids: sliced_ids}
+  end
+
   def update_default_locale!(old_default_locale, new_default_locale)
     if new_default_locale && self.settings['locale'] == old_default_locale && old_default_locale != new_default_locale
       buttons = self.buttons
@@ -197,7 +234,11 @@ module Relinking
         end
         trans[btn['id'].to_s] = btn_trans
       end
+      trans['default'] = new_default_locale
+      trans['current_label'] = new_default_locale
+      trans['current_vocalization'] = new_default_locale
       self.settings['translations'] = trans
+
       if anything_translated
         self.settings['buttons'] = buttons
         self.settings['locale'] = new_default_locale
