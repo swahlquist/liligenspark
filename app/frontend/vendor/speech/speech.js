@@ -270,7 +270,7 @@ function polyfillSpeechSynthesis(scope) {
   }
 
   // TODO: this won't work on all browsers, do a capability check
-  if(window.speak) {
+  if(window.speak || window.meSpeak) {
     synthesis.voiceList.push({
       voiceURI: "voice:speak_js",
       name: "Basic computer voice (male)",

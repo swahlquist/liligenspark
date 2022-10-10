@@ -26,6 +26,14 @@ var cloud_locales = ["af-ZA:f","ar-XA:fm","bg-BG:f","bn-IN:fm","ca-ES:f",
   "lv-LV:m","ml-IN:fm","ms-MY:fm","nb-NO:fm","nl-BE:fm","nl-NL:fm","pa-IN:fm","pl-PL:fm","pt-BR:fm",
   "pt-PT:fm","ro-RO:f","ru-RU:fm","sk-SK:f","sr-RS:f","sv-SE:fm","ta-IN:fm","te-IN:fm","th-TH:f",
   "tr-TR:fm","uk-UA:f","vi-VN:fm","yue-HK:fm"];
+var me_speak_locales = {
+  'en-n': 'en/en-n', 'en-rp': 'en/en-rp', 'en-sc': 'en/en-sc', 'en-us': 'en/en-us', 'en-wm': 'en/en-wm',
+  'ca': 'ca', 'cs': 'cs', 'de': 'de', 'el': 'el', 'eo': 'eo',
+  'es-la': 'es-la', 'es': 'es', 'fi': 'fi', 'fr': 'fr', 'hu': 'hu',
+  'it': 'it', 'kn': 'kn', 'la': 'la', 'lv': 'lv', 'nl': 'nl',
+  'pl': 'pl', 'pt-pt': 'pt-pt', 'pt': 'pt', 'ro': 'ro',
+  'sk': 'sk', 'sv': 'sv', 'tr': 'tr', 'zu-yue': 'zu-yue', 'zh': 'zh'
+};
 var speecher = EmberObject.extend({
   beep_url: "https://d18vdu4p71yql0.cloudfront.net/beep.mp3",
   chimes_url: "https://d18vdu4p71yql0.cloudfront.net/chimes.mp3",
@@ -125,7 +133,7 @@ var speecher = EmberObject.extend({
       _this.set('voices', voices);
     }, function() { });
     var add_low = false;
-    if(window.speak) {
+    if(window.speak || window.meSpeak) {
       add_low = true;
     }
     if(list.length === 0) {
@@ -171,23 +179,36 @@ var speecher = EmberObject.extend({
 
     if(!navigator.language.match(/uk/)) {
       list.push({
-        name: "Ukranian Female *Internet Required*",
+        name: i18n.t('female_ukranian_internet_required', "Ukranian Female *Internet Required*"),
         lang: 'uk-UA',
         remote_voice: true,
         voiceURI: "remote:uk-UA:female"
       });
     }
     list.push({
-      name: "Irish Female *Internet Required*",
+      name: i18n.t('irish_female_internet_required', "Irish Female *Internet Required*"),
       lang: 'ga-IE',
       remote_voice: true,
       voiceURI: "remote:ga-IE:Ulster"
     });
     if(add_low) {
+      var locale = ((i18n.langs || {}).preferred || window.navigator.language).replace(/_/, '-');
+      var loc = 'en-us';
+      var lang = 'en-US';
+      if(window.meSpeak) {
+        if(me_speak_locales[locale.toLowerCase()]) {
+          loc = locale.toLowerCase();
+          lang = locale;
+        } else if(me_speak_locales[locale.split(/-/)[0]]) {
+          loc = locale.split(/-/)[0];
+          lang = loc;
+        }
+      }
+      var i18nlang = i18n.locales_localized[lang] || i18n.locales[lang] || lang;
       list.push({
-        name: "English Low-Quality Male Voice",
-        lang: 'en-US',
-        voiceURI: "speak_js:en-US"
+        name: i18nlang + i18n.t('low_quality_male_voice', " Low-Quality Male Voice"),
+        lang: lang,
+        voiceURI: "speak_js:" + loc
       });
     }
     if(!this.get('voices') || this.get('voices').length === 0) {
@@ -664,7 +685,20 @@ var speecher = EmberObject.extend({
           window.cloud_speak(utterance);
         } else if(voice && voice.voiceURI && voice.voiceURI.match(/speak_js/)) {
           extra_delay = 2000;
-          window.speak(text, {pitch: utterance.pitch * 50, amplitude: utterance.volume * 100, speed: utterance.rate * 175});
+          if(window.meSpeak) {
+            var parts = voice.voiceURI.split(/:/);
+            var lang = (parts && parts[1]) || 'en-us';
+            var path = me_speak_locales[lang.toLowerCase()] || me_speak_locales[lang.split(/-|_/)[0]]
+            if(!window.meSpeak.isVoiceLoaded(path)) {
+              window.meSpeak.loadVoice(path);
+            }
+            window.meSpeak.speak(text, {pitch: utterance.pitch * 50, amplitude: utterance.volume * 100, speed: utterance.rate * 175, voice: path, callback: function(success, id, rawdata) {
+              handle_callback();
+            }});
+
+          } else {
+            window.speak(text, {pitch: utterance.pitch * 50, amplitude: utterance.volume * 100, speed: utterance.rate * 175});
+          }
         } else {
           speecher.scope.speechSynthesis.speak(utterance);
         }
