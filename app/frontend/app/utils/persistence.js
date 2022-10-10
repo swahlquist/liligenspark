@@ -1820,12 +1820,12 @@ var persistence = EmberObject.extend({
       var all_store_images = [];
       (user.get('supervisors') || []).forEach(function(sup) {
         if(CoughDrop.remote_url(sup.avatar_url) && !persistence.store_url_quick_check(sup.avatar_url, 'image')) {
-          all_store_images.push(persistence.store_url(sup.avatar_url, 'image'));
+          all_store_images.push(persistence.store_url_now(sup.avatar_url, 'image'));
         }
       });
       (user.get('contacts') || []).forEach(function(contact) {
         if(CoughDrop.remote_url(contact.image_url) && !persistence.store_url_quick_check(contact.image_url, 'image')) {
-          all_store_images.push(persistence.store_url(contact.image_url, 'image'));
+          all_store_images.push(persistence.store_url_now(contact.image_url, 'image'));
         }
       });
       return all_store_images;

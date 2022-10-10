@@ -139,6 +139,7 @@ export default modal.ModalController.extend({
     stashes.set('last_board_search_type', this.get('board_search_type'));
 //    editManager.done_editing_image();
     contentGrabbers.clear();
+
     var loc_hash = {nw: 0, n: 1, ne: 2, w: 3, e: 4, sw: 5, s: 6, se: 7};
     if(this.get('inflections_hash')) {
       var any_set = false;
