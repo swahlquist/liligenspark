@@ -63,7 +63,7 @@
           }
         };
         function onYouTubeIframeAPIReady() {
-          var controls = <%= params['testing'] == 'true' ? '1' : '0' %>;
+          var controls = <%= (params['testing'] == 'true' || params['controls'] == 'true') ? '1' : '0' %>;
           var autoplay = <%= params['testing'] == 'true' ? '0' : '1' %>;
           var start = <%= params['start'].to_i > 0 ? params['start'].to_i : 'null' %>;
           var end = <%= params['end'].to_i > 0 ? params['end'].to_i : 'null' %>;

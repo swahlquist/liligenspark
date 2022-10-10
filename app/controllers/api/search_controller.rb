@@ -172,6 +172,7 @@ class Api::SearchController < ApplicationController
   
   def audio
     req = nil
+    content_type = 'audio/wav'
     if params['locale'] && params['locale'].match(/^ga/)
       req = Typhoeus.post("https://abair.ie/aac_irish", body: {text: params['text'], voice: params['voice_id'] || 'Ulster'}, timeout: 5)
       if req.success?
@@ -214,9 +215,10 @@ class Api::SearchController < ApplicationController
         voice = json['voices'].detect{|v| v['ssmlGender'] && v['ssmlGender'].upcase == (params['voice_id'] || '').upcase }
         voice ||= json['voices'][0]
         # https://cloud.google.com/text-to-speech/?hl=en_US&_ga=2.240949507.-1294930961.1646091692
+        content_type = 'audio/mp3' if params['mp3'] != '0'
         res = Typhoeus.post("https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=#{ENV['GOOGLE_TTS_TOKEN']}", body: 
           {
-            audioConfig: {audioEncoding: 'LINEAR16', pitch: 0, speakingRate: 1},
+            audioConfig: {audioEncoding: content_type == 'audio/mp3' ? 'MP3' : 'LINEAR16', pitch: 0, speakingRate: 1},
             input: {text: params['text']},
             voice: {languageCode: params['locale'], name: voice['name']}
           }.to_json, headers: {'Content-Type': 'application/json'}
@@ -231,8 +233,8 @@ class Api::SearchController < ApplicationController
       req = Typhoeus.get("http://translate.google.com/translate_tts?id=UTF-8&tl=#{params['locale'] || 'en'}&q=#{URI.escape(params['text'] || "")}&total=1&idx=0&textlen=#{(params['text'] || '').length}&client=tw-ob", timeout: 5, headers: {'Referer' => "https://translate.google.com/", 'User-Agent' => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"})
     end
     return api_error 400, {error: 'remote request failed'} unless req
-    response.headers['Content-Type'] = req.headers['Content-Type']
-    send_data req.body, :type => req.headers['Content-Type'], :disposition => 'inline'
+    response.headers['Content-Type'] = content_type
+    send_data req.body, :type => content_type, :disposition => 'inline'
   end
   
   def get_url_in_chunks(request)

@@ -17,47 +17,61 @@ var cloud_speak = function(utterance) {
     modal.error(i18n.t('offline_no_speech', "Your browser requires an Internet connection in order to generate speech"));
     return;
   }
-  // TODO: make this an ajax call requiring API token instead to prevent abuse
   var lang = utterance.cloud_lang || utterance.lang || navigator.language.toLowerCase().split(/-|_/)[0] || 'en';
   var voice_id = utterance.cloud_voice_id || utterance.voice_id;
   if(!cloud_speak.audio_elem) {
     cloud_speak.audio_elem = document.createElement('audio');
+    cloud_speak.audio_elem.classList.add('cloud_audio');
     document.body.appendChild(cloud_speak.audio_elem);
   }
-  var event_handler = utterance.trigger;
   var player = cloud_speak.audio_elem;
-  if(player.ready_listener) {
-    player.removeEventListener('canplay', player.ready_listener);
-    player.ready_listener = null;
+  player.cloud_handler = utterance.trigger;
+  if(!player.ready_listener) {
+    player.ready_listener = function() { 
+      player.play(); 
+    };
+    player.addEventListener('canplay', player.ready_listener);
   }
+  player.currentTime = 0;
   player.pause();
-  player.ready_listener = function() { player.play(); };
-  player.addEventListener('canplay', player.ready_listener);
+  // TODO: make this an ajax call requiring API token instead to prevent abuse
   var src = "/api/v1/search/audio?text="+encodeURIComponent(utterance.text)+"&locale="+encodeURIComponent(lang)+"&voice_id="+encodeURIComponent(voice_id)
+  if(window.capabilities && (window.capabilities.system == 'iOS' || window.capabilities.browser == 'Safari')) {
+    src = src + '&mp3=1';
+  } else {
+    src = src + '&mp3=0';
+  }
   if(window.capabilities && window.capabilities.api_host) {
     src = window.capabilities.api_host + src;
   }
   player.src = src;
+  player.already_started = false;
+  player.load();
   
-  if(event_handler) {
+  if(player.cloud_handler && !player.handlers_set) {
+    player.handlers_set = true;
+    var cleanup = function() {
+    };
     player.addEventListener('play', function() {
-      if(event_handler.alreadyStarted) {
-        event_handler('resume');
+      if(player.already_started) {
+        player.cloud_handler('resume');
       } else {
-        event_handler.alreadyStarted = true;
-        event_handler('start');
+        player.already_started = true;
+        player.cloud_handler('start');
       }
     });
-    player.addEventListener('ended', function() {
-      event_handler('end');
+    player.addEventListener('ended', function(event) {
+      player.cloud_handler('end');
+      cleanup();
     });
     player.addEventListener('pause', function(event) {
       if(!event.target.ended) {
-        event_handler('pause');
+        player.cloud_handler('pause');
       }
     });
-    player.addEventListener('error', function() {
-      event_handler('error');
+    player.addEventListener('error', function(event) {
+      player.cloud_handler('error');
+      cleanup();
     });
   }
 };
