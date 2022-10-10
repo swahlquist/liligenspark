@@ -23,6 +23,14 @@ module JsonApi::Lesson
     cutoff = lesson.settings['past_cutoff'] ? (Time.now.to_i - lesson.settings['past_cutoff']) : nil
     json['completed_users'] = {}
 
+    youtube_regex = (/(?:https?:\/\/)?(?:www\.)?youtu(?:be\.com\/watch\?(?:.*?&(?:amp;)?)?v=|\.be\/)([\w \-]+)(?:&(?:amp;)?[\w\?=]*)?/);
+    youtube_match = json['url'] && json['url'].match(youtube_regex);
+    youtube_id = youtube_match && youtube_match[1];
+    if youtube_id
+      json['url'] = "#{JsonApi::Json.current_host}/videos/youtube/#{youtube_id}?controls=true"
+      json['video'] = true
+    end
+
     (lesson.settings['completions'] || []).select{|c| !cutoff || c['ts'] > cutoff }.each do |comp|
       json['completed_users'][comp['user_id']] = {'rating' => comp['rating']}
     end
