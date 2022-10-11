@@ -360,8 +360,33 @@ describe Lesson, :type => :model do
       expect(ue.settings['assignee_lessons'].map{|a| a['id'] }.uniq).to eq([l.global_id])
     end
     
-    it "should email users about the assigned lesson" do
-      write_this_test
+    it "should email users about the assigned required lesson" do
+      l = Lesson.create
+      l.settings['required'] = true
+      l.save
+
+      o = Organization.create
+      ou = OrganizationUnit.create
+      u = User.create
+
+      u1 = User.create
+      u2 = User.create
+      u3 = User.create
+      u4 = User.create
+      u5 = User.create
+      o.add_supervisor(u1.user_name, false)
+      o.add_supervisor(u2.user_name, false)
+      o.add_supervisor(u3.user_name, true)
+      o.add_manager(u4.user_name)
+
+      expect(UserMailer).to receive(:schedule_delivery).with(:lesson_assigned, l.global_id, [u1.global_id, u2.global_id, u3.global_id])
+      expect(Lesson.assign(l, o, ['supervisor'], u)).to eq(true)
+
+      expect(UserMailer).to receive(:schedule_delivery).with(:lesson_assigned, l.global_id, [u4.global_id])
+      expect(Lesson.assign(l, o, ['manager'], u)).to eq(true)
+
+      expect(UserMailer).to receive(:schedule_delivery).with(:lesson_assigned, l.global_id, [u5.global_id])
+      expect(Lesson.assign(l, u5, ['manager'], u)).to eq(true)
     end
   end
 
@@ -475,16 +500,6 @@ describe Lesson, :type => :model do
       expect(l.organization_id).to eq(nil)
       expect(l.organization_unit_id).to eq(nil)
       expect(l.user_id).to eq(u.id)
-    end
-  end
-  
-  describe "launch_url" do
-    it "should return a specialized link for known iframe-sensitive URLs" do
-      write_this_test
-    end
-
-    it "should return a parameterized link for known external lesson sites" do
-      write_this_test
     end
   end
 end

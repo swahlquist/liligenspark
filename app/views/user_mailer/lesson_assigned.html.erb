@@ -1,0 +1,13 @@
+You have been assigned a new CoughDrop lesson! Lessons can be assigned by your organization, 
+room, or supervisors, based on a skill or concept they think you would benefit from learning. 
+This lesson was assigned to the user <b><%= @user.user_name %></b><% if @lesson.settings['due_at'] %> and is due <%= Time.parse(@lesson.settings['due_at']).to_s(:long_ordinal) %><% end %>.
+Here are the details for this lesson:
+<br/><br/>
+
+Title: <b><%= @lesson.settings['title'] %></b><br/>
+Instructions: <b><%= @lesson.settings['description'] %></b><br/>
+<% if @lesson.settings['time_estimate'] %>Time: about <%= @lesson.settings['time_estimate'] %> minutes<br/><% end %>
+Link: <a href="<%= JsonApi::Json.current_host %>/lessons/<%= @lesson.global_id %>/<%= @lesson.nonce %>/<%= @user.user_token %>">Start the Lesson Here for <%= @user.user_name %></a><br/>
+<br/>
+Thanks!<br/>
+<%= email_signature %>

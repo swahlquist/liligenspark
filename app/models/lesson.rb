@@ -199,6 +199,7 @@ class Lesson < ApplicationRecord
       ae.settings['assignee_lessons'] = ae.settings['assignee_lessons'].select{|l| l['assigned'] > 14.months.ago.to_i }
       ae.save
     end
+    user_ids = []
     if obj.is_a?(User)
       extra = UserExtra.find_or_create_by(user: obj)
       extra.settings['lessons'] ||= []
@@ -207,25 +208,47 @@ class Lesson < ApplicationRecord
         'assigned' => Time.now.to_i
       }
       extra.save
+      user_ids << obj.global_id
     elsif obj.is_a?(Organization)
       obj.settings['lessons'] ||= []
+      types = types || ['supervisor']
       obj.settings['lessons'] << {
         'id' => lesson.global_id,
         'assigned' => Time.now.to_i,
-        'types' => types || ['supervisor']
+        'types' => types
       }
+      if lesson.settings['required']
+        if types.include?('supervisor')
+          user_ids += obj.attached_users('supervisor').map(&:global_id)
+        end
+        if types.include?('manager')
+          user_ids += obj.attached_users('manager').map(&:global_id)
+        end
+        if types.include?('user')
+          user_ids += obj.attached_users('approved_user').map(&:global_id)
+        end
+      end
       obj.save
     elsif obj.is_a?(OrganizationUnit)
       # Rooms can only have one lesson running at a time
+      types = types || ['supervisor']
       obj.settings['lesson'] = {
         'id' => lesson.global_id,
         'assigned' => Time.now.to_i,
-        'types' => types || ['supervisor']
+        'types' => types
       }
+      if lesson.settings['required']
+        link_types = []
+        link_types << 'org_unit_supervisor' if types.include?('supervisor')
+        link_types << 'org_unit_supervisor' if types.include?('user')
+        links = UserLink.links_for(obj).select{|l| link_types.include?(l['type']) }
+        user_ids += links.map{|l| l['user_id'] }.uniq
+      end
       obj.save
     else
       return false
     end
+    UserMailer.schedule_delivery(:lesson_assigned, lesson.global_id, user_ids) if !user_ids.blank? && lesson.settings['required']
     return true
   end
 

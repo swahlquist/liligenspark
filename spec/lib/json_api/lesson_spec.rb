@@ -76,7 +76,13 @@ describe JsonApi::Lesson do
     end
 
     it "should return a specialized link for known iframe-sensitive URLs" do
-      write_this_test
+      l = Lesson.create
+      u = User.create
+      l.settings['url'] = 'https://www.youtube.com/watch?v=aFYsJYPye94'
+      l.save
+      json = JsonApi::Lesson.build_json(l, {extra_user: u})
+      expect(json['url']).to_not eq(nil)
+      expect(json['url']).to eq("#{JsonApi::Json.current_host}/videos/youtube/aFYsJYPye94?controls=true")
     end
 
     it "should return a parameterized link for known external lesson sites" do

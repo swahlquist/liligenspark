@@ -233,6 +233,14 @@ class UserMailer < ActionMailer::Base
     @message = opts['message'] || "no message"
     mail(to: opts['to'], subject: opts['subject'], reply_to: @user.settings['email'])
   end
+
+  def lesson_assigned(lesson_id, user_ids)
+    @lesson = Lesson.find_by_path(lesson_id)
+    User.find_batches_by_global_id(user_ids) do |u|
+      @user = u
+      mail(to: u.named_email, subject: "#{app_name} - New Lesson Assigned")
+    end
+  end
   
   def organization_assigned(user_id, org_id)
     @user = User.find_by_global_id(user_id)

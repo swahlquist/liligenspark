@@ -707,6 +707,33 @@ describe UserMailer, :type => :mailer do
       expect(text).to match(/\"#{u.user_name}\"/)
     end
   end
+
+  describe "lesson_assigned" do
+    it "should have send message to user" do
+      u = User.create(settings: {email: 'test@example.com'})
+      l = Lesson.create
+      l.settings['title'] = "Super Lesson"
+      l.settings['description'] = "This is a great lesson"
+      l.settings['time_estimate'] = 14
+      l.save
+      l.nonce
+      expect_any_instance_of(User).to receive(:named_email).and_return("bob@example.com")
+      m = UserMailer.lesson_assigned(l.global_id, [u.global_id])
+      expect(m.subject).to eq("CoughDrop - New Lesson Assigned")
+      expect(m.to).to eq(["bob@example.com"])
+      html = message_body(m, :html)
+      expect(html).to match(/Super Lesson/)
+      expect(html).to match(/This is a great lesson/)
+      expect(html).to match(/14 minutes/)
+      expect(html).to match(/#{JsonApi::Json.current_host}\/lessons\/#{l.global_id}\/#{l.nonce}\/#{u.user_token}/)
+      
+      text = message_body(m, :text)
+      expect(text).to match(/Super Lesson/)
+      expect(text).to match(/This is a great lesson/)
+      expect(text).to match(/14 minutes/)
+      expect(text).to match(/#{JsonApi::Json.current_host}\/lessons\/#{l.global_id}\/#{l.nonce}\/#{u.user_token}/)
+    end
+  end
   
   it "should have a default reply-to of noreply@mycoughdrop.com"
   it "should have specs for the mailer erb templates"
