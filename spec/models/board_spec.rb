@@ -1911,6 +1911,45 @@ describe Board, :type => :model do
       expect(b.settings['unlisted']).to eq(false)
       expect(b.settings['edit_description']['notes']).to eq(['set to public'])
     end
+
+    it "should batch-update visibility for sub-boards if specified" do
+      u = User.create
+      b1 = Board.create(:user => u)
+      b2 = Board.create(user: u)
+      b3 = Board.create(user: u)
+      b4 = Board.create(user: u)
+      b1.process({'buttons' => [
+        {'id' => 1, 'label' => 'a', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {'user' => u})
+      b2.process({'buttons' => [
+        {'id' => 1, 'label' => 'a', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ]}, {'user' => u})
+      b3.process({'buttons' => [
+        {'id' => 1, 'label' => 'a', 'load_board' => {'id' => b4.global_id, 'key' => b4.key}},
+        {'id' => 2, 'label' => 'b', 'load_board' => {'id' => b1.global_id, 'key' => b1.key}},
+        {'id' => 3, 'label' => 'c', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}},
+      ]}, {'user' => u})
+      u2 = User.create
+      b4.user = u2
+      b4.save
+      Worker.process_queues
+
+      expect(b1.reload.public).to eq(false)
+      expect(b2.reload.public).to eq(false)
+      expect(b3.reload.public).to eq(false)
+      expect(b4.reload.public).to eq(false)
+
+      b1.process({'visibility' => 'public', 'update_visibility_downstream' => true})
+      expect(b1.reload.public).to eq(true)
+      expect(b2.reload.public).to eq(false)
+      expect(b3.reload.public).to eq(false)
+      expect(b4.reload.public).to eq(false)
+      Worker.process_queues
+      expect(b1.reload.public).to eq(true)
+      expect(b2.reload.public).to eq(true)
+      expect(b3.reload.public).to eq(true)
+      expect(b4.reload.public).to eq(false)
+    end
     
     it "should tie to the source board's copy id if defined" do
       u = User.create
