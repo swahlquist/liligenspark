@@ -4,13 +4,15 @@
   </h2>
   {{#if styled_lessons}}
     {{#each styled_lessons as |lesson|}}
-      <div class='well lesson'>
+      <div class={{if lesson.completed_ts 'well lesson done' 'well lesson'}}>
         <span class='summary'>
           <span style='display: inline-block; width: 20px; vertical-align: middle;'>
             {{#if lesson.rating_class}}
               <span class='face_label'><span class={{lesson.rating_class}}></span></span>
             {{else if lesson.completed}}
               <span class='glyphicon glyphicon-ok'></span>
+            {{else}}
+              <span class='glyphicon glyphicon-education'></span>
             {{/if}}
           </span>
           {{lesson.title}}
@@ -18,7 +20,7 @@
         <div style='float: right;'>
           {{#if lesson.completed}}
             <button class='btn btn-sm btn-default' {{action 'launch' lesson}}>{{t "Re-Take" key='re_take'}}</button>
-          {{else if lesson.due_at}}
+          {{else}}
             <button class={{if lesson.required 'btn btn-primary' 'btn btn-default'}} {{action 'launch' lesson}}>{{t "Start Lesson" key='start_lesson'}}</button>
           {{/if}}
         </div>
@@ -31,6 +33,11 @@
         </div>
         <div class='description text-muted'>
           {{lesson.description}}
+          {{#if lesson.time_estimate}}
+            <div>
+              ~ {{lesson.time_estimate}} {{t "min" key='minutes'}}
+            </div>
+          {{/if}}
         </div>
       </div>
     {{/each}}

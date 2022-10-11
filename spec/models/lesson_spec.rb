@@ -11,7 +11,7 @@ describe Lesson, :type => :model do
 
       u2 = User.create
       l.user_id = u2.id
-      expect(l.permissions_for(u2)).to eq({'user_id' => u2.global_id, 'view' => true, 'edit' => true})
+      expect(l.permissions_for(u2)).to eq({'user_id' => u2.global_id, 'view' => true, 'edit' => true, 'view_ratings' => true})
     end
 
     it "should let the first usage edit" do
@@ -20,7 +20,7 @@ describe Lesson, :type => :model do
       o = Organization.create
       o.add_manager(u.user_name, true)
       l.organization_id = o.id
-      expect(l.permissions_for(u)).to eq({'user_id' => u.global_id, 'view' => true, 'edit' => true})
+      expect(l.permissions_for(u)).to eq({'user_id' => u.global_id, 'view' => true, 'edit' => true, 'view_ratings' => true})
     end
 
     it "should let all usages view" do
@@ -29,7 +29,7 @@ describe Lesson, :type => :model do
       o = Organization.create
       o.add_manager(u.user_name, true)
       l.settings['usages'] = [{'obj' => Webhook.get_record_code(o)}]
-      expect(l.permissions_for(u)).to eq({'user_id' => u.global_id, 'view' => true})
+      expect(l.permissions_for(u)).to eq({'user_id' => u.global_id, 'view' => true, 'view_ratings' => true})
     end
   end
 

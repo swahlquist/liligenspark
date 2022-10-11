@@ -529,4 +529,35 @@ describe Api::LessonsController, :type => :controller do
       expect(ou.settings['lesson']).to eq(nil)
     end
   end
+
+  describe "update" do
+    it "should require an api token" do
+      put 'update', params: {'id' => 'asdf'}
+      assert_missing_token
+    end
+
+    it "should require a valid lesson" do
+      token_user
+      put 'update', params: {'id' => 'asdf'}
+      assert_not_found('asdf')
+    end
+
+    it "should require authorization" do
+      token_user
+      l = Lesson.create
+      put 'update', params: {'id' => l.global_id}
+      assert_unauthorized
+    end
+
+    it "should update" do
+      token_user
+      l = Lesson.create(user_id: @user.id)
+      put 'update', params: {'id' => l.global_id, 'lesson' => {'title' => 'a', 'time_estimate' => '5'}}
+      json = assert_success_json
+      expect(json['lesson']).to_not eq(nil)
+      expect(json['lesson']['id']).to eq(l.global_id)
+      expect(json['lesson']['title']).to eq('a')
+      expect(json['lesson']['time_estimate']).to eq(5)
+    end
+  end
 end

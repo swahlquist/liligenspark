@@ -1,9 +1,11 @@
-<h2>{{t "Lessons" key='lessons'}}</h2>
+<h2>{{t "All Organization Lessons" key='all_org_lessons'}}</h2>
 {{#if lessons.loading}}
   <p>{{t "Loading lessons..." key='loading_lessons'}}</p>
 {{else if lessons.error}}
   <p>{{t "Error loading lessons" key='error_loading_lessons'}}</p>
 {{else if lessons}}
+  <p>{{t "Below are all the lessons that have been assigned for the organization. You can see which users have completed each lesson, or manage the list of available lessons." key='org_ lessons_explainer'}}</p>
+  <!-- TODO: message users who... -->
   <h3>{{t "Supervisor Lessons" key='supervisor_lessons'}}</h3>
   {{#if supervisor_lessons}}
     <table class='table table-striped table-hover'>
@@ -132,13 +134,13 @@
     <tbody>
       {{#each lessons as |lesson|}}
         <tr>
-          <!-- TODO: link to re-assign/edit? -->
           <td>{{lesson.title}}</td>
           <td>
-            <a href={{lesson.url}} target='_blank'>link</a> 
-            {{#if lesson.time_estimate}} - 
+            <button class='btn btn-default btn-sm' {{action 'launch' lesson}}>{{t "Launch Lesson" key='launch_lesson'}}</button>
+            {{#if lesson.time_estimate}}
               {{lesson.time_estimate}} {{t "min" key='minutes_abbreviated'}}
-            {{/if}}
+            {{/if}} -
+            <a href={{lesson.url}} target='_blank'>link</a> 
           </td>
           <td>
             {{#if lesson.required}}
@@ -150,7 +152,12 @@
             {{/if}}
           </td>
           <td>{{lesson.target_types_list}}</td>
-          <td><a href='#' {{action 'delete' lesson}}><span class='glyphicon glyphicon-remove'></span></a></td>
+          <td style='text-align: right;'>
+            {{#if lesson.editable}}
+              <a href='#' {{action 'edit' lesson}}><span class='glyphicon glyphicon-pencil'></span></a>&nbsp;&nbsp;&nbsp;&nbsp;
+            {{/if}}
+            <a href='#' {{action 'delete' lesson}}><span class='glyphicon glyphicon-remove'></span></a>
+          </td>
         </tr>
       {{/each}}
 

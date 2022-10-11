@@ -2697,7 +2697,7 @@ describe Organization, :type => :model do
       o3.add_manager(u2.user_name, false)
       expect(Organization.attached_orgs(u1).map{|o| o.except('added')}.sort_by{|o| o['id'] }).to eq([
         {
-          'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'status' => 'unchecked', 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => []
+          'id' => o1.global_id, 'type' => 'user', 'eval' => false, 'sponsored' => false, 'status' => 'unchecked', 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => []
         }, {
           'id' => o2.global_id, 'type' => 'supervisor', 'extra_colors' => nil, 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => [], 'home_board_keys' => []
         }, {
@@ -2756,7 +2756,7 @@ describe Organization, :type => :model do
       o3.link_saml_alias(u1.reload, 'bobby@example.com')
       expect(Organization.attached_orgs(u1.reload).map{|o| o.except('added')}.sort_by{|o| o['id'] }).to eq([
         {
-          'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'status' => 'unchecked', 'pending' => false, 'name' => o1.settings['name'],"image_url"=>nil,
+          'id' => o1.global_id, 'type' => 'user', 'eval' => false, 'sponsored' => false, 'status' => 'unchecked', 'pending' => false, 'name' => o1.settings['name'],"image_url"=>nil,
           'external_auth' => true, 'external_auth_connected' => true, 'external_auth_alias' => 'bob@example.com', 'lesson_ids' => []
         }, {
           'id' => o2.global_id, 'type' => 'supervisor', 'extra_colors' => nil, 'pending' => false, 'name' => o1.settings['name'],"image_url"=>nil,
@@ -2785,7 +2785,7 @@ describe Organization, :type => :model do
       o2.save
       expect(Organization.attached_orgs(u1).map{|o| o.except('added')}.sort_by{|o| o['id'] }).to eq([
         {
-          'id' => o1.global_id, 'type' => 'user', 'sponsored' => false, 'status' => 'unchecked', 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'profile' => {
+          'id' => o1.global_id, 'type' => 'user', 'eval' => false, 'sponsored' => false, 'status' => 'unchecked', 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'profile' => {
             'profile_id' => 'squinch', 'template_id' => '1_1111', 'frequency' => 1000
           }, 'lesson_ids' => []
         }, {

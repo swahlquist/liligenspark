@@ -1492,7 +1492,7 @@ describe Api::UsersController, :type => :controller do
       json = JSON.parse(response.body)
       expect(json['progress']).not_to eq(nil)
       Worker.process_queues
-      expect(u.reload.settings['premium_voices']).to eq({'claimed' => [], 'allowed' => 1})
+      expect(u.reload.settings['premium_voices']).to eq({'claimed' => [], 'allowed' => 1, 'extra' => 1})
     end
     
     it "should let admins add premium extras" do

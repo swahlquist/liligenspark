@@ -4089,7 +4089,7 @@ describe Purchasing do
         expect(hash['expires']).to be < 6.years.from_now.iso8601
         expect(hash['plan_id']).to eq('long_term_ios')
         expect(hash['extras_enabled']).to eq(true)
-        expect(u.settings['premium_voices']).to eq({"allowed"=>4, "claimed"=>[]})
+        expect(u.settings['premium_voices']).to eq({"allowed"=>4, "claimed"=>[], "extra" => 2})
       end
 
       it "should add extras for subscription purchase" do

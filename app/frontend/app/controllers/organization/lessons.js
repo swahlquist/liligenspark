@@ -136,6 +136,23 @@ export default Controller.extend({
         }
       });
     },
+    edit: function(lesson) {
+      var _this = this;
+      modal.open('modals/assign-lesson', {org: _this.get('model'), lesson: lesson}).then(function(res) {
+        if(res && res.lesson) {
+          _this.load_lessons();
+        }
+      });
+    },
+    launch: function(lesson) {
+      if(lesson && app_state.get('currentUser.user_token')) {
+        var prefix = location.protocol + "//" + location.host;
+        if(capabilities.installed_app && capabilities.api_host) {
+          prefix = capabilities.api_host;
+        }
+        window.open(prefix + '/lessons/' + lesson.id + '/' + lesson.lesson_code + '/' + app_state.get('currentUser.user_token'), '_blank');
+      }
+    },
     delete: function(lesson) {
       var _this = this;
       modal.open('modals/confirm-org-action', {action: 'remove_lesson', org: _this.get('model'), lesson_name: lesson.title}).then(function(res) {

@@ -11,11 +11,24 @@ import CoughDrop from '../../app';
 
 export default modal.ModalController.extend({
   opening: function() {
-    var lesson = CoughDrop.store.createRecord('lesson');
-    this.set('required_option', 'optional');
-    this.set('lesson', lesson);
-    this.set('target_type', 'supervisors');
-    this.set('allow_past', false);
+    if(this.get('model.lesson.editable')) {
+      this.set('lesson', this.get('model.lesson'));
+    } else {
+      var lesson = CoughDrop.store.createRecord('lesson');
+      lesson.set('target_types' ['supervisor']);
+      this.set('lesson', lesson);
+    }
+
+    this.set('required_option', this.get('lesson.required') ? 'required' : 'optional');
+    var types = this.get('target_types') || ['supervisor'];
+    if(types == ['supervisor']) {
+      this.set('target_type', 'supervisors');
+    } else if(types == ['manager']) {
+      this.set('target_type', 'managers');
+    } else {
+      this.set('target_type', 'all');
+    }
+    this.set('allow_past', !!this.get('lesson.past_cutoff'));
     this.set('status', null);
   },
   required_options: computed(function() {
@@ -33,7 +46,7 @@ export default modal.ModalController.extend({
     res.push({id: 'all', name: i18n.t('all_users', "All Users")});
     return res;
   }),
-  update_on_required_option: observer('required_option', function() {
+  update_on_required_option: observer('lesson', 'required_option', function() {
     if(this.get('lesson') && this.get('required_option') != null) {
       this.set('lesson.required', this.get('required_option') == 'required');
     }
@@ -43,6 +56,7 @@ export default modal.ModalController.extend({
       var _this = this;
       _this.set('status', {saving: true});
       var lesson = _this.get('lesson');
+      lesson.set('url', lesson.get('original_url'));
       if(_this.get('model.org')) {
         lesson.set('organization_id', _this.get('model.org.id'));
       }

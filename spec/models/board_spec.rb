@@ -578,8 +578,8 @@ describe Board, :type => :model do
       expect(bls.count).to eq(4)
       expect(bls.order('id').map(&:locale)).to eq(["en", "es_US", "es", "en-US"])
       expect(bls.order('id').map(&:search_string)).to eq([
-        "b frogs, cheese, #{b.key} c ",
-        "a frogger, cheesy, #{b.key} c ",
+        "b b frogs, cheese, #{b.key} c ",
+        "a a frogger, cheesy, #{b.key} c ",
         "a frogger, cheddar, #{b.key} c ",
         "b rather frog, cheese, #{b.key} c ",
       ])

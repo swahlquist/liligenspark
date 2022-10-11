@@ -78,9 +78,10 @@ class Api::LessonsController < ApplicationController
   end
 
   def update
-    lesson = Lesson.find_by_path(params['lesson_id'])
-    return unless exists?(lesson, params['lesson_id'])
-    return unless authorized?(lesson, 'edit')
+    lesson = Lesson.find_by_path(params['id'])
+    return unless exists?(lesson, params['id'])
+    return unless allowed?(lesson, 'edit')
+    lesson.process(params['lesson'], {'author' => @api_user})
     render json: JsonApi::Lesson.as_json(lesson, {wrapper: true, permissions: @api_user})
   end
 

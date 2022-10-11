@@ -584,7 +584,7 @@ describe Api::SearchController, :type => :controller do
         body: {voices: [{'ssmlGender' => 'male', 'name' => 'Bob'}]}.to_json
       }))
       expect(Typhoeus).to receive(:post).with("https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=#{ENV['GOOGLE_TTS_TOKEN']}", body: {
-        audioConfig: {audioEncoding: 'LINEAR16', pitch: 0, speakingRate: 1},
+        audioConfig: {audioEncoding: 'MP3', pitch: 0, speakingRate: 1},
         input: {text: 'asdf'},
         voice: {languageCode: 'fr', name: 'Bob'}
       }.to_json, headers: {'Content-Type': 'application/json'}).and_return(OpenStruct.new({
@@ -610,7 +610,7 @@ describe Api::SearchController, :type => :controller do
       RedisInit.permissions.setex("google/voices/fr", 10.seconds.to_i, {voices: [{'ssmlGender' => 'male', 'name' => 'Bob'}]}.to_json)
       expect(Typhoeus).to_not receive(:get).with("https://texttospeech.googleapis.com/v1beta1/voices?languageCode=fr&key=#{ENV['GOOGLE_TTS_TOKEN']}")
       expect(Typhoeus).to receive(:post).with("https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=#{ENV['GOOGLE_TTS_TOKEN']}", body: {
-        audioConfig: {audioEncoding: 'LINEAR16', pitch: 0, speakingRate: 1},
+        audioConfig: {audioEncoding: 'MP3', pitch: 0, speakingRate: 1},
         input: {text: 'asdf'},
         voice: {languageCode: 'fr', name: 'Bob'}
       }.to_json, headers: {'Content-Type': 'application/json'}).and_return(OpenStruct.new({

@@ -11,6 +11,7 @@ module JsonApi::Lesson
     json['id'] = lesson.global_id
     json['title'] = lesson.settings['title']
     json['url'] = lesson.settings['url']
+    json['original_url'] = lesson.settings['url']
     json['required'] = !!lesson.settings['required']
     json['lesson_code'] = lesson.nonce
     json['due_at'] = lesson.settings['due_at']
@@ -41,11 +42,14 @@ module JsonApi::Lesson
       # check each usage?
     elsif args[:obj]
       if args[:obj].is_a?(User)
+        json['editable'] = true if lesson.user_id == args[:obj].id
         json['completed_users'][args[:obj].global_id] = comps[args[:obj].global_id] if comps[args[:obj].global_id]
       elsif args[:obj].is_a?(Organization)
+        json['editable'] = true if lesson.organization_id == args[:obj].id
         ids = args[:obj].attached_users('all').map(&:global_id)
         ids.each{|user_id| json['completed_users'][user_id] = comps[user_id] if comps[user_id] }
       elsif args[:obj].is_a?(OrganizationUnit)
+        json['editable'] = true if lesson.organization_unit_id == args[:obj].id
         ids = args[:obj].all_user_ids
         ids.each{|user_id| json['completed_users'][user_id] = comps[user_id] if comps[user_id] }
       end

@@ -1758,9 +1758,15 @@ body > .popover.bottom {
   }
 }
 .lesson {
+  &.done {
+    .summary {
+      font-size: 18px;
+      color: #888;
+    }
+  }
   .summary {
     font-weight: bold;
-    font-size: 18px;
+    font-size: 22px;
   }
   .details {
     font-size: 12px;
