@@ -31,12 +31,29 @@ module JsonApi::Lesson
       json['video'] = true
     end
 
+    comps = {}
     (lesson.settings['completions'] || []).select{|c| !cutoff || c['ts'] > cutoff }.each do |comp|
-      json['completed_users'][comp['user_id']] = {'rating' => comp['rating']}
+      comps[comp['user_id']] = {'rating' => comp['rating']}
     end
+    # Filter by args[:obj] to only show completion for related users
+    if args[:permissions] && args[:permissions].id == lesson.user_id
+      json['completed_users'] = comps
+      # check each usage?
+    elsif args[:obj]
+      if args[:obj].is_a?(User)
+        json['completed_users'][args[:obj].global_id] = comps[args[:obj].global_id] if comps[args[:obj].global_id]
+      elsif args[:obj].is_a?(Organization)
+        ids = args[:obj].attached_users('all').map(&:global_id)
+        ids.each{|user_id| json['completed_users'][user_id] = comps[user_id] if comps[user_id] }
+      elsif args[:obj].is_a?(OrganizationUnit)
+        ids = args[:obj].all_user_ids
+        ids.each{|user_id| json['completed_users'][user_id] = comps[user_id] if comps[user_id] }
+      end
+    end
+
     if args[:obj]
       json['counts'] = lesson.user_counts(args[:obj])
-      usage = lesson.settings['usages'].detect{|u| u['obj'] == Webhook.get_record_code(args[:obj])}
+      usage = (lesson.settings['usages'] || []).detect{|u| u['obj'] == Webhook.get_record_code(args[:obj])}
       if usage && args[:obj].is_a?(Organization)
         json['target_types'] = ((args[:obj].settings['lessons'] || []).detect{|l| l['id'] == lesson.global_id } || {})['types'] || ['supervisor']
       elsif usage && args[:obj].is_a?(OrganizationUnit)

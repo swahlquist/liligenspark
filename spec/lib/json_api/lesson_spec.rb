@@ -75,6 +75,21 @@ describe JsonApi::Lesson do
       expect(json['user']['completion']).to eq({'user_id' => u.global_id, 'bacon' => true})
     end
 
+    it "should include completion ratings only for users in the related org" do
+      l = Lesson.create
+      u = User.create
+      json = JsonApi::Lesson.build_json(l, {extra_user: u})
+      expect(json['user']).to_not eq(nil)
+      expect(json['user']['id']).to eq(u.global_id)
+      expect(json['user']['completion']).to eq(nil)
+
+      l.settings['completions'] = [{'user_id' => 'asdf', 'rating' => 2}, {'user_id' => u.global_id, 'bacon' => true, 'rating' => 3}]
+      json = JsonApi::Lesson.build_json(l, {obj: u})
+      expect(json['completed_users']).to_not eq(nil)
+      expect(json['completed_users'][u.global_id]).to eq({'rating' => 3})
+      expect(json['completed_users']['asdf']).to eq(nil)
+    end
+
     it "should return a specialized link for known iframe-sensitive URLs" do
       l = Lesson.create
       u = User.create

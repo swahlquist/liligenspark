@@ -74,7 +74,6 @@ class Api::LessonsController < ApplicationController
     return unless exists?(lesson, lesson_id)
     return unless lesson.nonce == lesson_code || allowed?(lesson, 'view')
     user = User.find_by_token(user_token)
-    # TODO: send completion status if already completed
     render json: JsonApi::Lesson.as_json(lesson, {wrapper: true, permissions: @api_user, extra_user: user})
   end
 

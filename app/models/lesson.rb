@@ -10,9 +10,9 @@ class Lesson < ApplicationRecord
   after_save :check_url
 
   add_permissions('view', ['*']) { !!self.public }
-  add_permissions('view', 'edit') {|user| self.user_id == user.id }
-  add_permissions('view') {|user| (self.settings['usages'] || []).map{|u| u['obj'] }.include?(Webhook.get_record_code(user)) }
-  add_permissions('view', 'edit') {|user| 
+  add_permissions('view', 'view_ratings', 'edit') {|user| self.user_id == user.id }
+  add_permissions('view', 'view_ratings') {|user| (self.settings['usages'] || []).map{|u| u['obj'] }.include?(Webhook.get_record_code(user)) }
+  add_permissions('view', 'view_ratings', 'edit') {|user| 
     # First usage gets edit permission
     if self.organization_id
       org = Organization.find(self.organization_id)
@@ -27,7 +27,7 @@ class Lesson < ApplicationRecord
       false
     end
   }
-  add_permissions('view') {|user| 
+  add_permissions('view', 'view_ratings') {|user| 
     # All usages get view permission
     res = false
     (self.settings['usages'] || []).each do |use|
