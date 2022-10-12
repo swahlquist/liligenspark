@@ -53,7 +53,7 @@ export default Controller.extend({
   }),
   custom_report: computed('current_report', function() {
     var rep = this.get('current_report');
-    var parts = this.get('current_report').split(/-/);
+    var parts = (this.get('current_report') || '').split(/-/);
     parts.shift();
     var str = parts.join('-');
     if(rep.match(/^status-/)) {
