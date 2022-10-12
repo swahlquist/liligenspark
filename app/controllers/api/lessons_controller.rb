@@ -95,7 +95,7 @@ class Api::LessonsController < ApplicationController
     user = User.find_by_token(user_token)
     return unless exists?(user, user_token)
 
-    Lesson.complete(lesson, user, params['rating'].to_i)
+    Lesson.complete(lesson, user, params['rating'].to_i, nil, params['duration'].to_i)
 
     render json: JsonApi::Lesson.as_json(lesson, {wrapper: true, extra_user: user, permissions: user})
   end

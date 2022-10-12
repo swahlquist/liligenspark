@@ -134,16 +134,18 @@ class Lesson < ApplicationRecord
     self.save
   end
 
-  def self.complete(lesson, user, rating, feedback=nil)
-    # Rating can be [declined, liked, disliked, loved]
+  def self.complete(lesson, user, rating, feedback=nil, duration=nil)
     return false unless lesson && user
     lesson.settings['completions'] ||= []
     comp = lesson.settings['completions'].detect{|c| c['user_id'] == user.global_id }
     if comp
       comp['ts'] = Time.now.to_i
       comp['rating'] = rating
+      comp['duration'] = duration if duration
     else
-      lesson.settings['completions'] << {'user_id' => user.global_id, 'ts' => Time.now.to_i, 'rating' => rating}      
+      comp = {'user_id' => user.global_id, 'ts' => Time.now.to_i, 'rating' => rating}
+      comp['duration'] = duration if duration
+      lesson.settings['completions'] << comp
     end
     if feedback && !feedback.blank?
       lesson.settings['feedback'] ||= []
@@ -157,7 +159,9 @@ class Lesson < ApplicationRecord
       comp['ts'] = Time.now.to_i
       comp['rating'] = rating
     else
-      extra.settings['completed_lessons'] << {'id' => lesson.global_id, 'url' => lesson.settings['url'], 'ts' => Time.now.to_i, 'rating' => rating}
+      comp = {'id' => lesson.global_id, 'url' => lesson.settings['url'], 'ts' => Time.now.to_i, 'rating' => rating}
+      comp['duration'] = duration if duration
+      extra.settings['completed_lessons'] << comp
     end
     extra.save
   end

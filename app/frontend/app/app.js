@@ -490,7 +490,21 @@ CoughDrop.avatarUrls = [
   {alt: 'zombie', url: 'https://opensymbols.s3.amazonaws.com/libraries/language-craft/zombie.png'},
   {alt: 'stegosaurus', url: 'https://opensymbols.s3.amazonaws.com/libraries/language-craft/stegosaurus.png'}
 ];
-
+CoughDrop.Lessons = {
+  track: function(url) {
+    return new RSVP.Promise(function(resolve, reject) {
+      var lesson = CoughDrop.Lessons.assert_lesson();
+      lesson.restart(url);
+    });
+  },
+  assert_lesson: function() {
+    CoughDrop.Lessons.lesson = CoughDrop.Lessons.lesson || EmberObject.extend({
+      restart: function(url) {
+        this.set('state', null);
+      }
+    }).create();
+  }
+};
 CoughDrop.Videos = {
   players: {},
   track: function(dom_id, callback) {
@@ -611,6 +625,10 @@ window.addEventListener('message', function(event) {
       event.source.frameElementRef = frame;
       CoughDrop.Videos.player_status(event);
     }
+  } else if(event.data && event.data.lesson_status) {
+    var lesson = CoughDrop.Lessons.assert_lesson();
+    lesson.set('duration', event.data.duration);
+    lesson.set('state', event.data.state);
   }
 });
 

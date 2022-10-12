@@ -8,15 +8,25 @@ export default Controller.extend({
     this.set('status', null);
     this.set('show_description', false);
     this.set('show_rating', false);
+    this.set('started', (new Date()).getTime());
     this.set('player', null);
     this.set('forced_show', false);
+    var _this = this;
+    CoughDrop.Lessons.track(this.get('model.url')).then(function(lesson) {
+      _this.set('lesson', lesson);      
+    });
     if(this.get('model.video')) {
-      var _this = this;
       CoughDrop.Videos.track('lesson_embed').then(function(player) {
         _this.set('player', player);
       });
     }
   },
+  set_lesson_complete: observer('lesson.state', function() {
+    if(this.get('lesson.state') == 'complete' && !this.get('forced_show')) {
+      this.set('forced_show', true);
+      this.set('show_rating', true);
+    }
+  }),
   set_video_complete: observer('player.time', 'player.duration', function() {
     var time = this.get('player.time');
     var duration = this.get('player.duration');
@@ -54,7 +64,16 @@ export default Controller.extend({
     rate: function(score) {
       var _this = this;
       _this.set('status', {saving: true})
-      persistence.ajax('/api/v1/lessons/' + this.get('model.id') + '/complete', {type: 'POST', data: {rating: score}}).then(function(res) {
+      var data = {rating: score};
+      if(_this.get('player.duration')) {
+        data.duration = _this.get('player.time') || _this.get('player.duration');
+      } else if(_this.get('lesson.duration')) {
+        data.duration = _this.get('lesson.duration');
+      } else {
+        var now = (new Date()).getTime();
+        data.duration = (now - _this.get('started')) / 1000;
+      }
+      persistence.ajax('/api/v1/lessons/' + this.get('model.id') + '/complete', {type: 'POST', data: data}).then(function(res) {
         _this.set('status', {done: true})
       }, function(err) {
         _this.set('status', {error: true});
