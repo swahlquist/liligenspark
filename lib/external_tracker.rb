@@ -8,7 +8,7 @@ module ExternalTracker
   def self.persist_new_user(user_id)
     user = User.find_by_path(user_id)
     return false unless user && user.external_email_allowed?
-    return false unless ENV['HUBSPOT_KEY']
+    return false unless ENV['HUBSPOT_TOKEN']
     return false unless user.settings && user.settings['email']
 
     d = user.devices[0]
@@ -69,9 +69,14 @@ module ExternalTracker
         {property: 'hs_legal_basis', value: 'Legitimate interest – prospect/lead'}
       ]
     }
-    # push to external system
-    url = "https://api.hubapi.com/contacts/v1/contact/?hapikey=#{ENV['HUBSPOT_KEY']}"
-    res = Typhoeus.post(url, {body: json.to_json, headers: {'Content-Type' => 'application/json'}})
+    url = "https://api.hubapi.com/contacts/v1/contact/"
+    res = Typhoeus.post(url, {body: json.to_json, headers: {
+      'Content-Type' => 'application/json',
+      'Authorization' => "Bearer #{ENV['HUBSPOT_TOKEN']}"
+      }})
+    # if res.code > 299
+    #   puts res.body
+    # end
     res.code
   end
 end
