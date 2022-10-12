@@ -1042,6 +1042,39 @@ describe LogSession, :type => :model do
       expect(log.data['eval']).to eq({'b' => 1, 'log_session_id' => log.global_id})
     end
 
+    it "should record log errors" do
+      u2 = User.create
+      u = User.create
+      User.link_supervisor_to_user(u, u2, nil, true)
+
+      events = []
+      e = {'geo' => ['1', '2'], 'timestamp' => 12.weeks.ago.to_i, 'type' => 'button', 'button' => {'label' => 'hat', 'board' => {'id' => '1_1'}}}
+      4.times do |i|
+        e['timestamp'] += 30
+        events << e.merge({})
+      end
+
+      events << {
+        'timestamp' => 12.weeks.ago.to_i + 30,
+        'type' => 'error',
+        'error' => {
+          'type' => 'bad one',
+          'a' => 1,
+          'b' => 2
+        }
+      }
+      
+      d = Device.create
+      s = LogSession.new(:data => {'events' => events}, :user => u, :author => u, :device => d)
+      expect(LogSession.count).to eq(0)
+
+      s.split_out_later_sessions(true)
+      ae = AuditEvent.last
+      expect(ae).to_not eq(nil)
+      expect(ae.event_type).to eq('log_error')
+      expect(ae.data).to eq({"a"=>1, "b"=>2, "type"=>"bad one"})
+    end
+
     it "should not allow overwriting a non-eval log" do
       u2 = User.create
       u = User.create

@@ -928,7 +928,7 @@ class LogSession < ActiveRecord::Base
     self.assert_extra_data
     (self.data['events'] || []).each do |event|
       stamp = event['timestamp'] || last_stamp
-      if event['note'] || event['assessment'] || event['share'] || event['alert'] || event['eval'] || event['profile']
+      if event['note'] || event['assessment'] || event['share'] || event['alert'] || event['eval'] || event['profile'] || event['error']
         # certain events are always in their own session
         more_sessions << [event]
       elsif (!stamp || !last_stamp || stamp - last_stamp < cutoff) && (!current_user_id || event['user_id'] == current_user_id)
@@ -993,6 +993,9 @@ class LogSession < ActiveRecord::Base
                 elsif event && event['profile']
                   prof = event['profile']
                   params = {profile: prof}
+                elsif event && event['error']
+                  AuditEvent.create!(event_type: 'log_error', summary: event['error']['type'], data: event['error'])
+                  params = nil
                 elsif event && event['eval']
                   evl = event['eval']
                   evl = evl['eval'] if evl['eval'].is_a?(Hash)

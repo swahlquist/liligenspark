@@ -484,6 +484,13 @@ var stashes = EmberObject.extend({
           user_id: user_id,
           activity: obj
         };
+      } else if(obj.error) {
+        log_event = {
+          type: 'error',
+          timestamp: timestamp,
+          user_id: user_id,
+          error: error
+        }
       } else {
         log_event = {
           type: 'action',

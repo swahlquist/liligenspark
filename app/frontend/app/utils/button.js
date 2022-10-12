@@ -938,10 +938,12 @@ Button.broken_image = function(image, skip_server_reattempt) {
             Button.image_fail_reported = true;
   
             var error = {
+              error: 'image_failed',
               type: 'image_failed',
               url: bad_src,
               sync_stale: now - persistence.get('last_sync_at')
             };
+            stashes.log(error);
           }  
         }
       }, function() {
