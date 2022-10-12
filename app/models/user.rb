@@ -216,7 +216,7 @@ class User < ActiveRecord::Base
     # saving a board with an image, log it as activated (unless it happens)
     # during the free trial, in which case it needs to be tracked at
     # purchase.
-    if !self.settings['activated_sources'].include?(source_id) && !self.subscription_hash['grace_trial_period']
+    if !self.settings['activated_sources'].include?(source_id) && !self.subscription_hash['grace_trial_period'] && !self.subscription_hash['grace_period']
       log_activation = true
       if source_id == 'lessonpix'
         template = UserIntegration.find_by(template: true, integration_key: 'lessonpix')

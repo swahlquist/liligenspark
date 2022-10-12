@@ -1017,6 +1017,7 @@ module Subscription
       json['free_premium'] = json['premium_supporter']
       json['expires'] = self.expires_at && self.expires_at.iso8601 if self.billing_state == :trialing_supporter
       json['grace_period'] = true if self.grace_period?
+      json['grace_trial_period'] = true if json['grace_period'] && ([:trialing_communicator,:trialing_supporter].include?(billing_state) || [:trialing_communicator,:trialing_supporter].include?(com_billing_state))
     else
       if [:long_term_active_communicator, :trialing_communicator, :grace_period_communicator, :trialing_supporter, :grace_period_supporter].include?(billing_state) #!self.eval_account? && !self.premium_supporter?
         json['expires'] = self.expires_at && self.expires_at.iso8601
