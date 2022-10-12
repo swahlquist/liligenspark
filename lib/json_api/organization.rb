@@ -58,6 +58,7 @@ module JsonApi::Organization
       json['communicator_profile_frequency'] = (((org.settings['communicator_profile'] || {})['frequency'] || 12.months.to_i).to_f / 1.month.to_f).round(2)
       user_ids = []
       UserLink.links_for(org).each do |link|
+        # TODO: Dead links will make these tallies inaccurate
         if link['type'] == 'org_manager'
           json['total_managers'] += 1
         elsif link['type'] == 'org_supervisor'

@@ -191,6 +191,7 @@ class Lesson < ApplicationRecord
   end
 
   def self.assign(lesson, obj, types=nil, assignee=nil)
+    # TODO: make required, due date, past_cutoff part of assignment?
     return false unless lesson && obj
     lesson.settings['usages'] ||= []
     lesson.settings['usages'] << {'ts' => Time.now.to_i, 'obj' => Webhook.get_record_code(obj)}

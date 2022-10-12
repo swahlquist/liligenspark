@@ -881,6 +881,7 @@ var persistence = EmberObject.extend({
         // the images cascade into visibility unless you prefetch them,
         // so we try to do this while still letting other requests slip in.
         runLater(function() {
+          // TODO: I think this maybe isn't necessary anymore
           var urls = [];
           for(var key in _this.url_cache) {
             urls.push(_this.url_cache[key]);

@@ -1323,6 +1323,7 @@ class Organization < ActiveRecord::Base
               new_user.process_home_board({'id' => home_board.global_id, 'copy' => true, 'symbol_library' => symbols}, {'updater' => home_board.user, 'org' => self, 'async' => true}) if home_board
             end
           elsif self.settings['default_home_board'] && !new_user.settings['preferences']['home_board'] && !new_user.settings['external_device']
+            # TODO: legacy code that can be removed Jan 2023
             home_board = Board.find_by_path(self.settings['default_home_board']['id'])
             new_user.process_home_board({'id' => home_board.global_id}, {'updater' => home_board.user, 'async' => true}) if home_board
           end

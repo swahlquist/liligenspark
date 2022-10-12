@@ -577,6 +577,9 @@ var scanner = EmberObject.extend({
       // check the text box (are single key strokes getting added?)
       // and send :complete if it's replacing keystrokes,
       // or :predict if it's auto-suggest not autocomplete
+      // TODO: add support for compositionStart and compositionEnd
+      // (you may need to start showing the input box explicitly when the native keyboard is up)
+      // https://developer.mozilla.org/en-US/docs/Web/API/Element/compositionend_event
       var action = null;
       if(false && event.data && event.data != ' ') { //&& buttonTracker.last_key != event.data) {
         // TODO: replace this nonsense with a text
