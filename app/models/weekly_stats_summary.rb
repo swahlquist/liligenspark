@@ -854,13 +854,14 @@ class WeeklyStatsSummary < ActiveRecord::Base
 
     all_grid_user_ids = []
     res[:grid_sizes] = {}
+    grids = {}
     stash[:grid_user_ids].each do |size, user_ids|
       all_grid_user_ids += user_ids
-      res[:grid_sizes][size] = user_ids.uniq.length
+      grids[size] = user_ids.uniq.length
     end
     res[:admin][:max_grid_size_count] = res[:grid_sizes].to_a.map(&:last).compact.max || 0
-    res[:grid_sizes].each do |size|
-      res[:grid_sizes][size] = (res[:grid_sizes][size].to_f / [res[:admin][:max_grid_size_count], 1].max.to_f).round(3)
+    grids.each do |size, cnt|
+      res[:grid_sizes][size] = (cnt.to_f / [res[:admin][:max_grid_size_count], 1].max.to_f).round(3)
     end
     res[:admin][:total_grid_users] = all_grid_user_ids.uniq.length
     
