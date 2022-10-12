@@ -318,12 +318,17 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           button_set.data['remote_paths'][remote_hash]['path'] = res[:path]
           button_set.data['remote_paths'][remote_hash]['checksum'] = new_checksum
         end
+      else
+        # TODO: need a way to force this to retry if it's holding up a user's progress
       end
     rescue => e
       button_set.data['remote_paths'][remote_hash]['path'] = false
       button_set.data['remote_paths'][remote_hash]['error'] = e.message
     end
     button_set.save
+    # TODO: I was stuck getting "button set failed to generate" for no reason
+    # nothing I as a user could do about it. Is there a way to retry this?
+    # Once I called BDBS.update_for(board_id) the issue resolved itself.
     return {success: false, error: 'button set failed to generate'} unless button_set.data && button_set.data['remote_paths'] && button_set.data['remote_paths'][remote_hash] && button_set.data['remote_paths'][remote_hash]['path']
     {success: true, state: 'uploaded', url: "#{ENV['UPLOADS_S3_CDN']}/#{button_set.data['remote_paths'][remote_hash]['path']}"}
   end
