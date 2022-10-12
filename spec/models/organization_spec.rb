@@ -572,18 +572,6 @@ describe Organization, :type => :model do
       expect(u2.reload.supervisor_user_ids).to eq([])
       expect(u2.reload.supervised_user_ids).to eq([])
     end
-    
-    it "should share a private home board if default and the user doesn't have one set" do
-      u = User.create
-      b = Board.create(user: u)
-      u2 = User.create
-      o = Organization.create(settings: {'total_licenses' => 1, 'home_board_keys' => [b.key]})
-      u2.reload
-      o.add_user(u2.user_name, false, true)
-      Worker.process_queues
-      expect(u2.reload.settings['preferences']['home_board']).to eq({'key' => b.key, 'id' => b.global_id, 'locale' => 'en'})
-      expect(b.shared_with?(u2)).to eq(true)
-    end
   end
   
   describe "permissions" do

@@ -1646,7 +1646,9 @@ describe Api::UsersController, :type => :controller do
     
     it "should return an error if add_voice fails" do
       token_user
+
       @user.settings['premium_voices'] = {'allowed' => 0}
+      @user.expires_at = 6.years.ago
       @user.save
       post :claim_voice, params: {:user_id => @user.global_id, :voice_id => 'acbdef'}
       expect(response).not_to be_successful
