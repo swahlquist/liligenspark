@@ -6,6 +6,8 @@ import { computed } from '@ember/object';
 import Utils from '../../utils/misc';
 import lessons from '../../routes/organization/lessons';
 import { htmlSafe } from '@ember/string';
+import app_state from '../../utils/app_state';
+import capabilities from '../../utils/capabilities';
 
 export default Controller.extend({
   load_lessons: function() {

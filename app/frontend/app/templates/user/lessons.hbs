@@ -1,6 +1,6 @@
 {{#if session.isAuthenticated}}
   <h2>
-    {{t "Current Lessons" key='current_lessons'}}
+    {{t "Current Trainings" key='current_trainings'}}
   </h2>
   {{#if styled_lessons}}
     {{#each styled_lessons as |lesson|}}
@@ -21,7 +21,7 @@
           {{#if lesson.completed}}
             <button class='btn btn-sm btn-default' {{action 'launch' lesson}}>{{t "Re-Take" key='re_take'}}</button>
           {{else}}
-            <button class={{if lesson.required 'btn btn-primary' 'btn btn-default'}} {{action 'launch' lesson}}>{{t "Start Lesson" key='start_lesson'}}</button>
+            <button class={{if lesson.required 'btn btn-primary' 'btn btn-default'}} {{action 'launch' lesson}}>{{t "Start Training" key='start_training'}}</button>
           {{/if}}
         </div>
         <div class='details'>
@@ -42,7 +42,7 @@
       </div>
     {{/each}}
   {{else}}
-    {{t "Organization managers can define continuing education lessons for your benefit and improvement. When lessons have been added they will appear on a user's dashboard and here on their list of lessons. Each lesson can be launched, and then rated once completed to provide feedback and to track usage. Organizations can use these lessons to help everyone develop the skills and knowledge that can help them best support AAC users." key='user_lessons_explainer'}}
+    {{t "Organization managers can define continuing education trainings for your benefit and improvement. When trainings have been added they will appear on a user's dashboard and here on their list of trainings. Each training can be launched, and then rated once completed to provide feedback and to track usage. Organizations can use these trainings to help everyone develop the skills and knowledge that can help them best support AAC users." key='user_trainings_explainer'}}
   {{/if}}
 {{else}}
   {{login-form left=true prompt=true return=true}}

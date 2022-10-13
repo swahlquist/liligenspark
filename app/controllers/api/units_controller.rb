@@ -75,7 +75,7 @@ class Api::UnitsController < ApplicationController
 
     res['user_weeks'] = {}
     sessions = LogSession.where(['started_at > ?', 12.weeks.ago]).where(:user_id => approved_users.map(&:id))
-    sessions.where(['goal_id IS NULL OR goal_id != ?', 0]).group("date_trunc('week', started_at), user_id").select("count(*), date_trunc('week', started_at), user_id, count(goal_id) AS goals").each do |obj|
+    sessions.where(log_type: 'session').where(['goal_id IS NULL OR goal_id != ?', 0]).group("date_trunc('week', started_at), user_id").select("count(*), date_trunc('week', started_at), user_id, count(goal_id) AS goals").each do |obj|
       if obj.attributes['user_id']
         user_id = unit.related_global_id(obj.attributes['user_id'])
         res['user_weeks'][user_id] ||= {}
@@ -156,11 +156,22 @@ class Api::UnitsController < ApplicationController
     approved_users = User.find_all_by_global_id(user_ids)
     user_count = approved_users.count
     
+    word_user_ids = {}
+    unit_goal = unit.user_goal
+    if unit_goal
+      words = (unit_goal.settings['assessment_badge'] || {})['words_list'] || (unit_goal.settings['ref_data'] || {})['words_list'] || []
+      words = words.split(/,/).compact.map(&:strip).select{|w| w.length > 0 } if words.is_a?(String)
+      words.each do |word|
+        str = word.downcase
+        word_user_ids[str] ||= []
+        word_user_ids[str] += ['unit', 'unit2']
+      end
+    end
     # This data can't be retrieved historically, so exclude in side-by-side
     goals = UserGoal.where(user_id: approved_users.map(&:id), active: true)
-    word_user_ids = {}
     goals.each do |goal|
-      words = (goal.settings['assessment_badge'] || {})['words_list'] || []
+      words = (goal.settings['assessment_badge'] || {})['words_list'] || (goal.settings['ref_data'] || {})['words_list'] || []
+      words = words.split(/,/).compact.map(&:strip).select{|w| w.length > 0 } if words.is_a?(String)
       words.each do |word|
         str = word.downcase
         word_user_ids[str] ||= []
@@ -229,7 +240,7 @@ class Api::UnitsController < ApplicationController
     user_ids = UserLink.links_for(unit).select{|l| l['type'] == 'org_unit_communicator' }.map{|l| l['user_id'] }
     approved_users = User.find_all_by_global_id(user_ids).select{|u| !u.private_logging? }
     # TODO: sharding
-    logs = LogSession.where(:user_id => approved_users.map(&:id)).order(id: :desc)
+    logs = LogSession.where(log_type: 'session').where(:user_id => approved_users.map(&:id)).order(id: :desc)
     prefix = "/units/#{unit.global_id}/logs"
     render json: JsonApi::Log.paginate(params, logs, {:prefix => prefix})
   end

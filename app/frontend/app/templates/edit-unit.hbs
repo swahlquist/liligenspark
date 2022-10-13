@@ -5,10 +5,33 @@
   </div>
   <div class="modal-body">
     <form class="form-horizontal" {{action "save" on="submit"}}>
+      {{#unless model.curriculum_only}}
       <div class="form-group">
         <label for="name" class="col-sm-3 control-label">{{t "Name" key='name'}}</label>
         <div class="col-sm-7">
           {{input value=model.unit.name class="form-control" id="name" placeholder="Room Name"}}
+        </div>
+      </div>
+      {{else}}
+        <div class="form-group">
+            <div class='col-sm-8 col-sm-offset-3'>
+              <p class='form-control-static'>
+                {{t "Each room can have its own list of assigned cirruclum. These can be links to any topics or material the room is curretly focused on. Any curriculum set will be available to all room communicators." key='curriculum_explainer'}}
+              </p>
+            </div>
+        </div>
+      {{/unless}}
+      <div class="form-group">
+        <label for="name" class="col-sm-3 control-label">{{t "Curriculum" key='curriculum'}}</label>
+        <div class="col-sm-8">
+          {{#each model.unit.topics as |row|}}
+            <div class='row' style='margin-top: 5px;'>
+              <div class='col-sm-5'>{{input value=row.title class='form-control' placeholder='topic'}}</div>
+              <div class='col-sm-6'>{{input value=row.url class='form-control' placeholder='https://'}}</div>
+              <div class='col-sm-1'><a href='#' {{action 'remove_curriculum_row' row}}><span class='glyphicon glyphicon-remove'></span></a></div>
+            </div>
+          {{/each}}
+          <div style='margin-top: 5px;'><button class='btn btn-default btn-sm' {{action 'add_curriculum_row'}}>{{t "add row" key='add_row'}}</button></div>
         </div>
       </div>
       <div class="form-group">

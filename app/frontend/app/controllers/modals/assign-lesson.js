@@ -15,15 +15,15 @@ export default modal.ModalController.extend({
       this.set('lesson', this.get('model.lesson'));
     } else {
       var lesson = CoughDrop.store.createRecord('lesson');
-      lesson.set('target_types' ['supervisor']);
+      lesson.set('target_types', ['supervisor']);
       this.set('lesson', lesson);
     }
 
     this.set('required_option', this.get('lesson.required') ? 'required' : 'optional');
-    var types = this.get('target_types') || ['supervisor'];
-    if(types == ['supervisor']) {
+    var types = (lesson.get('target_types') || ['supervisor']).sort().join(',')
+    if(types == 'supervisor') {
       this.set('target_type', 'supervisors');
-    } else if(types == ['manager']) {
+    } else if(types == 'manager') {
       this.set('target_type', 'managers');
     } else {
       this.set('target_type', 'all');
@@ -37,7 +37,7 @@ export default modal.ModalController.extend({
       {id: 'required', name: i18n.t('required_lesson', "This lesson is required, remind users")},
     ];
   }),
-  target_types: computed('model.org', function() {
+  target_types: computed('model.org', 'model.unit', function() {
     var res = [];
     res.push({id: 'supervisors', name: i18n.t('supervisors_only', "Supervisors Only")});
     if(this.get('model.org')) {
@@ -59,6 +59,8 @@ export default modal.ModalController.extend({
       lesson.set('url', lesson.get('original_url'));
       if(_this.get('model.org')) {
         lesson.set('organization_id', _this.get('model.org.id'));
+      } else if(_this.get('model.unit')) {
+        lesson.set('organization_unit_id', _this.get('model.unit.id'));
       }
       if(_this.get('model.org') || _this.get('model.unit')) {
         if(_this.get('target_type') == 'supervisors') {

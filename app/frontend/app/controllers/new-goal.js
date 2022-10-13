@@ -181,8 +181,8 @@ export default modal.ModalController.extend({
               watch_total: count.toString(),
               simple_type: 'words_per_day'
             });
-            goal.set('ref_data', {words_list: strings});
           }
+          goal.set('ref_data', {words_list: strings});
         } else if(type == 'modeling') {
           var strings = goal.get('strings_list');
           if(!goal.get('description')) {
@@ -197,8 +197,8 @@ export default modal.ModalController.extend({
               watch_total: count.toString(),
               simple_type: 'modeling_per_day'
             });
-            goal.set('ref_data', {modeled_words_list: strings});
           }
+          goal.set('ref_data', {modeled_words_list: strings});
         }
       }
       goal.set('active', true);

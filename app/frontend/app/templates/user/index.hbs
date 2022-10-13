@@ -450,6 +450,14 @@
   {{/unless}}
     <div class="row">
       <div class="col-sm-12">
+        {{#if model.topics.length}}
+          <h4>{{t "Current Curriculum Topics:" key='current_curriculum_topics'}}</h4>
+          <ul class='list-group' style='max-width: 350px;'>
+            {{#each model.topics as |topic|}}
+              <a class='list-group-item' href={{topic.url}} target='_blank'>{{topic.title}}</a>
+            {{/each}}
+          </ul>
+        {{/if}}
         <h4>
           {{#if model.external_device}}
             {{t "%app_name% Boards in this Account:" key='boards_in_this_account'}}

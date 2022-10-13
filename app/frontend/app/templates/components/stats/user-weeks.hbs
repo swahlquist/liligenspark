@@ -40,9 +40,28 @@
               </div>
               <div class='profile_box' title={{user.org_status_state}} data-toggle="tooltip" data-placement="top" style='display: inline-block;'>
                 {{#if user.org_status_class}}
-                  <button class='btn btn-default' {{action 'user_status' user}} style='padding-top: 3px; padding-bottom: 9px;'>
+                  <button class='btn btn-default org_state' {{action 'user_status' user}} style='padding-top: 3px; padding-bottom: 9px;'>
                     <span class={{user.org_status_class}} style='font-size: 20px; line-height: 10px; vertical-align: middle;'></span>
+                    {{#if user.unit_lesson_complete}}
+                      <span class='glyphicon glyphicon-education sub_state'></span>
+                    {{/if}}
                   </button>
+                {{else if user.unit_lesson_class}}
+                  <span class={{user.unit_lesson_class}}>
+                    <span class='glyphicon glyphicon-education'></span>
+                    {{#if user.unit_lesson_complete}}
+                      <span class='status'>
+                        {{#if user.unit_lesson_rating_class}}
+                          <span class='face_label'>
+                            <span class={{user.unit_lesson_rating_class}}></span>
+                          </span>
+                        {{else}}
+                          <span class='glyphicon glyphicon-ok'></span>
+                        {{/if}}
+                      </span>
+                    {{/if}}
+                  </span>
+                  <!-- Gray if incomplete, black with status if complete -->
                 {{/if}}
               </div>                
               <!-- don't show the score, that's personal and 

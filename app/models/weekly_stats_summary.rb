@@ -859,7 +859,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
       all_grid_user_ids += user_ids
       grids[size] = user_ids.uniq.length
     end
-    res[:admin][:max_grid_size_count] = res[:grid_sizes].to_a.map(&:last).compact.max || 0
+    res[:admin][:max_grid_size_count] = grids.to_a.map(&:last).compact.max || 0
     grids.each do |size, cnt|
       res[:grid_sizes][size] = (cnt.to_f / [res[:admin][:max_grid_size_count], 1].max.to_f).round(3)
     end

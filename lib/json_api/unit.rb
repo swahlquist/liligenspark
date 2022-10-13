@@ -66,6 +66,24 @@ module JsonApi::Unit
     if unit.user_goal
       json['goal'] = JsonApi::Goal.as_json(unit.user_goal, :lookups => false)
     end
+    if unit.settings['lesson']
+      lesson = ::Lesson.find_by_path(unit.settings['lesson']['id'])
+      if lesson
+        json['lesson'] = JsonApi::Lesson.as_json(lesson)
+        json['lesson']['types'] = unit.settings['lesson']['types']
+      end
+      if args[:permissions]
+        comps = {}
+        (lesson.settings['completions'] || []).select{|c| !cutoff || c['ts'] > cutoff }.each do |comp|
+          comps[comp['user_id']] = {'rating' => comp['rating']}
+        end
+    
+        json['lesson']['completed_users'] = {}
+        ids = unit.all_user_ids
+        ids.each{|user_id| json['lessons']['completed_users'][user_id] = comps[user_id] if comps[user_id] }
+      end
+    end
+    json['topics'] = unit.settings['topics']
     json['prior_goals'] = (unit.settings['goal_assertions'] || {})['prior']
 
     if args.key?(:permissions)

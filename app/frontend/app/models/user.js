@@ -67,6 +67,7 @@ CoughDrop.User = DS.Model.extend({
   valet_prevent_disable: DS.attr('boolean'),
   has_logging_code: DS.attr('boolean'),
   lessons: DS.attr('raw'),
+  topics: DS.attr('raw'),
   last_message_read: DS.attr('number'),
   last_alert_access: DS.attr('number'),
   last_access: DS.attr('date'),

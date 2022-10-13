@@ -11,6 +11,8 @@ CoughDrop.Unit = DS.Model.extend({
   name: DS.attr('string'),
   management_action: DS.attr('string'),
   goal: DS.attr('raw'),
+  topics: DS.attr('raw'),
+  lesson: DS.attr('raw'),
   prior_goals: DS.attr('raw'),
   supervisors: DS.attr('raw'),
   communicators: DS.attr('raw'),

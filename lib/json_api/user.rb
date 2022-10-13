@@ -143,6 +143,7 @@ module JsonApi::User
         json['prior_home_boards'] = json['prior_home_boards'].select{|b| b['key'] != user.settings['preferences']['home_board']['key'] }
       end
       
+      user_topics = []
       json['premium'] = user.any_premium_or_grace_period?
       json['terms_agree'] = !!user.settings['terms_agreed']
       json['subscription'] = user.subscription_hash
@@ -164,6 +165,7 @@ module JsonApi::User
         extra = user.user_extra
         if extra
           json['lesson_ids'] = (extra.settings['lessons'] || []).map{|l| l['id'] }
+          user_topics += extra.settings['topics'] || []
           tags = (extra.settings['board_tags'] || {}).to_a.map(&:first).sort
           json['board_tags'] = tags if !tags.blank?
           json['focus_words'] = extra.active_focus_words
@@ -177,6 +179,15 @@ module JsonApi::User
             json['last_profile'] = soonest
           end
         end
+        if json['organizations'].length > 0
+          unit_ids = UserLink.links_for(user).select{|l| l['record_code'].match(/OrganizationUnit/) }.map{|l| l['record_code'].split(/:/, 2)[1] }
+          OrganizationUnit.find_all_by_global_id(unit_ids).each do |unit|
+            user_topics += unit.settings['topics'] || []
+            json['lesson_ids'] ||= []
+            json['lesson_ids'] << unit.settings['lesson']
+          end
+        end
+  
       end
       
       supervisors = user.supervisors
@@ -196,7 +207,7 @@ module JsonApi::User
             'id' => ou.global_id,
             'organization_id' => ou.related_global_id(ou.organization_id),
             'name' => ou.settings['name'],
-            'lesson_ids' => (ou.settings['lessons'] || []).map{|l| l['id']}
+            'lesson_ids' => (ou.settings['lessons'] || []).map{|l| l['id']},
           }
         }
         if json['supervised_units'].empty?
@@ -289,6 +300,7 @@ module JsonApi::User
         json['lessons'].each{|l| l['source'] = sources[l['id']] || 'unknown' }
         json['lessons'] = ::Lesson.decorate_completion(user, json['lessons'])
       end
+      json['topics'] = user_topics
     end
     
     

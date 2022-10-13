@@ -124,6 +124,17 @@ export default Component.extend({
               });
             }
           });
+          if(_this.get('lesson')) {
+            var comp = (_this.get('lesson.completed_users') || {})[user.id];
+            user.org_status_state = comp ? i18n.t('training_complete', "Training Completed") : i18n.t('training_incomplete', "Training Not Completed");;
+            user.unit_lesson_class = htmlSafe(comp ? 'lesson_state' : 'lesson_state dim');
+            if(comp) {
+              user.unit_lesson_complete = true;
+              if(comp.rating) {
+                user.unit_lesson_rating_class = htmlSafe('face ' + (comp.rating == 3 ? 'laugh' : (comp.rating == 2 ? 'neutral' : 'sad')))
+              }
+            }
+          }
           if(user.org_status) {
             var state = CoughDrop.user_statuses.find(function(s) { return s.id == user.org_status.state; });
             if(_this.get('org.status_overrides')) {
@@ -131,6 +142,9 @@ export default Component.extend({
             }
             if(state) {
               user.org_status_state = i18n.t('status_colon', "Status: " + state.label);
+            }
+            if(user.unit_lesson_complete) {
+              user.org_status_state = user.org_status_state + ', ' + i18n.t('training_complete', "Training Completed");
             }
             user.org_status_class = htmlSafe('glyphicon glyphicon-' + user.org_status.state);
           }

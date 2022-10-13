@@ -25,6 +25,7 @@ class OrganizationUnit < ActiveRecord::Base
     raise "organization required" unless self.organization
     self.settings ||= {}
     self.settings['name'] = process_string(params['name']) if params['name']
+    self.settings['topics'] = params['topics'] if params['topics']
     if params['goal'] && self.id
       self.settings['goal_assertions'] ||= {}
       if params['goal']['remove']
@@ -35,7 +36,7 @@ class OrganizationUnit < ActiveRecord::Base
             'id' => self.user_goal.global_id,
             'name' => self.user_goal.settings['name']
           }
-          self.settings['goal_assertions']["conclude_#{self.user_goal.gobal_id}"] = true if params['goal']['auto_conclude']
+          self.settings['goal_assertions']["conclude_#{self.user_goal.global_id}"] = true if params['goal']['auto_conclude']
           self.settings['goal_assertions']['removed_goal_id'] = self.user_goal.global_id
           self.user_goal = nil
         end
@@ -43,7 +44,7 @@ class OrganizationUnit < ActiveRecord::Base
         goal = UserGoal.find_by_path(params['goal']['id'])
         if goal && goal.settings['organization_unit_id'] == self.global_id 
           if self.user_goal && self.user_goal != goal
-            self.settings['goal_assertions']["conclude_#{self.user_goal.gobal_id}"] = true if params['goal']['auto_conclude']
+            self.settings['goal_assertions']["conclude_#{self.user_goal.global_id}"] = true if params['goal']['auto_conclude']
             self.settings['goal_assertions']['removed_goal_id'] = self.user_goal.global_id if self.user_goal
           end
           self.user_goal = goal

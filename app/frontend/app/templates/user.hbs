@@ -21,7 +21,7 @@
       {{#if app_state.feature_flags.lessons}}
         {{#if model.organizations.length}}
           <li role="presentation">
-            {{#link-to 'user.lessons' model.user_name}}{{t "lessons" key='lessons'}}{{/link-to}}
+            {{#link-to 'user.lessons' model.user_name}}{{t "trainings" key='trainings'}}{{/link-to}}
           </li>
         {{/if}}
       {{/if}}
@@ -61,7 +61,7 @@
         {{#link-to 'user.goals' model.user_name class='btn btn-default'}}{{t "goals" key='goals_lower'}}{{/link-to}}
         {{#if app_state.feature_flags.lessons}}
           {{#if model.organizations.length}}
-            {{#link-to 'user.lessons' model.user_name class='btn btn-default'}}{{t "lessons" key='lessons'}}{{/link-to}}
+            {{#link-to 'user.lessons' model.user_name class='btn btn-default'}}{{t "trainings" key='trainings'}}{{/link-to}}
           {{/if}}
         {{/if}}
         {{#link-to 'user.recordings' model.user_name class='btn btn-default'}}{{t "recordings" key='recordings_lower'}}{{/link-to}}

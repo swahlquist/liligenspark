@@ -6,6 +6,8 @@ import modal from '../../utils/modal';
 import { computed } from '@ember/object';
 import EmberObject from '@ember/object';
 import { set as emberSet } from '@ember/object';
+import capabilities from '../../utils/capabilities';
+import app_state from '../../utils/app_state';
 
 export default Controller.extend({
   first_log: computed('model.logs.data', function() {
@@ -15,6 +17,7 @@ export default Controller.extend({
     var _this = this;
     _this.set('log_stats', {loading: true});
     persistence.ajax('/api/v1/units/' + _this.get('model.id') + '/log_stats', {type: 'GET'}).then(function(res) {
+      res.loaded = true;
       res.avg_words_per_day = Math.round(10 * res.total_words / Math.max(1, res.total_user_weeks * 7)) / 10;
       res.avg_words_per_session = Math.round(10 * res.total_words / Math.max(1, res.total_sessions)) / 10;
       res.avg_modeling_per_week = Math.round(10 * res.total_models / Math.max(1, res.total_user_weeks * 7)) / 10;
@@ -59,14 +62,61 @@ export default Controller.extend({
     });
     return res;
   }),
+  lesson_or_topics: computed('model.lesson', 'model.topics', function() {
+    return !!(this.get('model.lesson') || this.get('model.topics.length'));
+  }),
+  lesson_targets: computed('model.lesson.types', function() {
+    var types = (this.get('model.lesson.types') || []).sort().join(',');
+    if(types == 'supervisor') {
+      return i18n.t('supervisors', "supervisors");
+    } else {
+      return i18n.t('all_users', "all users");
+    }
+  }),
   actions: {
-    edit_unit: function() {
+    edit_unit: function(opt) {
       var _this = this;
-      modal.open('edit-unit', {unit: _this.get('model')}).then(function(res) {
+      var opts = {unit: _this.get('model')}
+      if(opt == 'curriculum_only') {
+        opts.curriculum_only = true;
+      }
+      modal.open('edit-unit', opts).then(function(res) {
         if(res && res.updated) {
           _this.get('model').load_data(true);
         }
       });
+    },
+    update_curriculum: function() {
+      this.send('edit_unit', 'curriculum_only')
+    },
+    set_lesson: function() {
+      var _this = this;
+      modal.open('modals/assign-lesson', {unit: _this.get('model')}).then(function(res) {
+        if(res && res.lesson) {
+          _this.get('model').reload();
+        }
+      });
+    },
+    remove_lesson: function() {
+      var _this = this;
+      if(_this.get('model.lesson')) {
+        modal.open('confirm-delete-unit', {unit: _this.get('model'), lesson: _this.get('model.lesson')}).then(function(res) {
+          if(res && res.deleted) {
+            _this.get('model').reload();
+          }
+        });
+      }
+    },
+    launch_lesson: function() {
+      if(this.get('model.lesson') && app_state.get('currentUser.user_token')) {
+        var lesson = this.get('model.lesson');
+        var prefix = location.protocol + "//" + location.host;
+        if(capabilities.installed_app && capabilities.api_host) {
+          prefix = capabilities.api_host;
+        }
+        window.open(prefix + '/lessons/' + lesson.id + '/' + lesson.lesson_code + '/' + app_state.get('currentUser.user_token'), '_blank');
+      }
+
     },
     delete_unit: function() {
       var _this = this;
