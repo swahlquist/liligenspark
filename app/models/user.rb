@@ -230,7 +230,8 @@ class User < ActiveRecord::Base
       self.settings['activated_sources'] << source_id
       self.save
       if log_activation
-        AuditEvent.create!(:event_type => 'source_activated', :summary => "#{self.user_name} activated #{source_id}", :data => {source: source_id})
+        ae = AuditEvent.find_by(user_key: self.global_id, record_id: source_id)
+        ae ||= AuditEvent.create!(:user_key => self.global_id, :record_id => source_id, :event_type => 'source_activated', :summary => "#{self.user_name} activated #{source_id}", :data => {source: source_id})
       end
     end
   end
