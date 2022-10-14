@@ -314,7 +314,8 @@ class User < ActiveRecord::Base
 
   def refresh_premium_voices
     if !self.any_premium_or_grace_period?(true)
-      if !self.settings['premium_voices']['expired_state']
+      if !(self.settings['premium_voices'] || {})['expired_state']
+        self.settings['premium_voices'] ||= {}
         self.settings['premium_voices']['allowed'] = self.settings['premium_voices']['extra'] || 0
         self.settings['premium_voices']['claimed'] = (self.settings['premium_voices']['claimed'] || [])[0, self.settings['premium_voices']['allowed']]
         self.settings['premium_voices']['expired_state'] = true
