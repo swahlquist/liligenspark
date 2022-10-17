@@ -454,7 +454,11 @@
           <h4>{{t "Current Curriculum Topics:" key='current_curriculum_topics'}}</h4>
           <ul class='list-group' style='max-width: 350px;'>
             {{#each model.topics as |topic|}}
-              <a class='list-group-item' href={{topic.url}} target='_blank'>{{topic.title}}</a>
+              {{#if topic.url}}
+                <a class='list-group-item' href={{topic.url}} target='_blank'>{{topic.title}}</a>
+              {{else}}
+                <li class='list-group-item'>{{topic.title}}</li>
+              {{/if}}
             {{/each}}
           </ul>
         {{/if}}

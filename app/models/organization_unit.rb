@@ -18,6 +18,12 @@ class OrganizationUnit < ActiveRecord::Base
   
   def generate_defaults
     self.settings ||= {}
+    if self.settings['topics']
+      self.settings['topics'].each do |topic|
+        topic.delete('url') if topic['url'] && !topic['url'].match(/^https?:\/\//)
+      end
+    end
+    true
   end
   
   def process_params(params, non_user_params)

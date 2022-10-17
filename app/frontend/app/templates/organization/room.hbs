@@ -94,10 +94,12 @@
                     {{t "Set Room-Wide Goal" key='set_room_wide_goal'}}
                   {{/if}}
                 </a></li>
-                {{#if model.lesson}}
-                  <li><a href="#" {{action 'remove_lesson'}}>{{t "Remove Training" key='remove_training'}}</a></li>
-                {{else}}
-                  <li><a href="#" {{action 'set_lesson'}}>{{t "Assign Training" key='assign_training'}}</a></li>
+                {{#if app_state.feature_flags.lessons}}
+                  {{#if model.lesson}}
+                    <li><a href="#" {{action 'remove_lesson'}}>{{t "Remove Training" key='remove_training'}}</a></li>
+                  {{else}}
+                    <li><a href="#" {{action 'set_lesson'}}>{{t "Assign Training" key='assign_training'}}</a></li>
+                  {{/if}}
                 {{/if}}
                 <li><a href="#" {{action 'update_curriculum'}}>{{t "Update Curriculum" key='update_curriculum'}}</a></li>
               {{/if}}
@@ -171,11 +173,13 @@
                     </span>
                   {{/each}}
                 {{/if}}
-                {{#if model.lesson}}
-                  <div style='font-style: italic; margin-top: 10px;'>
-                    <a href="#" {{action 'launch_lesson'}}>{{model.lesson.title}}</a>
-                    ({{lesson_targets}})
-                  </div>
+                {{#if app_state.feature_flags.lessons}}
+                  {{#if model.lesson}}
+                    <div style='font-style: italic; margin-top: 10px;'>
+                      <a href="#" {{action 'launch_lesson'}}>{{model.lesson.title}}</a>
+                      ({{lesson_targets}})
+                    </div>
+                  {{/if}}
                 {{/if}}
               {{else}}
                 {{t "None Set" key='none_set'}}
