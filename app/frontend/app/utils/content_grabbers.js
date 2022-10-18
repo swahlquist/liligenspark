@@ -729,7 +729,7 @@ var pictureGrabber = EmberObject.extend({
       return data;
     }, function(xhr, message) {
       if(fallback) {
-        return _this.open_symbols_search(text);
+        return _this.open_symbols_search(text, user_name, locale);
       } else {
         message = message || {error: 'invalid search'};
         return RSVP.reject(message.error);

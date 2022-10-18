@@ -908,7 +908,7 @@ export default modal.ModalController.extend({
         stashes.persist('last_image_library', this.get('image_library'));
         stashes.persist('last_image_library_at', (new Date()).getTime());  
       }
-      var locale = this.get('search_locale') || this.get('board.locale') || 'en';
+      var locale = this.get('search_locale') || this.get('board.button_locale') || this.get('board.locale') || 'en';
       contentGrabbers.pictureGrabber.find_picture(text, this.get('board.user_name'), locale);
     },
     set_as_button_image: function(url, content_type) {
