@@ -85,6 +85,8 @@ module Relinking
     board.settings['grid'] = BoardContent.load_content(self, 'grid')
     board.settings['intro'] = BoardContent.load_content(self, 'intro')
     board.settings['downstream_board_ids'] = self.settings['downstream_board_ids']
+    board.settings['common_library'] = self.settings['common_library'] if self.settings['common_library']
+    board.settings['swapped_library'] = self.settings['swapped_library'] if self.settings['swapped_library']
     board.settings['word_suggestions'] = self.settings['word_suggestions']
     board.settings['categories'] = self.settings['categories']
     board.settings['license'] = self.settings['license']
