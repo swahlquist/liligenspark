@@ -34,7 +34,7 @@ module Purchasing2
       session_opts[:metadata][:user_id] = opts[:user_id]
       session_opts[:metadata][:action] = 'subscribe'
       session_opts[:line_items] << {
-        {price: monthly_price_id, quantity: 1}
+        price: monthly_price_id, quantity: 1
       }
       session_opts[:mode] = 'subscription'
       session_opts[:subscription_data] = {metadata: { platform_source: 'coughdrop', user_id: opts[:user_id]}}
@@ -45,7 +45,7 @@ module Purchasing2
       end
       if opts[:supporter_count]
         session_opts[:line_items] << {
-          price: supporter_price_id, (opts[:supporter_count] || 1)
+          price: supporter_price_id, quantity: (opts[:supporter_count] || 1)
         }
       end
     elsif opts[:gift]
@@ -82,7 +82,7 @@ module Purchasing2
       end
       if opts[:supporter_count]
         session_opts[:line_items] << {
-          price: supporter_price_id, (opts[:supporter_count] || 1)
+          price: supporter_price_id, quantity: (opts[:supporter_count] || 1)
         }
       end
     elsif opts[:extras]
@@ -98,7 +98,7 @@ module Purchasing2
       session_opts[:line_items] << {
         price_data: {
           currency: 'USD', 
-          unit_amount: opts[:dollars] * 100
+          unit_amount: opts[:dollars] * 100,
           product_data: {
             name: "CoughDrop Custom Purchase",
             description: opts[:description],
@@ -110,7 +110,7 @@ module Purchasing2
     if opts[:discount_code] && !active_sale? && discountable
       # Create a coupon
       gift = GiftPurchase.find_by_code(opts[:discount_code]) rescue nil
-      return false unless gift || gift.already_used???
+      # return false unless gift || gift.already_used???
 
       coupon = Stripe::Coupon.create({
         metadata: {discount_code: opts[:discount_code]},
