@@ -66,7 +66,7 @@ describe Purchasing do
       u2 = User.create
       u1.settings['subscription'] = {'customer_id' => 'abacus'}
       o = OpenStruct.new(:metadata => {'user_id' => u2.global_id})
-      expect(Stripe::Customer).to receive(:retrieve).with('abacus').and_return(o)
+      expect(Stripe::Customer).to receive(:retrieve).with({id: 'abacus'}).and_return(o)
       expect(User).to receive(:find_by_global_id).with(u1.global_id).and_return(u1)
       expect(User).to receive(:find_by_global_id).with(u2.global_id).and_return(u2)
       expect(u1).to receive(:transfer_subscription_to).with(u2, true)
@@ -86,7 +86,7 @@ describe Purchasing do
       u1 = User.create
       u2 = User.create
       o = OpenStruct.new(:metadata => {'user_id' => u2.global_id})
-      expect(Stripe::Customer).to receive(:retrieve).with('abacus').and_return(o)
+      expect(Stripe::Customer).to receive(:retrieve).with({id: 'abacus'}).and_return(o)
       expect(User).to receive(:find_by_global_id).with(u1.global_id).and_return(u1)
       expect(User).to receive(:find_by_global_id).with(u2.global_id).and_return(u2)
       expect(u1).to_not receive(:transfer_subscription_to)
@@ -112,7 +112,7 @@ describe Purchasing do
         expect(SubscriptionMailer).to receive(:schedule_delivery).with(:purchase_confirmed, u.global_id)
         expect(SubscriptionMailer).to receive(:schedule_delivery).with(:new_subscription, u.global_id)
         
-        expect(Stripe::Customer).to receive(:retrieve).with('qwer').and_return({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: 'qwer'}).and_return({
           'metadata' => {
             'user_id' => u.global_id
           }
@@ -143,7 +143,7 @@ describe Purchasing do
         expect(SubscriptionMailer).to_not receive(:schedule_delivery)
         expect(SubscriptionMailer).to_not receive(:schedule_delivery)
         
-        expect(Stripe::Customer).to_not receive(:retrieve).with('qwer')
+        expect(Stripe::Customer).to_not receive(:retrieve).with({id: 'qwer'})
         res = stripe_event_request 'charge.succeeded', {
           'id' => '12345',
           'customer' => 'qwer',
@@ -296,7 +296,7 @@ describe Purchasing do
         expect(SubscriptionMailer).to receive(:schedule_delivery).with(:purchase_confirmed, u.global_id)
         expect(SubscriptionMailer).to receive(:schedule_delivery).with(:new_subscription, u.global_id)
         
-        expect(Stripe::Customer).to receive(:retrieve).with('qwer').and_return({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: 'qwer'}).and_return({
           'metadata' => {
             'user_id' => u.global_id
           }
@@ -328,7 +328,7 @@ describe Purchasing do
     describe "charge.failed" do
       it "should trigger a purchase_failed event" do
         u = User.create
-        expect(Stripe::Customer).to receive(:retrieve).with('qwer').and_return({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: 'qwer'}).and_return({
           'metadata' => {
             'user_id' => u.global_id
           }
@@ -342,7 +342,7 @@ describe Purchasing do
 
       it "should not trigger a purchase_failed event from a different source" do
         u = User.create
-        expect(Stripe::Customer).to_not receive(:retrieve).with('qwer')
+        expect(Stripe::Customer).to_not receive(:retrieve).with({id: 'qwer'})
         expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:purchase_bounced, u.global_id)
         res = stripe_event_request 'charge.failed', {
           'customer' => 'qwer',
@@ -381,7 +381,7 @@ describe Purchasing do
     describe "customer.subscription.created" do
       it "should trigger a subscribe event" do
         u = User.create
-        expect(Stripe::Customer).to receive(:retrieve).with('tyuio').and_return({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: 'tyuio'}).and_return({
           'metadata' => {
             'user_id' => u.global_id
           }
@@ -408,7 +408,7 @@ describe Purchasing do
 
       it "should not trigger a subscribe event from the wrong source" do
         u = User.create
-        expect(Stripe::Customer).to_not receive(:retrieve).with('tyuio')
+        expect(Stripe::Customer).to_not receive(:retrieve).with({id: 'tyuio'})
         expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:purchase_confirmed, u.global_id)
         expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:new_subscription, u.global_id)
         expect(Purchasing).to_not receive(:cancel_other_subscriptions).with(u, '12345')
@@ -434,7 +434,7 @@ describe Purchasing do
         u = User.create
         u.settings['subscription'] = {'customer_id' => '12345', 'subscription_id' => '23456'}
         u.save
-        expect(Stripe::Customer).to receive(:retrieve).with('12345').and_return({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '12345'}).and_return({
           'metadata' => {
             'user_id' => u.global_id
           }
@@ -458,7 +458,7 @@ describe Purchasing do
       
       it "should trigger a subscribe event if the status is active" do
         u = User.create
-        expect(Stripe::Customer).to receive(:retrieve).with('tyuio').and_return({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: 'tyuio'}).and_return({
           'metadata' => {
             'user_id' => u.global_id
           }
@@ -486,7 +486,7 @@ describe Purchasing do
 
       it "should not trigger a subscribe event when from the wrong source" do
         u = User.create
-        expect(Stripe::Customer).to_not receive(:retrieve).with('tyuio')
+        expect(Stripe::Customer).to_not receive(:retrieve).with({id: 'tyuio'})
         expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:purchase_confirmed, u.global_id)
         expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:new_subscription, u.global_id)
         expect(Purchasing).to_not receive(:cancel_other_subscriptions).with(u, '12345')
@@ -511,7 +511,7 @@ describe Purchasing do
         u = User.create
         u.settings['subscription'] = {'customer_id' => '12345', 'subscription_id' => '23456'}
         u.save
-        expect(Stripe::Customer).to receive(:retrieve).with('12345').and_return({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '12345'}).and_return({
           'metadata' => {
             'user_id' => u.global_id
           }
@@ -534,7 +534,7 @@ describe Purchasing do
         u = User.create
         u.settings['subscription'] = {'customer_id' => '12345', 'subscription_id' => '23456'}
         u.save
-        expect(Stripe::Customer).to_not receive(:retrieve).with('12345')
+        expect(Stripe::Customer).to_not receive(:retrieve).with({id: '12345'})
         expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:unsubscribe_reason, u.global_id)
         expect(SubscriptionMailer).to_not receive(:schedule_delivery).with(:subscription_expiring, u.global_id)
         res = stripe_event_request 'customer.subscription.deleted', {
@@ -695,7 +695,7 @@ describe Purchasing do
           'customer' => '12345',
           'status' => 'active'
         })
-        expect(Stripe::Customer).to receive(:retrieve).with('12345').and_return(OpenStruct.new({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '12345', expand: ['subscriptions']}).and_return(OpenStruct.new({
           subscriptions: subs,
           id: '12345'
         })).at_least(1).times
@@ -727,7 +727,7 @@ describe Purchasing do
           'customer' => '12345',
           'status' => 'active'
         })
-        expect(Stripe::Customer).to receive(:retrieve).with('12345').and_return(OpenStruct.new({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '12345', expand: ['subscriptions']}).and_return(OpenStruct.new({
           subscriptions: subs,
           id: '12345'
         })).at_least(1).times
@@ -767,6 +767,7 @@ describe Purchasing do
         expect(cus).to receive(:id).and_return('12345')
         expect(Stripe::Customer).to receive(:create).with({
           :metadata => {'platform_source' => 'coughdrop','user_id' => u.global_id},
+          :expand => ['subscriptions'],
           :email => nil
         }).and_return(cus)
         expect(Stripe::Customer).to receive(:retrieve).and_return(cus).at_least(1).times
@@ -827,6 +828,7 @@ describe Purchasing do
         expect(cus).to receive(:id).and_return('12345')
         expect(Stripe::Customer).to receive(:create).with({
           :metadata => {'platform_source' => 'coughdrop', 'user_id' => u.global_id},
+          :expand => ['subscriptions'],
           :email => nil
         }).and_return(cus)
         expect(Stripe::Customer).to receive(:retrieve).and_return(cus).at_least(1).times
@@ -887,6 +889,7 @@ describe Purchasing do
         expect(cus).to receive(:id).and_return('12345')
         expect(Stripe::Customer).to receive(:create).with({
           :metadata => {'platform_source' => 'coughdrop','user_id' => u.global_id},
+          :expand => ['subscriptions'],
           :email => nil
         }).and_return(cus)
         expect(Stripe::Customer).to receive(:retrieve).and_return(cus).at_least(1).times
@@ -937,7 +940,7 @@ describe Purchasing do
           'customer' => '12345',
           'status' => 'active'
         })
-        expect(Stripe::Customer).to receive(:retrieve).with('12345').and_return(OpenStruct.new({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '12345', expand: ['subscriptions']}).and_return(OpenStruct.new({
           subscriptions: subs,
           id: '12345'
         })).at_least(1).times
@@ -985,6 +988,7 @@ describe Purchasing do
         })
         expect(Stripe::Customer).to receive(:create).with({
           :metadata => {'platform_source' => 'coughdrop', 'user_id' => u.global_id},
+          :expand => ['subscriptions'],
           :email => nil
         }).and_return(cus)
         expect(Stripe::Customer).to receive(:retrieve).and_return(cus).at_least(1).times
@@ -1017,9 +1021,10 @@ describe Purchasing do
         })
         expect(Stripe::Customer).to receive(:create).with({
           :metadata => {'platform_source' => 'coughdrop', 'user_id' => u.global_id},
+          :expand => ['subscriptions'],
           :email => 'testing@example.com'
         }).and_return(cus)
-        expect(Stripe::Customer).to receive(:retrieve).with('12345').and_return(cus)
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '12345', expand: ['subscriptions']}).and_return(cus)
         Purchasing.purchase(u, {'id' => 'token'}, 'monthly_6')
       end
 
@@ -1042,6 +1047,7 @@ describe Purchasing do
         })
         expect(Stripe::Customer).to receive(:create).with({
           :metadata => {'platform_source' => 'coughdrop','user_id' => u.global_id},
+          :expand => ['subscriptions'],
           :email => nil
         }).and_return(cus)
         expect(s2).to receive(:save) do
@@ -1049,7 +1055,7 @@ describe Purchasing do
           expect(s2.plan).to eq('monthly_6')
           expect(s2.prorate).to eq(true)
         end
-        expect(Stripe::Customer).to receive(:retrieve).with('12345').and_return(cus)
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '12345', expand: ['subscriptions']}).and_return(cus)
         expect(subs).to_not receive(:create)
         res = Purchasing.purchase(u, {'id' => 'token'}, 'monthly_6')
         expect(res[:success]).to eq(true)
@@ -1072,9 +1078,10 @@ describe Purchasing do
         })
         expect(Stripe::Customer).to receive(:create).with({
           :metadata => {'platform_source' => 'coughdrop', 'user_id' => u.global_id},
+          :expand => ['subscriptions'],
           :email => nil
         }).and_return(cus)
-        expect(Stripe::Customer).to receive(:retrieve).with('9876').and_return(cus)
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '9876', expand: ['subscriptions']}).and_return(cus)
         expect(subs).to receive(:create){|opts|
           expect(opts).to eq({
             plan: 'monthly_6',
@@ -1110,7 +1117,7 @@ describe Purchasing do
           data: [sub1],
           count: 1
         })
-        expect(Stripe::Customer).to receive(:retrieve).with('12345').and_return(OpenStruct.new({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '12345', expand: ['subscriptions']}).and_return(OpenStruct.new({
           subscriptions: subs,
           id: '12345'
         })).at_least(1).times
@@ -2006,7 +2013,7 @@ describe Purchasing do
         block.call(b)
         block.call(c)
       end
-      expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '2345', expand: ['subscriptions']}).and_return(OpenStruct.new({
         subscriptions: subs1
       }))
       res = Purchasing.unsubscribe(u)
@@ -2022,23 +2029,23 @@ describe Purchasing do
 
   describe "change_user_id" do
     it "should error if no customer found" do
-      expect(Stripe::Customer).to receive(:retrieve).with('1234').and_return(nil)
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '1234'}).and_return(nil)
       expect { Purchasing.change_user_id('1234', '111', '222') }.to raise_error('customer not found')
     end
     
     it "should error if customer doesn't match what's expected" do
       o = OpenStruct.new(:metadata => {})
-      expect(Stripe::Customer).to receive(:retrieve).with('1234').and_return(o)
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '1234'}).and_return(o)
       expect { Purchasing.change_user_id('1234', '111', '222') }.to raise_error('wrong existing user_id')
       
       o.metadata['user_id'] = '222'
-      expect(Stripe::Customer).to receive(:retrieve).with('1234').and_return(o)
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '1234'}).and_return(o)
       expect { Purchasing.change_user_id('1234', '111', '222') }.to raise_error('wrong existing user_id')
     end
     
     it "should update the customer correctly" do
       o = OpenStruct.new(:metadata => {'user_id' => '111'})
-      expect(Stripe::Customer).to receive(:retrieve).with('1234').and_return(o)
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '1234'}).and_return(o)
       expect(o).to receive(:save)
       Purchasing.change_user_id('1234', '111', '222')
       expect(o.metadata['user_id']).to eq('222')
@@ -2052,7 +2059,7 @@ describe Purchasing do
       expect(res).to eq(false)
       
       u.settings['subscription'] = {'customer_id' => '1234'}
-      expect(Stripe::Customer).to receive(:retrieve).with('1234').and_return(nil)
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '1234', expand: ['subscriptions']}).and_return(nil)
       res = Purchasing.cancel_other_subscriptions(u, '2345')
       expect(res).to eq(false)
     end
@@ -2060,7 +2067,7 @@ describe Purchasing do
     it "should return false on error" do
       u = User.create
       u.settings['subscription'] = {'customer_id' => '1234'}
-      expect(Stripe::Customer).to receive(:retrieve).with('1234') { raise "no" }
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '1234', expand: ['subscriptions']}) { raise "no" }
       res = Purchasing.cancel_other_subscriptions(u, '2345')
       expect(res).to eq(false)
     end
@@ -2071,7 +2078,7 @@ describe Purchasing do
       subs1 = {}
       expect(subs1).to receive(:auto_paging_each) do |&block|
       end
-      expect(Stripe::Customer).to receive(:retrieve).with('1234').and_return(OpenStruct.new({
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '1234', expand: ['subscriptions']}).and_return(OpenStruct.new({
         subscriptions: subs1
       }))
       res = Purchasing.cancel_other_subscriptions(u, '2345')
@@ -2095,7 +2102,7 @@ describe Purchasing do
         block.call(b)
         block.call(c)
       end
-      expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '2345', expand: ['subscriptions']}).and_return(OpenStruct.new({
         subscriptions: subs
       }))
       res = Purchasing.cancel_other_subscriptions(u, '4567')
@@ -2126,13 +2133,13 @@ describe Purchasing do
       subs3 = {}
       expect(subs3).to receive(:auto_paging_each) do |&block|
       end
-      expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '2345', expand: ['subscriptions']}).and_return(OpenStruct.new({
         subscriptions: subs1
       }))
-      expect(Stripe::Customer).to receive(:retrieve).with('3456').and_return(OpenStruct.new({
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '3456', expand: ['subscriptions']}).and_return(OpenStruct.new({
         subscriptions: subs2
       }))
-      expect(Stripe::Customer).to receive(:retrieve).with('4567').and_return(OpenStruct.new({
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '4567', expand: ['subscriptions']}).and_return(OpenStruct.new({
         subscriptions: subs3
       }))
       res = Purchasing.cancel_other_subscriptions(u, 'all')
@@ -2162,13 +2169,13 @@ describe Purchasing do
       expect(subs3).to receive(:auto_paging_each) do |&block|
         block.call(c)
       end
-      expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '2345', expand: ['subscriptions']}).and_return(OpenStruct.new({
         subscriptions: subs1
       }))
-      expect(Stripe::Customer).to receive(:retrieve).with('3456').and_return(OpenStruct.new({
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '3456', expand: ['subscriptions']}).and_return(OpenStruct.new({
         subscriptions: subs2
       }))
-      expect(Stripe::Customer).to receive(:retrieve).with('4567').and_return(OpenStruct.new({
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '4567', expand: ['subscriptions']}).and_return(OpenStruct.new({
         subscriptions: subs3
       }))
       res = Purchasing.cancel_other_subscriptions(u, '4567')
@@ -2193,7 +2200,7 @@ describe Purchasing do
         block.call(b)
         block.call(c)
       end
-      expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '2345', expand: ['subscriptions']}).and_return(OpenStruct.new({
         subscriptions: subs1
       }))
       res = Purchasing.cancel_other_subscriptions(u, '4567')
@@ -2216,7 +2223,7 @@ describe Purchasing do
       expect(u.subscription_events.length).to eq(0)
       
       u = User.create({'settings' => {'subscription' => {'customer_id' => '1234'}}})
-      expect(Stripe::Customer).to receive(:retrieve).with('1234').and_raise("no dice")
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '1234', expand: ['subscriptions']}).and_raise("no dice")
       res = Purchasing.cancel_other_subscriptions(u, '1234')
       expect(res).to eq(false)
       expect(u.subscription_events.length).to eq(2)
@@ -2226,7 +2233,7 @@ describe Purchasing do
       u = User.create({'settings' => {'subscription' => {'customer_id' => '2345'}}})
       subscr = OpenStruct.new
       expect(subscr).to receive(:auto_paging_each).and_raise('naughty')
-      expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '2345', expand: ['subscriptions']}).and_return(OpenStruct.new({
         subscriptions: subscr
       }))
       res = Purchasing.cancel_other_subscriptions(u, '2345')
@@ -2246,7 +2253,7 @@ describe Purchasing do
       end
       expect(b).to receive(:save)
       expect(b).to receive(:delete).and_raise('yipe')
-      expect(Stripe::Customer).to receive(:retrieve).with('3456').and_return(OpenStruct.new({
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '3456', expand: ['subscriptions']}).and_return(OpenStruct.new({
         subscriptions: subs1
       }))
       res = Purchasing.cancel_other_subscriptions(u, '3456')
@@ -2273,7 +2280,7 @@ describe Purchasing do
         block.call(b)
         block.call(c)
       end
-      expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '2345', expand: ['subscriptions']}).and_return(OpenStruct.new({
         subscriptions: subs1
       }))
       res = Purchasing.cancel_other_subscriptions(u, '4567')
@@ -2382,7 +2389,7 @@ describe Purchasing do
       u.settings['subscription'] = {'customer_id' => '1234qwer'}
       u.save
       cus = {'id' => '1234qwer', 'default_source' => 'tokenny', 'subscriptions' => [{'status' => 'active'}]}
-      expect(Stripe::Customer).to receive(:retrieve).with('1234qwer').and_return(cus)
+      expect(Stripe::Customer).to receive(:retrieve).with({id: '1234qwer', expand: ['subscriptions']}).and_return(cus)
       expect(Stripe::Charge).to receive(:create).with({
         :amount => 2500,
         :currency => 'usd',
@@ -2988,6 +2995,7 @@ describe Purchasing do
       subscriptions: []
     })
     expect(Stripe::Customer).to receive(:create).with({
+      :expand => ['subscriptions'],
       :metadata => {
         'user_id' => u.global_id,
         'platform_source' => 'coughdrop'
@@ -3000,7 +3008,7 @@ describe Purchasing do
       :metadata => {:platform_source => 'coughdrop'},
       trial_end: (u.created_at + 60.days).to_i
     }).and_raise("You cannot use a Stripe token more than once")
-    Purchasing.purchase(u, {'id' => 'tokenasdfasdf'}, 'monthly_6')
+    Purchasing.purchase(u, {'id' => 'tokenasdfasdf',}, 'monthly_6')
     expect(u.reload.subscription_events.length).to eq(16)
     expect(u.reload.subscription_events[10]['log']).to eq('purchase initiated')
     expect(u.reload.subscription_events[10]['token']).to eq('tok..sdf')
@@ -3117,14 +3125,14 @@ describe Purchasing do
         res = Purchasing.cancel_other_subscriptions(u, '2345')
         expect(res).to eq(false)
       
-        expect(Stripe::Customer).to receive(:retrieve).with('1234').and_return(nil)
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '1234', expand: ['subscriptions']}).and_return(nil)
         res = Purchasing.cancel_subscription(u.global_id, '1234', '2345')
         expect(res).to eq(false)
       end
     
       it "should return false on error" do
         u = User.create
-        expect(Stripe::Customer).to receive(:retrieve).with('1234') { raise "no" }
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '1234', expand: ['subscriptions']}) { raise "no" }
         res = Purchasing.cancel_subscription(u.global_id, '1234', '2345')
         expect(res).to eq(false)
       end
@@ -3132,7 +3140,7 @@ describe Purchasing do
       it "should retrieve the customer record" do
         u = User.create
         subs1 = {}
-        expect(Stripe::Customer).to receive(:retrieve).with('1234').and_return(OpenStruct.new({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '1234', expand: ['subscriptions']}).and_return(OpenStruct.new({
           subscriptions: subs1
         }))
         res = Purchasing.cancel_subscription(u.global_id, '1234', '2345')
@@ -3142,7 +3150,7 @@ describe Purchasing do
       it "should not do anything if the customer metadata doesn't match the user" do
         u = User.create
         subs1 = {}
-        expect(Stripe::Customer).to receive(:retrieve).with('1234').and_return(OpenStruct.new({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '1234', expand: ['subscriptions']}).and_return(OpenStruct.new({
           subscriptions: subs1
         }))
         res = Purchasing.cancel_subscription(u.global_id, '1234', '2345')
@@ -3164,7 +3172,7 @@ describe Purchasing do
           block.call(b)
           block.call(c)
         end
-          expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
+          expect(Stripe::Customer).to receive(:retrieve).with({id: '2345', expand: ['subscriptions']}).and_return(OpenStruct.new({
           metadata: {'user_id' => u.global_id},
           subscriptions: subs1
         }))
@@ -3184,7 +3192,7 @@ describe Purchasing do
           block.call(a)
           block.call(b)
         end
-          expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
+          expect(Stripe::Customer).to receive(:retrieve).with({id: '2345', expand: ['subscriptions']}).and_return(OpenStruct.new({
           metadata: {'user_id' => u.global_id},
           subscriptions: subs1
         }))
@@ -3207,7 +3215,7 @@ describe Purchasing do
           block.call(b)
           block.call(c)
         end  
-        expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '2345', expand: ['subscriptions']}).and_return(OpenStruct.new({
           metadata: {'user_id' => u.global_id},
           subscriptions: subs1
         }))
@@ -3227,7 +3235,7 @@ describe Purchasing do
         expect(u.subscription_events.length).to eq(0)
       
         u = User.create({'settings' => {'subscription' => {'customer_id' => '1234'}}})
-        expect(Stripe::Customer).to receive(:retrieve).with('1234').and_raise("no dice")
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '1234', expand: ['subscriptions']}).and_raise("no dice")
         res = Purchasing.cancel_subscription(u.global_id, '1234', '1234')
         expect(res).to eq(false)
         expect(u.subscription_events.length).to eq(1)
@@ -3237,7 +3245,7 @@ describe Purchasing do
         u = User.create({'settings' => {'subscription' => {'customer_id' => '2345'}}})
         subscr = OpenStruct.new
         expect(subscr).to receive(:auto_paging_each).and_raise('naughty')
-        expect(Stripe::Customer).to receive(:retrieve).with('2345').and_return(OpenStruct.new({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '2345', expand: ['subscriptions']}).and_return(OpenStruct.new({
           metadata: {'user_id' => u.global_id},
           subscriptions: subscr
         }))
@@ -3259,7 +3267,7 @@ describe Purchasing do
           block.call(b)
         end
   
-        expect(Stripe::Customer).to receive(:retrieve).with('3456').and_return(OpenStruct.new({
+        expect(Stripe::Customer).to receive(:retrieve).with({id: '3456', expand: ['subscriptions']}).and_return(OpenStruct.new({
           metadata: {'user_id' => u.global_id},
           subscriptions: subs1
         }))

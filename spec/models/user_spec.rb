@@ -2836,6 +2836,7 @@ describe User, :type => :model do
     it "should track novel usage" do
       u = User.create
       u.settings['subscription'] = {'expiration_source' => 'cool stuff'}
+      u.expires_at = 6.months.ago
       u.save
       expect(u.subscription_hash['grace_trial_period']).to eq(nil)
       expect(u.settings['activated_sources']).to eq(nil)
@@ -2868,8 +2869,10 @@ describe User, :type => :model do
     it "should not re-track tracked usage" do
       u = User.create
       u.settings['subscription'] = {'expiration_source' => 'cool stuff'}
+      u.expires_at = 6.months.ago
       u.save
       expect(u.subscription_hash['grace_trial_period']).to eq(nil)
+      expect(u.subscription_hash['grace_period']).to eq(nil)
       expect(u.settings['activated_sources']).to eq(nil)
       u.settings['activated_sources'] = ['bacon']
       u.save

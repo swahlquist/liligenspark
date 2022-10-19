@@ -44,14 +44,14 @@ describe ExternalTracker do
       u = User.create
       u.settings['email'] = 'testing@example.com'
       u.save
-      ENV['HUBSPOT_KEY'] = 'hubby'
+      ENV['HUBSPOT_TOKEN'] = 'hubby'
 #       geo = {
 #         'country_code' => 'US',
 #         'city' => 'Sandy',
 #         'region_name' => 'Utah'
 #       }
 #      expect(Typhoeus).to receive(:get).with('asdf').and_return(OpenStruct.new(body: geo.to_json))
-      expect(Typhoeus).to receive(:post).with("https://api.hubapi.com/contacts/v1/contact/?hapikey=hubby", {
+      expect(Typhoeus).to receive(:post).with("https://api.hubapi.com/contacts/v1/contact/", {
         body: {properties: [
           {property: 'email', value: 'testing@example.com' },
           {property: 'firstname', value: 'No'},
@@ -62,7 +62,7 @@ describe ExternalTracker do
           {property: 'account_type', value: 'Communicator Account'},
           {property: 'hs_legal_basis', value: 'Legitimate interest – prospect/lead'}
         ]}.to_json,
-        headers: {'Content-Type' => 'application/json'}
+        headers: {'Content-Type' => 'application/json', "Authorization"=>"Bearer hubby"}
       }).and_return(OpenStruct.new(code: '201'))
       res = ExternalTracker.persist_new_user(u.global_id)
       expect(res).to eq('201')
@@ -77,14 +77,14 @@ describe ExternalTracker do
       d = Device.create(:user => u)
       d.settings['ip_address'] = '1.2.3.4'
       d.save
-      ENV['HUBSPOT_KEY'] = 'hubby'
+      ENV['HUBSPOT_TOKEN'] = 'hubby'
       geo = {
         'country_code' => 'US',
         'city' => 'Sandy',
         'region_name' => 'Utah'
       }
       expect(Typhoeus).to receive(:get).with("http://api.ipstack.com/1.2.3.4?access_key=#{ENV['IPSTACK_KEY']}", {timeout: 5}).and_return(OpenStruct.new(body: geo.to_json))
-      expect(Typhoeus).to receive(:post).with("https://api.hubapi.com/contacts/v1/contact/?hapikey=hubby", {
+      expect(Typhoeus).to receive(:post).with("https://api.hubapi.com/contacts/v1/contact/", {
         body: {properties: [
           {property: 'email', value: 'testing@example.com' },
           {property: 'firstname', value: 'No'},
@@ -95,7 +95,7 @@ describe ExternalTracker do
           {property: 'account_type', value: 'AT Specialist/Lending Library'},
           {property: 'hs_legal_basis', value: 'Legitimate interest – prospect/lead'}
         ]}.to_json,
-        headers: {'Content-Type' => 'application/json'}
+        headers: {'Content-Type' => 'application/json', "Authorization"=>"Bearer hubby"}
       }).and_return(OpenStruct.new(code: '201'))
       res = ExternalTracker.persist_new_user(u.global_id)
       expect(res).to eq('201')
@@ -110,14 +110,14 @@ describe ExternalTracker do
       d = Device.create(:user => u)
       d.settings['ip_address'] = '1.2.3.4'
       d.save
-      ENV['HUBSPOT_KEY'] = 'hubby'
+      ENV['HUBSPOT_TOKEN'] = 'hubby'
       geo = {
         'country_code' => 'US',
         'city' => 'Sandy',
         'region_name' => 'Utah'
       }
       expect(Typhoeus).to receive(:get).with("http://api.ipstack.com/1.2.3.4?access_key=#{ENV['IPSTACK_KEY']}", {timeout: 5}).and_return(OpenStruct.new(body: geo.to_json))
-      expect(Typhoeus).to receive(:post).with("https://api.hubapi.com/contacts/v1/contact/?hapikey=hubby", {
+      expect(Typhoeus).to receive(:post).with("https://api.hubapi.com/contacts/v1/contact/", {
         body: {properties: [
           {property: 'email', value: 'testing@example.com' },
           {property: 'firstname', value: 'No'},
@@ -128,7 +128,7 @@ describe ExternalTracker do
           {property: 'account_type', value: 'Therapist'},
           {property: 'hs_legal_basis', value: 'Legitimate interest – prospect/lead'}
         ]}.to_json,
-        headers: {'Content-Type' => 'application/json'}
+        headers: {'Content-Type' => 'application/json', "Authorization"=>"Bearer hubby"}
       }).and_return(OpenStruct.new(code: '201'))
       res = ExternalTracker.persist_new_user(u.global_id)
       expect(res).to eq('201')

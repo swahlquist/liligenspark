@@ -3,6 +3,7 @@ require 'stripe'
 module Purchasing
   def self.subscription_event(request)
     Stripe.api_key = ENV['STRIPE_SECRET_KEY']
+    Stripe.api_version = '2022-08-01'
     json = JSON.parse(request.body.read) rescue nil
     event_id = json && json['id']
     event = event_id && Stripe::Event.retrieve(event_id) rescue nil
@@ -59,7 +60,7 @@ module Purchasing
             end
           end
           if object['customer'] && object['customer'] != 'free'
-            customer = Stripe::Customer.retrieve(object['customer'])
+            customer = Stripe::Customer.retrieve({id: object['customer']})
             valid = customer && customer['metadata'] && customer['metadata']['user_id']
             if valid
               User.schedule(:subscription_event, {
@@ -74,7 +75,7 @@ module Purchasing
         elsif event['type'] == 'charge.failed' && (((object['metadata'] || {})['platform_source'] || 'coughdrop') == 'coughdrop')
           valid = false
           if object['customer'] && object['customer'] != 'free'
-            customer = Stripe::Customer.retrieve(object['customer'])
+            customer = Stripe::Customer.retrieve({id: object['customer']})
             valid = customer && customer['metadata'] && customer['metadata']['user_id']
 
             if valid
@@ -102,7 +103,7 @@ module Purchasing
             data = {:dispute => true, :notified => true, :valid => !!valid}
           end
         elsif event['type'] == 'customer.updated'
-          customer = Stripe::Customer.retrieve(object['id'])
+          customer = Stripe::Customer.retrieve({id: object['id']})
           valid = customer && customer['metadata'] && customer['metadata']['user_id']
           previous = event['data'] && event['data']['previous_attributes'] && event['data']['previous_attributes']['metadata'] && event['data']['previous_attributes']['metadata']['user_id']
           if valid && previous
@@ -114,7 +115,7 @@ module Purchasing
             end
           end
         elsif event['type'] == 'customer.subscription.created' && (((object['metadata'] || {})['platform_source'] || 'coughdrop') == 'coughdrop')
-          customer = Stripe::Customer.retrieve(object['customer'])
+          customer = Stripe::Customer.retrieve({id: object['customer']})
           valid = customer && customer['metadata'] && customer['metadata']['user_id'] && object['plan'] && object['plan']['id']
           if valid
             User.schedule(:subscription_event, {
@@ -131,7 +132,7 @@ module Purchasing
           end
           data = {:subscribe => true, :valid => !!valid}
         elsif event['type'] == 'customer.subscription.updated' && (((object['metadata'] || {})['platform_source'] || 'coughdrop') == 'coughdrop')
-          customer = Stripe::Customer.retrieve(object['customer'])
+          customer = Stripe::Customer.retrieve({id: object['customer']})
           valid = customer && customer['metadata'] && customer['metadata']['user_id']
           if object['status'] == 'unpaid' || object['status'] == 'canceled'
             if previous && previous['status'] && previous['status'] != 'unpaid' && previous['status'] != 'canceled'
@@ -175,7 +176,7 @@ module Purchasing
             data = {:subscribe => true, :valid => !!valid}
           end
         elsif event['type'] == 'customer.subscription.deleted' && (((object['metadata'] || {})['platform_source'] || 'coughdrop') == 'coughdrop')
-          customer = Stripe::Customer.retrieve(object['customer'])
+          customer = Stripe::Customer.retrieve({id: object['customer']})
           valid = customer && customer['metadata'] && customer['metadata']['user_id']
           if valid
             User.schedule(:subscription_event, {
@@ -189,6 +190,14 @@ module Purchasing
             })
           end
           data = {:unsubscribe => true, :valid => !!valid}
+        elsif event['type'] == 'checkout.session.completed'
+          # checkout_session.payment_status == 'paid'
+          # call Purchasing2.confirm_purchase
+          # else, wait for async event
+        elsif event['type'] == 'checkout.session.async_payment_succeeded'
+          # finalize payment as totally approved
+        elsif event['type'] == 'checkout.session.async_payment_failed'
+          # email admins about payment error
         elsif event['type'] == 'ping'
           data = {:ping => true, :valid => true}
         end
@@ -374,13 +383,14 @@ module Purchasing
         one_time_amount = amount
         if user.settings['subscription'] && user.settings['subscription']['customer_id'] && user.settings['subscription']['customer_id'] != 'free'
           user && user.log_subscription_event({:log => 'retrieving existing customer'})
-          customer = Stripe::Customer.retrieve(user.settings['subscription']['customer_id']) rescue nil
+          customer = Stripe::Customer.retrieve({id: user.settings['subscription']['customer_id'], expand: ['subscriptions']}) #rescue nil
         end
         if !customer
           user && user.log_subscription_event({:log => 'creating new customer'})
           customer = Stripe::Customer.create({
             :metadata => { 'user_id' => user.global_id, 'platform_source' => 'coughdrop' },
-            :email => (user && user.external_email_allowed?) ? (user && user.settings && user.settings['email']) : nil
+            :email => (user && user.external_email_allowed?) ? (user && user.settings && user.settings['email']) : nil,
+            :expand => ['subscriptions']
           })
         end
         if customer
@@ -412,7 +422,7 @@ module Purchasing
               :trial_end => trial_end
             })
           end
-          customer = Stripe::Customer.retrieve(customer['id'])
+          customer = Stripe::Customer.retrieve({id: customer['id'], expand: ['subscriptions']})
           any_sub = customer.subscriptions.data.detect{|s| ((s.metadata || {})['platform_source'] || 'coughdrop') == 'coughdrop' && (s.status == 'active' || s.status == 'trialing') }
           if include_extras || include_n_supporters > 0
             one_time_amount += self.extras_symbols_cost if include_extras
@@ -520,7 +530,7 @@ module Purchasing
     begin
       customer = nil
       if user && user.settings['subscription'] && user.settings['subscription']['customer_id'] && user.settings['subscription']['customer_id'] != 'free'
-        customer = Stripe::Customer.retrieve(user.settings['subscription']['customer_id'])  rescue nil
+        customer = Stripe::Customer.retrieve({id: user.settings['subscription']['customer_id'], expand: ['subscriptions']})  rescue nil
       end
       # TODO: this is disabled for now, it's cleaner to just send everyone through the same purchase workflow
       # but it would be an easier sale if customers could purchase later w/o getting out their credit card again
@@ -690,7 +700,7 @@ module Purchasing
   
   def self.change_user_id(customer_id, from_user_id, to_user_id)
     Stripe.api_key = ENV['STRIPE_SECRET_KEY']
-    customer = Stripe::Customer.retrieve(customer_id) rescue nil
+    customer = Stripe::Customer.retrieve({id: customer_id}) rescue nil
     if customer
       raise "wrong existing user_id" unless customer.metadata && customer.metadata['user_id'] == from_user_id
       customer.metadata['user_id'] = to_user_id
@@ -1150,8 +1160,8 @@ module Purchasing
         end
       else
         sub = customer_subs[0]
-        if sub && sub['start']
-          time = Time.at(sub['start']) rescue nil
+        if sub && (sub['start'] || sub['start_date'])
+          time = Time.at(sub['start'] || sub['start_date']) rescue nil
           if time
             yr = 0
             if time < 3.years.ago
@@ -1211,7 +1221,7 @@ module Purchasing
     return false unless user
     Stripe.api_key = ENV['STRIPE_SECRET_KEY']
     begin
-      customer = Stripe::Customer.retrieve(customer_id)
+      customer = Stripe::Customer.retrieve({id: customer_id, expand: ['subscriptions']})
     rescue => e
       user.log_subscription_event({:log => 'subscription canceling error', :detail => 'error retrieving customer', :error => e.to_s, :trace => e.backtrace})
     end
@@ -1256,7 +1266,7 @@ module Purchasing
     subs = []
     customer_ids.each do |customer_id|
       begin
-        customer = Stripe::Customer.retrieve(customer_id)
+        customer = Stripe::Customer.retrieve({id: customer_id, expand: ['subscriptions']})
       rescue => e
         user.log_subscription_event({:log => 'subscription cancel error', :detail => 'error retrieving customer', :error => e.to_s, :trace => e.backtrace}) if user
       end

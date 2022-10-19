@@ -833,7 +833,7 @@ class Organization < ActiveRecord::Base
         }
         e['lesson_ids'] = (org.settings['lessons'] || []).select{|l| l['types'].include?('manager') }.map{|l| l['id'] }
         e['home_board_keys'] = org.home_board_keys
-        e['note_templates'] = org.settings['note_templates']
+        e['note_templates'] = org.settings['note_templates'] if org.settings['note_templates']
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
@@ -853,7 +853,7 @@ class Organization < ActiveRecord::Base
           'pending' => !!link['state']['pending']
         }
         e['home_board_keys'] = org.home_board_keys if !e['pending']
-        e['note_templates'] = org.settings['note_templates'] if !e['pending']
+        e['note_templates'] = org.settings['note_templates'] if !e['pending'] && org.settings['note_templates']
         e['lesson_ids'] = (org.settings['lessons'] || []).select{|l| l['types'].include?('supervisor') }.map{|l| l['id'] }
         e['profile'] = org.settings['supervisor_profile'].slice('profile_id', 'template_id', 'frequency') if org.settings['supervisor_profile']
         e['external_auth'] = true if org.settings['saml_metadata_url']
