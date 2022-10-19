@@ -34,6 +34,10 @@ module RedisInit
     puts JSON.pretty_generate(redis.lrange(key, 0, len))
   end
 
+  def self.any_queue_pressure?
+    (Resque.redis.llen('queue:slow') > (ENV['QUEUE_SLOW_BOG'] || 20000)) || (Resque.redis.llen('queue:default') > (ENV['QUEUE_DEFAULT_BOG'] || 10000))
+  end
+
   def self.queue_pressure?
     ENV['STOP_CACHING'] || ENV['QUEUE_PRESSURE'] || (ENV['QUEUE_MAX'] && Resque.redis.llen('queue:slow') > ENV['QUEUE_MAX'].to_i)
   end

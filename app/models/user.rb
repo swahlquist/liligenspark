@@ -90,6 +90,7 @@ class User < ActiveRecord::Base
 
   def external_email_allowed?
     self.settings ||= {}
+    # Org-managed users have protected email addresses
     return !self.settings['authored_organization_id'] && !Organization.managed?(self)
   end
   

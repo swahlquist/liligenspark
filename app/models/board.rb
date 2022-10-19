@@ -1724,7 +1724,7 @@ class Board < ActiveRecord::Base
         self.settings['common_library'] = res
         self.save
         return res
-      elsif !RedisInit.queue_pressure?
+      elsif !RedisInit.any_queue_pressure?
         self.schedule(:current_library, true)
       end
     end
