@@ -601,6 +601,26 @@ CoughDrop.User = DS.Model.extend({
       this.set('preferences.speak_mode_pin', new_pin);
     }
   }),
+  all_note_templates: computed('organizations.@each.note_templates', function() {
+    var res = [];
+    var org_ids = {};
+    (this.get('organizations') || []).forEach(function(org) {
+      if(!org_ids[org.id]) {
+        (org.note_templates || []).forEach(function(template) {
+          org_ids[org.id] = true;
+          template.org_name = org.name;
+          res.push(template);
+        });
+      }
+    });
+    if(Object.keys(org_ids).length > 1) {
+      res.forEach(function(t) { 
+        t.title = t.title + " - " + t.org_name;
+      });
+    }
+    if(res.length > 0) { return res; }
+    return null;
+  }),
   all_extra_colors: computed('preferences.extra_colors', 'organizations.@each.extra_colors', function() {
     var res = [];
     var extra = this.get('preferences.extra_colors');
