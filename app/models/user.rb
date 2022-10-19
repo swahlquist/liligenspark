@@ -402,8 +402,12 @@ class User < ActiveRecord::Base
     if self.settings['preferences']['home_board']
       self.settings['preferences']['progress']['home_board_set'] = true
       self.settings['all_home_boards'] ||= []
-      self.settings['all_home_boards'] << self.settings['preferences']['home_board'].slice('key', 'id', 'locale')
-      self.settings['all_home_boards'] = self.settings['all_home_boards'].uniq
+      ref = self.settings['preferences']['home_board'].slice('key', 'id', 'locale')
+      if self.settings['all_home_boards'][-1] != ref
+        self.settings['all_home_boards'] << ref
+        self.settings['home_board_changed'] = true
+        self.settings['all_home_boards'] = self.settings['all_home_boards'].uniq
+      end
     end
     self.settings['edit_key'] = Time.now.to_f.to_s + "-" + rand(9999).to_s
     self.settings['preferences']['devices'] ||= {}
@@ -579,8 +583,9 @@ class User < ActiveRecord::Base
       linked_boards << {
         board: brd,
         locale: self.settings['preferences']['home_board']['locale'] || brd.settings['locale'] || 'en',
+        changed: self.settings['home_board_changed'],
         home: true
-      }
+      } if brd
     end
     if self.settings['preferences'] && self.settings['preferences']['sidebar_boards']
       self.settings['preferences']['sidebar_boards'].each do |brd|
@@ -588,6 +593,7 @@ class User < ActiveRecord::Base
         linked_boards << {
           board: board_record,
           locale: brd['locale'] || board_record.settings['locale'] || 'en',
+          changed: self.settings['sidebar_changed'],
           home: false
         } if brd['key']
       end
@@ -630,7 +636,7 @@ class User < ActiveRecord::Base
             end
             # When a user updated their home board/sidebar, all linked boards will have updated
             # tallies for popularity, home_popularity, etc.
-            board_ids_to_recalculate << downstream_board.global_id
+            board_ids_to_recalculate << downstream_board.global_id if hash[:changed]
           end
         end
         Rails.logger.info("done checking downstream boards for #{self.global_id}, #{board.global_id}")
@@ -649,6 +655,12 @@ class User < ActiveRecord::Base
     UserBoardConnection.where(:user_id => self.id, :board_id => orphan_board_ids).delete_all
     # TODO: sharding
     board_ids_to_recalculate += Board.where(:id => orphan_board_ids).select('id').map(&:global_id)
+    if self.settings['home_board_changed'] || self.settings['sidebar_changed']
+      self.settings.delete('home_board_changed')
+      self.settings.delete('sidebar_changed')
+      @do_track_boards = false
+      self.save
+    end
     # to regenerates stats?
     Board.schedule_for(:slow, :refresh_stats, board_ids_to_recalculate) if board_ids_to_recalculate.length > 0
     true
@@ -1323,9 +1335,12 @@ class User < ActiveRecord::Base
     end
 
     if result.length == 0
+      self.settings['sidebar_changed'] = true
       self.settings['preferences'].delete('sidebar_boards')
     else
       result = result.uniq{|b| b['special'] ? (b['alert'].to_s + "_" + b['action'].to_s + "_" + b['arg'].to_s) : b['key'] }
+      pre_json = self.settings['preferences']['sidebar_boards'].to_json
+      self.settings['sidebar_changed'] = true if pre_json != result.to_json
       self.settings['preferences']['sidebar_boards'] = result
       self.settings['preferences']['prior_sidebar_boards'] ||= []
       self.settings['preferences']['prior_sidebar_boards'] += result

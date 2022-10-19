@@ -110,7 +110,7 @@ module Purchasing2
     if opts[:discount_code] && !active_sale? && discountable
       # Create a coupon
       gift = GiftPurchase.find_by_code(opts[:discount_code]) rescue nil
-      # return false unless gift || gift.already_used???
+      return false unless gift || gift.already_used #TODO: ???
 
       coupon = Stripe::Coupon.create({
         metadata: {discount_code: opts[:discount_code]},

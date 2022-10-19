@@ -48,6 +48,14 @@ export default Controller.extend({
     return list;
   }),
   actions: {
+    modify_templates: function() {
+      var _this = this;
+      modal.open('modals/note-templates', {note_templates: this.get('model.note_templates')}).then(function(res) {
+        if(res && res.note_templates) {
+          _this.set('model.note_templates', res.note_templates);
+        }
+      });
+    },
     cancel: function() {
       this.transitionToRoute('organization', this.get('model.id'));
     },

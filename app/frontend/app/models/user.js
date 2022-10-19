@@ -609,13 +609,21 @@ CoughDrop.User = DS.Model.extend({
         (org.note_templates || []).forEach(function(template) {
           org_ids[org.id] = true;
           template.org_name = org.name;
-          res.push(template);
+          var found = false;
+          if(template.default) {
+            found = !!res.find(function(t) { return t.title == template.title && t.default; });
+          }
+          if(!found) {
+            res.push(template);
+          }
         });
       }
     });
     if(Object.keys(org_ids).length > 1) {
       res.forEach(function(t) { 
-        t.title = t.title + " - " + t.org_name;
+        if(!t.default) {
+          t.title = t.title + " - " + t.org_name;
+        }
       });
     }
     if(res.length > 0) { return res; }

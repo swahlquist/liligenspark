@@ -413,6 +413,23 @@ class Organization < ActiveRecord::Base
 #     end
 #   end
   
+  def note_templates
+    self.settings['note_templates'] || [
+      {title: "Session Notes", text: "" + 
+      "======= Session Summary ====================\n\n\n" + 
+      "======= What Went Well =====================\n\n\n" + 
+      "======= What to Change for Next Time =======\n\n", default: true},
+      {title: "Training Session", text: "" + 
+      "======= Who Attended =======================\n\n\n" + 
+      "======= Topics Covered =====================\n\n\n" + 
+      "======= Practice Assigned ==================\n\n", default: true},
+      {title: "Goal Notes", text: "" + 
+      "======= Targeted Outcome ===================\n\n\n" + 
+      "======= Supports Provided ==================\n\n\n" + 
+      "======= Ideas for Next Time=================\n\n", default: true},
+    ]
+  end
+
   def self.manager_for?(manager, user, include_admin_managers=true)
     return false unless manager && user
     manager_orgs = UserLink.links_for(manager).select{|l| l['type'] == 'org_manager' && l['user_id'] == manager.global_id && l['state']['full_manager'] }.map{|l| l['record_code'] }
@@ -833,7 +850,7 @@ class Organization < ActiveRecord::Base
         }
         e['lesson_ids'] = (org.settings['lessons'] || []).select{|l| l['types'].include?('manager') }.map{|l| l['id'] }
         e['home_board_keys'] = org.home_board_keys
-        e['note_templates'] = org.settings['note_templates'] if org.settings['note_templates']
+        e['note_templates'] = org.note_templates
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
@@ -853,7 +870,7 @@ class Organization < ActiveRecord::Base
           'pending' => !!link['state']['pending']
         }
         e['home_board_keys'] = org.home_board_keys if !e['pending']
-        e['note_templates'] = org.settings['note_templates'] if !e['pending'] && org.settings['note_templates']
+        e['note_templates'] = org.note_templates
         e['lesson_ids'] = (org.settings['lessons'] || []).select{|l| l['types'].include?('supervisor') }.map{|l| l['id'] }
         e['profile'] = org.settings['supervisor_profile'].slice('profile_id', 'template_id', 'frequency') if org.settings['supervisor_profile']
         e['external_auth'] = true if org.settings['saml_metadata_url']
@@ -1092,6 +1109,7 @@ class Organization < ActiveRecord::Base
     self.settings['preferred_symbols'] = process_string(params['preferred_symbols']) if params['preferred_symbols']
     self.settings['status_overrides'] = params['status_overrides']
     self.settings['extra_colors'] = params['extra_colors']
+    self.settings['note_templates'] = params['note_templates'] if params['note_templates'] != nil
     self.settings['support_target'] = params['support_target']
     raise "updater required" unless non_user_params['updater']
     if params[:allotted_licenses]

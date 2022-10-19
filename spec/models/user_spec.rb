@@ -393,6 +393,31 @@ describe User, :type => :model do
       expect(Worker.scheduled_for?(:slow, Board, :perform_action, {'method' => 'refresh_stats', 'arguments' => [[b.global_id]]})).to eq(true)
     end
 
+    it "should trigger board updates for updated home_board" do
+      u = User.create(settings: {'preferences' => {'home_board' => {'id' => 'asdf'}}})
+      b = Board.create(:user => u)
+      b2 = Board.create(:user => u)
+      b.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'id' => b2.global_id}}
+      ]
+      b.save
+      expect(b.settings['immediately_downstream_board_ids']).to eq([b2.global_id])
+      Worker.process_queues
+      b.reload
+      expect(b.settings['downstream_board_ids']).to eq([b2.global_id])
+
+      o = [b]
+      UserBoardConnection.create(:user_id => u.id, :board_id => b.id)
+      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
+#      expect(o).to receive(:select).with('id').and_return([b])
+      Worker.flush_queues
+      u.settings['preferences']['home_board']['id'] = b.global_id
+      u.generate_defaults
+      expect(u.settings['home_board_changed']).to eq(true)
+      u.track_boards(true)
+      expect(Worker.scheduled_for?(:slow, Board, :perform_action, {'method' => 'refresh_stats', 'arguments' => [[b2.global_id]]})).to eq(true)
+    end
+
     it "should create missing connections" do
       u = User.create
       b = Board.create(:user => u)

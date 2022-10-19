@@ -6,6 +6,7 @@ import stashes from '../utils/_stashes';
 import i18n from '../utils/i18n';
 import { htmlSafe } from '@ember/string';
 import { computed } from '@ember/object';
+import app_state from '../utils/app_state';
 
 export default modal.ModalController.extend({
   text_note: computed('note_type', function() {
@@ -17,6 +18,8 @@ export default modal.ModalController.extend({
   opening: function() {
     var type = this.get('model.type');
     var user = this.get('model.user');
+    this.set('note_rows', 4);
+    this.set('all_note_templates', app_state.get('currentUser.all_note_templates'));
     var _this = this;
     if(user && user.load_active_goals) {
       user.load_active_goals();
@@ -126,6 +129,10 @@ export default modal.ModalController.extend({
           emberSet(status, 'button_display_class', 'btn btn-default face_button');
         }
       });
+    },
+    pick_template: function(template) {
+      this.set('note', template.text);
+      this.set('note_rows', 8);
     },
     saveNote: function(type) {
       if(type == 'video' && !this.get('video_id')) { return; }

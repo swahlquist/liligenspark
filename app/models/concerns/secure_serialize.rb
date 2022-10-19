@@ -18,7 +18,11 @@ module SecureSerialize
     raise "version couldn't be loaded" if !record
 
     record.instance_variable_set('@buttons_changed', 'rollback') if record.is_a?(Board)
-    record.instance_variable_set('@do_track_boards', true) if record.is_a?(User)
+    if record.is_a?(User)
+      record.instance_variable_set('@do_track_boards', true) 
+      record.settings['home_board_changed'] = true
+      record.settings['sidebar_changed'] = true
+    end
     record.save
     version.created_at
   end

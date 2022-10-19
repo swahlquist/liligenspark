@@ -143,6 +143,11 @@ class Board < ActiveRecord::Base
   end
 
   def self.refresh_stats(board_ids)
+    if board_ids.length > 10
+      boards_ids = board_ids.slice(0, 10)
+      more_board_ids = board_ids.slice(10, board_ids.length)
+      Board.schedule_for(:slow, :refresh_stats, more_board_ids)
+    end
     Board.find_batches_by_global_id(board_ids, batch_size: 25) do |board|
       board.generate_stats
       board.save_without_post_processing
