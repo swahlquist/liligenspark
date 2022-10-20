@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20221020064404) do
+ActiveRecord::Schema.define(version: 20221020171010) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -446,6 +446,7 @@ ActiveRecord::Schema.define(version: 20221020064404) do
     t.integer  "parent_board_id"
     t.string   "locale"
     t.index ["board_id", "home", "updated_at"], name: "user_board_lookups", using: :btree
+    t.index ["user_id", "board_id"], name: "index_user_board_connections_on_user_id_and_board_id", using: :btree
   end
 
   create_table "user_extras", force: :cascade do |t|
