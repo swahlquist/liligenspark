@@ -662,7 +662,7 @@ class User < ActiveRecord::Base
       self.save
     end
     # to regenerates stats?
-    Board.schedule_for(:slow, :refresh_stats, board_ids_to_recalculate) if board_ids_to_recalculate.length > 0
+    Board.schedule_for(:slow, :refresh_stats, board_ids_to_recalculate, Time.now.to_i) if board_ids_to_recalculate.length > 0
     true
   end
 

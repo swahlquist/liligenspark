@@ -142,17 +142,22 @@ class Board < ActiveRecord::Base
     (self.settings || {})['stars'] || ((self.settings || {})['starred_user_ids'] || []).length
   end
 
-  def self.refresh_stats(board_ids)
+  def self.refresh_stats(board_ids, timestamp=nil)
+    now = Time.now.to_i
+    timestamp ||= now
     if board_ids.length > 10
       boards_ids = board_ids.slice(0, 10)
       more_board_ids = board_ids.slice(10, board_ids.length)
-      Board.schedule_for(:slow, :refresh_stats, more_board_ids)
+      Board.schedule_for(:slow, :refresh_stats, more_board_ids, timestamp)
     end
     Board.find_batches_by_global_id(board_ids, batch_size: 25) do |board|
-      board.generate_stats
-      board.save_without_post_processing
+      if board.updated_at.to_i < timestamp
+        board.generate_stats
+        board.save_without_post_processing
+      end
       upper = board.parent_board
-      if upper && upper != board
+      # TODO: don't update the parent if it's already been updated recently
+      if upper && upper != board && upper.updated_at.to_i < timestamp
         upper.generate_stats
         upper.save_without_post_processing
       end
