@@ -4,9 +4,14 @@ class Api::ImagesController < ApplicationController
   
   def create
     # TODO: search for an existing record with the exact same settings first
+    if !params['image'] || !params['image']['content_type']
+      return api_error(400, {error: 'content type required for image creationg'})
+    end
     image = ButtonImage.process_new(params['image'], {:user => @api_user, :remote_upload_possible => true})
     if !image || image.errored?
       api_error(400, {error: "image creation failed", errors: image && image.processing_errors})
+    elsif !image.settings['content_type']
+      api_error(400, {error: 'content type required for image creationg'})
     else
       render json: JsonApi::Image.as_json(image, :wrapper => true, :permissions => @api_user).to_json
     end
