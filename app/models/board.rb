@@ -582,6 +582,7 @@ class Board < ActiveRecord::Base
       self.settings['revision_hashes'] << @track_revision
       self.current_revision = data_hash
     end
+    self.settings['revision_hashes'] = self.settings['revision_hashes'].slice(-3, 3)
 
     if @map_later
       self.settings['images_not_mapped'] = true
@@ -1958,4 +1959,5 @@ class Board < ActiveRecord::Base
     end
     !!changed
   end
+
 end

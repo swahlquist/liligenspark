@@ -32,7 +32,7 @@ module Relinking
     copier = opts[:copier]
 
     raise "missing user" unless user
-    if !self.board_content_id
+    if !self.board_content_id || self.board_content_id == 0
       BoardContent.generate_from(self)
     end
     if self.settings['protected'] && self.settings['protected']['vocabulary']
@@ -94,7 +94,7 @@ module Relinking
     board.settings['never_edited'] = true
     board.public = true if make_public
     board.settings.delete('unlisted') if make_public
-    BoardContent.apply_clone(self, board) if self.board_content_id
+    BoardContent.apply_clone(self, board) if self.board_content_id && self.board_content_id != 0
     # board.map_images has to create a record for each image in the
     # board, and while that is useful for tracking, it's actually redundant
     # so we can postpone it and save some time for batch copies

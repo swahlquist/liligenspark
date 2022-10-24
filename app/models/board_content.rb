@@ -54,7 +54,7 @@ class BoardContent < ApplicationRecord
     from_offload = false
     board.settings ||= {}
     res = board.settings[attr] if !board.settings[attr].blank?
-    if board.board_content_id && !res
+    if board.board_content_id && board.board_content_id > 0 && !res
       res = board.board_content.settings[attr].deep_dup
       from_offload = true
     end

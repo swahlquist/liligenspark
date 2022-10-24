@@ -165,12 +165,12 @@ module UpstreamDownstream
       if ra
         if ra.extra == breadth
           # don't need to change same breadth
-          RemoteAction.where(id: ra.id).update_all(act_at: 30.minutes.from_now)
+          RemoteAction.where(id: ra.id).update_all(act_at: 60.minutes.from_now)
         else
-          RemoteAction.where(id: ra.id).update_all(act_at: 30.minutes.from_now, extra: 'all')
+          RemoteAction.where(id: ra.id).update_all(act_at: 60.minutes.from_now, extra: 'all')
         end
       else
-        RemoteAction.create(path: self.global_id, action: 'schedule_update_available_boards', act_at: 15.minutes.from_now, extra: breadth || 'all')
+        RemoteAction.create(path: self.global_id, action: 'schedule_update_available_boards', act_at: 30.minutes.from_now, extra: breadth || 'all')
       end
 #      self.schedule_once_for(:slow, :schedule_update_available_boards, breadth, true)
       return true
@@ -232,8 +232,8 @@ module UpstreamDownstream
       self.settings['tracked_visited_ids'].uniq!
       self.save_subtly
     end
-    ra_cnt = RemoteAction.where(path: self.global_id, action: 'track_downstream_with_visited').update_all(act_at: 15.minutes.from_now)
-    RemoteAction.create(path: self.global_id, act_at: 10.minutes.from_now, action: 'track_downstream_with_visited') if !ra_cnt || ra_cnt == 0
+    ra_cnt = RemoteAction.where(path: self.global_id, action: 'track_downstream_with_visited').update_all(act_at: 30.minutes.from_now)
+    RemoteAction.create(path: self.global_id, act_at: 20.minutes.from_now, action: 'track_downstream_with_visited') if !ra_cnt || ra_cnt == 0
   end
 
   def track_downstream_with_visited
