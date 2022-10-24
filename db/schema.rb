@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20221020171010) do
+ActiveRecord::Schema.define(version: 20221024153948) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -78,7 +78,6 @@ ActiveRecord::Schema.define(version: 20221020171010) do
     t.datetime "created_at",                    null: false
     t.datetime "updated_at",                    null: false
     t.index "to_tsvector('simple'::regconfig, COALESCE((search_string)::text, ''::text))", name: "board_locales_search_string", using: :gin
-    t.index ["board_id", "locale"], name: "index_board_locales_on_board_id_and_locale", unique: true, using: :btree
   end
 
   create_table "boards", force: :cascade do |t|
@@ -99,7 +98,6 @@ ActiveRecord::Schema.define(version: 20221020171010) do
     t.index "to_tsvector('simple'::regconfig, COALESCE((search_string)::text, ''::text))", name: "boards_search_string", using: :gin
     t.index ["key"], name: "index_boards_on_key", unique: true, using: :btree
     t.index ["parent_board_id"], name: "index_boards_on_parent_board_id", using: :btree
-    t.index ["public", "popularity", "home_popularity", "id"], name: "board_index_popularity", using: :btree
     t.index ["public", "user_id"], name: "index_boards_on_public_and_user_id", using: :btree
     t.index ["user_id", "popularity", "any_upstream", "id"], name: "board_user_index_popularity", using: :btree
   end
@@ -119,8 +117,6 @@ ActiveRecord::Schema.define(version: 20221020171010) do
     t.datetime "updated_at"
     t.string   "nonce",                  limit: 255
     t.boolean  "removable"
-    t.index ["file_hash"], name: "index_button_images_on_file_hash", using: :btree
-    t.index ["removable"], name: "index_button_images_on_removable", using: :btree
     t.index ["url"], name: "index_button_images_on_url", using: :btree
   end
 
@@ -258,7 +254,6 @@ ActiveRecord::Schema.define(version: 20221020171010) do
     t.integer  "board_id"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.index ["board_id", "log_session_id"], name: "index_log_session_boards_on_board_id_and_log_session_id", using: :btree
   end
 
   create_table "log_sessions", force: :cascade do |t|
@@ -282,9 +277,6 @@ ActiveRecord::Schema.define(version: 20221020171010) do
     t.integer  "score"
     t.string   "profile_id"
     t.index ["device_id", "ended_at"], name: "index_log_sessions_on_device_id_and_ended_at", using: :btree
-    t.index ["geo_cluster_id", "user_id"], name: "index_log_sessions_on_geo_cluster_id_and_user_id", using: :btree
-    t.index ["ip_cluster_id", "user_id"], name: "index_log_sessions_on_ip_cluster_id_and_user_id", using: :btree
-    t.index ["needs_remote_push"], name: "index_log_sessions_on_needs_remote_push", using: :btree
     t.index ["started_at", "log_type"], name: "index_log_sessions_on_started_at_and_log_type", using: :btree
     t.index ["user_id", "goal_id"], name: "index_log_sessions_on_user_id_and_goal_id", using: :btree
     t.index ["user_id", "highlighted"], name: "index_log_sessions_on_user_id_and_highlighted", using: :btree
