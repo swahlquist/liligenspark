@@ -90,7 +90,7 @@ class Api::BoardsController < ApplicationController
           locs = locs.where(locale: [params['locale'], params['locale'].split(/-|_/)[0]])
         end
         if params['user_id']
-          board_ids = boards.select('id').limit(1000).map(&:id)
+          board_ids = boards.select('id, board_content_id').limit(1000).map(&:id)
           locs = locs.where(board_id: board_ids)
         end
         board_ids = []
