@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20221024153948) do
+ActiveRecord::Schema.define(version: 20221024160126) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -95,6 +95,7 @@ ActiveRecord::Schema.define(version: 20221024153948) do
     t.string   "current_revision", limit: 255
     t.boolean  "any_upstream"
     t.integer  "board_content_id"
+    t.index "COALESCE(search_string, (''::text)::character varying)", name: "boards_search_string2", using: :gin
     t.index "to_tsvector('simple'::regconfig, COALESCE((search_string)::text, ''::text))", name: "boards_search_string", using: :gin
     t.index ["key"], name: "index_boards_on_key", unique: true, using: :btree
     t.index ["parent_board_id"], name: "index_boards_on_parent_board_id", using: :btree
