@@ -137,7 +137,7 @@ module Flusher
   end
   
   def self.flush_deleted_users
-    users = User.where(['schedule_deletion_at < ?', Time.now]).limit(100)
+    users = User.where(['schedule_deletion_at < ?', Time.now]).limit(500).select('id, user_name')
     users.each do |user|
       Worker.schedule(Flusher, :flush_user_completely, user.global_id, user.user_name)
     end

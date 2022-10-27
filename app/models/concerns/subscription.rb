@@ -1178,9 +1178,30 @@ module Subscription
           false
         end
       end
+
+      # Catch-up script if things get out of hand
+      # exp_ids = []
+      # User.where(["expires_at < ? AND updated_at < ? AND updated_at != DATE_TRUNC('hour', updated_at)", 30.week.ago, 30.weeks.ago]).find_in_batches(batch_size: 25) do |batch|
+      #   batch.each do |user|
+      #     if user.billing_state == :expired_communicator
+      #       if user.settings['subscription'] == {"expiration_source"=>"free_trial"} || (!user.settings['past_purchase_durations'] && !user.settings['last_purchase_plan_id'])
+      #         next if user.user_name.match(/^testing/) && user.settings['email'] == 'testing@example.com'
+      #         next if user.settings['preferences']['allow_log_reports'] && user.updated_at > 36.months.ago
+      #         next if user.settings['preferences']['never_delete']
+      #         exp_ids << user.id
+      #       else
+      #         # puts user.settings['subscription'].to_json
+      #       end
+      #     end
+      #   end
+      #   puts exp_ids.length
+      # end;
+
+
+
       User.where(id: non_expired_ids).update_all("updated_at = DATE_TRUNC('hour', updated_at)")
       to_be_deleted = User.where(id: (to_be_deleted_ids + trial_to_be_deleted_ids).uniq)
-      to_be_deleted.find_in_batched(batch_size: 25) do |batch|
+      to_be_deleted.find_in_batches(batch_size: 25) do |batch|
         batch.each do |user|
           if user.user_name.match(/^testing/) && user.settings['email'] == 'testing@example.com'
             user.touch

@@ -98,12 +98,36 @@ class BoardContent < ApplicationRecord
     end
   end
 
-  def self.apply_clone(original, copy, prevent_new_copy=false)
+  def self.link_clones(count=100)
+    ids = Board.where(['parent_board_id IS NOT NULL AND board_content_id IS NULL']).limit(count).select('id').map(&:id)
+    Board.where(id: ids).find_in_batches(batch_size: 15) do |batch|
+      ids = []
+      batch.each do |board|
+        if board && board.parent_board && !board.board_content_id
+          len1 = board.settings.to_json.length
+          BoardContent.apply_clone(board.parent_board, board, true)
+          len2 = board.settings.to_json.length
+          if len2 > len1
+            # If it takes up more space in the db, then don't bother saving
+            board.board_content_id = nil
+          else
+            board.save
+          end
+        end
+        if !board.board_content_id
+          ids << board.id
+        end
+      end
+      Board.where(id: ids).where(['board_content_id IS NULL']).update_all(board_content_id: 0)
+    end
+  end
+
+  def self.apply_clone(original, copy, prevent_new_copy_unless_necessary=false)
     # copy=nil when you want to manually offload content as-is
-    # prevent_new_copy=true when you want to use existing offloaded content 
+    # prevent_new_copy_unless_necessary=true when you want to use existing offloaded content 
     #    (think manually linking legacy copies)
     content = original.board_content
-    if !content || (BoardContent.has_changes?(original, content) && !prevent_new_copy)
+    if !content || (!prevent_new_copy_unless_necessary && BoardContent.has_changes?(original, content))
       # generate a new content offload
       content = BoardContent.generate_from(original)
     end
