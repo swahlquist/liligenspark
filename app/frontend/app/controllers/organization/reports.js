@@ -56,22 +56,23 @@ export default Controller.extend({
     var parts = (this.get('current_report') || '').split(/-/);
     parts.shift();
     var str = parts.join('-');
+    if(!rep) { return "N/A"; }
     if(rep.match(/^status-/)) {
       var code = rep.replace(/^status-/, '');
       var status = CoughDrop.user_statuses.find(function(r) { return r.id == code; });
-      return "Status: " + status.label;
+      return i18n.t('status_colon', "Status: ") + status.label;
     } else if(rep.match(/^access-/)) {
-      return "Access Method: " + str;
+      return i18n.t('access_method_colon', "Access Method: ") + str;
     } else if(rep.match(/^device-/)) {
       if(str == 'Other') { str = "All Results"; }
-      return "Device Type: " + str;
+      return i18n.t('device_type_colon', "Device Type: ") + str;
     } else if(rep.match(/^vocab-/)) {
       if(str == 'Other') { str = "All Results"; }
-      return "Vocabulary: " + str;
+      return i18n.t('vocab_colon', "Vocabulary: ") + str;
     } else if(rep.match(/^grid-/)) {
       var size = parseInt(str, 10);
       var lower = size - (size % 30);
-      return "Grid Sizes: " + lower + "-" + (lower + 29) + " cells";
+      return i18n.t('grid_sizes_colon', "Grid Sizes: ") + lower + "-" + (lower + 29) + " cells";
     }
   }),
   get_report: observer('current_report', 'model.id', function() {

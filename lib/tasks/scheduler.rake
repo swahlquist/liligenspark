@@ -3,6 +3,7 @@ desc "This task is called by the Heroku scheduler add-on"
 task :check_for_expiring_subscriptions => :environment do
   puts "Checking for expiring subscriptions..."
   res = User.check_for_subscription_updates
+  User.schedule_for('slow', :check_for_subscription_updates)
   puts "done."
   puts JSON.pretty_generate(res)
 end

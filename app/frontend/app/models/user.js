@@ -361,8 +361,8 @@ CoughDrop.User = DS.Model.extend({
   }),
   expired: computed('expiration_passed', 'membership_type', 'supporter_role', 'fully_purchased', function() {
     // expired is only true for users who have
-    // never purchased the app in any form
-    if(this.get('membership_type') != 'premium') { return true; }
+    // never fully-purchased the app in any form
+    if(this.get('membership_type') == 'free') { return true; }
     var passed = this.get('expiration_passed');
     if(!passed) { return false; }
     // if(this.get('supporter_role')) { return false; }
