@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20221024160126) do
+ActiveRecord::Schema.define(version: 20221027184626) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -77,6 +77,7 @@ ActiveRecord::Schema.define(version: 20221024160126) do
     t.string   "search_string",   limit: 10000
     t.datetime "created_at",                    null: false
     t.datetime "updated_at",                    null: false
+    t.index "COALESCE((search_string)::text, ''::text)", name: "board_locales_search_string2", using: :gin
     t.index "to_tsvector('simple'::regconfig, COALESCE((search_string)::text, ''::text))", name: "board_locales_search_string", using: :gin
   end
 
@@ -147,7 +148,7 @@ ActiveRecord::Schema.define(version: 20221024160126) do
     t.datetime "updated_at"
     t.string   "cluster_type", limit: 255
     t.string   "cluster_hash", limit: 255
-    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_hash", unique: true, using: :btree
+    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_cluster_hash", unique: true, using: :btree
   end
 
   create_table "contact_messages", force: :cascade do |t|
