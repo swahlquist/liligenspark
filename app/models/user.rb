@@ -1690,14 +1690,14 @@ class User < ActiveRecord::Base
   end
 
   def self.flush_old_versions
-    if PaperTrail::Version.where({item_type: 'LogSession'}).where(['created_at < ?', 6.months.ago]).count > 1000
-      PaperTrail::Version.where({item_type: 'LogSession'}).where(['created_at < ?', 6.months.ago]).delete_all
+    if PaperTrail::Version.where({item_type: 'LogSession'}).where(['created_at < ?', 1.months.ago]).count > 1000
+      PaperTrail::Version.where({item_type: 'LogSession'}).where(['created_at < ?', 1.months.ago]).delete_all
     end
     if PaperTrail::Version.where({item_type: 'User'}).where(['created_at < ?', 3.months.ago]).count > 1000
       PaperTrail::Version.where({item_type: 'User'}).where(['created_at < ?', 3.months.ago]).delete_all
     end
-    if PaperTrail::Version.where({item_type: 'Board'}).where(['created_at < ?', 12.months.ago]).count > 1000
-      PaperTrail::Version.where({item_type: 'Board'}).where(['created_at < ?', 12.months.ago]).delete_all
+    if PaperTrail::Version.where({item_type: 'Board'}).where(['created_at < ?', 6.months.ago]).count > 1000
+      PaperTrail::Version.where({item_type: 'Board'}).where(['created_at < ?', 6.months.ago]).delete_all
     end
 
   end
