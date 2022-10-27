@@ -1165,38 +1165,55 @@ module Subscription
 
       # send out a two and one-month warning when account is 
       # going to be deleted for inactivity (after 12 months of non-use)
-      to_be_deleted = User.where(['updated_at < ?', 12.months.ago]).order('updated_at ASC').limit(100)
-      to_be_deleted.each do |user|
-        if user.user_name.match(/^testing/) && user.settings['email'] == 'testing@example.com'
-          user.touch
-          next
+      to_be_deleted_ids = User.where(['updated_at < ?', 12.months.ago]).order('updated_at ASC').limit(500).map(&:id)
+      non_expired_ids = []
+      # if users are on an expired free trial, we can delete them much sooner
+      trial_to_be_deleted_ids = []
+      User.where(["expires_at < ? AND updated_at < ? AND updated_at != DATE_TRUNC('hour', updated_at)", 1.week.ago, 4.weeks.ago]).order('updated_at ASC').limit(200).select do |u|
+        if u.billing_state == :expired_communicator
+          trial_to_be_deleted_ids << u.id
+          true
+        else
+          non_expired_ids << u.id
+          false
         end
-        # Don't delete communicators marked as never-delete or who allow
-        # anonymized reports for tracking
-        next if user.settings['preferences']['allow_log_reports'] && user.updated_at > 36.months.ago
-        next if user.settings['preferences']['never_delete']
-        user.settings['subscription'] ||= {}
-        last_warning = Time.parse(user.settings['subscription']['last_deletion_warning']) rescue Time.at(0)
-        if last_warning < 3.weeks.ago
-          attempts = 1
-          if last_warning > 20.weeks.ago
-            attempts = (user.settings['subscription']['last_deletion_attempts'] || 0) + 1
+      end
+      User.where(id: non_expired_ids).update_all("updated_at = DATE_TRUNC('hour', updated_at)")
+      to_be_deleted = User.where(id: (to_be_deleted_ids + trial_to_be_deleted_ids).uniq)
+      to_be_deleted.find_in_batched(batch_size: 25) do |batch|
+        batch.each do |user|
+          if user.user_name.match(/^testing/) && user.settings['email'] == 'testing@example.com'
+            user.touch
+            next
           end
-          if attempts > 2
-            user.schedule_deletion_at = 36.hours.from_now
-            user.save(touch: false)
-            SubscriptionMailer.deliver_message(:account_deleted, user.global_id)
-          else
-            SubscriptionMailer.deliver_message(:deletion_warning, user.global_id, attempts)
-            alerts[:pending_deletes] += 1
-            user.update_setting({
-              'subscription' => {
-                'last_deletion_warning' => Time.now.iso8601,
-                'last_deletion_attempts' => attempts
-              }
-            })
+          # Don't delete communicators marked as never-delete or who allow
+          # anonymized reports for tracking
+          # TODO: these shouldn't apply for never-paid accounts that weren't actively used
+          next if user.settings['preferences']['allow_log_reports'] && user.updated_at > 36.months.ago
+          next if user.settings['preferences']['never_delete']
+          user.settings['subscription'] ||= {}
+          last_warning = Time.parse(user.settings['subscription']['last_deletion_warning']) rescue Time.at(0)
+          if last_warning < 3.weeks.ago
+            attempts = 1
+            if last_warning > 20.weeks.ago
+              attempts = (user.settings['subscription']['last_deletion_attempts'] || 0) + 1
+            end
+            if attempts > 2
+              user.schedule_deletion_at = 36.hours.from_now
+              user.save(touch: false)
+              SubscriptionMailer.deliver_message(:account_deleted, user.global_id)
+            else
+              SubscriptionMailer.deliver_message(:deletion_warning, user.global_id, attempts)
+              alerts[:pending_deletes] += 1
+              user.update_setting({
+                'subscription' => {
+                  'last_deletion_warning' => Time.now.iso8601,
+                  'last_deletion_attempts' => attempts
+                }
+              })
+            end
+            User.where(id: user.id).update_all(updated_at: 12.months.ago + 3.weeks)
           end
-          User.where(id: user.id).update_all(updated_at: 12.months.ago + 3.weeks)
         end
       end
       alerts
