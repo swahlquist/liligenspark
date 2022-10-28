@@ -38,7 +38,6 @@ class Api::SearchController < ApplicationController
     locale = (params['locale'] || 'en').split(/-|_/)[0]
     safe = params['safe'] != '0'
     res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(params['q'])}&search_token=#{token}&locale=#{locale}&safe=#{safe ? '1' : '0'}", :timeout => 5, :ssl_verifypeer => false)
-    # TODO: include locale in search
     results = JSON.parse(res.body) rescue nil
     results ||= []
     results.each do |result|
@@ -124,7 +123,8 @@ class Api::SearchController < ApplicationController
     end
     
     if params['suggestions']
-      res['recent_usage'] = WeeklyStatsSummary.word_trends(params['q'])
+      # TODO: this is too slow to return real-time, consider caching it on the word_data record
+      # res['recent_usage'] = WeeklyStatsSummary.word_trends(params['q'])
     end
     
     if params['suggestions'] && (data['sentences'] || []).length == 0

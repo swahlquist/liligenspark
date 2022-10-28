@@ -111,6 +111,7 @@ class BoardContent < ApplicationRecord
             # If it takes up more space in the db, then don't bother saving
             board.board_content_id = nil
           else
+            # puts "#{len2} from #{len1} #{board.parent_board.key} #{board.key}"
             board.save
           end
         end

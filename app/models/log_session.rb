@@ -1367,6 +1367,9 @@ class LogSession < ActiveRecord::Base
           event['related_user_ids'] = related.select{|a| (a['timestamp'] || 0) > cutoff || a['modeling_action'] == 'complete' }.map{|a| a['modeling_user_ids'] || [] }.flatten.uniq
         end
         session.data['events'] << event
+        if session.data['events'].length > 100
+          session.data['events'] = session.data['events'][-50, 50]
+        end
         session.save!
         session.schedule(:process_external_callbacks)
 #      end

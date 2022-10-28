@@ -181,14 +181,16 @@ class User < ActiveRecord::Base
     if self.settings['preferences']['home_board']
       board_ids = []
       b = Board.find_by_path(self.settings['preferences']['home_board']['id'])
-      board_ids << b.global_id
-      board_ids += b.settings['downstream_board_ids'] || []
-      Board.find_batches_by_global_id(board_ids) do |brd|
-        brd.button_images.each do |bi|
-          if bi.settings && bi.settings['protected_source']
-            if !(self.settings['activated_sources'] || []).include?(bi.settings['protected_source'])
-              found_sources << bi.settings['protected_source']
-              found_sources.uniq!
+      if b
+        board_ids << b.global_id
+        board_ids += b.settings['downstream_board_ids'] || []
+        Board.find_batches_by_global_id(board_ids) do |brd|
+          brd.button_images.each do |bi|
+            if bi.settings && bi.settings['protected_source']
+              if !(self.settings['activated_sources'] || []).include?(bi.settings['protected_source'])
+                found_sources << bi.settings['protected_source']
+                found_sources.uniq!
+              end
             end
           end
         end

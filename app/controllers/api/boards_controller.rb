@@ -90,7 +90,7 @@ class Api::BoardsController < ApplicationController
           locs = locs.where(locale: [params['locale'], params['locale'].split(/-|_/)[0]])
         end
         if params['user_id']
-          board_ids = boards.select('id, board_content_id').limit(1000).map(&:id)
+          board_ids = boards.select('id, board_content_id').limit(500).map(&:id)
           locs = locs.where(board_id: board_ids)
         end
         board_ids = []
@@ -164,8 +164,12 @@ class Api::BoardsController < ApplicationController
         boards = boards.limit(200) if boards.respond_to?(:limit)
         boards = boards[0, 200].select{|b| b.categories.include?(params['category']) }
       elsif params['copies'] == false || params['copies'] == 'false'
-        boards = boards.limit(500) if boards.respond_to?(:limit)
-        boards = boards[0, 500].select{|b| !b.parent_board_id }[0, 100]
+        if boards.respond_to?(:where)
+          boards = boards.where('parent_board_id IS NULL')
+        else
+          boards = boards[0, 100].select{|b| !b.parent_board_id }[0, 100]
+        end
+        boards = board.limit(100) if boards.respond_to?(:limit)
       end
     end
 
@@ -173,7 +177,8 @@ class Api::BoardsController < ApplicationController
       # All locale-defined lists should already have been filtered by locale
       # and search relevance, so we can safely trim to the top results here
       boards = boards.limit(50) if boards.respond_to?(:limit)
-      boards = Board.sort_for_locale(boards[0, 50], params['locale'], params['sort'], ranks)
+      # TODO: this was maybe too demanding on memory
+      # boards = Board.sort_for_locale(boards[0, 50], params['locale'], params['sort'], ranks)
     end
 
     # Private boards don't have search_string set as a column to protect against 
@@ -199,7 +204,9 @@ class Api::BoardsController < ApplicationController
           # not be useful
           limited_boards = limited_boards.limit(25) if limited_boards.respond_to?(:limit)
           limited_boards = limited_boards[0, 25]
-          boards = Board.sort_for_query(limited_boards, params['q'], params['locale'], 0, 25)
+          boards = limited_boards
+          # TODO: this was maybe too demanding on memory
+          # boards = Board.sort_for_query(limited_boards, params['q'], params['locale'], 0, 25)
         end
       end
     end

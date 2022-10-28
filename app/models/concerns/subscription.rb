@@ -1197,8 +1197,6 @@ module Subscription
       #   puts exp_ids.length
       # end;
 
-
-
       User.where(id: non_expired_ids).update_all("updated_at = DATE_TRUNC('hour', updated_at)")
       to_be_deleted = User.where(id: (to_be_deleted_ids + trial_to_be_deleted_ids).uniq)
       to_be_deleted.find_in_batches(batch_size: 25) do |batch|
