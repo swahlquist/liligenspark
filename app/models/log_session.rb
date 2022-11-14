@@ -371,6 +371,8 @@ class LogSession < ActiveRecord::Base
     self.data['stats']['all_ambient_light_levels'] = []
     self.data['stats']['all_screen_brightness_levels'] = []
     self.data['stats']['all_orientations'] = []
+    utterance_lengths = []
+    speech_lengths = []
     valid_words = WordData.standardized_words
     if self.device && self.user
       device_prefs = self.user.settings['preferences']['devices'][self.device.device_key]
@@ -421,6 +423,8 @@ class LogSession < ActiveRecord::Base
         if !event['modeling'] && event['type'] == 'utterance'
           self.data['stats']['utterances'] += 1
           self.data['stats']['utterance_words'] += event['utterance']['text'].split(/\s+/).length
+          utterance_lengths << event['utterance']['text'].length
+          speech_lengths << event['utterance']['text'].length
           self.data['stats']['utterance_buttons'] += (event['utterance']['buttons'] || []).length
         elsif event['type'] == 'button'
           if event['button'] && event['button']['access']
@@ -468,6 +472,7 @@ class LogSession < ActiveRecord::Base
                   self.data['stats']['all_button_counts'][ref]['full_travel_sum'] += travel_tally.round(2)
                 end
                 if button['text'] && button['text'].length > 0 && (event['button']['spoken'] || event['button']['for_speaking'])
+                  speech_lengths << button['text'].length
                   button['text'].split(/\s+/).each do |word|
                     self.data['stats']['all_word_counts'][word.downcase] ||= 0
                     self.data['stats']['all_word_counts'][word.downcase] += 1
@@ -577,6 +582,8 @@ class LogSession < ActiveRecord::Base
       self.data['stats']['total_recorded_tallies'] = recorded_total
       self.data['stats']['percent_correct'] = (pct_correct * 100).round(1)
       self.data['stats']['percent_incorrect'] = (pct_incorrect * 100).round(1)
+      self.data['stats']['avg_speech_length'] = (speech_lengths.sum.to_f / [speech_lengths.length, 1].max.to_f).round(3)
+      self.data['stats']['avg_utterance_length'] = (utterance_lengths.sum.to_f / [utterance_lengths.length, 1].max.to_f).round(3)
       
       biggest_correct_streak = 0
       biggest_incorrect_streak = 0

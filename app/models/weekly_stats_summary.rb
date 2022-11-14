@@ -106,6 +106,11 @@ class WeeklyStatsSummary < ActiveRecord::Base
     total_stats.merge!(target_words)
     
     total_stats[:word_pairs] = Stats.word_pairs(sessions)
+    utterance_lengths = sessions.map{|s| s.data['stats']['avg_utterance_length'] }.compact
+    total_stats[:avg_utterance] = [(utterance_lengths.sum.to_f / [utterance_lengths.length, 1].max.to_f).round(3), utterance_lengths.length]
+    speech_lengths = sessions.map{|s| s.data['stats']['avg_speech_length'] }.compact
+    total_stats[:avg_speech] = [(speech_lengths.sum.to_f / [speech_lengths.length, 1].max.to_f).round(3), speech_lengths.length]
+
     total_stats[:days] = days
     total_stats[:locations] = Stats.location_use_for_sessions(sessions)
     total_stats[:goals] = Stats.goals_for_user(user, start_at, end_at)
@@ -349,6 +354,8 @@ class WeeklyStatsSummary < ActiveRecord::Base
     home_board_levels = {}
     device_prefs = {}
     user_ids_with_home_boards = []
+    utterance_lengths = []
+    speech_lengths = []
     logging_warned = Date.parse('April 18, 2018')
     sums.find_in_batches(batch_size: 5) do |batch|
       # TODO: sharding
@@ -443,6 +450,11 @@ class WeeklyStatsSummary < ActiveRecord::Base
               board_id = button_id.split(/:/, 2)[0]
               board_usages[board_id] = (board_usages[board_id] || 0) + 1
             end
+          end
+
+          if summary.data['stats']['avg_utterance']
+            utterance_lengths << summary.data['stats']['avg_utterance']
+            speech_lengths << summary.data['stats']['avg_speech']
           end
         
           if summary.data['stats']['goals']
@@ -539,6 +551,8 @@ class WeeklyStatsSummary < ActiveRecord::Base
     
     total.data['totals']['goal_set'] = total.data['goals']['goals_set'].map{|k, g| g['user_ids'].length }.flatten.sum
     total.data['totals']['badges_earned'] = total.data['goals']['badges_earned'].map{|k, b| b['user_ids'].length }.flatten.sum
+    total.data['totals']['avg_utterance'] = [(utterance_lengths.map{|a, b| a * b }.sum.to_f / [utterance_lengths.map{|a, b| b }.sum, 1.0].max.to_f).round(3), utterance_lengths.map{|a, b| b }.sum]
+    total.data['totals']['avg_speech'] = [(speech_lengths.map{|a, b| a * b }.sum.to_f / [speech_lengths.map{|a, b| b }.sum.to_f, 1.0].max).round(3), speech_lengths.map{|a, b| b }.sum]
 
     # Get a list of all the words common to most user boards and record their frequency
     word_user_counts = {}    
@@ -654,6 +668,8 @@ class WeeklyStatsSummary < ActiveRecord::Base
     stash[:research_user_ids] = []
     stash[:publishing_user_ids] = []
     stash[:home_board_user_ids] = []
+    stash[:utterance_lengths] = []
+    stash[:speech_lengths] = []
     stash[:grid_user_ids] = {}
     stash[:total_summaries] = 0
     stash[:device] = {}
@@ -702,6 +718,11 @@ class WeeklyStatsSummary < ActiveRecord::Base
           summary.data['modeled_word_counts'].each do |word, cnt|
             stash[:modeled_word_counts][word] = (stash[:modeled_word_counts][word] || 0) + cnt
           end
+        end
+
+        if summary.data['avg_utterance']
+          stash[:utterance_lengths] << summary.data['avg_utterance']
+          stash[:speech_lengths] << summary.data['avg_speech']
         end
         
         if summary.data['grid_user_ids']
@@ -891,6 +912,12 @@ class WeeklyStatsSummary < ActiveRecord::Base
       end
     end
 
+    if stash[:utterance_lengths]
+      res[:avg_utterance_length] = (stash[:utterance_lengths].map{|a, b| a * b }.sum.to_f / [stash[:utterance_lengths].map{|a, b| b }.sum.to_f, 1.0].max.to_f).round(2)
+      res[:avg_speech_length] = (stash[:speech_lengths].map{|a, b| a * b }.sum.to_f / [stash[:speech_lengths].map{|a, b| b }.sum.to_f, 1.0].max.to_f).round(2)
+      res[:admin][:speech_count] = stash[:speech_lengths].map{|a, b| b }
+      res[:admin][:utterance_count] = stash[:utterance_lengths].map{|a, b| b }
+    end
 
     if stash[:word_counts]
       max_word_count = stash[:word_counts].map(&:last).max || 0.0

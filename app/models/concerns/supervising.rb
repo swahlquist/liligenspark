@@ -143,8 +143,8 @@ module Supervising
     elsif action == 'remove_supervisor'
       if key.match(/^org/)
         org_id = key.split(/-/)[1]
-        org_id ||= self.managing_organization.global_id
-        self.update_subscription_organization("r#{org_id}")
+        org_id ||= self.managing_organization && self.managing_organization.global_id
+        self.update_subscription_organization("r#{org_id}") if org_id
       else
         supervisor = User.find_by_path(key)
         user = self

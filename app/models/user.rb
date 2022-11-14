@@ -570,9 +570,7 @@ class User < ActiveRecord::Base
     @do_track_boards = false
     if frd != true
       args = {'id' => self.id, 'method' => 'track_boards', 'arguments' => [true]}
-      if !Worker.scheduled_for?(:slow, self.class, :perform_action, args)
-        Worker.schedule_for(:slow, self.class, :perform_action, args)
-      end
+      self.schedule_once_for(!RedisInit.any_queue_pressure? ? :whenever : :slow, :track_boards, true)
       return true
     end
     # TODO: trigger background process to create user_board_connection records for all boards
