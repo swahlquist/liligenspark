@@ -169,7 +169,7 @@ class Api::BoardsController < ApplicationController
         else
           boards = boards[0, 100].select{|b| !b.parent_board_id }[0, 100]
         end
-        boards = board.limit(100) if boards.respond_to?(:limit)
+        boards = boards.limit(100) if boards.respond_to?(:limit)
       end
     end
 
