@@ -4,6 +4,7 @@ task :check_for_expiring_subscriptions => :environment do
   puts "Checking for expiring subscriptions..."
   res = User.check_for_subscription_updates
   User.schedule_for('slow', :check_for_subscription_updates)
+  BoardContent.schedule_for('whenever', :link_clones, 1000)
   puts "done."
   puts JSON.pretty_generate(res)
 end
