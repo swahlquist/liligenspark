@@ -989,7 +989,7 @@ describe Api::BoardsController, :type => :controller do
       expect(response).to be_successful
       expect(b.reload.settings['starred_user_ids']).to eq(["en:" + @user.global_id])
       json = JSON.parse(response.body)
-      expect(json).to eq({'starred' => true, 'stars' => 1})
+      expect(json).to eq({'starred' => true, 'stars' => 1, 'user_id' => @user.global_id})
     end
   end
   

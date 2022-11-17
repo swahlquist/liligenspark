@@ -678,7 +678,7 @@ class User < ActiveRecord::Base
         self.settings['starred_board_ids'] = self.settings['starred_board_ids'] - [board.global_id]
       end
       self.settings['starred_boards'] = self.settings['starred_board_ids'].length
-      self.save
+      self.save_with_sync('star_list_changed')
     end
   end
   
@@ -1198,7 +1198,7 @@ class User < ActiveRecord::Base
   end
   
   def process_home_board(home_board, non_user_params)
-    board = Board.find_by_path(home_board['id'])
+    board = home_board && Board.find_by_path(home_board['id'])
     json = (self.settings['preferences']['home_board'] || {}).slice('id', 'key').to_json
     org_allowed_board = non_user_params['org'] && (non_user_params['org'].home_board_keys || []).include?(board.key)
     if board && board.allows?(self, 'view') && !home_board['copy']

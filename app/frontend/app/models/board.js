@@ -710,7 +710,6 @@ CoughDrop.Board = DS.Model.extend({
   non_author_starred: DS.attr('boolean'),
   star_or_unstar: function(star) {
     var _this = this;
-    console.log(star);
     persistence.ajax('/api/v1/boards/' + this.get('id') + '/stars', {
       type: 'POST',
       data: {

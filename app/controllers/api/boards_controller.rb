@@ -572,10 +572,11 @@ class Api::BoardsController < ApplicationController
   protected
   def star_or_unstar(star)
     board = Board.find_by_path(params['board_id'])
-    return unless exists?(board)
+    return unless exists?(board, params['board_id'])
     return unless allowed?(board, 'view')
+    return unless exists?(@api_user)
     board.star!(@api_user, star)
-    render json: {starred: board.starred_by?(@api_user), stars: board.stars}.to_json
+    render json: {starred: board.starred_by?(@api_user), user_id: @api_user.global_id, stars: board.stars}.to_json
   end
   
 end

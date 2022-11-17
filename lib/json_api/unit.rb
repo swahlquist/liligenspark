@@ -68,9 +68,11 @@ module JsonApi::Unit
     end
     if unit.settings['lesson']
       lesson = ::Lesson.find_by_path(unit.settings['lesson']['id'])
+      cutoff = nil
       if lesson
         json['lesson'] = JsonApi::Lesson.as_json(lesson)
         json['lesson']['types'] = unit.settings['lesson']['types']
+        cutoff = lesson.settings['past_cutoff'] ? (Time.now.to_i - lesson.settings['past_cutoff']) : nil
       end
       if args[:permissions]
         comps = {}
@@ -80,7 +82,7 @@ module JsonApi::Unit
     
         json['lesson']['completed_users'] = {}
         ids = unit.all_user_ids
-        ids.each{|user_id| json['lessons']['completed_users'][user_id] = comps[user_id] if comps[user_id] }
+        ids.each{|user_id| json['lesson']['completed_users'][user_id] = comps[user_id] if comps[user_id] }
       end
     end
     json['topics'] = unit.settings['topics']

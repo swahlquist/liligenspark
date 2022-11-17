@@ -410,6 +410,19 @@ module JsonApi::User
 
       json['stats'] = {}
       json['stats']['starred_boards'] = user.settings['starred_boards'] || 0
+      if json['permissions'] && json['permissions']['supervise']
+        brds = {}
+        json['stats']['starred_board_refs'] = []
+        Board.find_all_by_global_id(user.settings['starred_board_ids'] || []).each do |b|
+          brds[b.global_id] = b
+        end
+        (user.settings['starred_board_ids'] || []).each do |id|
+          brd = brds[id]
+          if brd
+            json['stats']['starred_board_refs'] << {'id' => brd.global_id, 'key' => brd.key, 'image_url' => brd.settings['image_url'], 'name' => brd.settings['name']}
+          end
+        end
+      end
       board_ids = user.board_set_ids
       # json['stats']['board_set'] = board_ids.uniq.length
       json['stats']['user_boards'] = Board.where(:user_id => user.id).count

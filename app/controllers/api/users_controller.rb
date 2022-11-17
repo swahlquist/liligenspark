@@ -487,6 +487,9 @@ class Api::UsersController < ApplicationController
       roots << Board.find_by_global_id(user.settings['preferences']['home_board']['id'])
     end
     roots += Board.find_all_by_path(user.sidebar_boards.map{|b| b['key'] })
+    if user.settings['preferences']['sync_starred_boards']
+      roots += Board.find_all_by_path(user.settings['starred_board_ids'] || [])
+    end
     all_ids = []
     roots.compact.each do |root|
       all_ids << root.global_id
