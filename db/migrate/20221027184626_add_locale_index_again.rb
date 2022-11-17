@@ -3,6 +3,9 @@ class AddLocaleIndexAgain < ActiveRecord::Migration[5.0]
   def change
     enable_extension "btree_gin"
     execute "CREATE INDEX CONCURRENTLY board_locales_search_string2 ON board_locales USING GIN(COALESCE(search_string::TEXT,''::TEXT))"
+
+    # (ts_rank(to_tsvector('simple'::regconfig, COALESCE((board_locales_1.search_string)::text, ''::text)), '''core'''::tsquery, 0))
+    # execute "CREATE INDEX CONCURRENTLY board_locales_search_string3 ON board_locales USING GIN(to_tsvector('simple', COALESCE(search_string::TEXT, ''))"
   end
 end
 
