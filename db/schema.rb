@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20221117204131) do
+ActiveRecord::Schema.define(version: 20221117204132) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -74,11 +74,12 @@ ActiveRecord::Schema.define(version: 20221117204131) do
     t.integer  "popularity"
     t.integer  "home_popularity"
     t.string   "locale"
-    t.string   "search_string",   limit: 10000
-    t.datetime "created_at",                    null: false
-    t.datetime "updated_at",                    null: false
+    t.string   "search_string",     limit: 10000
+    t.datetime "created_at",                      null: false
+    t.datetime "updated_at",                      null: false
+    t.tsvector "tsv_search_string"
     t.index "to_tsvector('simple'::regconfig, COALESCE((search_string)::text, ''::text))", name: "board_locales_search_string", using: :gin
-    t.index "to_tsvector('simple'::regconfig, COALESCE((search_string)::text, ''::text))", name: "board_locales_search_string4", using: :gin
+    t.index ["tsv_search_string"], name: "index_board_locales_tsv_search_string", using: :gin
   end
 
   create_table "boards", force: :cascade do |t|
