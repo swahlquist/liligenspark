@@ -41,9 +41,22 @@ export default Controller.extend({
         var locale = (_this.get('locale') || (i18n.langs || {}).preferred || window.navigator.language || 'en').split(/-/)[0];
         // TODO: ensure that search results show up localized
         // for translated boards with a different default locale
-        CoughDrop.store.query('board', {q: str, locale: locale, sort: 'popularity'}).then(function(res) {
+        
+        var query_filter = str + "::" + locale + "::popularity";
+        var params = {q: str, locale: locale, sort: 'popularity'};
+        var search_key = JSON.stringify(params);
+        var lookup = null;
+        if(_this.get('search_promise.key') == search_key) {
+          lookup = _this.get('search_promise.promise');
+        } else {
+          lookup = CoughDrop.store.query('board', params);
+          _this.set('search_promise', {promise: lookup, key: search_key});
+        }
+        lookup.then(function(res) {
+          _this.set('search_promise', null);
           _this.set('online_results', {results: res.map(function(i) { return i; })});
         }, function() {
+          _this.set('search_promise', null);
           _this.set('online_results', {results: []});
         });
         if(app_state.get('currentUser')) {

@@ -440,6 +440,12 @@ CoughDrop.User = DS.Model.extend({
   supporter_role: computed('preferences.role', function() {
     return this.get('preferences.role') == 'supporter';
   }),
+  communiator_in_supporter_view: computed('preferences.role', 'preferences.device.role', function() {
+    return this.get('preferences.role') != 'supporter' && this.get('preferences.device.role') == 'supporter';
+  }),
+  supporter_view: computed('preferences.role', 'preferences.device.role', function() {
+    return this.get('preferences.role') == 'supporter' || this.get('preferences.device.role') == 'supporter';
+  }),
   profile_url: computed('user_name', function() {
     return location.protocol + '//' + location.host + '/' + this.get('user_name');
   }),
@@ -811,6 +817,11 @@ CoughDrop.User = DS.Model.extend({
         ids.push(b.key);
       }
     });
+    if(this.get('preferences.sync_starred_boards')) {
+      (this.get('stats.starred_board_refs') || []).forEach(function(ref) {
+        ids.push(ref.id);
+      });
+    }
     var promises = [];
     var list = [];
     ids.forEach(function(id, idx) {

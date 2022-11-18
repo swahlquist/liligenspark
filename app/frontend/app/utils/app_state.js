@@ -724,6 +724,11 @@ var app_state = EmberObject.extend({
     if(jump_between_boards) {
       var last_root = stashes.get('last_root') || app_state.get('referenced_user.home_board') || {};
       var roots = [app_state.get('referenced_user.preferences.home_board') || {}];
+      if(app_state.get('referenced_user.preferences.sync_starred_boards')) {
+        (app_state.get('referenced_user.stats.starred_board_refs') || []).forEach(function(ref) {
+          roots.push(ref);
+        });
+      }
       roots = roots.concat((app_state.get('current_sidebar_boards') || []).filter(function(i) { return i.key; }));
       var found = roots.find(function(r) { return r && ((r.key && r.key == last_root.key) || (r.id && r.id == last_root.id)); });
       var current = Math.max(0, roots.indexOf(found));
@@ -1141,7 +1146,17 @@ var app_state = EmberObject.extend({
     if(!opts.remember_level) {
       stashes.persist('board_level', null);
     }
-    var preferred = opts.force_board_state || (speak_mode_user && speak_mode_user.get('preferences.home_board')) || opts.fallback_board_state || stashes.get('root_board_state') || {key: 'example/yesno'};
+    var user_preferred = null;
+    if(speak_mode_user) {
+      if(speak_mode_user.get('preferences.sync_starred_boards')) {
+        if(speak_mode_user.get('stats.starred_board_refs.length') || speak_mode_user.get('preferences.home_board')) {
+          user_preferred = {key: 'obf/stars-' + speak_mode_user.get('id')};
+        }
+      } else {
+        user_preferred = speak_mode_user.get('preferences.home_board');
+      }
+    }
+    var preferred = opts.force_board_state || user_preferred || opts.fallback_board_state || stashes.get('root_board_state') || {key: 'example/yesno'};
     if(preferred.locale) {
       stashes.persist('label_locale', preferred.locale);
       stashes.persist('vocalization_locale', preferred.locale);

@@ -350,7 +350,9 @@ export default Controller.extend({
     'app_state.sessionUser.supporter_role',
     'app_state.sessionUser.currently_premium',
     function() {
-      if(app_state.get('sessionUser.supporter_role')) {
+      if(app_state.get('sessionUser.currently_premium')) {
+        return true;
+      } else if(app_state.get('sessionUser.supporter_role')) {
         var any_premium_supervisees = false;
         (app_state.get('sessionUser.known_supervisees') || []).forEach(function(sup) {
           if(emberGet(sup, 'premium') || emberGet(sup, 'currently_premium')) {
@@ -360,8 +362,6 @@ export default Controller.extend({
         if(any_premium_supervisees) {
           return true;
         }
-      } else if(app_state.get('sessionUser.currently_premium')) {
-        return true;
       }
       return false;
     }

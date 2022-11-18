@@ -100,6 +100,13 @@ class Api::BoardsController < ApplicationController
             board_ids << bl.board_id
             ranks[bl.board_id] = bl.pg_search_rank
           end
+          # begin
+          #   ActiveRecord::Base.connection.execute('set statement_timeout = 20000')
+          #   # Do some long running queries
+          # ensure
+          #   # Always restore the statement_timeout to its initial value
+          #   ActiveRecord::Base.connection.execute('set statement_timeout = 10000')
+          # end          
         else
           # TODO: Track locale of search results so you can show them with
           # the right localized name if !params['locale'] || params['locale'] == 'any'
@@ -289,7 +296,11 @@ class Api::BoardsController < ApplicationController
         opts[:allow_copying_protected_boards] = true
       end
     end
-    board = Board.process_new(processed_params['board'], opts)
+    begin
+      board = Board.process_new(processed_params['board'], opts)
+    rescue ActiveRecord::RecordNotUnique
+      return api_error(400, {error: 'board key already in use'})
+    end
     if board.errored?
       api_error(400, {error: "board creation failed", errors: board && board.processing_errors})
     else

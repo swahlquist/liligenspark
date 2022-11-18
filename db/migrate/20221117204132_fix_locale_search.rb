@@ -1,6 +1,8 @@
 class FixLocaleSearch < ActiveRecord::Migration[5.0]
   disable_ddl_transaction!
   def change
+    # https://github.com/Casecommons/pg_search/issues/15
+    # https://github.com/ankane/the-ultimate-guide-to-ruby-timeouts#postgresql
     enable_extension "btree_gin"
 
     remove_index :board_locales, name: :board_locales_search_string3

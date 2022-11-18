@@ -72,6 +72,33 @@
     {{/if}}
 
     <div class="form-group">
+      <label for="home_board" class="col-sm-3 control-label">{{t "Home Board" key='home_board'}}</label>
+      <div class="col-sm-3">
+        <p class='form-control-static'>
+          {{#if pending_preferences.sync_starred_boards}}
+            {{t "All Liked Boards" key='all_starred_boards'}}
+            {{#if pending_preferences.home_board.key}}
+              <br/>{{t "(and home board %{hb})" hb=pending_preferences.home_board.key key='and_home_board'}}
+            {{/if}}
+          {{else if pending_preferences.home_board.key}}
+            {{pending_preferences.home_board.key}}
+          {{else}}
+            {{t "None Set" key='none_set'}}
+          {{/if}}
+        </p>
+      </div>
+      <div class='col-sm-2' style='text-align: right;'>
+        {{#if pending_preferences.home_board.key}}
+          <button class='btn btn-default' {{action 'clear_home'}}>{{t "Clear Home Board" key='clear_home_board'}}</button>
+        {{/if}}
+      </div>
+      {{#if pending_preferences.sync_starred_boards}}
+        <div class='col-sm-offset-3 col-sm-9'>
+          <em class='text-info'>{{t "Update starred boards preference in the Sidebar and Shortcuts section" key='update_starred_sync_in_other_section'}}</em>
+        </div>
+      {{/if}}
+    </div>
+    <div class="form-group">
       <label for="locale" class="col-sm-3 control-label">{{t "Preferred Language" key='preferred_language'}}</label>
       <div class="col-sm-5">
         {{bound-select select_class="form-control" select_id="locale" content=localeList selection=pending_preferences.locale action=(action (mut pending_preferences.locale)) }}
@@ -1029,6 +1056,19 @@
         {{/unless}}
       </div>
     </div>
+    <div class="form-group">
+      <label for="sync_starred_boards" class="col-sm-3 control-label">{{t "Liked Boards" key='liked_boards'}}</label>
+      <div class="col-sm-5">
+        <div class="checkbox big_checkbox">
+          <label>
+            {{input type="checkbox" checked=pending_preferences.sync_starred_boards id="sync_starred_boards"}}
+            {{t "Make my Home Board a list of all my liked boards" key='sync_starred_boards'}}<br/>
+            {{t "(and sync them for offline use)" key='and_sync_for_offline'}}
+          </label>
+        </div>
+      </div>
+    </div>
+
     {{#unless pending_preferences.disable_quick_sidebar}}
       <div class="form-group">
         <label class="col-sm-3 control-label">{{t "Links and Buttons" key='links_and_buttons'}}</label>

@@ -121,7 +121,7 @@ export default Controller.extend({
       } else if(this.get('selected') == 'starred') {
         list = this.get('model.starred_boards');
         res.remove_type = 'unstar';
-        res.remove_label = i18n.t('unstar', "unstar");
+        res.remove_label = i18n.t('unstar', "un-like");
         res.remove_icon = 'glyphicon glyphicon-star-empty';
       } else if(this.get('selected') == 'shared') {
         list = this.get('model.shared_boards');
@@ -691,6 +691,10 @@ export default Controller.extend({
           _this.set('password.error', true);
         });
       }
+    },
+    load_starred: function() {
+      var opts = {force_board_state: {key: 'obf/stars-' + this.get('model.id')}};
+      app_state.home_in_speak_mode(opts);
     },
     external_device: function() {
       if(this.get('model.permissions.edit')) {

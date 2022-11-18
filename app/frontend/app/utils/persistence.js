@@ -1437,6 +1437,7 @@ var persistence = EmberObject.extend({
           persistence.store_url('https://opensymbols.s3.amazonaws.com/libraries/mulberry/paper.svg', 'image', false, false).then(null, function() { });
           persistence.store_url('https://opensymbols.s3.amazonaws.com/libraries/arasaac/board_3.png', 'image', false, false).then(null, function() { });
           persistence.store_url('https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/274c.svg', 'image', false, false).then(null, function() { });
+          persistence.store_url('https://opensymbols.s3.amazonaws.com/libraries/noun-project/Home-c167425c69.svg', 'image', false, false).then(null, function() { });
         });
       }
 
@@ -2227,6 +2228,11 @@ var persistence = EmberObject.extend({
             }
           });
         }
+        if(user.get('preferences.sync_starred_boards')) {
+          user.get('stats.starred_board_refs').forEach(function(ref) {
+            to_visit_boards.push({key: ref.key, depth: 1, image: ref.image_url, visit_source: "starred board"});
+          });
+        }
         var safely_cached_boards = {};
         var checked_linked_boards = {};
 
@@ -2275,7 +2281,7 @@ var persistence = EmberObject.extend({
               var content_promises = 0;
               var safely_cached = !!safely_cached_boards[board.id];
               // force a reload of the buttonset if the board changed
-              if((next.depth == 0 && next.visit_source == 'home board') || (next.depth == 1 && next.visit_source == 'sidebar board')) {
+              if((next.depth == 0 && next.visit_source == 'home board') || (next.depth == 1 && next.visit_source == 'sidebar board') || (next.depth == 0 && next.visit_source == 'starred board')) {
                 // Confirm if the button set is stored locally
                 persistence.find('buttonset', board.get('id')).then(function(bs) {
                   if(bs.full_set_revision != local_full_set_revision && !bs.buttons && !safely_cached) {

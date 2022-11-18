@@ -10,6 +10,8 @@ import CoughDrop from '../app';
 import evaluation from './eval';
 import emergency from './obf-emergency';
 import { later as runLater } from '@ember/runloop';
+import app_state from './app_state';
+import i18n from './i18n';
 
 var handlers = {};
 var obf = EmberObject.extend({
@@ -152,6 +154,55 @@ var obf = EmberObject.extend({
 
 evaluation.register(obf);
 emergency.register(obf);
+obf.register("stars", function(key) {
+  var user_id = key.replace(/^stars-?/, '');
+  var user = app_state.get('sessionUser');
+  if(user_id && user_id != 'self') {
+    user = CoughDrop.store.peekRecord('user', user_id);
+    if(!user || !user.get('permissions.supervise')) {
+      
+    }
+  }
+  var rows = 3, cols = 4;
+  var idx = 0;
+  var total = (user && (user.get('stats.starred_board_refs') || []).length) || 0;
+  while(total > rows * cols) {
+    if(cols / rows > 1.7) {
+      rows++;
+    } else {
+      cols++;
+    }
+  }
+  var res = obf.shell(rows, cols);
+  res.name = i18n.t('starred_boards', "Starred Boards");
+  if(user) {
+    res.name = i18n.t('starred_boards_for_user', "Starred Boards for %{un}", {un: user.get('user_name')});
+    if(user.get('preferences.home_board')) {
+      var ref = (user.get('stats.starred_board_refs') || []).find(function(r) { return r.id == user.get('preferences.home_board.id'); });
+      var btn = {label: ref ? ref.name : i18n.t('home_board', "Home Board"), home_lock: true, image: {url: "https://opensymbols.s3.amazonaws.com/libraries/noun-project/Home-c167425c69.svg"}, load_board: {key: user.get('preferences.home_board.key'), id: user.get('preferences.home_board.id')}};
+      if(ref && ref.image_url) {
+        btn.image = {url: ref.image_url};
+      }
+      res.add_button(btn, 0, 0);
+      idx++;
+    }
+    (user.get('stats.starred_board_refs') || []).forEach(function(ref) {
+      var col = idx % cols;
+      var row = (idx - col) / cols;
+      res.add_button({label: ref.name, home_lock: true, image: {url: ref.image_url}, load_board: {key: ref.key, id: ref.id}}, row, col);
+      // TODO: pass the preferred level as well based on how it looked when it was starred
+      idx++;
+    });
+    if(total == 0) {
+      res.background = {text: i18n.t('no_starred_boards', "User Has No Starred Boards")};
+      // TODO: include fallback list of boards somehow
+    }
+  } else {
+    res.background = {text: i18n.t('no_user_found', "User Information Not Available")};
+  }
+  return {json: res.to_json()};
+});
+
 window.obf = obf;
 
 export default obf;

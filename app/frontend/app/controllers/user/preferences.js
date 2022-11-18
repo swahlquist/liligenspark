@@ -809,6 +809,9 @@ export default Controller.extend({
       this.set('model.preferences.phrase_categories', this.get('phrase_categories_string').split(/\s*,\s*/).filter(function(s) { return s; }));
       modal.open('modals/phrases', {user: this.get('model')})
     },
+    clear_home: function() {
+      this.set('pending_preferences.home_board', {});
+    },
     savePreferences: function(skip_redirect) {
       // TODO: add a "save pending..." status somewhere
       // TODO: this same code is in utterance.js...
