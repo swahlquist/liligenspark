@@ -453,6 +453,7 @@ export default modal.ModalController.extend({
       res.push({name: i18n.t('pcs_images', "PCS (BoardMaker) Symbols by Tobii Dynavox"), id: 'pcs_required'});
       res.push({name: i18n.t('symbolstix_images', "SymbolStix Symbols"), id: 'symbolstix_required'});
     }
+    // res.push({name: i18n.t('tawasol', "Tawasol"), id: 'tawasol'});
 
 //    res.push({name: i18n.t('openclipart', "OpenClipart"), id: 'openclipart'});
 

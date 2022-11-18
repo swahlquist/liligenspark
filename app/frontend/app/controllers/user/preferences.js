@@ -223,8 +223,12 @@ export default Controller.extend({
     {name: i18n.t('black', "Black"), id: "black"}
   ],
   dashboardViewList: [
-    {name: i18n.t('communicator_view', "Communicator View"), id: 'communicator'},
-    {name: i18n.t('supporter_view', "Therapist/Parent/Supporter View"), id: 'supporter'}
+    {name: i18n.t('communicator_view', "Communicator Account"), id: 'communicator'},
+    {name: i18n.t('supporter_view', "Therapist/Parent/Supporter Account"), id: 'supporter'}
+  ],
+  device_type_list: [
+    {name: i18n.t('communicator_device', "For Communication"), id: 'communicator'},
+    {name: i18n.t('supporter_device', "For Supporting the Communicator"), id: 'supporter'}
   ],
   symbolsList: computed(function() {
     var list = [

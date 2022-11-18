@@ -442,13 +442,16 @@
               {{/if}}
             {{else}}
               {{#if app_state.speak_mode_possible}}
-                {{#if app_state.currentUser.supervisees}}
+                {{#if app_state.currentUser.supporter_view}}
                   <div class="btn-group">
                     <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#" id="speak_mode" data-placement="bottom" data-trigger="manual">
                       <span class="wide">{{t "Speak Mode" key="speak_mode"}}</span><span class="skinny real_skinny glyphicon glyphicon-volume-up"></span>
                       <span class="caret"></span>
                     </a>
                     <ul class="dropdown-menu" role="menu">
+                      {{#if app_state.currentUser.communicator_in_supporter_view}}
+                        <li><a href="#" {{action "setSpeakModeUser" 'self' 'modeling'}}>{{t "model for me" key='model_for_me'}}</a></li>
+                      {{/if}}
                       <li><a href="#" {{action "setSpeakModeUser" 'self'}}>{{t "speak as me" key='speak_as_me'}}</a></li>
                       {{#if app_state.currentUser.permissions.delete}}
                         {{#if few_supervisees}}
@@ -685,7 +688,9 @@
               <img src={{app_state.currentUser.avatar_url_with_fallback}} class='user' onerror='button_broken_image(this);' />
             </span>
             {{#if app_state.modeling_for_user}}
-              <img src={{app_state.referenced_speak_mode_user.avatar_url_with_fallback}} class='modeling_user' onerror='button_broken_image(this);' />
+              {{#unless app_state.modeling_for_self}}
+                <img src={{app_state.referenced_speak_mode_user.avatar_url_with_fallback}} class='modeling_user' onerror='button_broken_image(this);' />
+              {{/unless}}
             {{/if}}
             {{#if session.invalid_token}}
               <span class="label label-danger unread">{{t "!" key='exclaim'}}</span>

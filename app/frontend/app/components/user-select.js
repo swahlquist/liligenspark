@@ -17,10 +17,11 @@ export default Component.extend({
     var supervisees = [];
     var _this = this;
     var has_supervisees = app_state.get('sessionUser.known_supervisees') || app_state.get('sessionUser.managed_orgs.length') > 0;
+    var show_options = has_supervisees || app_state.get('sessionUser.communicator_in_supporter_view');
     _this.set('has_extra_users', app_state.get('sessionUser.managed_orgs.length') > 0);
     _this.set('extra_users', null);
     _this.set('extra_user', null);
-    if(!this.get('users') && has_supervisees) {
+    if(!this.get('users') && show_options) {
       app_state.get('sessionUser.known_supervisees').forEach(function(supervisee) {
         var sup = {
           name: supervisee.user_name,
@@ -36,7 +37,7 @@ export default Component.extend({
           }, function(err) { });
         }
       });
-      if(supervisees.length > 0 || _this.get('has_extra_users')) {
+      if(supervisees.length > 0 || _this.get('has_extra_users') || app_state.get('sessionUser.communicator_in_supporter_view')) {
         supervisees.unshift({
           name: i18n.t('me', "me"),
           id: 'self',
@@ -53,7 +54,9 @@ export default Component.extend({
       this.load_extra_users();
     }
     if(!app_state.get('sessionUser.supervisees') || supervisees.length === 0) {
-      this.sendAction('action', 'self');
+      if(!app_state.get('sessionUser.communicator_in_supporter_view')) {
+        this.sendAction('action', 'self');
+      }
     }
     this.set('users', this.get('users') || supervisees);
   },

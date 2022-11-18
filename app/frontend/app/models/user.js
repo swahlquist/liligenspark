@@ -440,7 +440,7 @@ CoughDrop.User = DS.Model.extend({
   supporter_role: computed('preferences.role', function() {
     return this.get('preferences.role') == 'supporter';
   }),
-  communiator_in_supporter_view: computed('preferences.role', 'preferences.device.role', function() {
+  communicator_in_supporter_view: computed('preferences.role', 'preferences.device.role', function() {
     return this.get('preferences.role') != 'supporter' && this.get('preferences.device.role') == 'supporter';
   }),
   supporter_view: computed('preferences.role', 'preferences.device.role', function() {

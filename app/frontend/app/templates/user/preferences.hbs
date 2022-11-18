@@ -4,18 +4,24 @@
   {{#preference-box title="Basics" title_key='basics' open=true}}
     <span style='display: none;'>{{t "Basics" key='basics'}}</span>
     <div class="form-group">
-      <label for="role" class="col-sm-3 control-label">{{t "Dashboard" key='role'}}</label>
+      <label for="role" class="col-sm-3 control-label">{{t "Account Type" key='role'}}</label>
       <div class="col-sm-5">
         {{bound-select select_class="form-control" select_id="role" content=dashboardViewList selection=pending_preferences.role action=(action (mut pending_preferences.role)) }}
       </div>
     </div>
     {{#unless non_communicator}}
       <div class="form-group">
-        <label for="role" class="col-sm-3 control-label">{{t "On Launch" key='on_launch'}}</label>
+        <label for="device_role" class="col-sm-3 control-label">{{t "Device Purpose" key='device_purpose'}}</label>
+        <div class="col-sm-5">
+          {{bound-select select_class="form-control" select_id="device_role" content=device_type_list selection=pending_preferences.device.role action=(action (mut pending_preferences.device.role)) }}
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="auto_open_speak_mode" class="col-sm-3 control-label">{{t "On Launch" key='on_launch'}}</label>
         <div class="col-sm-5">
           <div class="checkbox big_checkbox">
             <label>
-              {{input type="checkbox" checked=pending_preferences.auto_open_speak_mode}}
+              {{input type="checkbox" id='auto_open_speak_mode' checked=pending_preferences.auto_open_speak_mode}}
               {{t "Start app in Speak Mode on launch" key='start_in_speak_mode_on_launch'}}
             </label>
           </div>

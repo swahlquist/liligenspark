@@ -25,9 +25,9 @@ export default Controller.extend({
   }),
   home_board_or_supporter: computed(
     'app_state.currentUser.preferences.home_board.key',
-    'app_state.currentUser.supporter_role',
+    'app_state.currentUser.supporter_view',
     function() {
-        return this.get('app_state.currentUser.preferences.home_board.key') || this.get('app_state.currentUser.supporter_role');
+        return this.get('app_state.currentUser.preferences.home_board.key') || this.get('app_state.currentUser.supporter_view');
     }
   ),
   needs_sync: computed('persistence.last_sync_at', function() {

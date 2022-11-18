@@ -599,12 +599,13 @@ var app_state = EmberObject.extend({
       stashes.set('modeling', !!this.get('modeling'));
     }
   }),
-  modeling: computed('manual_modeling', 'modeling_for_user', 'modeling_ts', function(ch) {
+  modeling: computed('manual_modeling', 'modeling_for_user', 'modeling_for_self', 'modeling_ts', function(ch) {
     var res = !!(this.get('manual_modeling') || this.get('modeling_for_user'));
     return res;
   }),
-  modeling_for_user: computed('speak_mode', 'currentUser', 'referenced_speak_mode_user', function() {
+  modeling_for_user: computed('speak_mode', 'currentUser', 'referenced_speak_mode_user', 'modeling_for_self', function() {
     var res = this.get('speak_mode') && this.get('currentUser') && this.get('referenced_speak_mode_user') && app_state.get('currentUser.id') != this.get('referenced_speak_mode_user.id');
+    res = res || this.get('modeling_for_self');
     var _this = this;
     // this is weird and hacky, but for some reason modeling wasn't reliably updating when modeling_for_user changed
     runLater(function() {
@@ -1072,7 +1073,7 @@ var app_state = EmberObject.extend({
       return u.get('button_list');
     };
 
-    if(!app_state.get('sessionUser.supporter_role')) {
+    if(!app_state.get('sessionUser.supporter_view')) {
       // TODO: DRY this check, it's in sync too
       if(app_state.get('sessionUser.preferences.remote_modeling') && (app_state.get('pairing') || app_state.get('sessionUser.preferences.remote_modeling_auto_follow') || app_state.get('followers.allowed'))) {
         var str = JSON.stringify(shareable_voc());
@@ -1108,7 +1109,7 @@ var app_state = EmberObject.extend({
   sync_keepalive: observer('short_refresh_stamp', function() {
     var last = app_state.get('last_keepalive') || 0;
     var now = (new Date()).getTime();
-    if(app_state.get('speak_mode') && !app_state.get('currentUser.supporter_role')) {
+    if(app_state.get('speak_mode') && !app_state.get('currentUser.supporter_view')) {
       // every 20 seconds, re-assert board state
       if(last < now - (20 * 1000))     {
         sync.check_following();
@@ -1177,6 +1178,10 @@ var app_state = EmberObject.extend({
     this.toggle_mode('speak', {force: true, override_state: preferred});
     this.set('referenced_board', preferred);
     this.controller.transitionToRoute('board', preferred.key);
+    if(speak_mode_user && speak_mode_user == app_state.get('sessionUser') && speak_mode_user.get('communicator_in_supporter_view')) {
+      // Supporter devices for communicators should start in modeling mode
+      app_state.set('modeling_for_self', true);
+    }
   },
   check_scanning: function() {
     var _this = this;
@@ -1323,6 +1328,9 @@ var app_state = EmberObject.extend({
           opts.force_board_state = {key: board_key};
         }
         this.home_in_speak_mode(opts);
+      }
+      if(keep_as_self && app_state.get('sessionUser.communicator_in_supporter_view')) {
+        app_state.set('modeling_for_self', true);
       }
     } else {
       // TODO: this won't get the device-specific settings correctly unless
@@ -1903,6 +1911,8 @@ var app_state = EmberObject.extend({
           app_state.set('followers', null);
           app_state.set('focus_words', null);
           app_state.set('sync_utterance', null);
+          app_state.set('modeling_for_self', null);
+
           sync.current_pairing = null;
           stashes.persist('temporary_root_board_state', null);
           stashes.persist('sticky_board', false);

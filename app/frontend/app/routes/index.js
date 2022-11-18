@@ -43,7 +43,7 @@ export default Route.extend({
     } else {
       if(stashes.get('current_mode') == 'edit') {
         stashes.persist('current_mode', 'default');
-      } else if(jump_to_speak && model && model.get('id') && !model.get('supporter_role') && !app_state.get('already_homed') && model.get('preferences.home_board.key')) {
+      } else if(jump_to_speak && model && model.get('id') && !model.get('supporter_view') && !app_state.get('already_homed') && model.get('preferences.home_board.key')) {
         var homey = function() {
           app_state.home_in_speak_mode({user: model});
           app_state.set('already_homed', true);
@@ -98,8 +98,11 @@ export default Route.extend({
     homeInSpeakMode: function(board_for_user_id, keep_as_self) {
       if(board_for_user_id) {
         app_state.set_speak_mode_user(board_for_user_id, true, keep_as_self);
-      } else if(app_state.get('currentUser.permissions.delete') && (app_state.get('currentUser.supervisees') || []).length > 0) {
+      } else if((app_state.get('currentUser.permissions.delete') && (app_state.get('currentUser.supervisees') || []).length > 0) || app_state.get('currentUser.communicator_in_supporter_view')) {
         var prompt = i18n.t('speak_as_which_user', "Select User to Speak As");
+        if(app_state.get('currentUser.communicator_in_supporter_view')) {
+          prompt = i18n.t('speak_as_which_mode', "Select Mode and User for Session");
+        }
         app_state.set('referenced_speak_mode_user', null);
         app_state.controller.send('switch_communicators', {stay: true, modeling: 'ask', skip_me: false, header: prompt});
       } else {
