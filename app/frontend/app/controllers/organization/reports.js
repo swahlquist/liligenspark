@@ -145,6 +145,8 @@ export default Controller.extend({
         next_page('/api/v1/organizations/' + _this.get('model.id') + '/users');
       } else if(this.get('current_report') == 'all_supervisors') {
         next_page('/api/v1/organizations/' + _this.get('model.id') + '/supervisors');
+      } else if(this.get('current_report') == 'all_evals') {
+        next_page('/api/v1/organizations/' + _this.get('model.id') + '/evals');
       } else {
         _this.set('sort_by_key', ['premium_voices', 'extras', 'protected_sources', 'subscriptions'].indexOf(_this.get('current_report')) != -1);
         next_page('/api/v1/organizations/' + _this.get('model.id') + '/admin_reports?report=' + _this.get('current_report'));
