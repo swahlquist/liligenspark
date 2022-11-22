@@ -164,7 +164,7 @@ class Board < ActiveRecord::Base
     end
   end
 
-  def generate_stats
+  def generate_stats(frd=false)
     self.settings['stars'] = (self.settings['starred_user_ids'] || []).length
     self.settings['locale_stars'] = {}
 
@@ -189,42 +189,49 @@ class Board < ActiveRecord::Base
     end
     child_board_ids = self.child_boards.select('id').map(&:id)
     self.settings['forks'] = child_board_ids.length
-    child_conns = UserBoardConnection.where(:board_id => child_board_ids)
-    self.settings['locale_home_forks'] = {}
-    self.settings['non_author_uses'] = 0
-    if child_conns.count > 20
-      self.settings['home_forks'] = child_conns.where(home: true).count
-      self.settings['recent_forks'] = child_conns.where(['updated_at > ?', 30.days.ago]).count
-      self.settings['recent_home_forks']  = child_conns.where(home: true).where(['updated_at > ?', 30.days.ago]).count
-      self.settings['non_author_uses'] += child_conns.where(['user_id != ?', self.user_id]).count
-      child_conns.where('locale IS NULL').each do |ubc|
-        if !ubc.locale && ubc.board && ubc.board.settings
-          UserBoardConnection.where(id: ubc.id).update_all(locale: ubc.board.settings['locale'])
-          ubc.locale = ubc.board.settings['locale']
-        end
-      end
-      child_conns.group('locale').count('home').each do |lang, count|
-        loc = (lang || 'en').split(/_|-/)[0]
-        self.settings['locale_home_forks'][lang] = (self.settings['locale_home_forks'][lang] || 0) + count
-        self.settings['locale_home_forks'][loc] = (self.settings['locale_home_forks'][loc] || 0) + count if lang != loc
-      end
+    if child_board_ids.length > 10 && !frd
+      self.schedule_for(:slow, :generate_stats, true)
     else
-      self.settings['home_forks'] = 0
-      self.settings['recent_forks'] = 0
-      self.settings['recent_home_forks'] = 0
-      child_conns.each do |ubc|
-        if !ubc.locale && ubc.board && ubc.board.settings
-          UserBoardConnection.where(id: ubc.id).update_all(locale: ubc.board.settings['locale'])
-          ubc.locale = ubc.board.settings['locale']
+      # This was getting too slow to be allowed in-request
+      child_conns = UserBoardConnection.where(:board_id => child_board_ids)
+      self.settings['locale_home_forks'] = {}
+      self.settings['non_author_uses'] = 0
+      if child_conns.count > 20
+        self.settings['home_forks'] = child_conns.where(home: true).count
+        self.settings['recent_forks'] = child_conns.where(['updated_at > ?', 30.days.ago]).count
+        self.settings['recent_home_forks']  = child_conns.where(home: true).where(['updated_at > ?', 30.days.ago]).count
+        self.settings['non_author_uses'] += child_conns.where(['user_id != ?', self.user_id]).count
+        child_conns.where('locale IS NULL').each do |ubc|
+          if !ubc.locale && ubc.board && ubc.board.settings
+            UserBoardConnection.where(id: ubc.id).update_all(locale: ubc.board.settings['locale'])
+            ubc.locale = ubc.board.settings['locale']
+          end
         end
-        loc = (ubc.locale || 'en').split(/_|-/)[0]
-        self.settings['home_forks'] += 1 if ubc.home
-        self.settings['locale_home_forks'][ubc.locale] = (self.settings['locale_home_forks'][ubc.locale] || 0) + 1 if ubc.home
-        self.settings['locale_home_forks'][loc] = (self.settings['locale_home_forks'][loc] || 0) + 1 if ubc.home && ubc.locale != loc
-        if ubc.updated_at > 30.days.ago
-          self.settings['recent_forks'] += 1 
-          self.settings['recent_home_forks'] += 1 if ubc.home        
+        child_conns.group('locale').count('home').each do |lang, count|
+          loc = (lang || 'en').split(/_|-/)[0]
+          self.settings['locale_home_forks'][lang] = (self.settings['locale_home_forks'][lang] || 0) + count
+          self.settings['locale_home_forks'][loc] = (self.settings['locale_home_forks'][loc] || 0) + count if lang != loc
         end
+      else
+        self.settings['home_forks'] = 0
+        self.settings['recent_forks'] = 0
+        self.settings['recent_home_forks'] = 0
+        child_conns.each do |ubc|
+          if !ubc.locale && ubc.board && ubc.board.settings
+            UserBoardConnection.where(id: ubc.id).update_all(locale: ubc.board.settings['locale'])
+            ubc.locale = ubc.board.settings['locale']
+          end
+          loc = (ubc.locale || 'en').split(/_|-/)[0]
+          self.settings['home_forks'] += 1 if ubc.home
+          self.settings['locale_home_forks'][ubc.locale] = (self.settings['locale_home_forks'][ubc.locale] || 0) + 1 if ubc.home
+          self.settings['locale_home_forks'][loc] = (self.settings['locale_home_forks'][loc] || 0) + 1 if ubc.home && ubc.locale != loc
+          if ubc.updated_at > 30.days.ago
+            self.settings['recent_forks'] += 1 
+            self.settings['recent_home_forks'] += 1 if ubc.home        
+          end
+        end
+        self.save if frd
+        true
       end
     end
       
