@@ -207,7 +207,7 @@ module ExtraData
       self.data[self.extra_data_attribute] = @cached_extra_data
     end
     if url && !self.data[self.extra_data_attribute]
-      req = Typhoeus.get(url, timeout: 10)
+      req = Typhoeus.get(url, timeout: 3)
       data = self.decrypted_json(req.body) rescue nil
       self.data[self.extra_data_attribute] = data
     end

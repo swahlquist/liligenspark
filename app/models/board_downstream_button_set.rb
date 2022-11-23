@@ -34,7 +34,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     self.data && self.data['json_response']
   end
   
-  def self.for_user(user, allow_slow=false)
+  def self.for_user(user, allow_slow=false, load_extra_data=true)
     board_ids = []
     if user.settings['preferences'] && user.settings['preferences']['home_board']
       board_ids << user.settings['preferences']['home_board']['id']
@@ -52,7 +52,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     end
     
     button_sets = boards.map{|b| b.board_downstream_button_set }.compact.uniq
-    button_sets.each{|bs| bs.assert_extra_data }
+    button_sets.each{|bs| bs.assert_extra_data } if load_extra_data
     button_sets
   end
   

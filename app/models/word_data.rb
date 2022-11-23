@@ -593,7 +593,7 @@ class WordData < ActiveRecord::Base
 
       url = "https://translation.googleapis.com/language/translate/v2?key=#{key}&target=#{dest_lang}&source=#{source_lang}&format=text"
       url += '&' + strings.map{|str| "q=#{CGI.escape(str || '')}" }.join('&')
-      data = Typhoeus.get(url, timeout: 10)
+      data = Typhoeus.get(url, timeout: 3)
       json = data && JSON.parse(data.body) rescue nil
       if json && json['data'] && json['data']['translations']
         json['data']['translations'].each_with_index do |trans, idx|
@@ -835,13 +835,14 @@ class WordData < ActiveRecord::Base
   def self.core_and_fringe_for(user, allow_slow=false)
     res = {}
     res[:for_user] = WordData.core_list_for(user)
-    button_sets = BoardDownstreamButtonSet.for_user(user, true)
+    button_sets = BoardDownstreamButtonSet.for_user(user, allow_slow, false)
     cache_key = "reachable_phrases_and_words/#{user.cache_key}/#{button_sets.map(&:cache_key).join('/')}"
     hashes = user.get_cached(cache_key)
     if !hashes
       hashes = {}
       # These lists don't contain any user-specific information and so can be safely
       # cached in Redis
+      button_sets.each{|bs| bs.assert_extra_data }
       hashes['reachable_for_user'] = WordData.reachable_core_list_for(user, button_sets)
       hashes['reachable_fringe_for_user'] = WordData.fringe_list_for(user, button_sets)
       hashes['reachable_requested_phrases'] = WordData.reachable_requested_phrases_for(user, button_sets)

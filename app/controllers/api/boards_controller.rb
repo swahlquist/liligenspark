@@ -12,12 +12,16 @@ class Api::BoardsController < ApplicationController
     cache_key = nil
     if qp.keys.sort == ['locale', 'q', 'sort']
       if (params['q'] || '') == '' && params['locale'] && params['sort']
-        cache_key = "board_search/ids/#{params['locale']}/#{params['sort']}"
+        cache_key = "board/search/#{params['locale']}/#{params['sort']}"
       end
     end
     if cache_key
-      json = RedisInit.default.get(cache_key)
-      return render(json: json) if json
+      json = RedisInit.default.get(cache_key)      
+      if json && json != {}.to_json
+        return render(json: json) 
+      else
+        RedisInit.default.setex(cache_key, 5.minutes.to_i, {}.to_json)
+      end
     end
     start = Time.now.to_i
     boards = boards.includes(:board_content)
@@ -131,12 +135,29 @@ class Api::BoardsController < ApplicationController
       end
     end
     if !params['locale'].blank? && params['locale'] != 'any' && (params['q'].blank? || !params['public'])
-      Rails.logger.warn('private locale search')
-      # board.search_string now includes locales, even on private boards
-      # This filter should be applied for private searches (which wouldn't yet
-      # have been filtered by locale) or for requests without a search query
-      lang = params['locale'].split(/-|_/)[0].downcase
-      boards = boards.where(['search_string ILIKE ?', "%locale:#{lang}%"])
+      if params['public']
+        board_ids = []
+        locs = BoardLocale.where(locale: [params['locale'], params['locale'].split(/-|_/)[0]])
+        if params['sort'] == 'home_popularity'
+          locs.order('home_popularity DESC, popularity DESC').limit(100).each_with_index do |bl, idx|
+            board_ids << bl.board_id
+            ranks[bl.board_id] = 100 - idx
+          end
+        else
+          locs.order('popularity DESC, home_popularity DESC').limit(100).each_with_index do |bl, idx|
+            board_ids << bl.board_id
+            ranks[bl.board_id] = 100 - idx
+          end
+        end
+        boards = boards.where(id: board_ids)
+      else
+        Rails.logger.warn('private locale search')
+        lang = params['locale'].split(/-|_/)[0].downcase
+        # board.search_string now includes locales, even on private boards
+        # This filter should be applied for private searches (which wouldn't yet
+        # have been filtered by locale) or for requests without a search query
+        boards = boards.where(['search_string ILIKE ?', "%locale:#{lang}%"])
+      end
     end
 
     Rails.logger.warn('public check')
@@ -236,7 +257,7 @@ class Api::BoardsController < ApplicationController
       json[:meta]['progress'] = JsonApi::Progress.as_json(progress) if progress
     end
     if cache_key
-      RedisInit.default.setex(cache_key, 12.hours.to_i, json)
+      RedisInit.default.setex(cache_key, 12.hours.to_i, json.to_json)
       json['uncached'] = true
     end
 
