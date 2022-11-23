@@ -8,6 +8,17 @@ class Api::BoardsController < ApplicationController
       conn = (Octopus.config[Rails.env] || {}).keys.sample
       boards = boards.using(conn) if conn
     end
+    qp = request.query_parameters
+    cache_key = nil
+    if qp.keys.sort == ['locale', 'q', 'sort']
+      if (params['q'] || '') == '' && params['locale'] && params['sort']
+        cache_key = "board_search/ids/#{params['locale']}/#{params['sort']}"
+      end
+    end
+    if cache_key
+      json = RedisInit.default.get(cache_key)
+      return render(json: json) if json
+    end
     start = Time.now.to_i
     boards = boards.includes(:board_content)
 
@@ -223,6 +234,10 @@ class Api::BoardsController < ApplicationController
     self.class.trace_execution_scoped(['boards/json_paginate']) do
       json = JsonApi::Board.paginate(params, boards, {locale: params['locale']})
       json[:meta]['progress'] = JsonApi::Progress.as_json(progress) if progress
+    end
+    if cache_key
+      RedisInit.default.setex(cache_key, 12.hours.to_i, json)
+      json['uncached'] = true
     end
 
     if (Time.now.to_i - start) > 5
