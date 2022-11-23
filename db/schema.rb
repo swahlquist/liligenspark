@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20221118200423) do
+ActiveRecord::Schema.define(version: 20221123065540) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -102,6 +102,7 @@ ActiveRecord::Schema.define(version: 20221118200423) do
     t.index ["key"], name: "index_boards_on_key", unique: true, using: :btree
     t.index ["parent_board_id"], name: "index_boards_on_parent_board_id", using: :btree
     t.index ["public", "home_popularity", "popularity", "id"], name: "board_pop_index", using: :btree
+    t.index ["public", "popularity", "home_popularity", "id"], name: "boards_all_pops", using: :btree
     t.index ["public", "user_id"], name: "index_boards_on_public_and_user_id", using: :btree
     t.index ["user_id", "popularity", "any_upstream", "id"], name: "board_user_index_popularity", using: :btree
   end
