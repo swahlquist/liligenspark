@@ -32,6 +32,17 @@ module JsonApi::Board
       if matching
         json['localized_name'] = (trans['board_name'] || {})[matching] || json['name']
         json['localized_locale'] = matching
+        if !args[:permissions]
+          json['buttons'].each do |button|
+            btn_tran = trans[button['id'].to_s]
+            if btn_tran && btn_tran[matching]
+              button['label'] = btn_tran[matching]['label']
+              button['vocalization'] = btn_tran[matching]['vocalization']
+              button['inflections'] = btn_tran[matching]['inflections']
+              button['rules'] = btn_tran[matching]['rules']
+            end
+          end
+        end
       end
     end
     self.trace_execution_scoped(['json/board/license']) do

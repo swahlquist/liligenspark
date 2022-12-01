@@ -513,17 +513,13 @@ var sync = EmberObject.extend({
 
     }
     if(update.board_state && !update.current_action && update.board_state.id == sync.last_board_id_assertion && app_state.get('sessionUser.id') != user_id) {
+      alert('bad loop');
       // When someone else navigates you to a board,
       // don't assert that board or you can end up
       // in a bad loop
       return RSVP.reject();
     }
     
-    // TODO: if paired as partner,
-    // - modeling: send force_state
-    //     (button hits will initially highlight, the
-    //      partner can double-hit them to manually select)
-    // - following: whatever
     var defer = RSVP.defer();
 
     var send_it = function(update) {

@@ -207,7 +207,7 @@ class Board < ActiveRecord::Base
             ubc.locale = ubc.board.settings['locale']
           end
         end
-        child_conns.group('locale').count('home').each do |lang, count|
+        child_conns.where(home: true).group('locale').count('home').each do |lang, count|
           loc = (lang || 'en').split(/_|-/)[0]
           self.settings['locale_home_forks'][lang] = (self.settings['locale_home_forks'][lang] || 0) + count
           self.settings['locale_home_forks'][loc] = (self.settings['locale_home_forks'][loc] || 0) + count if lang != loc
@@ -243,7 +243,7 @@ class Board < ActiveRecord::Base
       self.settings['uses'] = conns.count
       self.settings['recent_uses'] = conns.where(['updated_at > ?', 30.days.ago]).count
       self.settings['non_author_uses'] += conns.where(['user_id != ?', self.user_id]).count
-      conns.group('locale').count('home').each do |lang, count|
+      conns.where(home: true).group('locale').count('home').each do |lang, count|
         loc = (lang || 'en').split(/_|-/)[0]
         self.settings['locale_home_uses'][lang] = (self.settings['locale_home_uses'][lang] || 0) + count
         self.settings['locale_home_uses'][loc] = (self.settings['locale_home_uses'][loc] || 0) + count if lang != loc

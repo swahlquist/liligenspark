@@ -38,12 +38,12 @@ module UpstreamDownstream
 
     # short-circuit individual lookups, since the board most likely already knows about most of
     # its downstreams, and only one or a few will be new or updated    
-    Board.find_all_by_global_id(self.settings['downstream_board_ids'] || []).each do |board|
+    Board.find_all_by_global_id(top_board.settings['downstream_board_ids'] || []).each do |board|
       id = board.global_id
       # also track button counts, used for board stats
       board_edit_stats[id] = board.edit_stats
       boards_with_children[id] = (board.settings['immediately_downstream_board_ids'] || [])
-    end
+    end; 0
     unfound_boards += boards_with_children.map(&:last).flatten - boards_with_children.keys
     
     while !unfound_boards.empty?
@@ -69,6 +69,22 @@ module UpstreamDownstream
         boards_with_children[id] = children_ids
       end
     end
+
+    # Now that we have all possible boards loaded, gather only those accessible from the root
+    relevant_boards = {}
+    to_visit = [top_board.global_id]
+    visited = {}
+    while to_visit.length > 0
+      board_id = to_visit.shift
+      visited[board_id] = true
+      relevant_boards[board_id] = boards_with_children[board_id]
+      (boards_with_children[board_id] || []).each do |down_id|
+        if !visited[down_id] && !to_visit.include?(down_id)
+          to_visit << down_id
+        end
+      end
+    end
+
     
     # step 2: the complete downstream list is a collection of all these ids
     Rails.logger.info('generating stats and revision keys')
