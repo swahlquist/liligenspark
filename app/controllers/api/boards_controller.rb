@@ -15,6 +15,9 @@ class Api::BoardsController < ApplicationController
         cache_key = "board/search/#{params['locale']}/#{params['sort']}"
       end
     end
+    if params['sort'] == 'popularity' && params['q'].blank?
+      params['sort'] = 'home_popularity'
+    end
     if cache_key
       json = RedisInit.default.get(cache_key)      
       if json && json != {}.to_json
