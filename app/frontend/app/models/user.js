@@ -447,7 +447,11 @@ CoughDrop.User = DS.Model.extend({
     return this.get('preferences.role') == 'supporter' || this.get('preferences.device.role') == 'supporter';
   }),
   profile_url: computed('user_name', function() {
-    return location.protocol + '//' + location.host + '/' + this.get('user_name');
+    var prefix = location.protocol + '//' + location.host;
+    if(capabilities.installed_app && capabilities.api_host) {
+      prefix = capabilities.api_host;
+    }
+    return prefix + '/' + this.get('user_name');
   }),
   first_incomplete_lesson: computed('sorted_lessons', function() {
     return (this.get('sorted_lessons') || []).find(function(l) { return !l.completed; });

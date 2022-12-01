@@ -2151,7 +2151,8 @@ var boardGrabber = EmberObject.extend({
     find_args.allow_job = true;
     find_args.preferred_locale = this.controller.get('board.locale');
     var url_prefix = new RegExp("^" + location.protocol + "//" + location.host + "/");
-    var key = (this.controller.get('linkedBoardName') || "").replace(url_prefix, "");
+    var url_prefix2 = new RegExp("^" + (capabilities.api_host || '_n0h0st_') + "/");
+    var key = (this.controller.get('linkedBoardName') || "").replace(url_prefix, "").replace(url_prefix2, "");
     var keyed_find = RSVP.resolve([]);
     if(key.match(/^[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+|\d+_\d+$/) || key) {
       // right now this is always doing a double-lookup, first for an exact

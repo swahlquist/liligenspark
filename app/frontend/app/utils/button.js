@@ -879,7 +879,8 @@ Button.broken_image = function(image, skip_server_reattempt) {
     return;
   }
   image.already_broken[image.src] = true;
-  var fallback = Ember.templateHelpers.path('images/square.svg');
+  var original_fallback = Ember.templateHelpers.path('images/square.svg');
+  var fallback = original_fallback;
   var error_listen = function(img, callback) {
     if(!img) { return; }
     img.setAttribute('onerror', '');
@@ -895,7 +896,7 @@ Button.broken_image = function(image, skip_server_reattempt) {
   error_listen(image, null);
   if(image.src && image.src != fallback && !image.src.match(/^data/)) {
     var bad_src = image.src;
-    console.log("bad image url: " + bad_src);
+    CoughDrop.track_error("bad image url: " + bad_src);
     if(!image.getAttribute('rel-url')) {
       image.setAttribute('rel-url', image.src);
     }
@@ -912,6 +913,7 @@ Button.broken_image = function(image, skip_server_reattempt) {
         }
       };
     } else {
+      CoughDrop.track_error("bad data uri or fallback: " + bad_src);
       original_error = function() {
         CoughDrop.track_error("failed to retrieve image:" + fallback + " - " + image.src);
       };
@@ -919,6 +921,7 @@ Button.broken_image = function(image, skip_server_reattempt) {
     error_listen(image, original_error);
     if(window.cordova && window.cordova.file && window.cordova.file.dataDirectory) {
       CoughDrop.track_error("image failure on app, current directory:\n" + window.cordova.file.dataDirectory);
+      CoughDrop.track_error("tried to load:\n" + image.src);
     }
     image.src = fallback;
     var find_fallback = function() {
@@ -947,7 +950,9 @@ Button.broken_image = function(image, skip_server_reattempt) {
           }  
         }
       }, function() {
-        CoughDrop.track_error("failed to find local image fallback:\n" + image.getAttribute('rel'));
+        if(fallback != original_fallback) {
+          CoughDrop.track_error("failed to find local image fallback:\n" + image.getAttribute('rel'));
+        }
       });  
     };
 
@@ -1010,10 +1015,12 @@ Button.broken_image = function(image, skip_server_reattempt) {
             });
             image.src = data_uri;
           } else {
+            CoughDrop.track_error("image changed while looking up fallback");
             find_fallback();
           }
         }
       }, function() {
+        CoughDrop.track_error("no local copy found, trying fallback", bad_src, fallback);
         find_fallback();
       });
     }

@@ -1326,6 +1326,10 @@ var capabilities;
             // TODO: on iOS add debugger here to see whether all URLs are already escaped
             // url = encodeURI(url);
           }
+          // iOS has a weird bug that's causing a zero port sometimes
+          if(url.match(/localhost:0\//) && location.port && location.port != '0') {
+            url = url.replace(/localhost:0/, "localhost:" + location.port);
+          }
 
           if(url.match(/^cdvfile/)) {
             url = url.replace(/cdvfile:\/\/localhost\/library-nosync\//, prefix);
@@ -1428,6 +1432,10 @@ var capabilities;
           capabilities.storage.assert_directory(dirname, filename).then(function(dir) {
             dir.getFile(filename, {create: true}, function(file) {
               var url = file.toURL();
+              if(url.match(/localhost:0\//) && location.port && location.port != '0') {
+                // iOS-specific bug returns wrong port sometimes
+                url = url.replace(/localhost:0/, "localhost:" + location.port);
+              }
               file.createWriter(function(writer) {
                 writer.onwriteend = function() {
                   promise.resolve(url);
