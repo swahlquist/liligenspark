@@ -319,7 +319,7 @@ export default modal.ModalController.extend({
       editManager.controller.model.set('focus_id', 'force_refresh');
       modal.close();
       editManager.process_for_displaying();
-      if(app_state.get('pairing')) {
+      if(app_state.get('pairing') || app_state.get('followers.allowed')) {
         sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), {assertion: {focus_words: words}});
       }
     },

@@ -10,6 +10,7 @@ import i18n from '../utils/i18n';
 import Utils from '../utils/misc';
 import { observer, computed } from '@ember/object';
 import CoughDrop from '../app';
+import RSVP from 'rsvp';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -117,7 +118,11 @@ export default modal.ModalController.extend({
     if(type == 'core' || type == 'fringe' || type == 'requests') {
       this.set_list({loading: true}, type);
       if(_this.get('core_promise.user_id') != _this.get('user.id')) { _this.set('core_promise', null); }
-      if(!_this.get('core_promise')) { _this.set('core_promise', persistence.ajax('/api/v1/users/' + this.get('user.id') + '/core_lists', {type: 'GET'})); }
+      if(_this.get('user.core_lists')) {
+        _this.set('core_promise', RSVP.resolve(_this.get('user.core_lists')));
+      } else if(!_this.get('core_promise')) { 
+        _this.set('core_promise', persistence.ajax('/api/v1/users/' + this.get('user.id') + '/core_lists', {type: 'GET'}));
+      }
       _this.set('core_promise.user_id', _this.get('user.id'));
       _this.get('core_promise').then(function(res) {
         if(type == 'core') {

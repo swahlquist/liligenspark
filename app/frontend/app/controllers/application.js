@@ -366,7 +366,7 @@ export default Controller.extend({
       if(app_state.get('focus_words')) {
         app_state.set('focus_words', null);
         editManager.controller.model.set('focus_id', 'blank');
-        if(app_state.get('pairing')) {
+        if(app_state.get('pairing') || app_state.get('followers.allowed')) {
           sync.send_update(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), {assertion: {focus_words: []}});
         }
       } else {

@@ -167,13 +167,7 @@ export default modal.ModalController.extend({
       if(req && req.pair && req.pair.pair_code) {
         sync.confirm_pair(req.pair.pair_code, req.pair.partner_id);
       } else {
-        var follow_stamps = app_state.get('followers') || {};
-        follow_stamps.allowed = true;
-        app_state.set('followers', follow_stamps);
-        setTimeout(function() {
-          sync.check_following();
-          sync.send_update(app_state.get('sessionUser.id'));
-        }, 500);
+        sync.allow_followers();
       }
       modal.close();
     },

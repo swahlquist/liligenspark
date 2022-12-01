@@ -24,8 +24,12 @@ import {
   later as runLater,
   cancel as runCancel,
 } from '@ember/runloop';
+
 var sync = EmberObject.extend({
   subscribe: function(opts) {
+    if(window.crypto && window.crypto.subtle && !sync.user_token) {
+      sync.user_token = Math.round(Math.random() * 10000);
+    }
     if(!sync.con) {
       return new Promise(function(res, rej) {
         var check = function() {
@@ -54,6 +58,7 @@ var sync = EmberObject.extend({
         channel: "RoomChannel",
         room_id: opts.room_id,
         user_id: opts.ws_user_id,
+        token: sync.user_token,
         verifier: opts.verifier
       }, {
         received: function(data) {
@@ -66,17 +71,26 @@ var sync = EmberObject.extend({
           if(data.partner_id == opts.ws_user_id) {
             data.partner_is_self = true;
           }
-          if(data.communicator_id == opts.ws_user_id) {
+          if(data.communicator_id == opts.ws_user_id || (data.communicator_id == 'driver' && opts.ws_user_id.match(/^me/))) {
             data.communicator_is_self = true;
           }
           if(data.preferred_communicator_id == opts.ws_user_id) {
             data.preferred_communicator_is_self = true;
           }
-          if(data.paired_communicator_id == opts.ws_user_id) {
+          if(data.paired_communicator_id == opts.ws_user_id || (data.paired_communicator_id == 'driver' && opts.ws_user_id.match(/^me/))) {
             data.paired_communicator_is_self = true;
           }
           if(data.paired_partner_id == opts.ws_user_id) {
             data.paired_partner_is_self = true;
+          }
+          if(opts.never_communicator) {
+            if(data.communicator_is_self) {
+              delete data.communicator_is_self;
+              delete data.paired_communicator_is_self;
+            }
+          } else if(data.communicator_is_self) {
+            delete data.partner_is_self;
+            delete data.paired_partner_is_self;
           }
           if(data.type == 'users' || (data.type == 'update' && (data.user_id || '').match(/^me/))) {
             sub.last_communicator_access = parseInt(data.last_communicator_access, 10) || 0;
@@ -161,6 +175,7 @@ var sync = EmberObject.extend({
       user = user || app_state.get('sessionUser');
       if(!user) { return; }
       var manual_follow = user.get('id') != app_state.get('sessionUser.id');
+      var supporter_device = user.get('supporter_view');
       var connected = user.get('sync_connected') || 0;
       var now = (new Date()).getTime();
       sync.pending_connect_for = sync.pending_connect_for || {};
@@ -196,6 +211,7 @@ var sync = EmberObject.extend({
             promises.push(sync.subscribe({
               user_id: res.user_id,
               ws_user_id: res.my_device_id,
+              never_communicator: supporter_device,
               manual_follow: manual_follow && user,
               room_id: res.ws_user_id,
               verifier: res.verifier
@@ -317,13 +333,20 @@ var sync = EmberObject.extend({
           setTimeout(send_unpair, 300);
         }
       };
+      send_unpair();
     }
     app_state.set('pairing', null);
+  },
+  end_follows: function() {
+    // Send a couple times to the room that follows are being disabled
+    sync.message(app_state.get('referenced_user.id') || app_state.get('currentUser.id'), 'end_follows');
   },
   pair_as: function(role, user_id, other_ws_user_id, pair_code) {
     if(role == 'none') {
       // if already pairing for the specified user_id, end it
-      if(sync.current_pairing && sync.current_pairing.room_user_id == user_id) {
+      var pair_to_end = sync.current_pairing && sync.current_pairing.room_user_id == user_id;
+      pair_to_end = pair_to_end || (app_state.get('pairing.user_id') == user_id && pair_code == 'manual_end');
+      if(pair_to_end) {
         speecher.click('partner_end');
         app_state.set('pairing', null);
         sync.current_pairing = null;
@@ -379,6 +402,10 @@ var sync = EmberObject.extend({
           user_record.set('last_ws_access', now);
         }
       }
+      // Check if the user is allowed to follow
+      // NOTE: There is an assumption here that only authorized 
+      // supervisors would be able to join the room in the 
+      // first place, so we don't need to check their permissions
       if(app_state.get('pairing') || app_state.get('sessionUser.preferences.remote_modeling_auto_follow') || follow_stamps.allowed) {
         // Already broadcasting
         var prior_active_followers = (follow_stamps.active || []).length;
@@ -415,12 +442,13 @@ var sync = EmberObject.extend({
 
   },
   send_update: function(user_id, extra) {
+    // TODO: way to send to all classroom members in classroom mode
+    sync.cached_updates = sync.cached_updates || [];
     // generate an id for the update,
+    var update_id = (new Date()).getTime() + "." + Math.random();
     // if currently-paired then keep sending
     // it and queue other updates until the 
     // current update is confirmed
-    sync.cached_updates = sync.cached_updates || [];
-    var update_id = (new Date()).getTime() + "." + Math.random();
     var update = {
       type: 'update',
       update_id: update_id,
@@ -547,7 +575,7 @@ var sync = EmberObject.extend({
       }, 500);
       modal.highlight($button, {clear_overlay: true, highlight_type: 'model', icon: 'send' }).then(function(highlight) {
         var phrase = null;
-        if((button.add_vocalization || button.add_vocalization == null) && app_state.get('currentUser.supporter_role') && (stashes.get('logging_enabled') || app_state.get('currentUser.supervised_units.length'))) {
+        if((button.add_vocalization || button.add_vocalization == null) && app_state.get('currentUser.supporter_view') && (stashes.get('logging_enabled') || app_state.get('currentUser.supervised_units.length'))) {
           // unit supervisors and those with logging enabled 
           // with have their models explicitly tracked for reporting
           phrase = button.vocalization || button.label;
@@ -581,6 +609,15 @@ var sync = EmberObject.extend({
       return;
     }
 
+  },
+  allow_followers: function() {
+    var follow_stamps = app_state.get('followers') || {};
+    follow_stamps.allowed = true;
+    app_state.set('followers', follow_stamps);
+    setTimeout(function() {
+      sync.check_following();
+      sync.send_update(app_state.get('sessionUser.id'));
+    }, 500);
   },
   confirm_pair: function(code, partner_id) {
     speecher.click('partner_start');
@@ -624,8 +661,10 @@ var sync = EmberObject.extend({
             promise.reject('timed out');
             sync.pair_code = null;
           } else {
+            var driving = (user_id == app_state.get('sessionUser.id') && app_state.get('sessionUser.supporter_view'));
             sync.send(user_id, {
               type: 'request',
+              driving: driving,
               pair_code: sync.pair_code.code
             });
             runLater(send_request, 1000);
@@ -640,10 +679,13 @@ var sync = EmberObject.extend({
       var matched = false;
       if(message.user_id == app_state.get('sessionUser.id')) {
         matched = true;
+        var auto_accept = app_state.get('sessionUser.preferences.remote_modeling_auto_accept');
+        if(message.data.sender_id && message.data.sender_id.match(/^me\$/)) {
+          auto_accept = true;
+        }
         // Message in my room!
         if(message.type == 'pair_request') {
           app_state.set('unpaired', null);
-          var auto_accept = app_state.get('sessionUser.preferences.remote_modeling_auto_accept');
           if(app_state.get('speak_mode')) {
             // Someone sent a pair request
             if(!app_state.get('sessionUser.preferences.remote_modeling')) {
@@ -680,6 +722,9 @@ var sync = EmberObject.extend({
             });
           }
         } else if(message.type == 'query') {
+          if(auto_accept && !app_state.get('followers.allowed')) {
+            sync.allow_followers();
+          }
           // Someone asked for an update
           sync.send_update(message.user_id);
           sync.check_following(message.data.sender_id);
@@ -691,10 +736,17 @@ var sync = EmberObject.extend({
         } else if(message.type == 'pair_confirm') {
           app_state.sync_send_utterance();          
         } else if(message.type == 'unfollow') {
-          // You are not paired with this user
+          // You are not paired with this user but they are 
+          // done with you, so remove them from followers list
+
+          debugger
           sync.check_following(message.data.sender_id, true);
         } else if(message.type == 'message') {
-          sync.handle_message(message.data);
+          if(message.data && message.data.message == 'end_follows') {
+            sync.pair_as('none', message.user_id, null, 'manual_end');
+          } else {
+            sync.handle_message(message.data);
+          }
         }
       } else {
         // Check if it's for one of my supervisees
@@ -776,26 +828,28 @@ var sync = EmberObject.extend({
             // No one is paired with this communicator
             sync.pair_as('none', message.user_id, null, message.data.pair_code);
           }
-          var following = false;
+          var full_following = false, any_following = false;
           if(!modal.is_open()) {
             // Don't navigate when a modal is open
             if(app_state.get('pairing.communicator_id') == message.user_id) {
+              any_following = true;
               // Only update when it's for the room you're following/paired in
               if(app_state.get('pairing.model')) {
                 // When modeling, we follow both directions
-                following = true;
+                full_following = true;
               } else if(app_state.get('pairing.user_id') == message.user_id) {
                 // Otherwise only the non-communicator should update
-                following = true;
+                full_following = true;
               }
+            } else if((app_state.get('followers.active') || []).find(function(f) { return f.user_id == message.user_id; })) {
+              any_following = true;
             }
           }
 
           // TODO: warn if getting data from multiple devices at once
           // TODO: if paired, only listen to updates from the paired device
-          // TODO: this is what what following looks like
-          if(app_state.get('speak_mode') && following) {
-            if(message.data.utterance) {
+          if(app_state.get('speak_mode') && any_following) {
+            if(message.data.utterance && full_following) {
               var prefix = message.data.utterance.substring(0, 10);
               if(sync.get('last_utterance_prefix') != prefix) {
                 sync.set('last_utterance_prefix', prefix);
@@ -813,8 +867,7 @@ var sync = EmberObject.extend({
               }
             }
             var update_render = false;
-            if(message.data.board_state) {
-              // TODO: handle level, show_all, and focus_words
+            if(message.data.board_state && full_following) {
               CoughDrop.store.findRecord('board', message.data.board_state.id).then(function(board) {
                 sync.handle_action({type: 'board_assertion', board: board});
                 if(message.data.current_action) {
@@ -845,7 +898,8 @@ var sync = EmberObject.extend({
                 }
               });
             }
-            if(app_state.get('pairing')) {
+            // allow passive followers to send assertions (select focus words)
+            if(app_state.get('pairing') || app_state.get('followers')) {
               // communicator should handle force settings when paired
               if(message.data.assertion) {
                 if(message.data.assertion.show_all != null) {
@@ -981,7 +1035,24 @@ var sync = EmberObject.extend({
     var sub = sync.con && sync.con.subscriptions.subscriptions.find(function(s) { return s.user_id == user_id; });
     if(!sub) { return false; }
     message_obj.sender_id = sub.ws_user_id;
-    sub.send(message_obj);
+    message_obj.token = sync.user_token;
+    var ts = Math.round((new Date()).getTime() / 1000);
+    var str = ts + "::" + sub.ws_user_id + "::" + sync.user_token;
+    var do_send = function() {
+      sub.send(message_obj);
+    };
+    if(window.crypto && window.crypto.subtle) {
+      window.crypto.subtle.digest('SHA-512', new TextEncoder().encode(str)).then(function(buffer) { 
+        var hashArray = Array.from(new Uint8Array(buffer));
+        var hex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        message_obj.token = [ts, hex].join("::")
+        do_send();
+      }, function(err) {
+        do_send();
+      });
+    } else {
+      do_send();
+    }
     return true;
   }
 }).create({ });

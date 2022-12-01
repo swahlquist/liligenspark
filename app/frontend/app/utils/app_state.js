@@ -1913,6 +1913,7 @@ var app_state = EmberObject.extend({
           app_state.set('sync_utterance', null);
           app_state.set('modeling_for_self', null);
 
+          sync.end_follows();
           sync.current_pairing = null;
           stashes.persist('temporary_root_board_state', null);
           stashes.persist('sticky_board', false);
