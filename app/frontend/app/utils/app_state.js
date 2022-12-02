@@ -1631,7 +1631,6 @@ var app_state = EmberObject.extend({
           knowns[a.toString() + b.toString()] = true;
           knowns[a.toHexString() + b.toHexString()] = true;
           knowns[a.toRgbString() + b.toRgbString()] = true;
-          console.log("KNOWN", clr.border + clr.fill);
         });
         app_state.set('colored_keys', true);
 

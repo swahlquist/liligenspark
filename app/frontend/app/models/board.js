@@ -386,15 +386,17 @@ CoughDrop.Board = DS.Model.extend({
     buttons.forEach(function(button) {
       var b = $.extend({}, button);
       if(trans[b.id]) {
-        if(label_locale != current_locale && trans[b.id][label_locale] && trans[b.id][label_locale].label) {
-          b.label = trans[b.id][label_locale].label;
-        }
-        if(vocalization_locale != current_locale) {
-          if(trans[b.id][vocalization_locale] && trans[b.id][vocalization_locale].vocalization) {
-            b.vocalization = (trans[b.id][vocalization_locale].vocalization || trans[b.id][vocalization_locale].label);
-          } else {
-            delete b['vocalization'];
+        if(trans[b.id][label_locale] || trans[b.id][vocalization_locale]) {
+          if(label_locale != current_locale && trans[b.id][label_locale] && trans[b.id][label_locale].label) {
+            b.label = trans[b.id][label_locale].label;
           }
+          if(vocalization_locale != current_locale) {
+            if(trans[b.id][vocalization_locale] && trans[b.id][vocalization_locale].vocalization) {
+              b.vocalization = (trans[b.id][vocalization_locale].vocalization || trans[b.id][vocalization_locale].label);
+            } else if(vocalization_locale.split(/_|-/)[0] != current_locale.split(/_|-/)[0]) {
+              delete b['vocalization'];
+            }
+          }  
         }
       }
       if(level && level < 10) {

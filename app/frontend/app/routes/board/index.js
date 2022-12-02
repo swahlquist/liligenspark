@@ -61,11 +61,15 @@ export default Route.extend({
     // By default use whatever locale is set for the board, but
     // if the user has explicitly set a preferred locale then try
     // to use that
+    var board_langs = (model.get('locales') || []);
+    var stripped_langs = board_langs.map(function(l) { return l.split(/-|_/)[0]; });
     if(stashes.get('label_locale')) {
-      var preferred_lang = stashes.get('label_locale').split(/-|_/)[0];
-      var board_langs = (model.get('locales') || []).map(function(l) { return l.split(/-|_/)[0]; });
-      if(board_langs.indexOf(preferred_lang) == -1) {
+      var preferred_lang = stashes.get('label_locale')
+      var preferred_stripped_lang = preferred_lang.split(/-|_/)[0];
+      if(stripped_langs.indexOf(preferred_stripped_lang) == -1) {
         app_state.set('label_locale', model.get('locale'));
+      } else if(board_langs.indexOf(preferred_lang) == -1) {
+        app_state.set('label_locale', preferred_stripped_lang);
       } else {
         app_state.set('label_locale', stashes.get('label_locale'));
       }
@@ -74,9 +78,11 @@ export default Route.extend({
     }
     if(stashes.get('vocalization_locale')) {
       var preferred_lang = stashes.get('vocalization_locale').split(/-|_/)[0];
-      var board_langs = (model.get('locales') || []).map(function(l) { return l.split(/-|_/)[0]; });
-      if(board_langs.indexOf(preferred_lang) == -1) {
+      var preferred_stripped_lang = preferred_lang.split(/-|_/)[0];
+      if(stripped_langs.indexOf(preferred_stripped_lang) == -1) {
         app_state.set('vocalization_locale', model.get('locale'));
+      } else if(board_langs.indexOf(preferred_lang) == -1) {
+        app_state.set('vocalization_locale', preferred_stripped_lang);
       } else {
         app_state.set('vocalization_locale', stashes.get('vocalization_locale'));
       }
