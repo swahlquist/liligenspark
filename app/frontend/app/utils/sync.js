@@ -93,6 +93,11 @@ var sync = EmberObject.extend({
           }
           if(data.type == 'users' || (data.type == 'update' && (data.user_id || '').match(/^me/))) {
             sub.last_communicator_access = parseInt(data.last_communicator_access, 10) || 0;
+            if(data.type == 'users' && data.signed_list) {
+              if(data.signed_list.find(function(id) { return id && id == sub.ws_user_id; })) {
+                sub.secured = true;
+              }
+            }
             if(data.type == 'update') {
               sub.last_communicator_access = sub.last_communicator_access || ((new Date()).getTime() / 1000);
             }
@@ -123,7 +128,7 @@ var sync = EmberObject.extend({
             old_sub.unsubscribe();
           }
           runLater(function() {
-            sub.send({type: 'users'});
+            sub.send({type: 'users', token_secret: sync.user_token});
           }, 200);
           resolve();
         },
@@ -379,7 +384,14 @@ var sync = EmberObject.extend({
   keepalive: function() {
     if(!sync.con) { return; }
     sync.con.subscriptions.subscriptions.forEach(function(sub) {
-      sync.send(sub.user_id, {type: 'keepalive', following: (app_state.get('pairing.user_id') == sub.user_id)});
+      var opts = {
+        type: 'keepalive', 
+        following: (app_state.get('pairing.user_id') == sub.user_id)
+      };
+      if(!sub.secured && sync.user_token) {
+        opts.token_secret = sync.user_token;
+      }
+      sync.send(sub.user_id, opts);
     })
   },
   check_following: function(partner_id, unfollow) {
@@ -1027,10 +1039,13 @@ var sync = EmberObject.extend({
     delete sync.listeners[listen_id];
   },
   send: function(user_id, message_obj) {
+    // TODO: way to send to all members when in classroom mode
     var sub = sync.con && sync.con.subscriptions.subscriptions.find(function(s) { return s.user_id == user_id; });
     if(!sub) { return false; }
     message_obj.sender_id = sub.ws_user_id;
-    message_obj.token = sync.user_token;
+    if(sync.user_token) {
+      message_obj.token = sync.user_token;
+    }
     var ts = Math.round((new Date()).getTime() / 1000);
     var str = ts + "::" + sub.ws_user_id + "::" + sync.user_token;
     var do_send = function() {
@@ -1040,7 +1055,7 @@ var sync = EmberObject.extend({
       window.crypto.subtle.digest('SHA-512', new TextEncoder().encode(str)).then(function(buffer) { 
         var hashArray = Array.from(new Uint8Array(buffer));
         var hex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        message_obj.token = [ts, hex].join("::")
+        message_obj.token = [ts, sub.ws_user_id, hex].join("::")
         do_send();
       }, function(err) {
         do_send();
