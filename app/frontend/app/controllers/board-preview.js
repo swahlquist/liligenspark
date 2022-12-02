@@ -5,13 +5,13 @@ import EmberObject from '@ember/object';
 import app_state from '../utils/app_state';
 
 export default Controller.extend({
-  update_style_needed: observer('model.board.key', 'model.style', 'model.board.style.options', function() {
+  update_style_needed: observer('model.board.key', 'model.allow_style', 'model.style', 'model.board.style.options', function() {
     if(this.get('model.board.key')) {
       if(this.get('model.board.key') != this.get('model_key')) {
         this.set('model_style', null);
       }
       this.set('model_key', this.get('model.board.key'));
-      if(this.get('model.style') && this.get('model.board.style.options')) {
+      if(this.get('model.style') && this.get('model.allow_style') && this.get('model.board.style.options')) {
         this.set('style_needed', true);
       } else {
         this.set('style_needed', false);
@@ -81,7 +81,7 @@ export default Controller.extend({
     },
     select: function() {
       var opt = this.get('model_key');
-      var chosen = !this.get('style_missing');
+      var chosen = this.get('style_needed') && !this.get('style_missing');
       this.send('close');
       if(chosen && this.get('style_boards.length')) {
         var brd = this.get('style_boards').find(function(b) { return b.key == opt; });

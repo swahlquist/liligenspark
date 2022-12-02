@@ -58,7 +58,6 @@ var sync = EmberObject.extend({
         channel: "RoomChannel",
         room_id: opts.room_id,
         user_id: opts.ws_user_id,
-        token: sync.user_token,
         verifier: opts.verifier
       }, {
         received: function(data) {

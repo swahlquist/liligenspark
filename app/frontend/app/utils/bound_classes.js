@@ -39,6 +39,7 @@ var boundClasses = {};
       if(!this.classes[key]) {
         var str = '';
         var hoverStr = '';
+        var cornerStr = '';
         if(button.border_color) {
           // TODO: compute and store hover colors, mark them as "server-side approved"
           // and use them without tinycolor if approved
@@ -55,10 +56,23 @@ var boundClasses = {};
           var text = window.tinycolor.mostReadable(fill, ['#fff', '#000']);
           button.text_color = text.toRgbString();
           str = str + 'color: ' + button.text_color + ';';
+          if(button.background_color == button.border_color) {
+            var border = window.tinycolor(button.border_color || '#eee');
+            if(text.toHexString() == '#ffffff') {
+              var light_corner = border.lighten(50).toRgbString();
+              cornerStr = cornerStr + 'border-color: ' + light_corner + ' !important;'
+            } else {
+              var dark_corner = border.darken(50).toRgbString();
+              cornerStr = cornerStr + 'border-color: ' + dark_corner + ' !important;'
+            }
+          }
         }
 
         add_css_rule('.button.' + key, str);
         add_css_rule('.button.' + key + ':hover, .button.' + key + '.touched, .button.' + key + ':focus', hoverStr);
+        if(cornerStr) {
+          add_css_rule('.button.' + key + ':not(.edit) .action_container.folder', cornerStr);
+        }
         this.classes[key] = [str, hoverStr, button.dark_border_color, button.dark_background_color, button.text_color];
       } else {
         var vals = this.classes[key];
