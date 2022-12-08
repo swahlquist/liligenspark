@@ -23,16 +23,18 @@
       </div>
     {{/unless}}
     {{#unless modeling_choice}}
-      <div class="btn-group" role="group" aria-label="Speak Mode Style" style='margin-bottom: 20px; width: 100%;'>
-        <button type="button" {{action 'set_attribute' 'keep_as_self' true}} class={{if model.keep_as_self "btn btn-primary" "btn btn-default"}} style='width: 50%; padding: 10px 30px 10px;'>
-          <span class='glyphicon glyphicon-hand-up' style='font-size: 40px; float: left; margin-right: 5px; padding-top: 5px;'></span>
-          Model for the<br/>Communicator
-        </button>
-        <button type="button" {{action 'set_attribute' 'keep_as_self' false}} class={{if model.keep_as_self "btn btn-default" "btn btn-primary"}} style='width: 50%; padding: 10px 30px 10px;'>
-          <span class='glyphicon glyphicon-volume-up' style='font-size: 40px; float: left; margin-right: 5px; padding-top: 5px;'></span>
-          Speak as the<br/>Communicator
-        </button>
-      </div>
+      {{#unless model.route}}
+        <div class="btn-group" role="group" aria-label="Speak Mode Style" style='margin-bottom: 20px; width: 100%;'>
+          <button type="button" {{action 'set_attribute' 'keep_as_self' true}} class={{if model.keep_as_self "btn btn-primary" "btn btn-default"}} style='width: 50%; padding: 10px 30px 10px;'>
+            <span class='glyphicon glyphicon-hand-up' style='font-size: 40px; float: left; margin-right: 5px; padding-top: 5px;'></span>
+            Model for the<br/>Communicator
+          </button>
+          <button type="button" {{action 'set_attribute' 'keep_as_self' false}} class={{if model.keep_as_self "btn btn-default" "btn btn-primary"}} style='width: 50%; padding: 10px 30px 10px;'>
+            <span class='glyphicon glyphicon-volume-up' style='font-size: 40px; float: left; margin-right: 5px; padding-top: 5px;'></span>
+            Speak as the<br/>Communicator
+          </button>
+        </div>
+      {{/unless}}
     {{/unless}}
     {{user-select select_id="currently_selected_id" skip_me=model.skip_me allow_all=allow_all buttons=true selection=currently_selected_id action=(action (mut currently_selected_id)) }}
   </div>

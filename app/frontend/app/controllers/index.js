@@ -464,7 +464,7 @@ export default Controller.extend({
     lessons: function(user) {
       if(user == 'pick') {
         if(app_state.get('sessionUser.supporter_role') && (app_state.get('sessionUser.known_supervisees.length') > 0 || app_state.get('currentUser.managed_orgs.length') > 0)) {
-          app_state.controller.send('switch_communicators', {header: i18n.t('select_user_to_review_lessons', "Select User to Review Lesons")})
+          app_state.controller.send('switch_communicators', {header: i18n.t('select_user_to_review_lessons', "Select User to Review Trainings"), stay: true, route: 'user.lessons'})
           return;
         } else {
           user = app_state.get('currentUser');
