@@ -1008,9 +1008,14 @@ var buttonTracker = EmberObject.extend({
       // but it may no longer be necessary
       if(elem_wrap && elem_wrap.dom && buttonTracker.lastSelect != elem_wrap.dom) {
         event.preventDefault();
-        if(elem_wrap.dom.id != 'clear_button') {
+        if(elem_wrap.dom.id != 'clear_button' && elem_wrap.dom.id != 'home_button') {
           buttonTracker.lastSelect = elem_wrap.dom;
-          buttonTracker.clear_hits = 0;
+          if(elem_wrap.dom.id != 'clear_button') {
+            buttonTracker.clear_hits = 0;
+          }
+          if(elem_wrap.dom.id != 'home_button') {
+            buttonTracker.home_hits = 0;
+          }
           runLater(function() {
             if(buttonTracker.lastSelect == elem_wrap.dom) {
               buttonTracker.lastSelect = null;
@@ -1140,7 +1145,7 @@ var buttonTracker = EmberObject.extend({
         }
 
         // clear multi-touch for modeling can ignore debounces
-        if(elem_wrap.dom.id == 'clear_button' && event.type != 'gazelinger') {
+        if((elem_wrap.dom.id == 'clear_button') && event.type != 'gazelinger') {
           buttonTracker.clear_hits = (buttonTracker.clear_hits || 0) + 1;
           runCancel(buttonTracker.clear_hits_timeout);
           buttonTracker.clear_hits_timeout = runLater(function() {
@@ -1148,6 +1153,21 @@ var buttonTracker = EmberObject.extend({
           }, 1500);
           if(buttonTracker.clear_hits >= 3) {
             buttonTracker.clear_hits = 0;
+            var e = $.Event('tripleclick');
+            e.clientX = event.clientX;
+            e.clientY = event.clientY;
+            e.pass_through = true;
+            $(elem_wrap.dom).trigger(e);
+          }
+        }
+        if((elem_wrap.dom.id == 'home_button') && event.type != 'gazelinger') {
+          buttonTracker.home_hits = (buttonTracker.home_hits || 0) + 1;
+          runCancel(buttonTracker.home_hits_timeout);
+          buttonTracker.home_hits_timeout = runLater(function() {
+            buttonTracker.home_hits = 0;
+          }, 1500);
+          if(buttonTracker.home_hits >= 3) {
+            buttonTracker.home_hits = 0;
             var e = $.Event('tripleclick');
             e.clientX = event.clientX;
             e.clientY = event.clientY;

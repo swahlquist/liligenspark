@@ -411,7 +411,11 @@ export default Controller.extend({
         if(state == stashes.get('temporary_root_board_state')) {
           modal.notice(i18n.t('already_temporary_home', "This board was set as the home board temporarily. To cancel hit the icon in the top right corner and select 'Release Home Lock'."), true);
         } else {
-          modal.notice(i18n.t('already_home', "You are already on the home board. To exit Speak Mode hit the icon in the top right corner."), true);
+          if(state.meta_home) {
+            modal.notice(i18n.t('already_home', "You are already on the home board. To return to the home board list, hit the icon in the top right corner."), true);
+          } else {
+            modal.notice(i18n.t('already_home', "You are already on the home board. To exit Speak Mode hit the icon in the top right corner."), true);
+          }
           this.highlight_button('resume');
         }
       } else {
@@ -438,7 +442,8 @@ export default Controller.extend({
           source: source,
           level: board.level,
           locale: board.locale,
-          home_lock: board.home_lock
+          home_lock: board.home_lock,
+          meta_home: board.meta_home
         });
       }
     },
@@ -915,7 +920,8 @@ export default Controller.extend({
               buttons.shift();
               _this.jumpToBoard({
                 key: button.linked_board_key,
-                home_lock: button.home_lock
+                home_lock: button.home_lock,
+                meta_home: button.meta_home
               });
             }
           }, function(err) {
@@ -1046,6 +1052,11 @@ export default Controller.extend({
     },
     toggle_modeling: function() {
       app_state.toggle_modeling_if_possible(true);
+    },
+    meta_home_click: function() {
+    },
+    meta_home: function() {
+      app_state.meta_home_if_possible();
     },
     switch_languages: function() {
       modal.open('switch-languages', {board: this.get('board.model')}).then(function(res) {

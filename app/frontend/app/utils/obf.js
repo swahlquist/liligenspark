@@ -179,7 +179,16 @@ obf.register("stars", function(key) {
     res.name = i18n.t('starred_boards_for_user', "Starred Boards for %{un}", {un: user.get('user_name')});
     if(user.get('preferences.home_board')) {
       var ref = (user.get('stats.starred_board_refs') || []).find(function(r) { return r.id == user.get('preferences.home_board.id'); });
-      var btn = {label: ref ? ref.name : i18n.t('home_board', "Home Board"), home_lock: true, image: {url: "https://opensymbols.s3.amazonaws.com/libraries/noun-project/Home-c167425c69.svg"}, load_board: {key: user.get('preferences.home_board.key'), id: user.get('preferences.home_board.id')}};
+      var btn = {
+        label: ref ? ref.name : i18n.t('home_board', "Home Board"), 
+        meta_home: "obf/" + key,
+        home_lock: true, 
+        image: {url: "https://opensymbols.s3.amazonaws.com/libraries/noun-project/Home-c167425c69.svg"}, 
+        load_board: {
+          key: user.get('preferences.home_board.key'), 
+          id: user.get('preferences.home_board.id')
+        }
+      };
       if(ref && ref.image_url) {
         btn.image = {url: ref.image_url};
       }
@@ -189,7 +198,7 @@ obf.register("stars", function(key) {
     (user.get('stats.starred_board_refs') || []).forEach(function(ref) {
       var col = idx % cols;
       var row = (idx - col) / cols;
-      res.add_button({label: ref.name, home_lock: true, image: {url: ref.image_url}, load_board: {key: ref.key, id: ref.id}}, row, col);
+      res.add_button({label: ref.name, meta_home: "obf/" + key, home_lock: true, image: {url: ref.image_url}, load_board: {key: ref.key, id: ref.id}}, row, col);
       // TODO: pass the preferred level as well based on how it looked when it was starred
       idx++;
     });

@@ -3,17 +3,19 @@
   <div id="inner_header">
   {{#if app_state.speak_mode}}
     <span id="speak">
-      <button class={{if on_home "btn btn-default access dim" "btn btn-default access"}} id="home_button" {{action "home"}} style='position: relative;'>
-        <span class="sr-only">{{t "Home" key="home"}}</span>
-        <span class="glyphicon glyphicon-home button_icon"></span>
-        {{#unless app_state.eval_mode}}
-          {{#if stashes.temporary_root_board_state}}
-            <span class="glyphicon glyphicon-lock" style="float: left; width: 0; height: 0; color: #aaa; margin-top: 15px; margin-left: -5px;" title={{t "Home or Board Lock Set" key='home_or_board_lock_set'}}></span>
-          {{else if stashes.sticky_board}}
-            <span class="glyphicon glyphicon-lock" style="float: left; width: 0; height: 0; color: #aaa; margin-top: 15px; margin-left: -5px;" title={{t "Board Lock Set" key='board_lock_set'}}></span>
-          {{/if}}
-        {{/unless}}
-      </button>
+      {{#triple-click-listener triple_click='meta_home_click'}}
+        <button class={{if on_home "btn btn-default access dim" "btn btn-default access"}} id="home_button" {{action "home"}} style='position: relative;'>
+          <span class="sr-only">{{t "Home" key="home"}}</span>
+          <span class="glyphicon glyphicon-home button_icon"></span>
+          {{#unless app_state.eval_mode}}
+            {{#if stashes.temporary_root_board_state}}
+              <span class="glyphicon glyphicon-lock" style="float: left; width: 0; height: 0; color: #aaa; margin-top: 15px; margin-left: -5px;" title={{t "Home or Board Lock Set" key='home_or_board_lock_set'}}></span>
+            {{else if stashes.sticky_board}}
+              <span class="glyphicon glyphicon-lock" style="float: left; width: 0; height: 0; color: #aaa; margin-top: 15px; margin-left: -5px;" title={{t "Board Lock Set" key='board_lock_set'}}></span>
+            {{/if}}
+          {{/unless}}
+        </button>
+      {{/triple-click-listener}}
       {{#if show_back}}
         <button class="btn btn-default access skinnier" id="back_button" {{action "back"}}>
           <span class="sr-only">{{t "Back" key="back"}}</span>
@@ -903,6 +905,9 @@
                     {{#if stashes.temporary_root_board_state}}
                       <li><a href="#" {{action "toggle_home_lock"}}>{{t "Release Home Lock" key='release_home_lock'}}</a></li>
                     {{else}}
+                      {{#if stashes.root_board_state.meta_home}}
+                        <li><a href="#" {{action "meta_home"}}>{{t "Return to Home List" key='return_to_home_list'}}</a></li>
+                      {{/if}}
                       {{#unless app_state.current_board_is_speak_mode_home}}
                         <li><a href="#" {{action "toggle_home_lock"}}>{{t "Set As Temporary Home" key='temporary_home'}}</a></li>
                       {{/unless}}

@@ -1350,7 +1350,7 @@ class Board < ActiveRecord::Base
       button = button.slice('id', 'hidden', 'link_disabled', 'image_id', 'sound_id', 'label', 'vocalization', 
             'background_color', 'border_color', 'load_board', 'hide_label', 'url', 'apps', 'text_only', 
             'integration', 'video', 'book', 'part_of_speech', 'suggested_part_of_speech', 'external_id', 
-            'painted_part_of_speech', 'add_to_vocalization', 'home_lock', 'blocking_speech', 
+            'painted_part_of_speech', 'add_to_vocalization', 'home_lock', 'meta_home', 'blocking_speech', 
             'level_modifications', 'inflections', 'ref_id', 'rules', 'add_vocalization', 'no_skin');
       button.delete('level_modifications') if button['level_modifications'] && !button['level_modifications'].is_a?(Hash)
       button.delete('ref_id') if button['ref_id'].blank?

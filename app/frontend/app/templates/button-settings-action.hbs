@@ -610,6 +610,16 @@
               {{t "Set as temporary home when loaded" key='set_home_lock'}}
             </label>
           </div>
+          {{#if model.home_lock}}
+            <div style='margin-left: 30px;'>
+              <div class="checkbox big_checkbox">
+                <label>
+                  {{input checked=model.meta_home type="checkbox"}}
+                  {{t "Require menu action to return from link" key='set_meta_home'}}
+                </label>
+              </div>
+            </div>
+          {{/if}}
         {{/if}}
         <div class="checkbox big_checkbox">
           <label>

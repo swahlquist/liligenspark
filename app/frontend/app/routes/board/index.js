@@ -49,6 +49,12 @@ export default Route.extend({
       text_direction: i18n.text_direction(model.get('locale')),
       translatable: (model.get('locales') || []).length > 1
     });
+    if(app_state.get('meta_home.unassigned') && app_state.get('meta_home.new_key') == model.get('key')) {
+      var state = Object.assign({}, app_state.get('currentBoardState'));
+      state.meta_home = app_state.get('meta_home.state');
+      stashes.persist('root_board_state', state);
+      app_state.set('meta_home.unassigned', false);
+    }
 
     if(stashes.get('root_board_state.id') == app_state.get('currentBoardState.id')) {
       if(!stashes.get('root_board_state.text_direction')) {

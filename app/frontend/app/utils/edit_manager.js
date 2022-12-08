@@ -1771,6 +1771,7 @@ var editManager = EmberObject.extend({
           }
           newButton.level_modifications = currentButton.level_modifications;
           newButton.home_lock = !!currentButton.home_lock;
+          newButton.meta_home = !!(newButton.home_lock && currentButton.meta_home);
           newButton.hide_label = !!currentButton.hide_label;
           newButton.blocking_speech = !!currentButton.blocking_speech;
           newButton.rules = currentButton.rules;

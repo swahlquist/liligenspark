@@ -517,7 +517,14 @@ var app_state = EmberObject.extend({
       new_id: new_state
     });
     if(new_state && new_state.home_lock) {
-      this.set('temporary_root_board_key', new_state.key);
+      if(new_state.meta_home) {
+        this.set('temporary_root_board_key', null);
+        stashes.persist('temporary_root_board_state', null);
+        var root_state = stashes.get('root_board_state') || old_state;
+        this.set('meta_home', {state: root_state, unassigned: true, new_key: new_state.key})
+      } else {
+        this.set('temporary_root_board_key', new_state.key);
+      }
     }
     this.controller.send('hide_temporary_sidebar');
     this.set_history([].concat(history));
@@ -576,6 +583,18 @@ var app_state = EmberObject.extend({
         app_state.set_history([]);
       }
     }
+  },
+  meta_home_if_possible: function() {
+    if(app_state.get('speak_mode') && stashes.get('root_board_state.meta_home')) {
+      this.set('temporary_root_board_key', null);
+      stashes.persist('temporary_root_board_state', null);
+      this.set('meta_home', {unassigned: true, new_key: stashes.get('root_board_state.meta_home.key')});
+      this.jump_to_board({
+        id: stashes.get('root_board_state.meta_home.id'),
+        key: stashes.get('root_board_state.meta_home.key')
+      });
+    }
+    app_state.set_history([]);
   },
   toggle_modeling_if_possible: function(enable) {
     if(app_state.get('modeling_for_user')) {
@@ -2762,6 +2781,7 @@ var app_state = EmberObject.extend({
             id: button.load_board.id,
             key: button.load_board.key,
             button_triggered: true,
+            meta_home: button.meta_home,
             home_lock: button.home_lock
           }, obj.board);
         }, 50);
@@ -2815,7 +2835,8 @@ var app_state = EmberObject.extend({
       _this.jump_to_board({
         id: "i" + button.integration.user_integration_id,
         key: "integrations/" + button.integration.user_integration_id + ":" + (button.integration.action || ''),
-        home_lock: button.home_lock
+        home_lock: button.home_lock,
+        meta_home: button.meta_home
       }, obj.board);
       }, 100);
     } else if(!skip_auto_return) {
@@ -3114,7 +3135,8 @@ var app_state = EmberObject.extend({
           _this.jump_to_board({
             id: "i_tarheel",
             key: "integrations/tarheel:" + encodeURIComponent(btoa(JSON.stringify(opts))),
-            home_lock: button.home_lock
+            home_lock: button.home_lock,
+            meta_home: button.meta_home
           }, board);
         }, 100);
       } else {
