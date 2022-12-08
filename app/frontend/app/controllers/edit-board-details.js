@@ -49,6 +49,11 @@ export default modal.ModalController.extend({
       this.set('model.update_visibility_downstream', false)
     }
   }),
+  update_background: observer('background_enabled', function() {
+    if(this.get('background_enabled')) {
+      this.set('model.background', {});
+    }
+  }),
   board_categories: computed('model.home_board', 'model.id', 'model.categories', function() {
     var res = [];
     var _this = this;
@@ -98,6 +103,11 @@ export default modal.ModalController.extend({
       sections.pushObject({});
       emberSet(intro, 'sections', sections);
       this.set('model.intro', intro);
+    },
+    set_position: function(str) {
+      if(this.get('model.background')) {
+        this.set('model.background.position', str);
+      }
     },
     delete_board_intro_section: function(section) {
       if(!this.get('model.intro.sections')) { return; }

@@ -1087,7 +1087,7 @@ class Board < ActiveRecord::Base
     self.settings['description'] = process_string(params['description']) if params['description']
     @edit_notes << "changed the image" if params['image_url'] && params['image_url'] != self.settings['image_url']
     self.settings['image_url'] = params['image_url'] if params['image_url']
-    @edit_notes << "changed the background" if params['background'] && params['background'] != self.settings['background'].to_json
+    @edit_notes << "changed the background" if params['background'] && params['background'].to_json != self.settings['background'].to_json
     self.settings['background'] = BoardContent.load_content(self, 'background')
     self.settings['background'] = params['background'] if params['background']
     if self.settings['background']
