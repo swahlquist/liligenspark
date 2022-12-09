@@ -387,6 +387,17 @@ export default Controller.extend({
       }
     }
   ),
+  update_home_board: observer('model.preferences.home_board.key', function() {
+    if(this.get('model.preferences.home_board.key')) {
+      if(this.get('home_board_pref.key') != this.get('model.preferences.home_board.key')) {
+        this.set('home_board_pref', this.get('model.preferences.home_board'));
+      }
+      var _this = this;
+      CoughDrop.store.findRecord('board', this.get('model.preferences.home_board.key')).then(function(brd) {
+        _this.set('home_board_pref', brd);
+      }, function(err) { });
+    }
+  }),
   update_selected: observer('selected', 'persistence.online', 'current_tag', function() {
     var _this = this;
     var list_id = Math.random().toString();

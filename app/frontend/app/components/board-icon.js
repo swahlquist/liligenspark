@@ -19,15 +19,24 @@ export default Component.extend({
     }
     if(!board.reload && board.key) {
       var _this = this;
-      CoughDrop.store.findRecord('board', board.key).then(function(b) {
-        // If specified as a hash {key: '', locale: ''}
-        // then use that locale to set the display name
-        if(_this.get('locale') || board.locale) {
-          b.set('localized_locale', _this.get('locale') || board.locale);
-          _this.set('localized', true);
-        }
-        _this.set('board_record', b);
-      }, function() { });
+      var b = CoughDrop.store.peekRecord('board', board.id);
+      var found_board = function() {
+          // If specified as a hash {key: '', locale: ''}
+          // then use that locale to set the display name
+          if(_this.get('locale') || board.locale) {
+            b.set('localized_locale', _this.get('locale') || board.locale);
+            _this.set('localized', true);
+          }
+          _this.set('board_record', b);
+      };
+      if(!b) {
+        CoughDrop.store.findRecord('board', board.id || board.key).then(function(brd) {
+          b = brd;
+          found_board();
+        }, function() { });  
+      } else {
+        found_board();
+      }
     } else {
       // If a localized name wasn't sent from the server
       // then use the specified locale for displaying the name
