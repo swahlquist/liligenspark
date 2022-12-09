@@ -1108,6 +1108,7 @@ class Board < ActiveRecord::Base
     self.settings['categories'] = params['categories'] if params['categories']
     self.settings['hide_empty'] = params['hide_empty'] if params['hide_empty'] != nil
     self.settings['text_only'] = params['text_only'] if params['text_only'] != nil
+    self.settings['dim_header'] = params['dim_header'] if params['dim_header'] != nil
     self.settings['never_edited'] = false if self.id
     button_params = params['buttons']
     button_params.instance_variable_set('@add_voc_error', non_user_params['add_voc_error']) if button_params

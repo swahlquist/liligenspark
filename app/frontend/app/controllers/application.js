@@ -1226,6 +1226,7 @@ export default Controller.extend({
     'app_state.speak_mode',
     'app_state.currentUser.preferences.board_background',
     'app_state.currentUser.preferences.dim_header',
+    'board.model.dim_header',
     function() {
       var res = "";
       if(app_state.get('speak_mode')) {
@@ -1237,7 +1238,7 @@ export default Controller.extend({
         if(app_state.get('currentUser.preferences.dim_level')) {
           res = res + " " + app_state.get('currentUser.preferences.dim_level');
         }
-        if(app_state.get('currentUser.preferences.dim_header')) {
+        if(app_state.get('currentUser.preferences.dim_header') || this.get('board.model.dim_header')) {
           res = res + " dim_sides";
         }
       }

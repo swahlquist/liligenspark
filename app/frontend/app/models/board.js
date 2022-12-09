@@ -54,6 +54,7 @@ CoughDrop.Board = DS.Model.extend({
   copy_key: DS.attr('string'),
   new_owner: DS.attr('boolean'),
   disconnect: DS.attr('boolean'),
+  dim_header: DS.attr('boolean'),
   update_visibility_downstream: DS.attr('boolean'),
   source_id: DS.attr('string'),
   current_library: DS.attr('string'),
