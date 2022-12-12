@@ -67,41 +67,12 @@
         </div>
       </div>
       <div class="form-group">
-        <label for="copy_key" class="col-sm-3 control-label">{{t "Root Key" key='root_key'}}</label>
-        <div class="col-sm-7">
-          {{input value=model.copy_key class="form-control" id="copy_key" placeholder="Root board key"}}
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="suggestions" class="col-sm-3 control-label">{{t "Suggestions" key='word_suggestions'}}</label>
-        <div class="col-sm-9">
-          <div class="checkbox big_checkbox">
-            <label>
-              {{input type="checkbox" checked=model.word_suggestions}}
-              {{t "Show word completion suggestions" key='show_word_suggestions'}}
-            </label>
-          </div><br/>
-          <em style="padding-left: 20px;">{{t "(helpful for keyboard-style boards)" key='helpful_for_keyboard_boards'}}</em>
-        </div>
-      </div>
-      <div class="form-group">
         <label for="home_board" class="col-sm-3 control-label">{{t "Home Board" key='home_board'}}</label>
         <div class="col-sm-9">
           <div class="checkbox big_checkbox">
             <label>
               {{input type="checkbox" checked=model.home_board}}
               {{t "This board can be used as a home board" key='is_home_board'}}
-            </label>
-          </div>
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="home_board" class="col-sm-3 control-label">{{t "Dim Header" key='dim_header'}}</label>
-        <div class="col-sm-9">
-          <div class="checkbox big_checkbox">
-            <label>
-              {{input type="checkbox" checked=model.dim_header}}
-              {{t "Dim the header and vocalization box while on this board" key='dim_header_on_this_board'}}
             </label>
           </div>
         </div>
@@ -147,89 +118,137 @@
             </div>
           {{/if}}
         {{/if}}
+      </div>
+      {{#if advanced}}
         {{#if model.visibility_setting.private}}
-          <div class="col-sm-9 col-sm-offset-3">
+          <div class="form-group">
+            <label for="public" class="col-sm-3 control-label">{{t "Copying" key='copying'}}</label>
+            <div class="col-sm-9">
+              <div class="checkbox big_checkbox">
+                <label>
+                  {{input type="checkbox" checked=protected_vocabulary disabled=model.copying_state.none}}
+                  {{t "Only the author can make copies of this board, and any copies cannot be re-copied by others" key='protected_vocabulary'}}
+                </label>
+              </div>
+            </div>
+          </div>
+        {{/if}}
+        <div class="form-group">
+          <label for="suggestions" class="col-sm-3 control-label">{{t "Suggestions" key='word_suggestions'}}</label>
+          <div class="col-sm-9">
             <div class="checkbox big_checkbox">
               <label>
-                {{input type="checkbox" checked=protected_vocabulary disabled=model.copying_state.none}}
-                {{t "Only the author can make copies of this board, and any copies cannot be re-copied by others" key='protected_vocabulary'}}
+                {{input type="checkbox" checked=model.word_suggestions}}
+                {{t "Show word completion suggestions" key='show_word_suggestions'}}
+              </label>
+            </div><br/>
+            <em style="padding-left: 20px;">{{t "(helpful for keyboard-style boards)" key='helpful_for_keyboard_boards'}}</em>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="home_board" class="col-sm-3 control-label">{{t "Adjust Header" key='adjust_header'}}</label>
+          <div class="col-sm-9">
+            <div class="checkbox big_checkbox">
+              <label>
+                {{input type="checkbox" checked=model.dim_header}}
+                {{t "Dim the header and vocalization box while on this board" key='dim_header_on_this_board'}}
               </label>
             </div>
           </div>
-        {{/if}}
-      </div>
-      <div class="form-group">
-        <label for="background" class="col-sm-3 control-label">{{t "Background" key='background'}}</label>
-        <div class="col-sm-9">
-          <div class="checkbox big_checkbox">
-            <label>
-              {{input type="checkbox" checked=background_enabled}}
-              {{t "Use a custom background for this board" key='add_custom_background'}}
-            </label>
+          <div class="col-sm-9 col-sm-offset-3">
+            <div class="checkbox big_checkbox">
+              <label>
+                {{input type="checkbox" checked=model.small_header}}
+                {{t "Shrink the header and vocalization box while on this board" key='small_header_on_this_board'}}
+              </label>
+            </div>
           </div>
-
         </div>
-        {{#if model.background}}
-          <div class="col-sm-9 col-sm-offset-3" style='margin-top: 10px;'>
-            {{input value=model.background.image class="form-control" id="background_image_url" placeholder="URL for background"}}
-            <div style="margin-top: 12px; float: left; height: 60px; width: 80px; border: 1px solid #ccc; overflow: hidden;">
-              {{#if model.background.image}}
-                <img src={{model.background.image}} style="width: 80px; height: 60px; obect-fit: contain; object-position: center;" alt="current image"/>
-              {{/if}}
+        <div class="form-group">
+          <label for="background" class="col-sm-3 control-label">{{t "Background" key='background'}}</label>
+          <div class="col-sm-9">
+            <div class="checkbox big_checkbox">
+              <label>
+                {{input type="checkbox" checked=background_enabled}}
+                {{t "Use a custom background for this board" key='add_custom_background'}}
+              </label>
             </div>
-            <div style="clear: left;"></div>
-          </div>
-          <div class="col-sm-6 col-sm-offset-3" style='margin-top: 10px;'>
-            {{input value=model.background.position class="form-control" id="background_image_position" placeholder="image positioning"}}
-          </div>
-          <div class='col-sm-2' style='margin-left: -50px; margin-top: 10px;'>
-            <div class="btn-group dropup">
-              <button class="btn btn-default dropdown-toggle" style="border-top-left-radius: 0; border-bottom-left-radius: 0;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                {{t "choose" key='choose'}} <span class="caret"></span>
-              </button>
-              <ul class="dropdown-menu" style="right: 0; left: inherit; text-align: left;">
-                <li><a href="#" {{action 'set_position' 'center'}}>{{t "center" key='center'}}</a></li>
-                <li><a href="#" {{action 'set_position' 'stretch'}}>{{t "stretch" key='stretch'}}</a></li>
-                <li><a href="#" {{action 'set_position' 'cover'}}>{{t "cover" key='cover'}}</a></li>
-              </ul>
-            </div>
-            <div style="clear: left;"></div>
-          </div>
 
-          <div class="col-sm-9 col-sm-offset-3" style='margin-top: 10px;'>
-            <span {{action "toggle_color" "fill"}} style="display: inline-block; border-width: 3px; border: 2px dotted #ccc; height: 34px; width: 70px; vertical-align: bottom;" class={{fake_button_class}}></span>
-            <span class="button_field">
-              {{input value=model.background.color class="form-control" id="background fill color"}}
-            </span>
           </div>
-        {{/if}}
-      </div>
-
-      {{#if model.home_board}}
-        {{#if app_state.feature_flags.find_multiple_buttons}}
-          <div class="form-group">
-            <label for="board_intro" class="col-sm-3 control-label">{{t "Board Intro" key='board_intro'}}</label>
-            {{#unless model.intro.sections}}
-              <div class="col-sm-9" style='margin-bottom: 10px;'>
-                <em class='form-control-static'>{{t "You can build a short lesson that people will walk through when they choose this board set, including explanations and practice phrases for them to find using the board set." key='board_intro_explainer'}}</em>
+          {{#if model.background}}
+            <div class="col-sm-9 col-sm-offset-3" style='margin-top: 10px;'>
+              {{input value=model.background.image class="form-control" id="background_image_url" placeholder="URL for background"}}
+              <div style="margin-top: 12px; float: left; height: 60px; width: 80px; border: 1px solid #ccc; overflow: hidden;">
+                {{#if model.background.image}}
+                  <img src={{model.background.image}} style="width: 80px; height: 60px; obect-fit: contain; object-position: center;" alt="current image"/>
+                {{/if}}
               </div>
-            {{/unless}}
-            {{#each model.intro.sections as |section index|}}
-              <div class={{if index 'col-sm-7 col-sm-offset-3' 'col-sm-7'}}>
-                {{textarea value=section.description class="form-control" placeholder="Explanation, notes, etc."}}
-                <div style='margin-top: 3px; margin-bottom: 15px;'>
-                  {{input type='text' value=section.prompt class='form-control' placeholder="optional button sequence to find"}}
+              <div style="clear: left;"></div>
+            </div>
+            <div class="col-sm-6 col-sm-offset-3" style='margin-top: 10px;'>
+              {{input value=model.background.position class="form-control" id="background_image_position" placeholder="image positioning"}}
+            </div>
+            <div class='col-sm-2' style='margin-left: -50px; margin-top: 10px;'>
+              <div class="btn-group dropup">
+                <button class="btn btn-default dropdown-toggle" style="border-top-left-radius: 0; border-bottom-left-radius: 0;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  {{t "choose" key='choose'}} <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" style="right: 0; left: inherit; text-align: left;">
+                  <li><a href="#" {{action 'set_position' 'center'}}>{{t "center" key='center'}}</a></li>
+                  <li><a href="#" {{action 'set_position' 'stretch'}}>{{t "stretch" key='stretch'}}</a></li>
+                  <li><a href="#" {{action 'set_position' 'cover'}}>{{t "cover" key='cover'}}</a></li>
+                </ul>
+              </div>
+              <div style="clear: left;"></div>
+            </div>
+
+            <div class="col-sm-9 col-sm-offset-3" style='margin-top: 10px;'>
+              <span {{action "toggle_color" "fill"}} style="display: inline-block; border-width: 3px; border: 2px dotted #ccc; height: 34px; width: 70px; vertical-align: bottom;" class={{fake_button_class}}></span>
+              <span class="button_field">
+                {{input value=model.background.color class="form-control" id="background fill color"}}
+              </span>
+            </div>
+          {{/if}}
+        </div>
+        <div class="form-group">
+          <label for="copy_key" class="col-sm-3 control-label">{{t "Root Key" key='root_key'}}</label>
+          <div class="col-sm-7">
+            {{input value=model.copy_key class="form-control" id="copy_key" placeholder="Root board key"}}
+          </div>
+        </div>
+        {{#if model.home_board}}
+          {{#if app_state.feature_flags.find_multiple_buttons}}
+            <div class="form-group">
+              <label for="board_intro" class="col-sm-3 control-label">{{t "Board Intro" key='board_intro'}}</label>
+              {{#unless model.intro.sections}}
+                <div class="col-sm-9" style='margin-bottom: 10px;'>
+                  <em class='form-control-static'>{{t "You can build a short lesson that people will walk through when they choose this board set, including explanations and practice phrases for them to find using the board set." key='board_intro_explainer'}}</em>
                 </div>
+              {{/unless}}
+              {{#each model.intro.sections as |section index|}}
+                <div class={{if index 'col-sm-7 col-sm-offset-3' 'col-sm-7'}}>
+                  {{textarea value=section.description class="form-control" placeholder="Explanation, notes, etc."}}
+                  <div style='margin-top: 3px; margin-bottom: 15px;'>
+                    {{input type='text' value=section.prompt class='form-control' placeholder="optional button sequence to find"}}
+                  </div>
+                </div>
+                <div class='col-sm-2'>
+                  <button class='btn btn-default' {{action 'delete_board_intro_section' section}}><span class='glyphicon glyphicon-remove'></span></button>
+                </div>
+              {{/each}}
+              <div class='col-sm-9 col-sm-offset-3'>
+                <button class='btn btn-default' {{action 'add_board_intro_section'}}>{{t "Add Intro Section" key='add_intro_section'}}</button>
               </div>
-              <div class='col-sm-2'>
-                <button class='btn btn-default' {{action 'delete_board_intro_section' section}}><span class='glyphicon glyphicon-remove'></span></button>
-              </div>
-            {{/each}}
-            <div class='col-sm-9 col-sm-offset-3'>
-              <button class='btn btn-default' {{action 'add_board_intro_section'}}>{{t "Add Intro Section" key='add_intro_section'}}</button>
             </div>
-          </div>
+          {{/if}}
         {{/if}}
+      {{else}}
+        <div class='form-group'>
+          <div class='col-sm-9 col-sm-offset-3'>
+            <p><a href='#' {{action 'show_advanced'}}>{{t "advanced options" key='advanced_options'}}</a></p>
+          </div>
+        </div>
+
       {{/if}}
     </form>
   </div>

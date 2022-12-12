@@ -15,6 +15,7 @@ export default modal.ModalController.extend({
     if(!board.get('button_locale')) {
       board.set('button_locale', app_state.get('label_locale') || board.get('locale'));
     }
+    this.set('advanced', false);
     this.set('originally_public', board.get('public'));
     this.set('protected_vocabulary', !!board.get('protected_settings.vocabulary'));
   },
@@ -95,6 +96,9 @@ export default modal.ModalController.extend({
     },
     pickImageUrl: function(url) {
       this.set('model.image_url', url);
+    },
+    show_advanced: function() {
+      this.set('advanced', true);
     },
     add_board_intro_section: function() {
       var intro = this.get('model.intro') || {};

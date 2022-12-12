@@ -1699,6 +1699,7 @@ var app_state = EmberObject.extend({
   }),
   header_size: computed(
     'currentUser.preferences.device.vocalization_height',
+    'controller.board.model.small_header',
     'window_inner_width',
     'window_inner_height',
     'flipped',
@@ -1707,6 +1708,11 @@ var app_state = EmberObject.extend({
       var size = this.get('currentUser.preferences.device.vocalization_height') || ((window.user_preferences || {}).device || {}).vocalization_height || 100;
       if(this.get('currentUser.preferences.device.flipped_override') && this.get('flipped') && this.get('currentUser.preferences.device.flipped_height')) {
         size = this.get('currentUser.preferences.device.flipped_height');
+      }
+      if(this.controller.get('board.model.small_header')) {
+        if(size != 'tiny' && size != 'small') {
+          size = 'small';
+        }
       }
       if(window.innerHeight < 400) {
         size = 'tiny';
