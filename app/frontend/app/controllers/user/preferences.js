@@ -817,8 +817,6 @@ export default Controller.extend({
       this.set('pending_preferences.home_board', {});
     },
     savePreferences: function(skip_redirect) {
-      // TODO: add a "save pending..." status somewhere
-      // TODO: this same code is in utterance.js...
       this.set('skip_save_on_transition', true);
       var pitch = parseFloat(this.get('pending_preferences.device.voice.pitch'));
       if(isNaN(pitch)) { pitch = 1.0; }

@@ -277,6 +277,10 @@ export default Controller.extend({
     }
     return false;
   }),
+  no_hidden_buttons: computed('stashes.all_buttons_enabled', 'board.model.hidden_buttons', function() {
+    if(stashes.get('all_buttons_enabled')) { return false; }
+    return !this.get('board.model.hidden_buttons');
+  }),
   actions: {
     invalidateSession: function() {
       session.invalidate(true);

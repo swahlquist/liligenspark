@@ -190,81 +190,81 @@ var persistence = EmberObject.extend({
     if(!key) { /*debugger;*/ }
     var res = new RSVP.Promise(function(resolve, reject) {
       setTimeout(function() {
-      if(valid_stores.indexOf(store) == -1) {
-        reject({error: "invalid type: " + store});
-        return;
-      }
-      if(persistence.known_missing && persistence.known_missing[store] && persistence.known_missing[store][key]) {
-//         console.error('found a known missing!');
-        reject({error: 'record known missing: ' + store + ' ' + key});
-        return;
-      }
-      var id = RSVP.resolve(key);
-      if(store == 'user' && key == 'self') {
-        id = coughDropExtras.storage.find('settings', 'selfUserId').then(function(res) {
-          return res.raw.id;
-        });
-      }
-      var lookup = id.then(function(id) {
-        return coughDropExtras.storage.find(store, id).then(function(record) {
-          return persistence.get_important_ids().then(function(ids) {
-            return RSVP.resolve({record: record, importantIds: ids});
-          }, function(err) {
-            // if we've never synced then this will be empty, and that's ok
-            if(err && err.error && err.error.match(/no record found/)) {
-              return RSVP.resolve({record: record, importantIds: []});
-            } else {
-              return RSVP.reject({error: "failed to find settings result when querying " + store + ":" + key});
-            }
+        if(valid_stores.indexOf(store) == -1) {
+          reject({error: "invalid type: " + store});
+          return;
+        }
+        if(persistence.known_missing && persistence.known_missing[store] && persistence.known_missing[store][key]) {
+  //         console.error('found a known missing!');
+          reject({error: 'record known missing: ' + store + ' ' + key});
+          return;
+        }
+        var id = RSVP.resolve(key);
+        if(store == 'user' && key == 'self') {
+          id = coughDropExtras.storage.find('settings', 'selfUserId').then(function(res) {
+            return res.raw.id;
           });
-        }, function(err) {
-          return RSVP.reject(err);
+        }
+        var lookup = id.then(function(id) {
+          return coughDropExtras.storage.find(store, id).then(function(record) {
+            return persistence.get_important_ids().then(function(ids) {
+              return RSVP.resolve({record: record, importantIds: ids});
+            }, function(err) {
+              // if we've never synced then this will be empty, and that's ok
+              if(err && err.error && err.error.match(/no record found/)) {
+                return RSVP.resolve({record: record, importantIds: []});
+              } else {
+                return RSVP.reject({error: "failed to find settings result when querying " + store + ":" + key});
+              }
+            });
+          }, function(err) {
+            return RSVP.reject(err);
+          });
         });
-      });
-      lookup.then(function(res) {
-        var record = res.record;
-        var importantIds = res.importantIds;
-        var ago = (new Date()).getTime() - (7 * 24 * 60 * 60 * 1000); // >1 week old is out of date
-        // TODO: garbage collection for db??? maybe as part of sync..
-        if(record && record.raw) {
-          record.raw.important = !!importantIds.find(function(i) { return i == (store + "_" + key); });
-        }
-        // if we have the opportunity to get it from an online source and it's out of date,
-        // we should use the online source
-        if(record && record.raw && !record.important && record.persisted < ago) {
-          record.raw.outdated = true;
-        }
-
-        if(store == 'dataCache' && capabilities.system == 'iOS' && record.raw && record.raw.local_url && record.raw.local_filename && record.raw.local_filename.match(/\%/)) {
-          // Only on iOS:
-          // URLs are stored unecoded, so they need to be encoded
-          // before being used, and consistently encoded at least
-          // on iOS or they won't be properly double-escaped
-          // if the original filename had escaped characters
-          record.raw.local_url = encodeURI(record.raw.local_url);
-        }
-
-        if(record) {
-          var result = {};
-          if(wrapped) {
-            result[store] = record.raw;
-          } else {
-            result = record.raw;
+        lookup.then(function(res) {
+          var record = res.record;
+          var importantIds = res.importantIds;
+          var ago = (new Date()).getTime() - (7 * 24 * 60 * 60 * 1000); // >1 week old is out of date
+          // TODO: garbage collection for db??? maybe as part of sync..
+          if(record && record.raw) {
+            record.raw.important = !!importantIds.find(function(i) { return i == (store + "_" + key); });
           }
-          resolve(result);
-        } else {
+          // if we have the opportunity to get it from an online source and it's out of date,
+          // we should use the online source
+          if(record && record.raw && !record.important && record.persisted < ago) {
+            record.raw.outdated = true;
+          }
+
+          if(store == 'dataCache' && capabilities.system == 'iOS' && record.raw && record.raw.local_url && record.raw.local_filename && record.raw.local_filename.match(/\%/)) {
+            // Only on iOS:
+            // URLs are stored unecoded, so they need to be encoded
+            // before being used, and consistently encoded at least
+            // on iOS or they won't be properly double-escaped
+            // if the original filename had escaped characters
+            record.raw.local_url = encodeURI(record.raw.local_url);
+          }
+
+          if(record) {
+            var result = {};
+            if(wrapped) {
+              result[store] = record.raw;
+            } else {
+              result = record.raw;
+            }
+            resolve(result);
+          } else {
+            persistence.known_missing = persistence.known_missing || {};
+            persistence.known_missing[store] = persistence.known_missing[store] || {};
+            persistence.known_missing[store][key] = true;
+            reject({error: "record not found: " + store + ' ' + key});
+          }
+        }, function(err) {
           persistence.known_missing = persistence.known_missing || {};
           persistence.known_missing[store] = persistence.known_missing[store] || {};
           persistence.known_missing[store][key] = true;
-          reject({error: "record not found: " + store + ' ' + key});
-        }
-      }, function(err) {
-        persistence.known_missing = persistence.known_missing || {};
-        persistence.known_missing[store] = persistence.known_missing[store] || {};
-        persistence.known_missing[store][key] = true;
-        reject(err);
-      });
-    }, 0)
+          reject(err);
+        });
+      }, 0);
     });
     return res;
   },
@@ -2228,7 +2228,8 @@ var persistence = EmberObject.extend({
             }
           });
         }
-        if(user.get('preferences.sync_starred_boards')) {
+        // A user without a home board should also sync starred boards, by default
+        if(user.get('preferences.sync_starred_boards') !== false || !user.get('preferences.home_board.id')) {
           user.get('stats.starred_board_refs').forEach(function(ref) {
             to_visit_boards.push({key: ref.key, depth: 1, image: ref.image_url, visit_source: "starred board"});
           });

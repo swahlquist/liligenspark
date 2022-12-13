@@ -9,7 +9,8 @@
   {{else}}
     {{#if for_self}}
       <div style='margin-bottom: 40px;'>
-        <button class='btn btn-default btn-lg' {{action 'choose_board'}} style='font-size: 22px;'>{{t "Skip For Now, Just<br/>Help Me Choose a Board" key='skip_to_board_choice'}}</button>
+        <button class='btn btn-default btn-lg' {{action 'done'}} style='font-size: 22px;'>{{t "Skip For Now, Return<br/>to the Dashboard" key='skip_to_dashboard'}}</button>
+        <button class='btn btn-default btn-lg' {{action 'choose_board'}} style='font-size: 22px;'>{{t "Skip the Setup, Just<br/>Help Me Choose a Board" key='skip_to_board_choice'}}</button>
       </div>
     {{/if}}
   {{/if}}

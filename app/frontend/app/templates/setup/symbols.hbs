@@ -55,78 +55,6 @@
 <div class='row'>
   <div class='col-sm-5 col-sm-offset-1'>
     <div class='setup_setting'>
-      <label>{{t "How do you want pictures to display?" key='symbol_background_question'}}</label>
-      <div class="btn-group-vertical" style="width: 100%;">
-        <a href="#" class={{if background.clear 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'clear'}} style='text-align: left;'>
-          <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: rgb(255, 189, 144);'>
-            <span style='display: inline-block; width: 16px; height: 16px; margin: 3px; border-radius: 20px; border: 3px solid #800; background: #ffc;'></span>
-          </span> 
-          {{t "With a background matching the button" key='clear_background'}}
-        </a>
-        <a href="#" class={{if background.white 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'white'}} style='text-align: left;' >
-          <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background:#fff;'>
-            <span style='display: inline-block; width: 16px; height: 16px; margin: 3px; border-radius: 20px; border: 3px solid #800; background: #ffc;'></span>
-          </span> 
-          {{t "Always with a white background" key='always_white_background'}}
-        </a>
-        <a href="#" class={{if background.black 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'black'}} style='text-align: left;' >
-          <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: #000;'>
-            <span style='display: inline-block; width: 16px; height: 16px; margin: 3px; border-radius: 20px; border: 3px solid #800; background: #ffc;'></span>
-          </span> 
-          {{t "Always with a black background" key='always_black_background'}}
-        </a>
-        <a href="#" class={{if background.black_with_high_contrast 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'black_with_high_contrast'}} style='text-align: left;' >
-          <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: #000;'>
-            <span style='display: inline-block; width: 16px; height: 16px; margin: 3px; border-radius: 20px; border: 3px solid #f00; background: #f8fc03;'></span>
-          </span> 
-          {{t "High contrast with a black background" key='high_contrast_black_background'}}
-        </a>
-      </div>
-    </div>
-
-  </div>
-  <div class='col-sm-5' style='padding-top: 50px;'>
-    <div style='width: 200px; height: 200px; border-radius: 10px; border: 3px solid rgb(246, 98, 0); text-align: center; margin: 0 auto; background-color: rgb(255, 189, 144); float: left; margin-right: 15px;'>
-      {{#if text_position.text_only}}
-        <div style='font-size: 25px; text-align: center; margin-top: 80px;'>
-          {{t "frog" key='frog'}}
-        </div>
-      {{else}}
-        {{#if text_position.text_on_top}}
-          <div style='font-size: 25px; text-align: center;'>
-            {{t "frog" key='frog'}}
-          </div>
-        {{/if}}
-        <span class={{image_preview_class}}>
-          {{#if symbols.twemoji}}
-            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f438.svg' />
-          {{else if symbols.noun_project}}
-            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Green-frog_582_g.svg' />
-          {{else if symbols.tawasol}}
-            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/tawasol/Frog.png' />
-          {{else if symbols.pcs}}
-            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/02086/70f88a99a243736c9f554808cbff30c26a8b74a25f06d58e31dd392a89f6586ebe03d6ff2d617e71e98c3901689c833d56e96e5e48dbb1cf51da8336d46b5728/02086.svg' />
-          {{else if symbols.symbolstix}}
-            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/symbolstix/00001114/fabde031d3fb14205b35670fc5b66ddfe187344c73f1edcbc756525c6d6834bcad0b4791eebec7f38367ac3369282156ab08ba1e92b155930b8e4dcc14142add/c-animals-symbol00001114.png' />
-          {{else if symbols.lessonpix}}
-            <img src='https://lessonpix.com/drawings/1283/150x150/1283.png' />
-          {{else}}
-            <img src='https://opensymbols.s3.amazonaws.com/libraries/arasaac/frog.png' />
-          {{/if}}
-          {{#if text_position.text_on_bottom}}
-            <div style='font-size: 25px; text-align: center;'>
-              {{t "frog" key='frog'}}
-            </div>
-          {{/if}}
-        </span>
-      {{/if}}
-    </div>
-    <p style='font-size: 16px;'>{{t "For most users, matching the button color works well, but for some communicators having a white background can help with contrast and recognition." key='background_suggestion'}}</p>
-  </div>
-</div>
-<div class='row'>
-  <div class='col-sm-5 col-sm-offset-1'>
-    <div class='setup_setting'>
       <label>{{t "Which symbols do you prefer?" key='which_symbols'}}</label>
       <div class="btn-group-vertical" style="width: 100%; text-align: left;">
         <a href="#" style='text-align: left; padding: 14px 20px;' class={{if symbols.original 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'preferred_symbols' 'original'}} >
@@ -384,6 +312,78 @@
     </div>
     <div style='clear: left;'></div>
     <p style='font-size: 16px; margin-top: 10px;'>{{t "Text-only can help communicators learn how words combine into sentences and help promote literacy as they see the emphasis on words, but it may not be the best fit for all users." key='utterance_suggestion'}}</p>
+  </div>
+</div>
+<div class='row'>
+  <div class='col-sm-5 col-sm-offset-1'>
+    <div class='setup_setting'>
+      <label>{{t "How do you want pictures to display?" key='symbol_background_question'}}</label>
+      <div class="btn-group-vertical" style="width: 100%;">
+        <a href="#" class={{if background.clear 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'clear'}} style='text-align: left;'>
+          <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: rgb(255, 189, 144);'>
+            <span style='display: inline-block; width: 16px; height: 16px; margin: 3px; border-radius: 20px; border: 3px solid #800; background: #ffc;'></span>
+          </span> 
+          {{t "With a background matching the button" key='clear_background'}}
+        </a>
+        <a href="#" class={{if background.white 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'white'}} style='text-align: left;' >
+          <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background:#fff;'>
+            <span style='display: inline-block; width: 16px; height: 16px; margin: 3px; border-radius: 20px; border: 3px solid #800; background: #ffc;'></span>
+          </span> 
+          {{t "Always with a white background" key='always_white_background'}}
+        </a>
+        <a href="#" class={{if background.black 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'black'}} style='text-align: left;' >
+          <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: #000;'>
+            <span style='display: inline-block; width: 16px; height: 16px; margin: 3px; border-radius: 20px; border: 3px solid #800; background: #ffc;'></span>
+          </span> 
+          {{t "Always with a black background" key='always_black_background'}}
+        </a>
+        <a href="#" class={{if background.black_with_high_contrast 'btn btn-lg btn-primary' 'btn btn-lg btn-default'}} {{action 'set_preference' 'device.symbol_background' 'black_with_high_contrast'}} style='text-align: left;' >
+          <span style='vertical-align: middle; display: inline-block; width: 32px; height: 32px; border-radius: 3px; border: 5px solid rgb(255, 189, 144); background: #000;'>
+            <span style='display: inline-block; width: 16px; height: 16px; margin: 3px; border-radius: 20px; border: 3px solid #f00; background: #f8fc03;'></span>
+          </span> 
+          {{t "High contrast with a black background" key='high_contrast_black_background'}}
+        </a>
+      </div>
+    </div>
+
+  </div>
+  <div class='col-sm-5' style='padding-top: 50px;'>
+    <div style='width: 200px; height: 200px; border-radius: 10px; border: 3px solid rgb(246, 98, 0); text-align: center; margin: 0 auto; background-color: rgb(255, 189, 144); float: left; margin-right: 15px;'>
+      {{#if text_position.text_only}}
+        <div style='font-size: 25px; text-align: center; margin-top: 80px;'>
+          {{t "frog" key='frog'}}
+        </div>
+      {{else}}
+        {{#if text_position.text_on_top}}
+          <div style='font-size: 25px; text-align: center;'>
+            {{t "frog" key='frog'}}
+          </div>
+        {{/if}}
+        <span class={{image_preview_class}}>
+          {{#if symbols.twemoji}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/twemoji/1f438.svg' />
+          {{else if symbols.noun_project}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/noun-project/Green-frog_582_g.svg' />
+          {{else if symbols.tawasol}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/tawasol/Frog.png' />
+          {{else if symbols.pcs}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/pcs/02086/70f88a99a243736c9f554808cbff30c26a8b74a25f06d58e31dd392a89f6586ebe03d6ff2d617e71e98c3901689c833d56e96e5e48dbb1cf51da8336d46b5728/02086.svg' />
+          {{else if symbols.symbolstix}}
+            <img src='https://d18vdu4p71yql0.cloudfront.net/libraries/symbolstix/00001114/fabde031d3fb14205b35670fc5b66ddfe187344c73f1edcbc756525c6d6834bcad0b4791eebec7f38367ac3369282156ab08ba1e92b155930b8e4dcc14142add/c-animals-symbol00001114.png' />
+          {{else if symbols.lessonpix}}
+            <img src='https://lessonpix.com/drawings/1283/150x150/1283.png' />
+          {{else}}
+            <img src='https://opensymbols.s3.amazonaws.com/libraries/arasaac/frog.png' />
+          {{/if}}
+          {{#if text_position.text_on_bottom}}
+            <div style='font-size: 25px; text-align: center;'>
+              {{t "frog" key='frog'}}
+            </div>
+          {{/if}}
+        </span>
+      {{/if}}
+    </div>
+    <p style='font-size: 16px;'>{{t "For most users, matching the button color works well, but for some communicators having a white background can help with contrast and recognition." key='background_suggestion'}}</p>
   </div>
 </div>
 {{/unless}}

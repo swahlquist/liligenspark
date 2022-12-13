@@ -98,11 +98,16 @@
           <button class='btn btn-default' {{action 'clear_home'}}>{{t "Clear Home Board" key='clear_home_board'}}</button>
         {{/if}}
       </div>
-      {{#if pending_preferences.sync_starred_boards}}
-        <div class='col-sm-offset-3 col-sm-9'>
-          <em class='text-info'>{{t "Update starred boards preference in the Sidebar and Shortcuts section" key='update_starred_sync_in_other_section'}}</em>
+      {{#unless pending_preferences.home_board.key}}
+        <div class="col-sm-5 col-sm-offset-3">
+          <div class="checkbox big_checkbox">
+            <label>
+              {{input type="checkbox" checked=pending_preferences.sync_starred_boards id="sync_starred_boards"}}
+              {{t "Sync my liked boards to use as a home board" key='sync_starred_boards_for_home'}}
+            </label>
+          </div>
         </div>
-      {{/if}}
+      {{/unless}}
     </div>
     <div class="form-group">
       <label for="locale" class="col-sm-3 control-label">{{t "Preferred Language" key='preferred_language'}}</label>
@@ -631,6 +636,18 @@
       </div>
     </div>
     <div class="form-group">
+      <label for="sync_starred_boards" class="col-sm-3 control-label">{{t "Liked Boards" key='liked_boards'}}</label>
+      <div class="col-sm-5">
+        <div class="checkbox big_checkbox">
+          <label>
+            {{input type="checkbox" checked=pending_preferences.sync_starred_boards id="sync_starred_boards"}}
+            {{t "Make my Home Board a list of all my liked boards" key='sync_starred_boards'}}<br/>
+            {{t "(and sync them for offline use)" key='and_sync_for_offline'}}
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
       <label for="skip_supervisee_sync" class="col-sm-3 control-label">{{t "Syncing" key='syncing'}}</label>
       <div class="col-sm-5">
         <div class="checkbox big_checkbox">
@@ -1060,18 +1077,6 @@
             </label>
           </div>
         {{/unless}}
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="sync_starred_boards" class="col-sm-3 control-label">{{t "Liked Boards" key='liked_boards'}}</label>
-      <div class="col-sm-5">
-        <div class="checkbox big_checkbox">
-          <label>
-            {{input type="checkbox" checked=pending_preferences.sync_starred_boards id="sync_starred_boards"}}
-            {{t "Make my Home Board a list of all my liked boards" key='sync_starred_boards'}}<br/>
-            {{t "(and sync them for offline use)" key='and_sync_for_offline'}}
-          </label>
-        </div>
       </div>
     </div>
 

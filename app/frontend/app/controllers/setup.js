@@ -448,7 +448,7 @@ export default Controller.extend({
   for_self: computed('app_state.currentUser.id', 'setup_user.id', function() {
     return this.get('setup_user') && this.get('setup_user.id') == app_state.get('currentUser.id');
   }),
-  update_on_page_change: observer('page', 'user_id', 'app_state.currentUser', function() {
+  update_on_page_change: observer('page', 'user_id', 'app_state.currentUser', 'setup_user', function() {
     var _this = this;
     if(!_this.get('fake_user')) {
       _this.set('fake_user', EmberObject.create({
@@ -491,7 +491,7 @@ export default Controller.extend({
         _this.set(pref, _this.get('setup_user.preferences.' + pref));
       });
 
-      if(this.get('page') == 'symbols') {
+      if(this.get('page') == 'symbols' && this.get('setup_user').find_integration) {
         this.get('setup_user').find_integration('lessonpix').then(function(res) {
           _this.set('lessonpix_enabled', true);
         }, function(err) { });
@@ -504,7 +504,7 @@ export default Controller.extend({
     var _this = this;
     speecher.stop('all');
     _this.set('reading', false);
-    if(!_this.get('reading_disabled')) {
+    if(_this.get('reading_enabled')) {
       runLater(function() {
         _this.read_step();
       }, 500);
@@ -608,10 +608,10 @@ export default Controller.extend({
     toggle_speaking: function() {
       if(this.get('reading')) {
         speecher.stop('all');
-        this.set('reading_disabled', true);
+        this.set('reading_enabled', false);
         this.set('reading', false);
       } else {
-        this.set('reading_disabled', false);
+        this.set('reading_enabled', true);
         this.read_step();
       }
     },

@@ -155,17 +155,32 @@ var obf = EmberObject.extend({
 evaluation.register(obf);
 emergency.register(obf);
 obf.register("stars", function(key) {
-  var user_id = key.replace(/^stars-?/, '');
+  var parts = key.replace(/^stars-?/, '').split(/-/);
+  var user_id = parts[0];
+  var board_id = parts[1];
   var user = app_state.get('sessionUser');
   if(user_id && user_id != 'self') {
     user = CoughDrop.store.peekRecord('user', user_id);
     if(!user || !user.get('permissions.supervise')) {
-      
+      // TODO: error message
     }
   }
   var rows = 3, cols = 4;
   var idx = 0;
-  var total = (user && (user.get('stats.starred_board_refs') || []).length) || 0;
+  var refs = (user && user.get('stats.starred_board_refs')) || [];
+  if(board_id && refs.length) {
+    var ref = user.get('stats.starred_board_refs').find(function(b) { return b.id == board_id && b.style && b.style.options; });
+    if(ref) {
+      var list = [];
+      ref.style.options.forEach(function(o) {
+        var opt = Object.assign({}, o);
+        opt.image_url = opt.url || ref.image_url;
+        list.push(opt)
+      })
+      refs = list;
+    }
+  }
+  var total = refs.length || 0;
   while(total > rows * cols) {
     if(cols / rows > 1.7) {
       rows++;
@@ -177,8 +192,8 @@ obf.register("stars", function(key) {
   res.name = i18n.t('starred_boards', "Starred Boards");
   if(user) {
     res.name = i18n.t('starred_boards_for_user', "Starred Boards for %{un}", {un: user.get('user_name')});
-    if(user.get('preferences.home_board')) {
-      var ref = (user.get('stats.starred_board_refs') || []).find(function(r) { return r.id == user.get('preferences.home_board.id'); });
+    if(user.get('preferences.home_board') && !board_id) {
+      var ref = refs.find(function(r) { return r.id == user.get('preferences.home_board.id'); });
       var btn = {
         label: ref ? ref.name : i18n.t('home_board', "Home Board"), 
         meta_home: "obf/" + key,
@@ -195,10 +210,14 @@ obf.register("stars", function(key) {
       res.add_button(btn, 0, 0);
       idx++;
     }
-    (user.get('stats.starred_board_refs') || []).forEach(function(ref) {
+    refs.forEach(function(ref) {
       var col = idx % cols;
       var row = (idx - col) / cols;
-      res.add_button({label: ref.name, meta_home: "obf/" + key, home_lock: true, image: {url: ref.image_url}, load_board: {key: ref.key, id: ref.id}}, row, col);
+      if(ref.style) {
+        res.add_button({label: ref.style.name, image: {url: ref.style.image_url}, load_board: {key: "obf/stars-" + user.id + "-" + ref.id}}, row, col);
+      } else {
+        res.add_button({label: ref.name, meta_home: "obf/" + key, home_lock: true, image: {url: ref.image_url}, load_board: {key: ref.key, id: ref.id}}, row, col);
+      }
       // TODO: pass the preferred level as well based on how it looked when it was starred
       idx++;
     });

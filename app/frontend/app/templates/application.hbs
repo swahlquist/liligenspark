@@ -771,6 +771,12 @@
                   </a>
                 {{/if}}
               </li>
+              {{#unless stashes.temporary_root_board_state}}
+                {{#if stashes.root_board_state.meta_home}}
+                  <li><a href="#" {{action "meta_home"}}>{{t "Return to Home List" key='return_to_home_list'}}</a></li>
+                {{/if}}
+              {{/unless}}
+
               {{#if app_state.embedded}}
                 <li class="divider"></li>
                 <li role="presentation">
@@ -849,14 +855,21 @@
               {{#if app_state.feature_flags.enable_all_buttons}}
                 {{#unless app_state.currentUser.preferences.prevent_hide_buttons}}
                   {{#unless app_state.eval_mode}}
-                    <li><a href="#" {{action 'toggle_all_buttons'}}>
-                      <span class="glyphicon glyphicon-apple"></span>
-                      {{#if stashes.all_buttons_enabled}}
-                        {{t "Hide Hidden Buttons" key='hide_disabled_buttons'}}
-                      {{else}}
-                        {{t "Show Hidden Buttons" key='show_all_buttons'}}
-                      {{/if}}
-                    </a></li>
+                    {{#if no_hidden_buttons}}
+                      <li><a href="#" {{action 'toggle_all_buttons'}} style='margin-top: -10px; font-size: 14px;'>
+                        <span class="glyphicon glyphicon-apple"></span>
+                        {{t "No Hidden Buttons" key='no_hidden_buttons'}}
+                      </a></li>
+                    {{else}}
+                      <li><a href="#" {{action 'toggle_all_buttons'}}>
+                        <span class="glyphicon glyphicon-apple"></span>
+                        {{#if stashes.all_buttons_enabled}}
+                          {{t "Hide Hidden Buttons" key='hide_disabled_buttons'}}
+                        {{else}}
+                          {{t "Show Hidden Buttons" key='show_all_buttons'}}
+                        {{/if}}
+                      </a></li>
+                    {{/if}}
                   {{/unless}}
                 {{/unless}}
                 {{#if app_state.feature_flags.focus_word_highlighting}}
@@ -905,9 +918,6 @@
                     {{#if stashes.temporary_root_board_state}}
                       <li><a href="#" {{action "toggle_home_lock"}}>{{t "Release Home Lock" key='release_home_lock'}}</a></li>
                     {{else}}
-                      {{#if stashes.root_board_state.meta_home}}
-                        <li><a href="#" {{action "meta_home"}}>{{t "Return to Home List" key='return_to_home_list'}}</a></li>
-                      {{/if}}
                       {{#unless app_state.current_board_is_speak_mode_home}}
                         <li><a href="#" {{action "toggle_home_lock"}}>{{t "Set As Temporary Home" key='temporary_home'}}</a></li>
                       {{/unless}}

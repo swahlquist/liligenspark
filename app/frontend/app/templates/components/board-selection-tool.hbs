@@ -116,24 +116,36 @@
           </div>
         {{/if}}
       {{else}}
-        <div class='col-sm-4'>
-          <button class='btn btn-default' {{action 'set_base_level' 1}}>
-            <img src={{path 'images/grid-few.svg'}} />
-            {{t "Brand New User" key='brand_new_user'}}
+        <div class='col-sm-8 col-sm-offset-2'>
+          <button class='btn btn-default' {{action 'skip_with_note'}} style='min-height: 50px; margin-bottom: 20px;'>
+            {{t "I Don't Want a Home Board Right Now" key='not_ready_yet'}}
           </button>
         </div>
-        <div class='col-sm-4'>
-          <button class='btn btn-default' {{action 'set_base_level' 4}}>
-            <img src={{path 'images/grid-some.svg'}} />
-            {{t "Some Experience" key='some_experience'}}
-          </button>
-        </div>
-        <div class='col-sm-4'>
-          <button class='btn btn-default' {{action 'set_base_level' 10}}>
-            <img src={{path 'images/grid-full.svg'}} />
-            {{t "Very Experienced" key='very_experienced'}}
-          </button>
-        </div>
+        {{#if skip_note}}
+          <div class='col-sm-12'>
+            <p class='prompt'>{{t "No problem. You can return to this setup wizard any time for help, or if you find a board on your own you can choose Set as My Home Board to make it your starting point whenever you start." key='choose_later_1'}}</p>
+            <p class='prompt'>{{t "In the mean time, your starting spot will be a list of popular boards and any boards you have liked. " key='choose_later_2'}}</p>
+          </div>
+        {{else}}
+          <div class='col-sm-4'>
+            <button class='btn btn-default' {{action 'set_base_level' 1}}>
+              <img src={{path 'images/grid-few.svg'}} />
+              {{t "Brand New User" key='brand_new_user'}}
+            </button>
+          </div>
+          <div class='col-sm-4'>
+            <button class='btn btn-default' {{action 'set_base_level' 4}}>
+              <img src={{path 'images/grid-some.svg'}} />
+              {{t "Some Experience" key='some_experience'}}
+            </button>
+          </div>
+          <div class='col-sm-4'>
+            <button class='btn btn-default' {{action 'set_base_level' 10}}>
+              <img src={{path 'images/grid-full.svg'}} />
+              {{t "Very Experienced" key='very_experienced'}}
+            </button>
+          </div>
+        {{/if}}
       {{/if}}
     </div>
   </div>

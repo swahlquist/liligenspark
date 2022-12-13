@@ -36,6 +36,7 @@ export default Component.extend({
     this.set('base_level', null);
     this.set('board_style', null);
     this.set('app_state', app_state);
+    this.set('skip_note', false);
   },
   didInsertElement: function() {
     this.size_element();
@@ -255,6 +256,16 @@ export default Component.extend({
         this.set('current_index', Math.max((this.get('current_index') || 0) - 1, 0));
       }
     },
+    skip_with_note: function() {
+      var user = app_state.get('setup_user') || app_state.get('currentUser');
+      if(user) {
+        user.set('preferences.home_board', {id: 'none'});
+        user.set('preferences.sync_starred_boards', true);
+        user.save();
+      }
+
+      this.set('skip_note', true);
+    },
     advanced: function() {
       this.sendAction('advanced');
     },
@@ -291,6 +302,7 @@ export default Component.extend({
   
       if(_this.get('current_level') || !board.get('levels')) {
         if(_this.get('current_board.key')) {
+          user.set('preferences.sync_starred_boards', false);
           user.copy_home_board(_this.get('current_board'), true).then(function() { }, function(err) {
             modal.error(i18n.t('set_as_home_failed', "Home board update failed unexpectedly"));
           });

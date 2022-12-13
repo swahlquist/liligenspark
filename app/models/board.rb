@@ -133,6 +133,19 @@ class Board < ActiveRecord::Base
     end
     res
   end
+
+  def self.find_suggested(locale='en', limit=10)
+    ids = nil
+    if locale == 'en'
+      user = User.find_by_path('example')
+      ids = user && self.local_ids(user.settings['starred_board_ids'] || [])
+    end
+    if ids.blank?
+      locs = BoardLocale.where(locale: [locale, locale.split(/-|_/)[0]])
+      ids = locs.order('home_popularity DESC, popularity DESC').limit(limit).map{|bl| bl.board_id }
+    end
+    Board.where(id: ids).order('home_popularity DESC, popularity DESC')
+  end
   
   def non_author_starred?
     self.user && ((self.settings || {})['starred_user_ids'] || []).any?{|s| s != self.user.global_id && !s.to_s.match(self.user.global_id) }

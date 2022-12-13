@@ -8,7 +8,7 @@
       <p class='text-danger'>{{t "Error loading user, please make sure you have permission to support this user" key='error_loading_user'}}</p>
     </div>
   {{else}}
-    <a class={{if reading 'btn btn-lg btn-success throb' 'btn btn-lg btn-default'}} {{action 'toggle_speaking'}} href="#" style='position: absolute; top: 5px; right: 5px;'>
+    <a class={{if reading 'btn btn-lg btn-success throb' 'btn btn-lg btn-default'}} {{action 'toggle_speaking'}} href="#" style='position: absolute; top: 5px; right: 5px; width: 100px;'>
       {{#if reading}}
         <span class='glyphicon glyphicon-volume-off'></span>
         <span class='sr-only'>{{t "Stop Reading This Step" key='stop_reading_this_step'}}</span>
