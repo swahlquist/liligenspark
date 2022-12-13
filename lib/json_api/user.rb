@@ -423,13 +423,14 @@ module JsonApi::User
           end
         end
         if json['stats']['starred_board_refs'].length < 12
-          Board.find_suggested('en', 4).each do |board|
-            if !brds[board.global_id]
+          Board.find_suggested('en', 5).each do |board|
+            if !brds[board.global_id] && json['stats']['starred_board_refs'].length < 12
               if board.settings['board_style']
                 json['stats']['starred_board_refs'] << {
                   'id' => board.global_id,
                   'key' => board.key,
                   'name' => board.settings['name'],
+                  'suggested' => true,
                   'style' => board.settings['board_style'],
                   'image_url' => board.settings['image_url']
                 }
@@ -438,6 +439,7 @@ module JsonApi::User
                   'id' => board.global_id,
                   'key' => board.key,
                   'name' => board.settings['name'],
+                  'suggested' => true,
                   'image_url' => board.settings['image_url']
                 }
               end

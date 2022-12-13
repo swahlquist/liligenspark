@@ -25,6 +25,7 @@ var clean_url = function(str) {
 };
 var dom = document.createElement('div');
 var clean_text = function(str) {
+  str = str || "";
   if(str.cleaned) { return str; }
   dom.textContent = str;
   var res = new String(dom.innerHTML);

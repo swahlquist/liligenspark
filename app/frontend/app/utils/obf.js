@@ -213,7 +213,7 @@ obf.register("stars", function(key) {
     refs.forEach(function(ref) {
       var col = idx % cols;
       var row = (idx - col) / cols;
-      if(ref.style) {
+      if(ref.style && ref.style.options) {
         res.add_button({label: ref.style.name, image: {url: ref.style.image_url}, load_board: {key: "obf/stars-" + user.id + "-" + ref.id}}, row, col);
       } else {
         res.add_button({label: ref.name, meta_home: "obf/" + key, home_lock: true, image: {url: ref.image_url}, load_board: {key: ref.key, id: ref.id}}, row, col);

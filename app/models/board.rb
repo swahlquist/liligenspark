@@ -144,7 +144,7 @@ class Board < ActiveRecord::Base
       locs = BoardLocale.where(locale: [locale, locale.split(/-|_/)[0]])
       ids = locs.order('home_popularity DESC, popularity DESC').limit(limit).map{|bl| bl.board_id }
     end
-    Board.where(id: ids).order('home_popularity DESC, popularity DESC')
+    Board.where(id: ids).order('home_popularity DESC, popularity DESC').limit(limit)
   end
   
   def non_author_starred?
