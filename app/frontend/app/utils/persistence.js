@@ -2229,9 +2229,15 @@ var persistence = EmberObject.extend({
           });
         }
         // A user without a home board should also sync starred boards, by default
-        if(user.get('preferences.sync_starred_boards') !== false || !user.get('preferences.home_board.id')) {
+        if(user.get('preferences.sync_starred_boards') === true || (!user.get('preferences.home_board.id') && user.get('preferences.sync_starred_boards') !== false)) {
           user.get('stats.starred_board_refs').forEach(function(ref) {
-            to_visit_boards.push({key: ref.key, depth: 1, image: ref.image_url, visit_source: "starred board"});
+            if(ref.style && ref.style.options) {
+              ref.style.options.forEach(function(opt) {
+                to_visit_boards.push({key: opt.key, depth: 1, image: opt.url || ref.image_url, visit_source: "suggested board"});
+              })
+            } else {
+              to_visit_boards.push({key: ref.key, depth: 1, image: ref.image_url, visit_source: ref.suggested ? "suggested board" : "starred board"});
+            }
           });
         }
         var safely_cached_boards = {};
