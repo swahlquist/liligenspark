@@ -121,7 +121,7 @@ var obf = EmberObject.extend({
       button.id = button.id || "btn_" + (++shell.id_index);
       if(button.image) {
         var img = Object.assign({}, button.image);
-        img.id = "tmpimg_" + (++shell.id_index);
+        img.id = "tmpimg_" + (++obf.id_index);
         var existing = CoughDrop.store.peekRecord('image', img.id);
         if(existing && existing.get('incomplete')) {
           existing.set('url', img.url);
@@ -132,7 +132,7 @@ var obf = EmberObject.extend({
       }
       if(button.sound) {
         var snd = Object.assign({}, button.sound);
-        snd.id = "tmpsnd_" + (++shell.id_index);
+        snd.id = "tmpsnd_" + (++obf.id_index);
         var existing = CoughDrop.store.peekRecord('sound', img.id);
         if(existing && existing.get('incomplete')) {
           existing.set('url', snd.url);
@@ -213,7 +213,7 @@ obf.register("stars", function(key) {
     refs.forEach(function(ref) {
       var col = idx % cols;
       var row = (idx - col) / cols;
-      if(ref.style && ref.style.options) {
+      if(ref.style && ref.style.options && !board_id) {
         res.add_button({label: ref.style.name, image: {url: ref.style.image_url}, load_board: {key: "obf/stars-" + user.id + "-" + ref.id}}, row, col);
       } else {
         res.add_button({label: ref.name, meta_home: "obf/" + key, home_lock: true, image: {url: ref.image_url}, load_board: {key: ref.key, id: ref.id}}, row, col);
@@ -230,6 +230,7 @@ obf.register("stars", function(key) {
   }
   return {json: res.to_json()};
 });
+obf.id_index = 0;
 
 window.obf = obf;
 
