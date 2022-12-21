@@ -181,6 +181,9 @@ obf.register("stars", function(key) {
     }
   }
   var total = refs.length || 0;
+  if(user.get('preferences.home_board') && !board_id) {
+    total++;
+  }
   while(total > rows * cols) {
     if(cols / rows > 1.7) {
       rows++;
