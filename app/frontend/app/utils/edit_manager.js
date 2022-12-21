@@ -572,7 +572,7 @@ var editManager = EmberObject.extend({
         var trans_lab = lab && (lab.inflections || [])[idx];
         if(!ignore_defaults && !trans_lab && lab) { 
           trans_lab = (lab.inflection_defaults || {})[locs[idx]];
-          if((voc.inflection_defaults || {}).v != expected_inflections_version) {
+          if((lab.inflection_defaults || {}).v != expected_inflections_version) {
             defaults_allowed = false;
           }
         }
