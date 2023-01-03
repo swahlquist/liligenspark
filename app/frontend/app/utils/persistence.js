@@ -2155,13 +2155,117 @@ var persistence = EmberObject.extend({
     if(persistence.get('sync_progress')) {
       persistence.set('sync_progress.all_sound_urls', all_sound_urls);
     }
+    var lookups = persistence.get('sync_progress.key_lookups');
+    if(!lookups) {
+      lookups = {};
+      if(persistence.get('sync_progress')) {
+        persistence.set('sync_progress.key_lookups', lookups);
+      }
+    }
+    var board_statuses = persistence.get('sync_progress.board_statuses');
+    if(!board_statuses) {
+      board_statuses = [];
+      if(persistence.get('sync_progress')) {
+        persistence.set('sync_progress.board_statuses', board_statuses);
+      }
+    }
 
     var allow_any_cached = false;
     var get_remote_revisions = RSVP.resolve({});
     if(user) {
       get_remote_revisions = persistence.ajax('/api/v1/users/' + user.get('id') + '/board_revisions', {type: 'GET'}).then(function(res) {
         fresh_revisions = res;
-        return res;
+        // Check for any missing or out-of-date boards here
+        // instead of at request time, and make a batch request
+        // for all of their record results at once (this should
+        // result in much fewer http requests)
+        return coughDropExtras.storage.find_all('board').then(function(list) {
+          var need_fresh_ids = [];
+          var missing_ids = {};
+          for(var key_or_id in fresh_revisions) {
+            // Only check board ids, not boad keys
+            if(key_or_id && !key_or_id.match(/\//) && key_or_id.match(/_/)) {
+              missing_ids[key_or_id] = true;              
+            }
+          }
+          // Check these revisions against the local copies and
+          // batch-request updated records for any that
+          // are out of date
+          list.forEach(function(brd) {
+            if(brd && brd.data && brd.data.id && fresh_revisions[brd.data.id]) {
+              delete missing_ids[brd.data.id];
+              if(brd.data.raw.current_revision == fresh_revisions[brd.data.id]) {
+                if(!CoughDrop.store.peekRecord('board', brd.data.id)) {
+                  // push already-cached record to the store
+                  var json_api = { data: {
+                    id: brd.data.raw.id,
+                    type: 'board',
+                    attributes: brd.data.raw
+                  }};
+                  var board_record = CoughDrop.store.push(json_api);
+                  lookups[brd.data.raw.id] = RSVP.resolve(board_record);
+                  lookups[brd.data.raw.key] = lookups[brd.data.raw.id]
+                  board_statuses.push({id: brd.data.raw.id, key: brd.data.raw.key, status: 'cached'});
+                }
+              } else {
+                // add it to the list of boards that need to be retrieved
+                need_fresh_ids.push(brd.data.id);
+              }
+            }
+          });
+      
+          Object.keys(missing_ids).forEach(function(id) {
+            if(missing_ids[id]) {
+              need_fresh_ids.push(id);
+            }
+          });
+          // Try to download in chunks instead of as individual records, if possible
+          if(need_fresh_ids.length > 0 && need_fresh_ids.length < 100) {
+            if(persistence.get('sync_progress')) {
+              persistence.set('sync_progress.pre_total', need_fresh_ids.length);
+              persistence.set('sync_progress.pre_visited', 0);
+            }
+            var ids_left = [].concat(need_fresh_ids);
+            return new RSVP.Promise(function(batch_resolve, batch_reject) {
+              var next_batch = function() {
+                if(ids_left.length > 0) {
+                  var ids = ids_left.slice(0, 25);
+                  ids_left = ids_left.slice(25);
+                  persistence.ajax("/api/v1/users/" + user.get('id') + "/boards?ids=" + ids.join(','), {type: 'GET'}).then(function(list) {
+                    if(persistence.get('sync_progress')) {
+                      persistence.set('sync_progress.pre_visited', need_fresh_ids.length - ids_left.length);
+                    }
+                    list.forEach(function(board_json) {
+                      var json_api = { data: {
+                        id: board_json.id,
+                        type: 'board',
+                        attributes: board_json
+                      }};
+                      var board_record = CoughDrop.store.push(json_api);
+                      board_statuses.push({id: board_json.id, key: board_json.key, status: 'downloaded'});
+                      lookups[board_json.id] = RSVP.resolve(board_record);
+                      lookups[board_json.key] = lookups[board_json.id]
+                      persistence.store('board', board_json, board_json.key).then(function(str) {
+                        next_batch();
+                      }, function(err) {
+                        next_batch();
+                      });
+                    });
+                  }, function(err) {
+                    // On error, just stop trying to pre-batch and
+                    // fall back to the old way
+                    batch_resolve(res);
+                  });  
+                } else {
+                  batch_resolve(res);
+                }  
+              };
+              next_batch();
+            });
+          } else {
+            return res;
+          }
+        });
       }, function() {
         if(!persistence.get('online')) {
           return RSVP.reject({error: 'could not retrieve board revisions'})

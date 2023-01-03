@@ -206,6 +206,7 @@ Coughdrop::Application.routes.draw do
       get 'sync_stamp' => 'users#sync_stamp'
       post 'translate' => 'users#translate'
       get 'board_revisions' => 'users#board_revisions'
+      get 'boards' => 'users#boards'
       get 'places' => 'users#places'
       get 'ws_settings' => 'users#ws_settings'
       get 'ws_lookup' => 'users#ws_lookup'

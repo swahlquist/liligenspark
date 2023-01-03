@@ -503,6 +503,20 @@ class Api::UsersController < ApplicationController
     end
     render json: res.to_json
   end
+
+  def boards
+    user = User.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    return unless allowed?(user, 'model')
+    ids = params['ids'].split(/,/)
+    return api_error(400, {error: 'too many ids'}) if ids.length > 25
+    boards = Board.find_all_by_global_id(ids)
+    res = []
+    boards.each do |board|
+      res << JsonApi::Board.as_json(board, :permissions => @api_user, :skip_subs => true)
+    end
+    render json: res
+  end
   
   def confirm_registration
     user = User.find_by_path(params['user_id'])
