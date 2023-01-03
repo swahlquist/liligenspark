@@ -1271,8 +1271,8 @@ var app_state = EmberObject.extend({
         buttonTracker.dwell_modeling = _this.get('currentUser.preferences.device.dwell_modeling');
         buttonTracker.dwell_gravity = _this.get('currentUser.preferences.device.dwell_gravity');
         buttonTracker.head_tracking = !!  (buttonTracker.dwell_type == 'head' && !head_pointer);
-        if(buttonTracker.dwell_type == 'eyegaze') {
-          capabilities.eye_gaze.listen('noisy', buttonTracker.dwell_selection == 'expression');
+        if(buttonTracker.dwell_type == 'eyegaze' || buttonTracker.dwell_type == 'eyegaze_external') {
+          capabilities.eye_gaze.listen({level: 'noisy', expressions: buttonTracker.dwell_selection == 'expression', external_accessory: buttonTracker.dwell_type == 'eyegaze_external'});
         } else if(buttonTracker.dwell_type == 'head' || buttonTracker.dwell_selection == 'expression') {
           if(head_pointer) {
             buttonTracker.dwell_type = 'eyegaze';

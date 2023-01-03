@@ -169,7 +169,7 @@ export default Component.extend({
     });
 
     var head_pointer = _this.get('preferences.device.dwell_type') == 'head' && _this.get('preferences.device.dwell_head_pointer');
-    if(!_this.get('preferences.device.dwell_type') || _this.get('preferences.device.dwell_type') == 'eyegaze' || head_pointer) {
+    if(!_this.get('preferences.device.dwell_type') || _this.get('preferences.device.dwell_type') == 'eyegaze' || _this.get('preferences.device.dwell_type') == 'eyegaze_external' || head_pointer) {
       var eye_listener = function(e) {
         var ratio = window.devicePixelRatio || 1.0;
         e.screenX = (e.clientX + (window.screenInnerOffsetX || window.screenX));
@@ -192,7 +192,7 @@ export default Component.extend({
       if(head_pointer) {
         capabilities.head_tracking.listen({head_pointing: true, tilt: capabilities.tracking.tilt_factor(_this.get('preferences.device.dwell_tilt_sensitivity'))});
       } else {
-        capabilities.eye_gaze.listen('noisy', true);
+        capabilities.eye_gaze.listen({level: 'noisy', expressions: true, external_accessory: _this.get('preferences.device.dwell_type') == 'eyegaze_external'});
       }
       capabilities.eye_gaze.calibrating_or_testing = true;
       this.set('eye_listener', eye_listener);

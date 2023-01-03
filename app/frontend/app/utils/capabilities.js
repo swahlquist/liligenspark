@@ -265,7 +265,10 @@ var capabilities;
         return false;
       },
       eye_gaze: { 
-        listen: function(listen_level, expression_watch) {
+        listen: function(opts) {
+          opts = opts || {};
+          var listen_level = opts.level || 'noisy';
+          var expression_watch = !!opts.expressions;
           if(window.weblinger) {
             var start = function() {            
               window.weblinger.start_options = "gaze";

@@ -1693,7 +1693,7 @@ var buttonTracker = EmberObject.extend({
     }
 
     if(buttonTracker.dwell_icon_elem) {
-      if(source == 'head' || source == 'eyegaze') {
+      if(source == 'head' || source == 'eyegaze' || source == 'eyegaze_external') {
         buttonTracker.dwell_icon_elem.classList.add('with_transition');
       } else {
         buttonTracker.dwell_icon_elem.classList.remove('with_transition');

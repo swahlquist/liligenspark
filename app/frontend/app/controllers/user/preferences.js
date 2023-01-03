@@ -284,6 +284,9 @@ export default Controller.extend({
           if(eyes) {
             eyes.name = i18n.t('eye_plus_head', "Eye-Gaze-Plus-Head Tracking")
           }  
+          if(capabilities.eye_gaze.hardware_possible) {
+            res.push({name: i18n.t('external_gaze_hardware', "External Gaze Tracking Hardware"), id: 'eyegaze_external'});
+          }
         }
       }
       res.push({name: i18n.t('head_dwell', "Head Tracking"), id: 'head'});
@@ -539,7 +542,7 @@ export default Controller.extend({
     'pending_preferences.device.dwell',
     'pending_preferences.device.dwell_type',
     function() {
-      return this.get('pending_preferences.device.dwell') && this.get('pending_preferences.device.dwell_type') == 'eyegaze';
+      return this.get('pending_preferences.device.dwell') && (this.get('pending_preferences.device.dwell_type') == 'eyegaze' || this.get('pending_preferences.device.dwell_type') == 'eyegaze_external');
     }
   ),
   head_tracking_type: computed(
