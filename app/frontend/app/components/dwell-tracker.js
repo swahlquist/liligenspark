@@ -115,7 +115,7 @@ export default Component.extend({
   }),
   hardware_type: computed('hardware', 'source', function() {
     var res = {};
-    if(this.get('hardware') && this.get('source') == 'eyegaze') {
+    if(this.get('hardware') && this.get('source.eyegaze')) {
       res[this.get('hardware')] = true;
       return res;
     } else {
