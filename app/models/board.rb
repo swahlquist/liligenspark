@@ -134,6 +134,18 @@ class Board < ActiveRecord::Base
     res
   end
 
+  def track_usage!
+    if self.public && self.home_popularity && self.settings && self.settings['home_board']
+      # TODO: increment counter for this board with an expiration
+      #    If the counter gets high enough, mark this as a common board
+      #    and schedule a future action to generate a zip-sync for faster downloading
+      # TODO: also in that case, schedule an action to map all of the symbol libraries
+      #    for the board set to get even faster symbol switching
+      # PROBLEM: you can't really create a zip of all symbols for fast downloading
+      #    because of skin tones, I guess you could at least do it for non-skinned images
+    end
+  end
+
   def self.find_suggested(locale='en', limit=10)
     ids = nil
     if locale == 'en'

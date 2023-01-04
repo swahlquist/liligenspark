@@ -308,6 +308,7 @@ class Api::BoardsController < ApplicationController
     json = {}
     Rails.logger.warn('rendering json')
     self.class.trace_execution_scoped(['boards/board/json_render']) do
+      board.track_usage!
       json = JsonApi::Board.as_json(board, :wrapper => true, :permissions => @api_user, :skip_subs => true)
     end
     Rails.logger.warn('rails render')

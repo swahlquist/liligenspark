@@ -513,6 +513,7 @@ class Api::UsersController < ApplicationController
     boards = Board.find_all_by_global_id(ids)
     res = []
     boards.each do |board|
+      board.track_usage!
       res << JsonApi::Board.as_json(board, :permissions => @api_user, :skip_subs => true)
     end
     render json: res
