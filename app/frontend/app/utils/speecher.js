@@ -556,6 +556,8 @@ var speecher = EmberObject.extend({
       // On iOS, a single letter is read "capital B" instead of just "B"
       text = text.toLowerCase();
     }
+    // Replace fancy quote marks with normal ones, or some TTS engines get confused
+    text = text.replace(/‘|’/g, "'").replace(/“|”/g, '"');
     var current_locale = app_state.get('vocalization_locale');
     if(opts.default_prompt && opts.voiceURI) { current_locale = 'any'; }
     if(opts.alternate_voice) {
