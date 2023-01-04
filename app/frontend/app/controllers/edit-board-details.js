@@ -5,6 +5,7 @@ import i18n from '../utils/i18n';
 import modal from '../utils/modal';
 import { set as emberSet } from '@ember/object';
 import { computed, observer } from '@ember/object';
+import { htmlSafe } from '@ember/string';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -79,6 +80,19 @@ export default modal.ModalController.extend({
   licenseOptions: CoughDrop.licenseOptions,
   public_options: CoughDrop.publicOptions,
   iconUrls: CoughDrop.iconUrls,
+  bg_style: computed('model.background.color', function() {
+    var str = "display: inline-block; border-width: 3px; border: 2px dotted #ccc; height: 34px; width: 70px; vertical-align: bottom;";
+    if(this.get('model.background.color')) {
+      if(window.tinycolor) {
+        var bg = window.tinycolor(this.get('model.background.color'));
+        if(bg && bg.isValid()) {
+          str = "display: inline-block; border-width: 3px; border: 2px solid #444; height: 34px; width: 70px; vertical-align: bottom;"
+          str = str + "background: " + bg.toRgbString() + ";";
+        }
+      }
+    }
+    return htmlSafe(str);
+  }),
   attributable_license_type: computed('model.license.type', function() {
     if(!this.get('model.license')) { return; }
     if(this.get('model.license') && this.get('model.license.type') != 'private') {
@@ -118,6 +132,19 @@ export default modal.ModalController.extend({
       var sections = this.get('model.intro.sections') || [];
       sections = sections.filter(function(s) { return s != section; });
       this.set('model.intro.sections', sections);
+    },
+    toggle_color: function() {
+      var $elem = $("#background");
+
+      if(!$elem.hasClass('minicolors-input')) {
+        $elem.minicolors();
+      }
+      if($elem.next().next(".minicolors-panel:visible").length > 0) {
+        $elem.minicolors('hide');
+      } else {
+        $elem.minicolors('show');
+      }
+
     }
   }
 });
