@@ -1199,6 +1199,16 @@ class User < ActiveRecord::Base
   
   def process_home_board(home_board, non_user_params)
     board = home_board && Board.find_by_path(home_board['id'])
+    board_updater = non_user_params['updater']
+    if home_board['copy'] && home_board['copy_from_org']
+      org = Organization.find_by_global_id(home_board['copy_from_org'])
+      if org && non_user_params['updater']
+        if Organization.attached_orgs(non_user_params['updater']).map{|o| o['id'] }.include?(org.global_id)
+          non_user_params['org'] = org 
+          board_updater = board.user
+        end
+      end
+    end
     json = (self.settings['preferences']['home_board'] || {}).slice('id', 'key').to_json
     org_allowed_board = non_user_params['org'] && (non_user_params['org'].home_board_keys || []).include?(board.key)
     if board && board.allows?(self, 'view') && !home_board['copy']
@@ -1211,9 +1221,9 @@ class User < ActiveRecord::Base
     elsif board && non_user_params['updater'] && (org_allowed_board || board.allows?(non_user_params['updater'], 'share'))
       if home_board['copy']
         if non_user_params['async']
-          Progress.schedule(self, :copy_to_home_board, home_board, non_user_params['updater'].global_id, home_board['symbol_library'])
+          Progress.schedule(self, :copy_to_home_board, home_board, board_updater.global_id, home_board['symbol_library'])
         else
-          self.copy_to_home_board(home_board, non_user_params['updater'].global_id, home_board['symbol_library'])
+          self.copy_to_home_board(home_board, board_updater.global_id, home_board['symbol_library'])
         end
         return
       elsif non_user_params['async']

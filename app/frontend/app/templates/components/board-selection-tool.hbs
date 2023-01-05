@@ -107,9 +107,9 @@
           <div class='col-sm-8 col-sm-offset-2' style='margin-bottom: 100px; margin-top: 20px;'>
             Organization-Provided Boards
             <ul class="list-group" style="max-width: 350px;">
-              {{#each app_state.currentUser.org_board_keys as |board|}}
+              {{#each app_state.currentUser.org_board_keys as |board_key|}}
                 <li class="list-group-item">
-                  <a href="#" {{action 'set_org_board' board}}>{{board.key}}</a>
+                  <a href="#" {{action 'set_org_board' board_key}}>{{board_key}}</a>
                 </li>
               {{/each}}
             </ul>

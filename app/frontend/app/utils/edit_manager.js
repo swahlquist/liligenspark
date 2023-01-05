@@ -1968,6 +1968,33 @@ var editManager = EmberObject.extend({
     return new RSVP.Promise(function(resolve, reject) {
       var ids_to_copy = old_board.get('downstream_board_ids_to_copy') || [];
       var prefix = old_board.get('copy_prefix');
+      var level = user.get('copy_level');
+      user.set('copy_level', null);
+      if(decision == 'links_copy_as_home' && user && user.get('org_board_keys')) {
+        if(user.get('org_board_keys').indexOf(old_board.get('key')) != -1) {
+          var org = (user.get('organizations') || []).find(function(org) { return org.home_board_keys.indexOf(old_board.get('key')) != -1; });
+          user.set('preferences.home_board', {
+            id: old_board.get('id'),
+            key: old_board.get('key'),
+            swap_library: swap_library,
+            copy: true,
+            copy_from_org: org.id
+          });
+          if(level && level > 0 && level < 10) {
+            user.set('preferences.home_board.level', level);
+          }
+          user.save().then(function() {
+            CoughDrop.store.findRecord('board', user.get('preferences.home_board.id')).then(function(board) {
+              resolve(board);
+            }, function(err) {
+              reject(i18n.t('user_home_find_failed', "Failed to retrieve the copied home board"));
+            })
+          }, function() {
+            reject(i18n.t('user_home_failed', "Failed to update user's home board"));
+          });
+          return;
+        }
+      }
       var save = old_board.create_copy(user, make_public);
       if(decision == 'remove_links') {
         save = save.then(function(res) {
@@ -1992,6 +2019,9 @@ var editManager = EmberObject.extend({
               id: board.get('id'),
               key: board.get('key')
             });
+            if(level && level > 0 && level < 10) {
+              user.set('preferences.home_board.level', level);
+            }
             user.save().then(function() {
               resolve(board);
             }, function() {

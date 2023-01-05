@@ -212,14 +212,23 @@ module Sharing
       if user.settings['all_shared_board_ids'][sub_key] && user.settings['all_shared_board_ids'][sub_key]['timestamp'] >= user.boards_updated_at.to_f.round(2)
         return user.settings['all_shared_board_ids'][sub_key]['list']
       end
-      links = UserLink.links_for(user).select{|l| l['type'] == 'board_share' }
-      return [] if links.length == 0
+      all_links = UserLink.links_for(user)
+      links = all_links.select{|l| l['type'] == 'board_share' }
+      org_links = all_links.select{|l| ['org_user', 'org_manager', 'org_supervisor'].include?(l['type']) }
+      return [] if links.length == 0 && org_links.length == 0
       
 #      cached = user.get_cached("all_shared_board_ids/#{plus_editing}")
 #      return cached if cached
 
       # all explicitly-shared boards
       shallow_board_ids = links.select{|l| plus_editing ? (l['state'] && l['state']['allow_editing']) : true }.map{|l| l['record_code'].split(/:/)[1] }
+      if !plus_editing
+        keys = []
+        Organization.attached_orgs(user).each do |org|
+          keys += org['home_board_keys'] || []
+        end
+        shallow_board_ids += Board.where(key: keys).map(&:global_id) if keys.length > 0
+      end
 
       # all explicitly-shared boards that are set to include downstream
       deep_board_shares = links.select{|l| plus_editing ? (l['state'] && l['state']['allow_editing'] && !l['state']['pending']) : true }.select{|l| l['state'] && l['state']['include_downstream'] }

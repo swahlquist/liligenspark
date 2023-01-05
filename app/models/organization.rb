@@ -66,6 +66,7 @@ class Organization < ActiveRecord::Base
     user.settings['possible_admin'] = true
     user.assert_current_record!
     user.save_with_sync('add_manager')
+    user.schedule(:update_available_boards)
 #     self.attach_user(user, 'manager')
     # TODO: trigger notification
     if (user.grace_period? || user.modeling_only?) && !Organization.sponsored?(user)
@@ -170,6 +171,7 @@ class Organization < ActiveRecord::Base
     user.settings['pending'] = false
     user.assert_current_record!
     user.save_with_sync('add_supervisor')
+    user.schedule(:update_available_boards)
 #     self.attach_user(user, 'supervisor')
     if !pending
       if (user.grace_period? || user.modeling_only?) && !Organization.sponsored?(user)
@@ -538,6 +540,7 @@ class Organization < ActiveRecord::Base
       user.settings[key].delete(self.global_id)
       user.save
     end
+    user.schedule(:update_available_boards)
     user_types.each do |type|
       self.settings['attached_user_ids'] ||= {}
       self.settings['attached_user_ids'][type] ||= []
@@ -829,7 +832,7 @@ class Organization < ActiveRecord::Base
         e['status'] = link['state']['status']
         e['status'] ||= (user.settings['preferences'] && user.settings['preferences']['home_board'] ? 'tree-deciduous' : 'unchecked')
         e['eval'] = link['state']['eval']
-        e['home_board_keys'] = org.home_board_keys if e['eval'] && !e['pending']
+        e['home_board_keys'] = org.home_board_keys if e['eval'] || !e['pending']
         e['external_auth'] = true if org.settings['saml_metadata_url']
         e['external_auth_connected'] = true if e['external_auth'] && auth_hash[org.global_id]
         e['external_auth_alias'] = alias_hash[org.global_id].join(', ') if e['external_auth'] && alias_hash[org.global_id]
@@ -925,6 +928,7 @@ class Organization < ActiveRecord::Base
       raise "no licenses available" if sponsored && ((self.settings || {})['total_licenses'] || 0) <= sponsored_user_count
     end
     user.update_subscription_organization(self, pending, sponsored, eval_account)
+    user.schedule(:update_available_boards)
     user
   end
   
@@ -932,6 +936,7 @@ class Organization < ActiveRecord::Base
     user = User.find_by_path(user_key)
     raise "invalid user, #{user_key}" unless user
     pending = !!UserLink.links_for(user).detect{|l| l['type'] == 'org_user' && l['record_code'] == Webhook.get_record_code(self) && l['state']['pending'] }
+    user.schedule(:update_available_boards)
     user.update_subscription_organization("r#{self.global_id}")
     notify('org_removed', {
       'user_id' => user.global_id,
@@ -1260,7 +1265,6 @@ class Organization < ActiveRecord::Base
         self.schedule(:assert_profile, prof)
       end
     end
-    # TODO: Orgs can have a default symbol library?
     if params[:home_board_key] || params[:home_board_keys]
       keys = params[:home_board_keys] || [params[:home_board_key]]
       self.settings.delete('default_home_board')

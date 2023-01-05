@@ -900,7 +900,7 @@ CoughDrop.User = DS.Model.extend({
       }
     });
   },
-  copy_home_board: function(board, swap_images) {
+  copy_home_board: function(board, swap_images, home_level) {
     var user = this;
     var board_key = emberGet(board, 'key');
     var board_id = emberGet(board, 'id');
@@ -910,6 +910,7 @@ CoughDrop.User = DS.Model.extend({
       CoughDrop.store.findRecord('board', board_id).then(function(board) {
         var swap_library = null;
         if(swap_images && preferred_symbols && preferred_symbols != 'original') { swap_library = user.get('preferences.preferred_symbols'); }
+        user.set('copy_level', home_level);
         editManager.copy_board(board, 'links_copy_as_home', user, false, swap_library).then(function(new_board) {
           user.set('home_board_pending', false);
           if(persistence.get('online') && persistence.get('auto_sync')) {

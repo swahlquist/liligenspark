@@ -303,7 +303,7 @@ export default Component.extend({
       if(_this.get('current_level') || !board.get('levels')) {
         if(_this.get('current_board.key')) {
           user.set('preferences.sync_starred_boards', false);
-          user.copy_home_board(_this.get('current_board'), true).then(function() { }, function(err) {
+          user.copy_home_board(_this.get('current_board'), true, _this.get('current_level')).then(function() { }, function(err) {
             modal.error(i18n.t('set_as_home_failed', "Home board update failed unexpectedly"));
           });
         }
@@ -321,9 +321,9 @@ export default Component.extend({
       this.set('level_select', false);
       this.set('current_level', null);
     },
-    set_org_board: function(brd) {
+    set_org_board: function(brd_key) {
       var _this = this;
-      CoughDrop.store.findRecord('board', brd.id).then(function(board) {
+      CoughDrop.store.findRecord('board', brd_key).then(function(board) {
         _this.set('org_board', board)
         runLater(function() {
           _this.send('select');
