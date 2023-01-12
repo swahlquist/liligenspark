@@ -269,6 +269,7 @@ describe UserMailer, :type => :mailer do
       expect(html).to match(/just signed up/)
       expect(html).to match(/#{u.user_name}/)
       expect(html).to_not match(/Location:/)
+      expect(html).to_not match(/Start Code:/)
       
       text = message_body(m, :text)
       expect(text).to match(/just signed up/)
@@ -287,6 +288,7 @@ describe UserMailer, :type => :mailer do
       expect(html).to match(/just signed up/)
       expect(html).to match(/#{u.user_name}/)
       expect(html).to_not match(/Location:/)
+      expect(html).to_not match(/Start Code:/)
       
       text = message_body(m, :text)
       expect(text).to match(/just signed up/)
@@ -305,6 +307,28 @@ describe UserMailer, :type => :mailer do
       expect(html).to match(/just signed up/)
       expect(html).to match(/#{u.user_name}/)
       expect(html).to match(/Location: Paris, Texas, US/)
+      expect(html).to_not match(/Start Code:/)
+      
+      text = message_body(m, :text)
+      expect(text).to match(/just signed up/)
+      expect(text).to match(/#{u.user_name}/)
+      expect(text).to match(/Location: Paris, Texas, US/)
+    end
+
+    it "should include activation code if set" do
+      u = User.create
+      u.settings['activations'] = [{'code' => 'asdf'}, {'code' => 'qqqq'}]
+      u.save
+      d = Device.create(:user => u, :settings => {'ip_address' => '1.2.3.4'})
+      ENV['NEW_REGISTRATION_EMAIL'] = 'asdf@example.com'
+      expect(Typhoeus).to receive(:get).with("http://api.ipstack.com/1.2.3.4?access_key=#{ENV['IPSTACK_KEY']}", {timeout: 5}).and_return(OpenStruct.new(body: {city: 'Paris', region_name: 'Texas', country_code: 'US'}.to_json))
+      m = UserMailer.new_user_registration(u.global_id)
+      expect(m.subject).to eq('CoughDrop - New Communicator Registration')
+      html = message_body(m, :html)
+      expect(html).to match(/just signed up/)
+      expect(html).to match(/#{u.user_name}/)
+      expect(html).to match(/Location: Paris, Texas, US/)
+      expect(html).to match(/Start Code: asdf, qqqq/)
       
       text = message_body(m, :text)
       expect(text).to match(/just signed up/)
