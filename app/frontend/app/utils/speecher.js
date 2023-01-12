@@ -397,7 +397,6 @@ var speecher = EmberObject.extend({
     var already_in_collection = collection_id && this.speaking_from_collection == collection_id;
     if(this.speaking_from_collection && !collection_id) {
       // lets the user start building their next sentence without interrupting the current one
-      // TODO: this seems elegant right now, but it is actually a good idea?
       return;
     } else if(this.speaking && opts.interrupt === false) {
       return;

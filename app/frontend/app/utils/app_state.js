@@ -1638,8 +1638,8 @@ var app_state = EmberObject.extend({
     var list = [];
     if(app_state.get('currentUser.all_extra_colors')) {
       list = [].concat(app_state.get('currentUser.all_extra_colors'));
-    } else if(app_state.get('currentUser.preferences.extra_colors')) {
-      list = [].concat(CoughDrop.extra_keyed_colors);
+    // } else if(app_state.get('currentUser.preferences.extra_colors')) {
+    //   list = [].concat(CoughDrop.extra_keyed_colors);
     } else {
       if(app_state.controller && app_state.controller.get('board.model') && window.tinycolor && editManager.controller.get('ordered_buttons')) {
         var knowns = {};
