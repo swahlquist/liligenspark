@@ -32,6 +32,7 @@ export default Route.extend({
       var _this = this;
       user.save().then(function(user) {
         controller.set('registering', null);
+        controller.set('start_code', null);
         user.set('password', null);
         controller.set('triedToSave', false);
         app_state.return_to_index();

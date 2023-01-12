@@ -40,6 +40,10 @@ module JsonApi::User
         json['valet_disabled'] = true if user.settings['valet_password'] && !user.valet_allowed?
         json['valet_long_term'] = true if user.settings['valet_long_term']
         json['valet_prevent_disable'] = true if user.settings['valet_prevent_disable']
+        if user.settings['activation_settings']
+          json['start_codes'] = Organization.start_codes(user)
+        end
+  
       else
         json['vocalizations'] = json['vocalizations'].select{|v| v['category'] != 'journal' }
       end

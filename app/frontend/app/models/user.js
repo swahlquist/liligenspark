@@ -56,6 +56,8 @@ CoughDrop.User = DS.Model.extend({
   board_tags: DS.attr('raw'),
   focus_words: DS.attr('raw'),
   access_methods: DS.attr('raw'),
+  start_codes: DS.attr('raw'),
+  start_code: DS.attr('string'),
   unread_messages: DS.attr('number'),
   unread_alerts: DS.attr('number'),
   external_device: DS.attr('raw'),

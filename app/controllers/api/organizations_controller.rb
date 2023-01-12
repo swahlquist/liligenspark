@@ -84,6 +84,14 @@ class Api::OrganizationsController < ApplicationController
     end
   end
 
+  def start_code
+    return unless allowed?(@org, 'edit')
+    users = @org.users
+    code = Organization.activation_code(@org, params['overrides'])
+    api_error(400, {error: 'code generation failed'}) unless code
+    render json: {code: code}
+  end
+
   def extras
     return unless allowed?(@org, 'edit')
     users = @org.extras_users.sort_by(&:user_name)

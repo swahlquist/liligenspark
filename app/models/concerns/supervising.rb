@@ -157,6 +157,9 @@ module Supervising
       user = User.find_by_path(key)
       return false unless supervisor && user
       self.class.unlink_supervisor_from_user(supervisor, user)
+    elsif action == 'start'
+      res = Organization.parse_activation_code(key, self)
+      return false unless res && !res[:disabled]
     else
       return false
     end

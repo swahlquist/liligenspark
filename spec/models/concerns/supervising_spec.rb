@@ -593,6 +593,13 @@ describe Supervising, :type => :model do
       expect(o.reload.supervisor?(u)).to eq(false)
     end
 
+    it "should allow adding a start code" do
+      u = User.create
+      expect(Organization).to receive(:parse_activation_code).with('asdf', u).and_return({:disabled => true}).exactly(2).times
+      expect(u.process_supervisor_key("start-asdf")).to eq(false)
+      expect(u.process({'supervisor_key' => "start-asdf"})).to eq(false)
+    end
+
     it "should allow using a supporter code for a new supporter" do
       u = User.create
       u2 = User.create

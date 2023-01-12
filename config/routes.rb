@@ -201,6 +201,7 @@ Coughdrop::Application.routes.draw do
       get 'supervisors' => 'users#supervisors'
       get 'supervisees' => 'users#supervisees'
       post 'claim_voice' => 'users#claim_voice'
+      post 'start_code' => 'users#start_code'
       post 'rename' => 'users#rename'
       post 'activate_button' => 'users#activate_button'
       get 'sync_stamp' => 'users#sync_stamp'
@@ -284,6 +285,7 @@ Coughdrop::Application.routes.draw do
       get 'blocked_cells'
       post 'extra_action'
       post 'alias'
+      post 'start_code' => 'organizations#start_code'
       post 'status/:user_id' => 'organizations#set_status'
     end
     

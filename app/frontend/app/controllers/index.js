@@ -694,6 +694,9 @@ export default Controller.extend({
       if(users.length > 0) {
         modal.open('modals/modeling-ideas', {users: users});
       }
+    },
+    set_start_code: function() {
+      this.set('start_code', true);
     }
   }
 });

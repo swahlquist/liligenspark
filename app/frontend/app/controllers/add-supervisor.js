@@ -9,6 +9,7 @@ export default modal.ModalController.extend({
   opening: function() {
     this.set('existing_user', true);
     this.set('new_user', false);
+    this.set('start_code', false);
     var sup = CoughDrop.store.createRecord('user', {
       preferences: {
         registration_type: 'manually-added-supervisor'
@@ -40,9 +41,15 @@ export default modal.ModalController.extend({
     },
     set_user_type: function(type) {
       if(type == 'new') {
+        this.set('start_code', false);
         this.set('existing_user', false);
         this.set('new_user', true);
+      } else if(type == 'start_code') {
+        this.set('start_code', true);
+        this.set('existing_user', false);
+        this.set('new_user', false);
       } else {
+        this.set('start_code', false);
         this.set('existing_user', true);
         this.set('new_user', false);
       }
@@ -60,6 +67,8 @@ export default modal.ModalController.extend({
         }, function() {
           return RSVP.reject(i18n.t('creating_supervisor_failed', "Failed to create a new user with the given settings"));
         });
+      } else if(this.get('start_code')) {
+        get_user_name = RSVP.resolve(this.get('start_code_key'));
       }
       get_user_name.then(function(user_name) {
         var user = controller.get('model.user');
@@ -68,6 +77,8 @@ export default modal.ModalController.extend({
           type = 'add_edit';
         } else if(controller.get('supervisor_permission') == 'modeling_only') {
           type = 'add_modeling';
+        } else if(controller.get('start_code')) {
+          type = 'start';
         }
         if(controller.get('premium_supporter') && controller.get('supervisor_sponsorships')) {
           type = type.replace(/^add/, 'add_premium');

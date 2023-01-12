@@ -47,6 +47,15 @@ export default Controller.extend({
     ];
     return list;
   }),
+  locale_list: computed(function() {
+    var list = i18n.get('locales');
+    var res = [{name: i18n.t('choose_locale', '[Choose a Language]'), id: ''}];
+    for(var key in list) {
+      res.push({name: list[key], id: key});
+    }
+    res.push({name: i18n.t('unspecified', "Unspecified"), id: ''});
+    return res;
+  }),
   actions: {
     modify_templates: function() {
       var _this = this;

@@ -2992,4 +2992,460 @@ describe Organization, :type => :model do
       expect(o.settings['default_home_board']).to eq(nil)
     end
   end
+
+  describe "start codes" do
+    describe "activation_code" do
+      it "should allow generating a code on an org" do
+        o = Organization.create
+        code = Organization.activation_code(o, {'user_type' => 'communicator'})
+        expect(code).to_not eq(nil)
+        rnd = "1#{code[-11..-8]}"
+        o.reload
+        expect(o.settings['activation_settings'].keys).to eq([rnd])
+      end
+
+      it "should allow generating a supervisor code on an org" do
+        o = Organization.create
+        code = Organization.activation_code(o, {'user_type' => 'supporter'})
+        expect(code).to_not eq(nil)
+        rnd = "2#{code[-11..-8]}"
+        o.reload
+        expect(o.settings['activation_settings'].keys).to eq([rnd])
+      end
+
+      it "should allow generating a code on a user" do
+        u = User.create
+        code = Organization.activation_code(u, {'user_type' => 'communicator'})
+        expect(code).to_not eq(nil)
+        rnd = "9#{code[-11..-8]}"
+        u.reload
+        expect(u.settings['activation_settings'].keys).to eq([rnd])
+      end
+
+      it "should allow generating multiple codes" do
+        o = Organization.create
+        code = Organization.activation_code(o, {'user_type' => 'communicator'})
+        expect(code).to_not eq(nil)
+        rnd = "1#{code[-11..-8]}"
+        o.reload
+        expect(o.settings['activation_settings'].keys).to eq([rnd])
+
+        code2 = Organization.activation_code(o, {'user_type' => 'supporter'})
+        expect(code2).to_not eq(nil)
+        rnd2 = "2#{code2[-11..-8]}"
+        o.reload
+        expect(o.settings['activation_settings'].keys).to eq([rnd, rnd2])
+      end
+
+      it "should allow proposing a custom start code" do
+        o = Organization.create
+        code = Organization.activation_code(o, {'user_type' => 'communicator', 'proposed_code' => 't292oofao'})
+        expect(code).to_not eq(nil)
+        expect(code).to eq('t292oofao')
+        ac = ActivationCode.lookup('t292oofao')
+        expect(ac).to_not eq(nil)
+        o.reload
+        expect(o.settings['activation_settings'].keys).to eq(["a#{ac.id}"])
+      end
+
+      it "should allow a short custom start code" do
+        o = Organization.create
+        expect { Organization.activation_code(o, {'user_type' => 'communicator', 'proposed_code' => 'tt'}) }.to raise_error('code is too short')
+      end
+
+      it "should allow a custom start code that starts with a number" do
+        o = Organization.create
+        expect { Organization.activation_code(o, {'user_type' => 'communicator', 'proposed_code' => '4agag4g4tt'}) }.to raise_error('code must start with a letter')
+      end
+
+      it "should not allow repeating custom start codes" do
+        o = Organization.create
+        ac_id = ActivationCode.generate('t292oofao', o)
+        expect { Organization.activation_code(o, {'user_type' => 'communicator', 'proposed_code' => 't292oofao'}) }.to raise_error('code is taken')
+      end
+
+      it "should allow saving preferences on a start code" do
+        o = Organization.create
+        code = Organization.activation_code(o, {'user_type' => 'supporter', 'limit' => 4, 'locale' => 'es'})
+        expect(code).to_not eq(nil)
+        rnd = "2#{code[-11..-8]}"
+        o.reload
+        expect(o.settings['activation_settings'].keys).to eq([rnd])
+        expect(o.settings['activation_settings'][rnd]).to eq({
+          'user_type' => 'supporter',
+          'limit' => 4,
+          'locale' => 'es'
+        })
+      end
+
+      it "should allow saving preferences on a custom start code" do
+        o = Organization.create
+        code = Organization.activation_code(o, {
+          'user_type' => 'communicator', 
+          'proposed_code' => 't292oofao',
+          'symbol_library' => 'twemoji'
+        })
+        expect(code).to_not eq(nil)
+        expect(code).to eq('t292oofao')
+        ac = ActivationCode.lookup('t292oofao')
+        expect(ac).to_not eq(nil)
+        o.reload
+        expect(o.settings['activation_settings'].keys).to eq(["a#{ac.id}"])
+        expect(o.settings['activation_settings']["a#{ac.id}"]).to eq({
+          'code' => 't292oofao',
+          'symbol_library' => 'twemoji'
+        })
+      end
+
+      it "should allow regenerating a start code from a hash index" do
+        o = Organization.create
+        code = Organization.activation_code(o, {'user_type' => 'communicator'})
+        expect(code).to_not eq(nil)
+        rnd = "1#{code[-11..-8]}"
+        o.reload
+        expect(o.settings['activation_settings'].keys).to eq([rnd])
+
+        code2 = Organization.activation_code(o, {'user_type' => 'communicator', 'proposed_code' => 't292oofao'})
+        expect(code2).to_not eq(nil)
+        expect(code2).to eq('t292oofao')
+        ac = ActivationCode.lookup('t292oofao')
+        expect(ac).to_not eq(nil)
+        o.reload
+        expect(o.settings['activation_settings'].keys).to eq([rnd, "a#{ac.id}"])
+
+        expect(Organization.activation_code(o, {'rnd' => rnd})).to eq(code)
+        expect(Organization.activation_code(o, {'rnd' => "a#{ac.id}"})).to eq(code2)
+      end
+    end
+  
+    describe "start_codes" do
+      it "should return start codes saved on an org" do
+        o = Organization.create
+        code = Organization.activation_code(o, {'user_type' => 'communicator', 'locale' => 'es'})
+        expect(code).to_not eq(nil)
+        rnd = "1#{code[-11..-8]}"
+        o.reload
+        expect(o.settings['activation_settings'].keys).to eq([rnd])
+
+        code2 = Organization.activation_code(o, {'user_type' => 'communicator', 'locale' => 'fr', 'symbol_library' => 'pcs', 'bacon' => 2, 'proposed_code' => 't292oofao'})
+        expect(code2).to_not eq(nil)
+        expect(code2).to eq('t292oofao')
+        ac = ActivationCode.lookup('t292oofao')
+        expect(ac).to_not eq(nil)
+        o.reload
+        expect(o.settings['activation_settings'].keys).to eq([rnd, "a#{ac.id}"])
+
+        expect(Organization.activation_code(o, {'rnd' => rnd})).to eq(code)
+        expect(Organization.activation_code(o, {'rnd' => "a#{ac.id}"})).to eq(code2)
+        expect(Organization.start_codes(o)).to eq([
+          {
+            code: code,
+            disabled: false,
+            locale: 'es'
+          },
+          {
+            code: code2,
+            disabled: false,
+            locale: 'fr',
+            symbol_library: 'pcs'
+          }
+        ])
+      end
+      
+      it "should return start codes saved on a user" do
+        u = User.create
+        code = Organization.activation_code(u, {'user_type' => 'communicator'})
+        expect(code).to_not eq(nil)
+        rnd = "9#{code[-11..-8]}"
+        u.reload
+        expect(u.settings['activation_settings'].keys).to eq([rnd])
+
+        code2 = Organization.activation_code(u, {'user_type' => 'communicator', 'home_board_key' => 'asdf'})
+        expect(code2).to_not eq(nil)
+        rnd2 = "9#{code2[-11..-8]}"
+        u.reload
+        expect(u.settings['activation_settings'].keys).to eq([rnd, rnd2])
+        
+        expect(Organization.start_codes(u)).to eq([
+          {
+            code: code,
+            disabled: false
+          },
+          {
+            code: code2,
+            disabled: false,
+            home_board_key: 'asdf'
+          }
+        ])
+      end
+    end
+
+    describe "parse_activation_code" do
+      it "should return a valid start code" do
+        o = Organization.create
+        code = Organization.activation_code(o, {})
+        expect(code).to_not eq(nil)
+        rnd = "1#{code[-11..-8]}"
+        res = Organization.parse_activation_code(code)
+        expect(res).to_not eq(false)
+        expect(res[:disabled]).to_not eq(true)
+        expect(res[:target]).to eq(o)
+        expect(res[:user_type]).to eq('communicator')
+        expect(res[:key]).to eq(rnd)
+      end
+
+      it "should return false on an invalid start code" do
+        o = Organization.create
+        code = Organization.activation_code(o, {})
+        expect(code).to_not eq(false)
+        rnd = "1#{code[-11..-8]}"
+        expect(Organization.parse_activation_code(code + 'a')).to eq(false)
+        expect(Organization.parse_activation_code('a')).to eq(false)
+      end
+
+      it "should return a valid custom start code" do
+        o = Organization.create
+        code = Organization.activation_code(o, {'proposed_code' => 'x347t2ot2'})
+        expect(code).to_not eq(nil)
+        ac = ActivationCode.lookup(code)
+        rnd = "a#{ac.id}"
+        res = Organization.parse_activation_code(code)
+        expect(res).to_not eq(false)
+        expect(res[:disabled]).to_not eq(true)
+        expect(res[:target]).to eq(o)
+        expect(res[:user_type]).to eq('communicator')
+        expect(res[:key]).to eq(rnd)
+      end
+
+      it "should return false on an invalid custom start code" do
+        o = Organization.create
+        code = Organization.activation_code(o, {'proposed_code' => 'x347t2ot2'})
+        expect(Organization.parse_activation_code(code + 'a')).to eq(false)
+        expect(Organization.parse_activation_code('a')).to eq(false)
+      end
+
+      it "should add a user to an org if passed" do
+        o = Organization.create
+        code = Organization.activation_code(o, {})
+        expect(code).to_not eq(nil)
+        u = User.create
+        expect(o.user?(u)).to eq(false)
+        res = Organization.parse_activation_code(code, u)
+        o.reload
+        expect(o.user?(u)).to eq(true)
+      end
+
+      it "should add a supervisor to the passed user" do
+        s = User.create
+        code = Organization.activation_code(s, {})
+        expect(code).to_not eq(nil)
+        u = User.create
+        expect(u.supervisor_user_ids).to eq([])
+        res = Organization.parse_activation_code(code, u)
+        u.reload
+        expect(u.supervisor_user_ids).to eq([s.global_id])
+      end
+
+      it "should add specified supervisors to an org add" do
+        o = Organization.create
+        s1 = User.create
+        s2 = User.create
+        code = Organization.activation_code(o, {'supervisors' => [s1.global_id, s2.global_id]})
+        expect(code).to_not eq(nil)
+        u = User.create
+        expect(o.user?(u)).to eq(false)
+        res = Organization.parse_activation_code(code, u)
+        expect(!!res).to_not eq(false)
+        o.reload
+        expect(o.user?(u)).to eq(true)
+        u.reload
+        expect(u.supervisor_user_ids.sort).to eq([s1.global_id, s2.global_id])
+      end
+
+      it "should update user with start code settings" do
+        o = Organization.create
+        code = Organization.activation_code(o, {'user_type' => 'supporter', 'locale' => 'es', 'symbol_library' => 'twemoji'})
+        expect(code).to_not eq(nil)
+        u = User.create
+        expect(o.supervisor?(u)).to eq(false)
+        res = Organization.parse_activation_code(code, u)
+        expect(!!res).to_not eq(false)
+        o.reload
+        expect(o.supervisor?(u)).to eq(true)
+        expect(u.settings['preferences']['role']).to eq('supporter')
+        expect(u.settings['preferences']['locale']).to eq('es')
+        expect(u.settings['preferences']['preferred_symbols']).to eq('twemoji')
+      end
+
+      it "should copy a new home board for the user if tied to the start code" do
+        o = Organization.create
+        s = User.create
+        b = Board.create(user: s, public: true)
+        b2 = Board.create(user: s, public: true)
+        o.process({:home_board_keys => [b.key, b2.key]}, {updater: s})
+        expect(o.home_board_keys).to eq([b.key, b2.key])
+        code = Organization.activation_code(o, {'user_type' => 'communicator', 'home_board_key' => b2.key})
+
+        u = User.create
+        res = Organization.parse_activation_code(code, u)
+        expect(!!res).to_not eq(false)
+        o.reload
+        expect(o.user?(u)).to eq(true)
+        expect(u.settings['preferences']['home_board']).to_not eq(nil)
+        brd = Board.find_by_path(u.settings['preferences']['home_board']['key'])
+        expect(brd).to_not eq(b)
+        expect(brd).to_not eq(b2)
+        expect(brd.parent_board).to eq(b2)
+      end
+
+      it "should copy the default home board for the user if no home board set on the start code" do
+        o = Organization.create
+        s = User.create
+        b = Board.create(user: s, public: true)
+        o.process({:home_board_key => b.key}, {updater: s})
+        expect(o.home_board_keys).to eq([b.key])
+        code = Organization.activation_code(o, {'user_type' => 'communicator'})
+
+        u = User.create
+        res = Organization.parse_activation_code(code, u)
+        expect(!!res).to_not eq(false)
+        o.reload
+        expect(o.user?(u)).to eq(true)
+        expect(u.settings['preferences']['home_board']).to_not eq(nil)
+        brd = Board.find_by_path(u.settings['preferences']['home_board']['key'])
+        expect(brd).to_not eq(b)
+        expect(brd.parent_board).to eq(b)
+      end
+
+      it "should not copy a home board if the user already has a home board set" do
+        o = Organization.create
+        s = User.create
+        b = Board.create(user: s, public: true)
+        o.process({:home_board_key => b.key}, {updater: s})
+        expect(o.home_board_keys).to eq([b.key])
+        code = Organization.activation_code(o, {'user_type' => 'communicator'})
+
+        u = User.create
+        u.process({'preferences' => {'home_board' => {'key' => b.key, 'id' => b.global_id}}})
+        expect(u.settings['preferences']['home_board']).to_not eq(nil)
+        res = Organization.parse_activation_code(code, u)
+        expect(!!res).to_not eq(false)
+        o.reload
+        expect(o.user?(u)).to eq(true)
+        expect(u.settings['preferences']['home_board']).to_not eq(nil)
+        brd = Board.find_by_path(u.settings['preferences']['home_board']['key'])
+        expect(brd).to eq(b)
+        expect(brd.parent_board).to eq(nil)
+      end
+
+      it "should not set a home board for a supervisor type" do
+        o = Organization.create
+        s = User.create
+        b = Board.create(user: s, public: true)
+        o.process({:home_board_key => b.key}, {updater: s})
+        expect(o.home_board_keys).to eq([b.key])
+        code = Organization.activation_code(o, {'user_type' => 'supporter'})
+
+        u = User.create
+        res = Organization.parse_activation_code(code, u)
+        expect(!!res).to_not eq(false)
+        o.reload
+        expect(o.supervisor?(u)).to eq(true)
+        expect(u.settings['preferences']['home_board']).to eq(nil)
+      end
+
+      it "should not copy a new home board if the specified board isn't in the org's list" do
+        o = Organization.create
+        s = User.create
+        b2 = Board.create(user: s, public: true)
+        code = Organization.activation_code(o, {'user_type' => 'communicator', 'home_board_key' => b2.key})
+
+        u = User.create
+        res = Organization.parse_activation_code(code, u)
+        expect(!!res).to_not eq(false)
+        o.reload
+        expect(o.user?(u)).to eq(true)
+        expect(u.settings['preferences']['home_board']).to eq(nil)
+      end
+
+      it "should not copy a new home board if the specified board isn't available for the supervisor" do
+        s = User.create
+        u2 = User.create
+        b = Board.create(user: u2)
+        code = Organization.activation_code(s, {'home_board_key' => b.global_id})
+        expect(code).to_not eq(nil)
+        u = User.create
+        expect(u.supervisor_user_ids).to eq([])
+        res = Organization.parse_activation_code(code, u)
+        u.reload
+        expect(u.supervisor_user_ids).to eq([s.global_id])
+        expect(u.settings['preferences']['home_board']).to eq(nil)
+      end
+
+      it "should copy a new home board if the specified board is available for the supervisor" do
+        s = User.create
+        b = Board.create(user: s)
+        code = Organization.activation_code(s, {'home_board_key' => b.global_id})
+        expect(code).to_not eq(nil)
+        u = User.create
+        expect(u.supervisor_user_ids).to eq([])
+        res = Organization.parse_activation_code(code, u)
+        u.reload
+        expect(u.supervisor_user_ids).to eq([s.global_id])
+        expect(u.settings['preferences']['home_board']).to_not eq(nil)
+        brd = Board.find_by_path(u.settings['preferences']['home_board']['key'])
+        expect(brd).to_not eq(b)
+        expect(brd.parent_board).to eq(b)
+      end
+
+      it "should record the activation for the user" do
+        o = Organization.create
+        code = Organization.activation_code(o, {})
+        expect(code).to_not eq(nil)
+        u = User.create
+        expect(o.user?(u)).to eq(false)
+        res = Organization.parse_activation_code(code, u)
+        o.reload
+        expect(o.user?(u)).to eq(true)
+        expect(u.settings['activations']).to_not eq(nil)
+        expect(u.settings['activations'].length).to eq(1)
+        expect(u.settings['activations'][0]['code']).to eq(code)
+        expect(u.settings['activations'][0]['ts']).to be > 5.seconds.ago.to_i
+        expect(u.settings['activations'][0]['ts']).to be < 5.seconds.from_now.to_i
+      end
+
+      it "should not allow an expired activation" do
+        o = Organization.create
+        code = Organization.activation_code(o, {'expires' => 5.minutes.ago.to_i})
+        expect(code).to_not eq(nil)
+        u = User.create
+        expect(o.user?(u)).to eq(false)
+        res = Organization.parse_activation_code(code, u)
+        o.reload
+        expect(o.user?(u)).to eq(false)
+        expect(res).to_not eq(nil)
+        expect(res[:disabled]).to eq(true)
+      end
+
+      it "should not allow an activation that has exceeded its limit" do
+        o = Organization.create
+        code = Organization.activation_code(o, {'limit' => 1})
+        expect(code).to_not eq(nil)
+        u = User.create
+        expect(o.user?(u)).to eq(false)
+        res = Organization.parse_activation_code(code, u)
+        expect(res).to_not eq(nil)
+        expect(res[:disabled]).to eq(false)
+        o.reload
+        expect(o.user?(u)).to eq(true)
+
+        u2 = User.create        
+        res = Organization.parse_activation_code(code, u2)
+        expect(res).to_not eq(nil)
+        expect(res[:disabled]).to eq(true)
+        o.reload
+        expect(o.user?(u2)).to eq(false)
+      end
+    end
+  end
 end

@@ -35,6 +35,10 @@ module JsonApi::Organization
       json['org_access'] = org.settings['org_access']
       json['org_access'] = true if json['org_access'] == nil
       json['preferred_symbols'] = org.settings['preferred_symbols'] || 'original'
+      json['default_locale'] = org.settings['default_locale'] || 'en'
+      if org.settings['activation_settings']
+        json['start_codes'] = Organization.start_codes(org)
+      end
       json['allotted_eval_licenses'] = org.settings['total_eval_licenses'] || 0
       json['allotted_supervisor_licenses'] = org.settings['total_supervisor_licenses'] || 0
       json['allotted_extras'] = org.settings['total_extras'] || 0

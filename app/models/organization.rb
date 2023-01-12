@@ -1102,6 +1102,182 @@ class Organization < ActiveRecord::Base
       end
     end
   end
+
+  def update_user_available_boards
+    self.attached_users.each{|u| u.schedule(:update_available_boards) }
+  end
+
+  def self.activation_code(org_or_user, opts)
+    opts ||= {}
+    type = opts['user_type'] || 'communicator'
+    type_code = org_or_user.is_a?(User) ? '9' : (type == 'supporter' ? '2' : '1')
+
+    if !org_or_user.settings['activation_nonce']
+      org_or_user.settings['activation_nonce'] = GoSecure.nonce('org activation code')
+    end
+    rnd = nil
+    if opts['proposed_code']
+      prop = opts['proposed_code'].gsub(/\s+/, '')
+      raise "code is too short" unless prop.length > 6
+      raise "code must start with a letter" unless prop.match(/^[8a-zA-Z]/)
+      code_id = ActivationCode.generate(prop, org_or_user)
+      raise "code is taken" if !code_id
+      settings_key = "a#{code_id}"
+      opts['code'] = prop
+    elsif opts['rnd']
+      type_code = opts['rnd'][0]
+      rnd = opts['rnd'][1..-1]
+      settings_key = opts['rnd']
+    else
+      tries = 0
+      while !rnd || (org_or_user.settings['activation_settings'] || {})["#{type_code}#{rnd}"]
+        raise "too hard to find unique" if tries > 500
+        tries += 1
+        rnd = rand(9999).to_s.rjust(4, '0')
+      end
+      settings_key = "#{type_code}#{rnd}"
+    end
+    org_or_user.settings['activation_settings'] ||= {}
+    if !org_or_user.settings['activation_settings'][settings_key]
+      org_or_user.settings['activation_settings'][settings_key] = {}
+      if (opts.keys.map(&:to_s) & ['home_board_key', 'locale', 'symbol_library', 'premium', 'supervisors', 'limit', 'expires', 'code']).length > 0
+        opts = opts.slice('home_board_key', 'locale', 'symbol_library', 'premium', 'supervisors', 'limit', 'expires', 'code')
+        if org_or_user.is_a?(User)
+          opts.delete('premium')
+          opts.delete('supervisors')
+        end
+        opts['limit'] = opts['limit'].to_i if opts['limit']
+        opts['expires'] = opts['expires'].to_i if opts['expires']
+        opts['premium'] = true if opts['premium'] == true || opts['premium'] == 'true'
+        org_or_user.settings['activation_settings'][settings_key] = opts
+      end
+      org_or_user.settings['activation_settings'][settings_key]['user_type'] = 'supporter' if type == 'supporter'
+      org_or_user.save
+    else
+      type ||= org_or_user.settings['activation_settings'][settings_key]['user_type'] || 'communicator'
+    end
+    if ((org_or_user.settings['activation_settings'] || {})[settings_key] || {})['code']
+      return ((org_or_user.settings['activation_settings'] || {})[settings_key] || {})['code']
+    else
+      res = type_code + org_or_user.global_id.sub(/_/, '0') + ' '
+      res += rnd + ' '
+      res += GoSecure.sha512("#{org_or_user.global_id}-#{rnd.to_s}-#{type}", org_or_user.settings['activation_nonce'])[0, 5].to_i(16).to_s[0, 6].rjust(6, '0')
+      res
+    end
+  end
+
+  def self.start_codes(org_or_user)
+    res = []
+    org_or_user.settings['activation_settings'].each do |rnd, opts|
+      code = Organization.activation_code(org_or_user, {'rnd' => rnd})
+      hash = {
+        code: code,
+        disabled: !!opts['disabled']
+      }
+      hash[:home_board_key] = opts['home_board_key'] if opts['home_board_key']
+      hash[:locale] = opts['locale'] if opts['locale']
+      hash[:symbol_library] = opts['symbol_library'] if opts['symbol_library']
+      hash[:premium] = opts['premium'] if opts['premium'] != nil
+      hash[:supervisors] = opts['supervisors'] if opts['supervisors']
+      hash[:premium] = opts['premium'] if opts['premium'] != nil
+      res << hash
+    end
+    res
+  end
+
+  def self.parse_activation_code(orig_code, activate_for=nil)
+    code = orig_code.gsub(/\s+|-/, '')
+    org_or_user = nil
+    if code.match(/^[8a-zA-Z]/)
+      ac = ActivationCode.lookup(code)
+      if ac
+        org_or_user = ac.find_record
+        settings_key = "a#{ac.id}"
+      end
+    else
+      code = code.gsub(/o/i, '0')
+
+      klass = code[0] == '9' ? User : Organization
+      type = code[0] == '2' ? 'supporter' : 'communicator'
+      rest = code[1..-1]
+      id_part = rest[0..-11]
+      verifier = rest[-10..-1]
+      return false unless verifier
+      shard, id = id_part.split(/0/, 2)
+      global_id = "#{shard}_#{id}"
+      rnd = verifier[0, 4]
+      settings_key = "#{code[0]}#{rnd}"
+      sha = verifier[4..-1]
+      org_or_user = klass.find_by_global_id(global_id)
+      org_or_user = nil unless org_or_user && sha == GoSecure.sha512("#{global_id}-#{rnd}-#{type}", org_or_user.settings['activation_nonce'] || 'bad_nonce')[0, 5].to_i(16).to_s[0, 6].rjust(6, '0')
+    end
+
+    if org_or_user 
+      overrides = (org_or_user.settings['activation_settings'] || {})[settings_key]
+      return false unless overrides
+      if overrides['limit'] && (overrides['user_ids'] || []).length >= overrides['limit']
+        overrides['disabled'] = true
+      elsif overrides['expires'] && overrides['expires'] < Time.now.to_i
+        overrides['disabled'] = true
+      end
+      type ||= overrides['user_type'] || 'communicator'
+      ovr = overrides.slice('home_board_key', 'locale', 'symbol_library', 'premium', 'supervisors')
+      copier = nil
+      if activate_for && !overrides['disabled']
+        overrides['user_ids'] ||= []
+        overrides['user_ids'] << activate_for.global_id
+        home_board = overrides['home_board_key']
+        copy_board = nil
+        locale = overrides['locale']
+        symbol_library = overrides['symbol_library']
+        if org_or_user.is_a?(Organization)
+          home_board ||= org_or_user.home_board_keys[0]
+          locale ||= org_or_user.settings['default_locale']
+          symbol_library ||= org_or_user.settings['preferred_symbols']
+          if type == 'communicator'
+            org_or_user.add_user(activate_for.user_name, false, !!overrides['premium'], false)
+          elsif type == 'supporter'
+            org_or_user.add_supervisor(activate_for.user_name, false, !!overrides['premium'])
+          end
+          (overrides['supervisors'] || []).each do |sup_name|
+            u = User.find_by_path(sup_name)
+            User.link_supervisor_to_user(u, activate_for, nil, 'edit') if u
+          end
+          board = Board.find_by_path(home_board) if home_board
+          if board && org_or_user.home_board_keys.include?(home_board) && type == 'communicator'
+            copier = board.user 
+            copy_board = {'id' => board.global_id}
+          end
+        elsif org_or_user.is_a?(User)
+          User.link_supervisor_to_user(org_or_user, activate_for, nil, 'edit')
+          copier = org_or_user
+          board = Board.find_by_path(home_board) if home_board
+          if board && board.allows?(copier, 'view')
+            copier = board.user 
+            copy_board = {'id' => board.global_id}
+          end
+        end
+        org_or_user.settings['activation_settings'][settings_key] = overrides
+        org_or_user.save
+        if type == 'supporter'
+          activate_for.settings['preferences']['role'] = 'supporter'
+        elsif type == 'communicator'
+          activate_for.settings['preferences']['role'] = 'communicator'
+        end
+        activate_for.settings['preferences']['locale'] = locale if locale
+        activate_for.settings['preferences']['preferred_symbols'] = symbol_library if symbol_library
+        if !activate_for.settings['preferences']['home_board'] && copy_board
+          activate_for.copy_to_home_board(copy_board, (copier || activate_for).global_id, symbol_library)
+        end
+        activate_for.settings['activations'] ||= []
+        activate_for.settings['activations'] << {'ts' => Time.now.to_i, 'code' => orig_code}
+        activate_for.save
+      end
+      return {user_type: type, target: org_or_user, key: settings_key, disabled: !!overrides['disabled'], overrides: ovr}
+    else
+      return false
+    end
+  end
   
   def process_params(params, non_user_params)
     self.settings ||= {}
@@ -1111,6 +1287,7 @@ class Organization < ActiveRecord::Base
     self.settings['inactivity_timeout'] = params['inactivity_timeout'].to_i if params['inactivity_timeout']
     self.settings.delete('inactivity_timeout') if (self.settings['inactivity_timeout'] || 0) < 10
     self.settings['image_url'] = process_string(params['image_url']) if params['image_url']
+    self.settings['default_locale'] = process_string(params['default_locale']) if params['default_locale']
     self.settings['preferred_symbols'] = process_string(params['preferred_symbols']) if params['preferred_symbols']
     self.settings['status_overrides'] = params['status_overrides']
     self.settings['extra_colors'] = params['extra_colors']
@@ -1290,7 +1467,8 @@ class Organization < ActiveRecord::Base
           end
         end
       end
-      self.settings.delete('default_home_boards') if self.settings['default_home_boards'].empty?    
+      self.settings.delete('default_home_boards') if self.settings['default_home_boards'].empty?
+      self.schedule(:update_user_available_boards) if self.id
     end
     
     if params[:management_action]

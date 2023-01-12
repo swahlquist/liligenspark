@@ -10,11 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20221123065540) do
+ActiveRecord::Schema.define(version: 20230112200022) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "btree_gin"
+
+  create_table "activation_codes", force: :cascade do |t|
+    t.string   "code_hash"
+    t.string   "record_code"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+    t.index ["code_hash"], name: "index_activation_codes_on_code_hash", unique: true, using: :btree
+  end
 
   create_table "api_calls", force: :cascade do |t|
     t.integer  "user_id"

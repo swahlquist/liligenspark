@@ -205,9 +205,18 @@ class Api::UsersController < ApplicationController
   end
   
   def create
+    if params['user'] && params['user']['start_code']
+      # Validate user.start_code if present and error before trying to create
+      code = Organization.parse_activation_code(params['user']['start_code'])
+      return api_error(400, {error: "invalid start code", start_code_error: true}) if !code || code[:disabled]
+    end
     user = User.process_new(params['user'], {:pending => true, :author => @api_user})
     if !user || user.errored?
       return api_error(400, {error: "user creation failed", errors: user && user.processing_errors})
+    end
+    if params['user']['start_code']
+      # Process start code actions once the user is fully created (can't add supervisors beforehand)
+      Organization.parse_activation_code(params['user']['start_code'], user)
     end
     UserMailer.schedule_delivery(:confirm_registration, user.global_id)
     UserMailer.schedule_delivery(:new_user_registration, user.global_id)
@@ -243,6 +252,17 @@ class Api::UsersController < ApplicationController
     end
   end
   
+  def start_code
+    # post 'start_code'
+    user = User.find_by_path(params['user_id'])
+    return unless exists?(user, params['user_id'])
+    return unless allowed?(user, 'edit')
+    return allowed?(user, 'never_allow') unless user.supporter_role?
+    code = Organization.activation_code(user, params['overrides'])
+    api_error(400, {error: 'code generation failed'}) unless code
+    render json: {code: code}
+  end
+
   def activate_button
     user = User.find_by_path(params['user_id'])
     return if params['user_id'] != 'nobody' && !exists?(user, params['user_id'])

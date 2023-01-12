@@ -1410,4 +1410,85 @@ describe Api::OrganizationsController, :type => :controller do
       expect(l.data['note']['text']).to eq("Status set to bacon - no way")
     end
   end
+
+  describe "generate_start_code" do
+    it "should require a token" do
+      post 'start_code', params: {organization_id: 'whatever'}
+      assert_missing_token
+    end
+
+    it "should require a valid org" do
+      token_user
+      post 'start_code', params: {organization_id: 'none'}
+      assert_not_found('none')
+    end
+
+    it "should require edit permission" do
+      token_user
+      o = Organization.create
+      post 'start_code', params: {organization_id: o.global_id}
+      assert_unauthorized
+    end
+
+    it "should return an activation code" do
+      token_user
+      o = Organization.create
+      o.add_manager(@user.user_name)
+      post 'start_code', params: {organization_id: o.global_id}
+      json = assert_success_json
+      expect(json['code']).to_not eq(nil)
+      pre, rnd, verifier = json['code'].split(/\s/)
+      type = pre[0]
+      id = pre[1..-1]
+      expect(type).to eq('1')
+      expect(id).to eq(o.global_id.sub(/_/, '0'))
+      o.reload
+      expect(o.settings['activation_settings']["#{type}#{rnd}"]).to_not eq(nil)
+      expect(o.settings['activation_settings']["#{type}#{rnd}"]).to eq({
+      })
+    end
+
+    it "should record settings" do
+      token_user
+      o = Organization.create
+      o.add_manager(@user.user_name)
+      ts = 4.weeks.from_now.to_i
+      post 'start_code', params: {organization_id: o.global_id, overrides: {
+        'supervisors' => ['a', 'b'],
+        'limit' => 5,
+        'locale' => 'fr',
+        'symbol_library' => 'symbolstix',
+        'premium' => true,
+        'expires' => ts
+      }}
+      json = assert_success_json
+      expect(json['code']).to_not eq(nil)
+      pre, rnd, verifier = json['code'].split(/\s/)
+      type = pre[0]
+      id = pre[1..-1]
+      expect(type).to eq('1')
+      expect(id).to eq(o.global_id.sub(/_/, '0'))
+      o.reload
+      expect(o.settings['activation_settings']["#{type}#{rnd}"]).to_not eq(nil)
+      expect(o.settings['activation_settings']["#{type}#{rnd}"]).to eq({
+        'limit' => 5,
+        'expires' => ts,
+        'locale' => 'fr',
+        'supervisors' => ['a', 'b'],
+        'premium' => true,
+        'symbol_library' => 'symbolstix'
+      })
+      res = Organization.parse_activation_code(json['code'])
+      expect(res).to_not eq(false)
+      expect(res[:target]).to eq(o)
+      expect(res[:disabled]).to eq(false)
+      expect(res[:key]).to eq("1#{rnd}")
+      expect(res[:overrides]).to eq({"locale"=>"fr", "premium"=>true, "supervisors"=>["a", "b"], "symbol_library"=>"symbolstix"})
+
+      list = Organization.start_codes(o)
+      expect(list).to_not eq(nil)
+      expect(list.length).to eq(1)
+      expect(list[0][:code]).to eq(json['code'])
+    end
+  end
 end

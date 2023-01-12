@@ -23,4 +23,9 @@ export default Controller.extend({
   noSpacesName: computed('model.user_name', function() {
     return !!(this.get('model.user_name') || '').match(/[\s\.'"]/);
   }),
+  actions: {
+    allow_start_code: function() {
+      this.set('start_code', true);
+    }
+  }
 });

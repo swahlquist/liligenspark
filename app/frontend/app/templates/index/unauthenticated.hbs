@@ -233,6 +233,13 @@
             <div class="form-group">
               {{bound-select select_class="form-control" select_id="registration_type" content=registration_types selection=user.preferences.registration_type action=(action (mut user.preferences.registration_type)) }}
             </div>
+            <div class='form-group'>
+              {{#if start_code}}
+                {{input value=user.start_code class="form-control" id="start_code" title="Start Code" placeholder="Start Code (optional, if provided)"}}
+              {{else}}
+                <a href='#' {{action 'set_start_code'}}>{{t " I have a start code" key='have_a_start_code'}}</a>
+              {{/if}}
+            </div>
             <div class="form-group">
               <div class="checkbox big_checkbox">
                 <label style="font-weight: normal;">

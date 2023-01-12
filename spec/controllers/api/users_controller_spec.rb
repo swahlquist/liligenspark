@@ -655,6 +655,54 @@ describe Api::UsersController, :type => :controller do
       post :create, params: {:user => {'name' => 'fred'}}
       expect(response).to be_successful
     end
+
+    it "should error on invalid start code" do
+      post :create, params: {:user => {'name' => 'fred', 'start_code' => 'asdf'}}
+      assert_error('invalid start code')
+    end
+
+    it "should allow adding a start code" do
+      o = Organization.create
+      code = Organization.activation_code(o, {'user_type' => 'communicator'})
+      post :create, params: {:user => {'name' => 'fred', 'start_code' => code}}
+      json = assert_success_json
+      u = User.find_by_path(json['user']['id'])
+      expect(u).to_not eq(nil)
+      o.reload
+      expect(o.user?(u)).to eq(true)
+    end
+
+    it "should update user settings when start code is provided" do
+      o = Organization.create
+      s = User.create
+      b = Board.create(user: s, public: true)
+      o.process({:home_board_key => b.key}, {updater: s})
+      expect(o.home_board_keys).to eq([b.key])
+      
+      code = Organization.activation_code(o, {'user_type' => 'communicator', 'locale' => 'fr', 'symbol_library' => 'symbolstix', 'supervisors' => [s.global_id], 'home_board_key' => b.key})
+      post :create, params: {:user => {
+        'name' => 'fred', 
+        'preferences' => {
+          'locale' => 'es', 
+          'preferred_symbols' => 'pcs', 
+        },
+        'start_code' => code
+      }}
+      json = assert_success_json
+      u = User.find_by_path(json['user']['id'])
+      expect(u).to_not eq(nil)
+      o.reload
+      expect(o.user?(u)).to eq(true)
+      expect(u.settings['preferences']['locale']).to eq('fr')
+      expect(u.settings['preferences']['preferred_symbols' => 'symbolstix'])
+      
+      expect(u.settings['preferences']['home_board']).to_not eq(nil)
+      expect(u.settings['preferences']['home_board']['key']).to_not eq(nil)
+      b2 = Board.find_by_path(u.settings['preferences']['home_board']['key'])
+      expect(b2).to_not eq(nil)
+      expect(b2).to_not eq(b)
+      expect(b2.parent_board).to eq(b)
+    end
     
     it "should throttle or captcha or something to prevent abuse"
   end
@@ -3034,6 +3082,85 @@ describe Api::UsersController, :type => :controller do
       expect(json['progress']).to_not eq(nil)
       p = Progress.find_by_path(json['progress']['id'])
       expect(p.settings).to eq({'class' => 'User', 'id' => @user.id, 'method' => 'reset_eval', 'state' => 'pending', 'arguments' => [@user.devices[0].global_id, {'email' => nil, 'home_board_key' => nil, 'password' => nil, 'symbol_library' => nil}]})
+    end
+  end
+
+  describe "generate_start_code" do
+    it "should require a token" do
+      post 'start_code', params: {user_id: 'whatever'}
+      assert_missing_token
+    end
+
+    it "should require a valid user" do
+      token_user
+      post 'start_code', params: {user_id: 'none'}
+      assert_not_found('none')
+    end
+
+    it "should require edit permission" do
+      token_user
+      u = User.create
+      post 'start_code', params: {user_id: u.global_id}
+      assert_unauthorized
+    end
+
+    it "should require a supervisor role" do
+      token_user
+      post 'start_code', params: {user_id: @user.global_id}
+      assert_unauthorized
+    end
+
+    it "should return an activation code" do
+      token_user
+      @user.settings['preferences']['role'] = 'supporter'
+      @user.save
+      post 'start_code', params: {user_id: @user.global_id}
+      json = assert_success_json
+      expect(json['code']).to_not eq(nil)
+      pre, rnd, verifier = json['code'].split(/\s/)
+      type = pre[0]
+      id = pre[1..-1]
+      expect(type).to eq('9')
+      expect(id).to eq(@user.global_id.sub(/_/, '0') + '0')
+      @user.reload
+      expect(@user.settings['activation_settings']["#{type}#{rnd}"]).to_not eq(nil)
+      expect(@user.settings['activation_settings']["#{type}#{rnd}"]).to eq({
+      })
+    end
+
+    it "should record settings" do
+      token_user
+      @user.settings['preferences']['role'] = 'supporter'
+      @user.save
+      ts = 4.weeks.from_now.to_i
+      post 'start_code', params: {user_id: @user.global_id, overrides: {
+        'supervisors' => ['a', 'b'],
+        'limit' => 5,
+        'locale' => 'fr',
+        'symbol_library' => 'symbolstix',
+        'expires' => ts
+      }}
+      json = assert_success_json
+      expect(json['code']).to_not eq(nil)
+      pre, rnd, verifier = json['code'].split(/\s/)
+      type = pre[0]
+      id = pre[1..-1]
+      expect(type).to eq('9')
+      expect(id).to eq(@user.global_id.sub(/_/, '0'))
+      @user.reload
+      expect(@user.settings['activation_settings']["#{type}#{rnd}"]).to_not eq(nil)
+      expect(@user.settings['activation_settings']["#{type}#{rnd}"]).to eq({
+        'limit' => 5,
+        'expires' => ts,
+        'locale' => 'fr',
+        'symbol_library' => 'symbolstix'
+      })
+      res = Organization.parse_activation_code(json['code'])
+      expect(res).to_not eq(false)
+      expect(res[:target]).to eq(@user)
+      expect(res[:disabled]).to eq(false)
+      expect(res[:key]).to eq("9#{rnd}")
+      expect(res[:overrides]).to eq({"locale"=>"fr", "symbol_library"=>"symbolstix"})
     end
   end
 end

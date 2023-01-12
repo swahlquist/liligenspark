@@ -128,6 +128,7 @@ export default Route.extend({
       var _this = this;
       user.save().then(function(user) {
         controller.set('registering', null);
+        controller.set('start_code', null);
         var meta = persistence.meta('user', null);
         controller.set('triedToSave', false);
         user.set('password', null);
