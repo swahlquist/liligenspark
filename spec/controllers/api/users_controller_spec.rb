@@ -3121,7 +3121,7 @@ describe Api::UsersController, :type => :controller do
       type = pre[0]
       id = pre[1..-1]
       expect(type).to eq('9')
-      expect(id).to eq(@user.global_id.sub(/_/, '0') + '0')
+      expect(id).to eq(@user.global_id.sub(/_/, '0'))
       @user.reload
       expect(@user.settings['activation_settings']["#{type}#{rnd}"]).to_not eq(nil)
       expect(@user.settings['activation_settings']["#{type}#{rnd}"]).to eq({
