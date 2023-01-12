@@ -424,17 +424,18 @@ var speecher = EmberObject.extend({
     var pieces_started = (new Date()).getTime();
     var next_piece = function() {
       var piece_text = pieces.shift();
+
       if(!piece_text || (_this.last_stop && pieces_started < _this.last_stop)) {
-        if(_this.last_speak_id == speak_id) {
-          console.log("done with last speak");
-          _this.speak_end_handler(speak_id);
-        }
+        _this.speak_end_handler(speak_id);
       } else if(piece_text.length === 0 || piece_text.match(/^\s+$/)) {
         runLater(function() {
           if(_this.last_speak_id == speak_id) {
             next_piece();
           }
         }, 500);
+      } else if(_this.last_speak_id != speak_id) {
+        // speech has moved on to something else
+        _this.speak_end_handler(speak_id);
       } else {
         _this.speak_raw_text(piece_text, collection_id, opts, function() {
           if(pieces.length > 0) {
@@ -444,9 +445,7 @@ var speecher = EmberObject.extend({
               }
             }, 500);
           } else {
-            if(_this.last_speak_id == speak_id) {
-              _this.speak_end_handler(speak_id);
-            }
+            _this.speak_end_handler(speak_id);
           }
         });
       }
