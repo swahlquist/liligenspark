@@ -210,24 +210,32 @@ class Api::SearchController < ApplicationController
           req = Typhoeus.get("https://texttospeech.googleapis.com/v1beta1/voices?languageCode=#{CGI.escape((params['locale'] || 'en').split(/-|_/)[0])}&key=#{ENV['GOOGLE_TTS_TOKEN']}")
           json = JSON.parse(req.body) rescue nil
         end
+        cache = nil
       end
 
       req = nil
       if json && !cache
         Permissions.setex(RedisInit.permissions, "google/voices/#{params['locale']}", 72.hours.to_i, json.to_json)
       end
+      return api_error 400, {error: 'no voice found', locale: params['locale']} unless json && json['voices'] && json['voices'][0]
       if json && json['voices'] && json['voices'][0]
         gender = params['voice_id'] if ['male', 'female'].include?(params['voice_id'])
-        voice = json['voices'].detect{|v| v['ssmlGender'] && v['ssmlGender'].upcase == (params['voice_id'] || '').upcase }
-        voice ||= json['voices'][0]
+        voices = json['voices'].sort_by{|v| (v['name'] || '').match(/neural2/i) ? 0 : ((v['name'] || '').match(/wavenet/i) ? 1 : 2)}
+        voice = voices.detect{|v| v['ssmlGender'] && v['ssmlGender'].upcase == (params['voice_id'] || '').upcase && v['languageCodes'].include?(params['locale']) }
+        voice = voices.detect{|v| v['languageCodes'].include?(params['locale']) }
+        voice = voices.detect{|v| v['ssmlGender'] && v['ssmlGender'].upcase == (params['voice_id'] || '').upcase }
+        voice ||= voices[0]
+        loc = params['locale']
+        if voice && !voice['languageCodes'].include?(params['locale'])
+          loc = voice['languageCodes'][0]
+        end
         # https://cloud.google.com/text-to-speech/?hl=en_US&_ga=2.240949507.-1294930961.1646091692
         content_type = 'audio/mp3' if params['mp3'] != '0'
-        return api_error 400, {error: 'no voice found', locale: params['locale']} unless voice
         res = Typhoeus.post("https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=#{ENV['GOOGLE_TTS_TOKEN']}", body: 
           {
             audioConfig: {audioEncoding: content_type == 'audio/mp3' ? 'MP3' : 'LINEAR16', pitch: 0, speakingRate: 1},
             input: {text: params['text']},
-            voice: {languageCode: params['locale'], name: voice['name']}
+            voice: {languageCode: loc, name: voice['name']}
           }.to_json, headers: {'Content-Type': 'application/json'}
         )
         json = JSON.parse(res.body) rescue nil
