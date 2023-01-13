@@ -203,7 +203,7 @@ class Api::SearchController < ApplicationController
       if cache
         json = JSON.parse(cache) rescue nil
       end
-      if !json
+      if !json || json['voices'].length == 0
         req = Typhoeus.get("https://texttospeech.googleapis.com/v1beta1/voices?languageCode=#{CGI.escape(params['locale'] || 'en')}&key=#{ENV['GOOGLE_TTS_TOKEN']}")
         json = JSON.parse(req.body) rescue nil
         if !json['voices'] || json['voices'].length == 0
@@ -241,7 +241,6 @@ class Api::SearchController < ApplicationController
     end
     return api_error 400, {error: 'remote request failed'} unless req && !req.body.blank?
     response.headers['Content-Type'] = content_type
-    render json: {done: true}
     send_data req.body, :type => content_type, :disposition => 'inline'
   end
   
