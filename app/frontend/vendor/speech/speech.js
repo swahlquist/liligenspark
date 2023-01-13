@@ -51,7 +51,8 @@ var cloud_speak = function(utterance) {
   if(player.cloud_handler && !player.handlers_set) {
     player.handlers_set = true;
     var cleanup = function() {
-      player.src = null;
+      // If you uncomment this, you'll get in an infinite loop, it's super-cool
+      // player.src = null;
     };
     player.addEventListener('play', function() {
       if(player.already_started) {

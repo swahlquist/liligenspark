@@ -198,14 +198,20 @@ class Api::SearchController < ApplicationController
     #   end
     elsif ENV['GOOGLE_TTS_TOKEN']
       # TODO: API for getting a list of all available remote languages
-      cache = RedisInit.permissions.get("google/voices/#{params['locale']}")
+      json = nil
+      cache = RedisInit.permissions.get("google/voices/#{params['locale'] || 'en'}") rescue nil
       if cache
         json = JSON.parse(cache) rescue nil
       end
       if !json
         req = Typhoeus.get("https://texttospeech.googleapis.com/v1beta1/voices?languageCode=#{CGI.escape(params['locale'] || 'en')}&key=#{ENV['GOOGLE_TTS_TOKEN']}")
         json = JSON.parse(req.body) rescue nil
+        if !json['voices'] || json['voices'].length == 0
+          req = Typhoeus.get("https://texttospeech.googleapis.com/v1beta1/voices?languageCode=#{CGI.escape((params['locale'] || 'en').split(/-|_/)[0])}&key=#{ENV['GOOGLE_TTS_TOKEN']}")
+          json = JSON.parse(req.body) rescue nil
+        end
       end
+
       req = nil
       if json && !cache
         Permissions.setex(RedisInit.permissions, "google/voices/#{params['locale']}", 72.hours.to_i, json.to_json)
@@ -216,6 +222,7 @@ class Api::SearchController < ApplicationController
         voice ||= json['voices'][0]
         # https://cloud.google.com/text-to-speech/?hl=en_US&_ga=2.240949507.-1294930961.1646091692
         content_type = 'audio/mp3' if params['mp3'] != '0'
+        return api_error 400, {error: 'no voice found', locale: params['locale']} unless voice
         res = Typhoeus.post("https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=#{ENV['GOOGLE_TTS_TOKEN']}", body: 
           {
             audioConfig: {audioEncoding: content_type == 'audio/mp3' ? 'MP3' : 'LINEAR16', pitch: 0, speakingRate: 1},
@@ -232,8 +239,9 @@ class Api::SearchController < ApplicationController
     else
       req = Typhoeus.get("http://translate.google.com/translate_tts?id=UTF-8&tl=#{params['locale'] || 'en'}&q=#{URI.escape(params['text'] || "")}&total=1&idx=0&textlen=#{(params['text'] || '').length}&client=tw-ob", timeout: 5, headers: {'Referer' => "https://translate.google.com/", 'User-Agent' => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36"})
     end
-    return api_error 400, {error: 'remote request failed'} unless req
+    return api_error 400, {error: 'remote request failed'} unless req && !req.body.blank?
     response.headers['Content-Type'] = content_type
+    render json: {done: true}
     send_data req.body, :type => content_type, :disposition => 'inline'
   end
   
