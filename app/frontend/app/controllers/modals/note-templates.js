@@ -53,7 +53,7 @@ export default modal.ModalController.extend({
     add_row: function() {
       var rows = [].concat(this.get('model.note_templates') || []);
       rows.push({
-        text: "======= Header =======\n\n"
+        text: "======= Header Goes Here =======\n\n"
       });
       this.set('model.note_templates', rows);
       var _this = this;
