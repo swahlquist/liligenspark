@@ -676,6 +676,13 @@ var speecher = EmberObject.extend({
           extra_delay = 5000;
           utterance.trigger = function(type) {
             if(type == 'error') {
+              // make a flash that cloud TTS isn't working, once per 5 minutes
+              var now = (new Date()).getTime();
+              var prior_error = speecher.get('last_cloud_error');
+              if(window.modal && (!prior_error || prior_error < (now - (5 * 60 * 1000)))) {
+                window.modal.error(i18n.t('cloud_tts_failed_trying_fallback', "Cloud-Based Speech Failed, Trying Fallback..."));
+                speecher.set('last_cloud_error', now);
+              }
               utterance.cloud_lang = null;
               speecher.scope.speechSynthesis.speak(utterance);
             } else if(type == 'end' || type == 'error' || type == 'pause') {
