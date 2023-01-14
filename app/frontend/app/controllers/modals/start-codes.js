@@ -13,7 +13,7 @@ export default modal.ModalController.extend({
   opening: function() {
     this.set('status', null);
     this.set('new_start_code', null);
-    this.get('org_or_user.start_codes').forEach(function(code) {
+    (this.get('org_or_user.start_codes') || []).forEach(function(code) {
       emberSet(code, 'to_delete', false);
       emberSet(code, 'status', null);
     });
