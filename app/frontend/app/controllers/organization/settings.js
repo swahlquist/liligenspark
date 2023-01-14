@@ -65,6 +65,10 @@ export default Controller.extend({
         }
       });
     },
+    manage_start_codes: function() {
+      var _this = this;
+      modal.open('modals/start-codes', {org: _this.get('model')});
+    },
     cancel: function() {
       this.transitionToRoute('organization', this.get('model.id'));
     },

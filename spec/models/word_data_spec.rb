@@ -101,7 +101,7 @@ RSpec.describe WordData, :type => :model do
           ]
         }
       }.to_json)
-      expect(Typhoeus).to receive(:get).with('https://translation.googleapis.com/language/translate/v2?key=secrety&target=es&source=en&format=text&q=hat&q=cat', {timeout: 10}).and_return(response)
+      expect(Typhoeus).to receive(:get).with('https://translation.googleapis.com/language/translate/v2?key=secrety&target=es&source=en&format=text&q=hat&q=cat', {timeout: 3}).and_return(response)
       res = WordData.query_translations([{text: 'hat'}, {text: 'cat'}], 'en', 'es')
       expect(res).to eq([
         {text: 'hat', translation: 'top'},
@@ -119,7 +119,7 @@ RSpec.describe WordData, :type => :model do
           ]
         }
       }.to_json)
-      expect(Typhoeus).to receive(:get).with('https://translation.googleapis.com/language/translate/v2?key=secrety&target=es&source=en&format=text&q=hat&q=cat', {timeout: 10}).and_return(response)
+      expect(Typhoeus).to receive(:get).with('https://translation.googleapis.com/language/translate/v2?key=secrety&target=es&source=en&format=text&q=hat&q=cat', {timeout: 3}).and_return(response)
       res = WordData.query_translations([{text: 'hat'}, {text: 'cat'}], 'en', 'es')
       expect(res).to eq([
         {text: 'hat', translation: 'top'}
@@ -136,7 +136,7 @@ RSpec.describe WordData, :type => :model do
           ]
         }
       }.to_json)
-      expect(Typhoeus).to receive(:get).with('https://translation.googleapis.com/language/translate/v2?key=secrety&target=zh-CN&source=en&format=text&q=hat&q=cat', {timeout: 10}).and_return(response)
+      expect(Typhoeus).to receive(:get).with('https://translation.googleapis.com/language/translate/v2?key=secrety&target=zh-CN&source=en&format=text&q=hat&q=cat', {timeout: 3}).and_return(response)
       res = WordData.query_translations([{text: 'hat'}, {text: 'cat'}], 'en_US', 'zh')
       expect(res).to eq([
         {text: 'hat', translation: 'top'}

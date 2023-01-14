@@ -130,6 +130,9 @@ export default modal.ModalController.extend({
       }, function(err) {
         emberSet(org, 'alias_state', {temp_error: true});
       });
+    },
+    start_codes: function() {
+      modal.open('modals/start-codes', {user: this.get('model')});
     }
   }
 });

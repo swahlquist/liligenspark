@@ -166,6 +166,9 @@
       {{else if model.all_connections.error}}
         <p class='text-danger'>{{t "There was an error loading supervision users" key='error_loading_connections'}}</p>
       {{/if}}
+      {{#if model.permissions.edit}}
+        <button class='btn btn-default' {{action 'start_codes'}}>{{t "Manage Start Codes" key='start_codes'}}</button>
+      {{/if}}
     {{/if}}
   </div>
   <div class="modal-footer">

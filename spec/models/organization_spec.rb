@@ -3446,6 +3446,70 @@ describe Organization, :type => :model do
         o.reload
         expect(o.user?(u2)).to eq(false)
       end
+
+      it "should not allow a disabled code" do
+        o = Organization.create
+        code = Organization.activation_code(o, {})
+        expect(code).to_not eq(nil)
+        rnd = "1#{code[-11..-8]}"
+        o.reload
+
+        Organization.remove_start_code(o, code)
+        o.reload
+        expect(o.settings['activation_settings'][rnd]['disabled']).to eq(true)
+
+        u2 = User.create        
+        res = Organization.parse_activation_code(code, u2)
+        expect(res).to_not eq(nil)
+        expect(res[:disabled]).to eq(true)
+        o.reload
+        expect(o.user?(u2)).to eq(false)
+      end
+    end
+
+    describe "remove_start_code" do
+      it "should disable a start code" do
+        o = Organization.create
+        code = Organization.activation_code(o, {})
+        expect(code).to_not eq(nil)
+        rnd = "1#{code[-11..-8]}"
+        o.reload
+
+        u = User.create        
+        res = Organization.parse_activation_code(code, u)
+        expect(res).to_not eq(nil)
+        expect(res[:disabled]).to_not eq(true)
+        o.reload
+        expect(o.user?(u)).to eq(true)
+
+        Organization.remove_start_code(o, code)
+        o.reload
+        expect(o.settings['activation_settings'][rnd]['disabled']).to eq(true)
+        res = Organization.parse_activation_code(code)
+        expect(res).to_not eq(false)
+        expect(res[:disabled]).to eq(true)
+        expect(res[:target]).to eq(o)
+        expect(res[:user_type]).to eq('communicator')
+        expect(res[:key]).to eq(rnd)
+
+        u2 = User.create        
+        res = Organization.parse_activation_code(code, u2)
+        expect(res).to_not eq(nil)
+        expect(res[:disabled]).to eq(true)
+        o.reload
+        expect(o.user?(u2)).to eq(false)
+      end
+
+      it "should return false on missing start code" do
+        o = Organization.create
+        code = Organization.activation_code(o, {})
+        expect(code).to_not eq(nil)
+        rnd = "1#{code[-11..-8]}"
+        o.reload
+
+        expect(Organization.remove_start_code(o, 'asdf')).to eq(false)
+        expect(Organization.remove_start_code(o, code + 'a')).to eq(false)
+      end
     end
   end
 end

@@ -127,8 +127,23 @@
       </div>
   </div>
   <div class='form-group'>
+      <label class="col-sm-3 control-label">{{t "Start Codes" key='start_codes'}}</label>
+      <div class="col-sm-2">
+        <p class='form-control-static'>
+          {{#if model.start_codes.length}}
+            {{t "Start Code" count=model.start_codes.length key='n_start_codes'}}
+          {{else}}
+            {{t "None Defined" key='none_defined'}}
+          {{/if}}
+        </p>
+      </div>
+      <div class='col-sm-2'>
+        <button class='btn btn-default' {{action 'manage_start_codes'}} style='margin-left: 30px;'>{{t "Manage Start Codes" key='manage_start_codes'}}</button>
+      </div>
+  </div>
+  <div class='form-group'>
       <label class="col-sm-3 control-label">{{t "Note Templates" key='note_templates'}}</label>
-      <div class="col-sm-6">
+      <div class="col-sm-2">
         <p class='form-control-static'>
           {{#if model.note_templates.length}}
             {{t "Template" count=model.note_templates.length key='n_templates'}}
@@ -136,20 +151,9 @@
             {{t "None Defined" key='none_defined'}}
           {{/if}}
         </p>
-        <button class='btn btn-default' {{action 'modify_templates'}} style='margin-left: 30px;'>{{t "Modify" key='modify'}}</button>
       </div>
-  </div>
-  <div class='form-group'>
-      <label class="col-sm-3 control-label">{{t "Start Codes" key='start_codes'}}</label>
-      <div class="col-sm-6">
-        <p class='form-control-static'>
-          {{#if model.start_codes.length}}
-            {{t "Code" count=model.start_codes.length key='n_codes'}}
-          {{else}}
-            {{t "None Set" key='none_defined'}}
-          {{/if}}
-        </p>
-        <button class='btn btn-default' {{action 'manage_start_codes'}} style='margin-left: 30px;'>{{t "Manage" key='manage'}}</button>
+      <div class='col-sm-2'>
+        <button class='btn btn-default' {{action 'modify_templates'}} style='margin-left: 30px;'>{{t "Modify Templates" key='modify_templates'}}</button>
       </div>
   </div>
   {{#if app_state.feature_flags.profiles}}

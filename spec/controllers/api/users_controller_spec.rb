@@ -672,6 +672,14 @@ describe Api::UsersController, :type => :controller do
       expect(o.user?(u)).to eq(true)
     end
 
+    it "should error on disabled start code" do
+      o = Organization.create
+      code = Organization.activation_code(o, {'user_type' => 'communicator'})
+      Organization.remove_start_code(o, code)
+      post :create, params: {:user => {'name' => 'fred', 'start_code' => code}}
+      assert_error('invalid start code')
+    end
+
     it "should update user settings when start code is provided" do
       o = Organization.create
       s = User.create
@@ -3161,6 +3169,76 @@ describe Api::UsersController, :type => :controller do
       expect(res[:disabled]).to eq(false)
       expect(res[:key]).to eq("9#{rnd}")
       expect(res[:overrides]).to eq({"locale"=>"fr", "symbol_library"=>"symbolstix"})
+    end
+
+    it "should allow a custom start code" do
+      token_user
+      @user.settings['preferences']['role'] = 'supporter'
+      @user.save
+      post 'start_code', params: {user_id: @user.global_id, overrides: {
+        'proposed_code' => 'asdfasdf'
+      }}
+      json = assert_success_json
+      expect(json['code']).to eq('asdfasdf')
+    end
+
+    it "should error on taken custom code" do
+      token_user
+      @user.settings['preferences']['role'] = 'supporter'
+      @user.save
+      Organization.activation_code(@user, {'proposed_code' => 'asdfasdf'})
+      post 'start_code', params: {user_id: @user.global_id, overrides: {
+        'proposed_code' => 'asdfasdf'
+      }}
+      assert_error('code is taken')
+    end
+
+    it "should error on too-short code" do
+      token_user
+      @user.settings['preferences']['role'] = 'supporter'
+      @user.save
+      post 'start_code', params: {user_id: @user.global_id, overrides: {
+        'proposed_code' => 'asdf'
+      }}
+      assert_error('code is too short')
+    end
+
+    it "should allow deleting a custom code" do
+      token_user
+      @user.settings['preferences']['role'] = 'supporter'
+      @user.save
+      Organization.activation_code(@user, {'proposed_code' => 'asdfasdf'})
+      post 'start_code', params: {user_id: @user.global_id,
+        'delete' => true,
+        'code' => 'asdfasdf'
+      }
+      json = assert_success_json
+      expect(json).to eq({'code' => 'asdfasdf', 'deleted' => true})
+    end 
+
+    it "should allow deleting a default code" do
+      token_user
+      @user.settings['preferences']['role'] = 'supporter'
+      @user.save
+      code = Organization.activation_code(@user, {})
+      post 'start_code', params: {user_id: @user.global_id, 
+        'delete' => true,
+        'code' => code
+      }
+      json = assert_success_json
+      expect(json).to eq({'code' => code, 'deleted' => true})
+    end 
+
+    it "should error on missing code deletion" do
+      token_user
+      @user.settings['preferences']['role'] = 'supporter'
+      @user.save
+      code = Organization.activation_code(@user, {})
+      post 'start_code', params: {user_id: @user.global_id, 
+        'delete' => true,
+        'code' => "whatever"
+      }
+      assert_error('code not found')
     end
   end
 end

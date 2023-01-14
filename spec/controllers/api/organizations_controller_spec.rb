@@ -1490,5 +1490,75 @@ describe Api::OrganizationsController, :type => :controller do
       expect(list.length).to eq(1)
       expect(list[0][:code]).to eq(json['code'])
     end
+
+    it "should allow a custom start code" do
+      token_user
+      o = Organization.create
+      o.add_manager(@user.user_name)
+      post 'start_code', params: {organization_id: o.global_id, overrides: {
+        'proposed_code' => 'asdfasdf'
+      }}
+      json = assert_success_json
+      expect(json['code']).to eq('asdfasdf')
+    end
+
+    it "should error on taken custom code" do
+      token_user
+      o = Organization.create
+      o.add_manager(@user.user_name)
+      Organization.activation_code(o, {'proposed_code' => 'asdfasdf'})
+      post 'start_code', params: {organization_id: o.global_id, overrides: {
+        'proposed_code' => 'asdfasdf'
+      }}
+      assert_error('code is taken')
+    end
+
+    it "should error on too-short code" do
+      token_user
+      o = Organization.create
+      o.add_manager(@user.user_name)
+      post 'start_code', params: {organization_id: o.global_id, overrides: {
+        'proposed_code' => 'asdf'
+      }}
+      assert_error('code is too short')
+    end
+
+    it "should allow deleting a custom code" do
+      token_user
+      o = Organization.create
+      o.add_manager(@user.user_name)
+      Organization.activation_code(o, {'proposed_code' => 'asdfasdf'})
+      post 'start_code', params: {organization_id: o.global_id,
+        'delete' => true,
+        'code' => 'asdfasdf'
+      }
+      json = assert_success_json
+      expect(json).to eq({'code' => 'asdfasdf', 'deleted' => true})
+    end 
+
+    it "should allow deleting a default code" do
+      token_user
+      o = Organization.create
+      o.add_manager(@user.user_name)
+      code = Organization.activation_code(o, {})
+      post 'start_code', params: {organization_id: o.global_id, 
+        'delete' => true,
+        'code' => code
+      }
+      json = assert_success_json
+      expect(json).to eq({'code' => code, 'deleted' => true})
+    end 
+
+    it "should error on missing code deletion" do
+      token_user
+      o = Organization.create
+      o.add_manager(@user.user_name)
+      code = Organization.activation_code(@user, {})
+      post 'start_code', params: {organization_id: o.global_id, 
+        'delete' => true,
+        'code' => "whatever"
+      }
+      assert_error('code not found')
+    end
   end
 end

@@ -87,9 +87,22 @@ class Api::OrganizationsController < ApplicationController
   def start_code
     return unless allowed?(@org, 'edit')
     users = @org.users
-    code = Organization.activation_code(@org, params['overrides'])
-    api_error(400, {error: 'code generation failed'}) unless code
-    render json: {code: code}
+    if params['delete'] && params['code']
+      res = Organization.remove_start_code(@org, params['code'])
+      return api_error(400, {error: 'code not found'}) unless res
+      render json: {code: params['code'], deleted: true}
+    else
+      code = nil
+      begin
+        code = Organization.activation_code(@org, params['overrides'])
+      rescue => e
+        err = {error: e.message}
+        err[:code_taken] = true if e.message == 'code is taken'
+        return api_error(400, err)
+      end
+      api_error(400, {error: 'code generation failed'}) unless code
+      render json: {code: code}
+    end
   end
 
   def extras

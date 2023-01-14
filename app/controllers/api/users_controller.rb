@@ -258,9 +258,22 @@ class Api::UsersController < ApplicationController
     return unless exists?(user, params['user_id'])
     return unless allowed?(user, 'edit')
     return allowed?(user, 'never_allow') unless user.supporter_role?
-    code = Organization.activation_code(user, params['overrides'])
-    api_error(400, {error: 'code generation failed'}) unless code
-    render json: {code: code}
+    if params['delete'] && params['code']
+      res = Organization.remove_start_code(user, params['code'])
+      return api_error(400, {error: 'code not found'}) unless res
+      render json: {code: params['code'], deleted: true}
+    else
+      code = nil
+      begin
+        code = Organization.activation_code(user, params['overrides'])
+      rescue => e
+        err = {error: e.message}
+        err[:code_taken] = true if e.message == 'code is taken'
+        return api_error(400, err)
+      end
+      api_error(400, {error: 'code generation failed'}) unless code
+      render json: {code: code}
+    end
   end
 
   def activate_button

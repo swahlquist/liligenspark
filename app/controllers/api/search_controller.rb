@@ -206,7 +206,7 @@ class Api::SearchController < ApplicationController
       if !json || json['voices'].length == 0
         req = Typhoeus.get("https://texttospeech.googleapis.com/v1beta1/voices?languageCode=#{CGI.escape(params['locale'] || 'en')}&key=#{ENV['GOOGLE_TTS_TOKEN']}")
         json = JSON.parse(req.body) rescue nil
-        if !json['voices'] || json['voices'].length == 0
+        if json && (!json['voices'] || json['voices'].length == 0)
           req = Typhoeus.get("https://texttospeech.googleapis.com/v1beta1/voices?languageCode=#{CGI.escape((params['locale'] || 'en').split(/-|_/)[0])}&key=#{ENV['GOOGLE_TTS_TOKEN']}")
           json = JSON.parse(req.body) rescue nil
         end
@@ -222,11 +222,11 @@ class Api::SearchController < ApplicationController
         gender = params['voice_id'] if ['male', 'female'].include?(params['voice_id'])
         voices = json['voices'].sort_by{|v| (v['name'] || '').match(/neural2/i) ? 0 : ((v['name'] || '').match(/wavenet/i) ? 1 : 2)}
         voice = voices.detect{|v| v['ssmlGender'] && v['ssmlGender'].upcase == (params['voice_id'] || '').upcase && v['languageCodes'].include?(params['locale']) }
-        voice = voices.detect{|v| v['languageCodes'].include?(params['locale']) }
+        voice = voices.detect{|v| (v['languageCodes'] || []).include?(params['locale']) }
         voice = voices.detect{|v| v['ssmlGender'] && v['ssmlGender'].upcase == (params['voice_id'] || '').upcase }
         voice ||= voices[0]
         loc = params['locale']
-        if voice && !voice['languageCodes'].include?(params['locale'])
+        if voice && voice['languageCodes'] && !(voice['languageCodes'] || []).include?(params['locale'])
           loc = voice['languageCodes'][0]
         end
         # https://cloud.google.com/text-to-speech/?hl=en_US&_ga=2.240949507.-1294930961.1646091692

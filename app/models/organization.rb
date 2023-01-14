@@ -1109,6 +1109,7 @@ class Organization < ActiveRecord::Base
 
   def self.activation_code(org_or_user, opts)
     opts ||= {}
+    opts.delete('code')
     type = opts['user_type'] || 'communicator'
     type_code = org_or_user.is_a?(User) ? '9' : (type == 'supporter' ? '2' : '1')
 
@@ -1146,6 +1147,7 @@ class Organization < ActiveRecord::Base
           opts.delete('premium')
           opts.delete('supervisors')
         end
+        opts['supervisors'] = opts['supervisors'].split(/\s*,\s*/) if opts['supervisors'] && opts['supervisors'].is_a?(String)
         opts['limit'] = opts['limit'].to_i if opts['limit']
         opts['expires'] = opts['expires'].to_i if opts['expires']
         opts['premium'] = true if opts['premium'] == true || opts['premium'] == 'true'
@@ -1164,6 +1166,19 @@ class Organization < ActiveRecord::Base
       res += GoSecure.sha512("#{org_or_user.global_id}-#{rnd.to_s}-#{type}", org_or_user.settings['activation_nonce'])[0, 5].to_i(16).to_s[0, 6].rjust(6, '0')
       res
     end
+  end
+
+  def self.remove_start_code(org_or_user, start_code)
+    to_delete = nil
+    return false unless org_or_user.settings['activation_settings']
+    org_or_user.settings['activation_settings'].each do |rnd, opts|
+      code = Organization.activation_code(org_or_user, {'rnd' => rnd})
+      to_delete = rnd if code == start_code
+    end
+    return false unless to_delete
+    org_or_user.settings['activation_settings'][to_delete]['disabled'] = true
+    org_or_user.save
+    true
   end
 
   def self.start_codes(org_or_user)
