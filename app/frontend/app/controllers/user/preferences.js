@@ -817,7 +817,7 @@ export default Controller.extend({
       modal.open('modals/phrases', {user: this.get('model')})
     },
     clear_home: function() {
-      this.set('pending_preferences.home_board', {});
+      this.set('pending_preferences.home_board', {id: 'none'});
     },
     savePreferences: function(skip_redirect) {
       this.set('skip_save_on_transition', true);

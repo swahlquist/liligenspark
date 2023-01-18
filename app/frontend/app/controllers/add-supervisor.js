@@ -4,6 +4,7 @@ import modal from '../utils/modal';
 import i18n from '../utils/i18n';
 import app_state from '../utils/app_state';
 import { computed } from '@ember/object';
+import progress_tracker from '../utils/progress_tracker';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -56,7 +57,7 @@ export default modal.ModalController.extend({
     },
     add: function() {
       var controller = this;
-      if(!controller.get('supervisor_permission')) { return; }
+      if(!controller.get('supervisor_permission') && !controller.get('start_code')) { return; }
       controller.set('linking', true);
       var get_user_name = RSVP.resolve(this.get('supervisor_key'));
       if(this.get('new_user')) {
@@ -85,11 +86,28 @@ export default modal.ModalController.extend({
         }
         user.set('supervisor_key', type + "-" + user_name);
         return user.save().then(function(user) {
-          controller.set('linking', false);
-          if(app_state.get('currentUser') && app_state.get('currentUser.id') != user.get('id')) {
-            app_state.get('currentUser').reload();
+          var add_done = function() {
+            controller.set('linking', false);
+            if(app_state.get('currentUser') && app_state.get('currentUser.id') != user.get('id')) {
+              app_state.get('currentUser').reload();
+            }
+            modal.close();
           }
-          modal.close();
+          if(user.get('start_progress')) {
+            controller.set('linking', {start_code: true});
+            progress_tracker.track(user.get('start_progress'), function(event) {
+              if(event.status == 'errored' || (event.status == 'finished' && event.result && event.result.translated === false)) {
+                user.reload();
+                controller.set('linking', false);
+                controller.set('error', i18n.t('start_code_failed', "The start code failed to process completely, and may need to be re-tried"));
+              } else if(event.status == 'finished') {
+                user.reload();
+                add_done();
+              }
+            });  
+          } else {
+            add_done();
+          }
         }, function() {
           controller.set('linking', false);
           controller.set('error', i18n.t('adding_supervisor_failed_explanation', "The user name provided was not valid, or can't be added to this account."));

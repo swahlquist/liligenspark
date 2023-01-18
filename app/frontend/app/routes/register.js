@@ -2,6 +2,7 @@ import Route from '@ember/routing/route';
 import persistence from '../utils/persistence';
 import app_state from '../utils/app_state';
 import CoughDrop from '../app';
+import progress_tracker from '../utils/progress_tracker';
 
 export default Route.extend({
   model: function() {
@@ -31,19 +32,36 @@ export default Route.extend({
       controller.set('registering', {saving: true});
       var _this = this;
       user.save().then(function(user) {
-        controller.set('registering', null);
         controller.set('start_code', null);
         user.set('password', null);
         controller.set('triedToSave', false);
-        app_state.return_to_index();
         var meta = persistence.meta('user', null);
-        if(meta && meta.access_token) {
-          _this.get('session').override(meta);
+        var save_done = function() {
+          controller.set('registering', null);
+          app_state.return_to_index();
+          if(meta && meta.access_token) {
+            _this.get('session').override(meta);
+          }
+        };
+        if(user.get('start_progress')) {
+          controller.set('registering', {saving: true, initializing: true})
+
+          progress_tracker.track(user.get('start_progress'), function(event) {
+            if(event.status == 'errored' || (event.status == 'finished' && event.result && event.result.translated === false)) {
+              controller.set('registering', {error: {progress: true}});
+            } else if(event.status == 'finished') {
+              save_done();
+            }
+          });
+        } else {
+          save_done();
         }
       }, function(err) {
         controller.set('registering', {error: true});
         if(err.errors && err.errors[0] == 'blocked email address') {
           controller.set('registering', {error: {email_blocked: true}});
+        } else if(err.errors && err.errors[0] && err.errors[0].start_code_error) {
+          controller.set('registering', {error: {start_code: true}});
         }
       });
     }

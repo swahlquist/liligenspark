@@ -56,7 +56,7 @@
         {{#if start_code}}
           <label for="start_code" class="col-sm-4 control-label">{{t "Start Code" key='start_code'}}</label>
           <div class="col-sm-8">
-            {{input value=model.user.start_code class="form-control" placeholder="optional, if provided"}}
+            {{input value=model.start_code class="form-control" placeholder="optional, if provided"}}
           </div>
         {{else}}
           <div class='col-sm-8 col-sm-offset-4'>
@@ -80,7 +80,9 @@
           </div>
           {{#if persistence.online}}
             <button type="submit" disabled={{registering.saving}} class="btn btn-primary">
-              {{#if registering.saving}}
+              {{#if registering.initializing}}
+                {{t "Handling Start Code..." key='processing_start_code'}}
+              {{else if registering.saving}}
                 {{t "Signing Up..." key='signing_up'}}
               {{else}}
                 {{t "Sign Up" key='sign_up'}}
@@ -95,6 +97,10 @@
             <p class='text-danger'>
               {{#if registering.error.email_blocked}}
                 {{t "The email address provided has been blocked, please try a different address" key='email_blocked'}}
+              {{else if registering.error.progress}}
+                {{t "User initialization failed. Please contact support." key='user_init_failed'}}
+              {{else if registering.error.start_code}}
+                {{t "Please re-check the start code" key='check_start_code'}}
               {{else}}
                 {{t "There was an unexpected error while registering" key='error_registering'}}
               {{/if}}

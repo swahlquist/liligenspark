@@ -255,7 +255,9 @@
               </div>
               {{#if persistence.online}}
                 <button type="submit" class="btn btn-primary" disabled={{registering.saving}} style="width: 100px;">
-                  {{#if registering.saving}}
+                  {{#if registering.initializing}}
+                    {{t "Handling Start Code..." key='processing_start_code'}}
+                  {{else if registering.saving}}
                     {{t "Signing Up..." key='signing_up'}}
                   {{else}}
                     {{t "Sign Up" key='sign_up'}}
@@ -271,6 +273,10 @@
                 <p class='text-danger'>
                   {{#if registering.error.email_blocked}}
                     {{t "The email address provided has been blocked, please try a different address" key='email_blocked'}}
+                  {{else if registering.error.progress}}
+                    {{t "User initialization failed. Please contact support." key='user_init_failed'}}
+                  {{else if registering.error.start_code}}
+                    {{t "Please re-check the start code" key='check_start_code'}}
                   {{else}}
                     {{t "There was an unexpected error while registering" key='error_registering'}}
                   {{/if}}

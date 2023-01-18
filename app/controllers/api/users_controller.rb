@@ -198,7 +198,12 @@ class Api::UsersController < ApplicationController
     options['updater'] = @api_user
       
     if user.process(params['user'], options)
-      render json: JsonApi::User.as_json(user, :wrapper => true, :permissions => @api_user, :device => user_device).to_json
+      start_code_progress = user.instance_variable_get('@start_code_progress')
+      json = JsonApi::User.as_json(user, :wrapper => true, :permissions => @api_user, :device => user_device)
+      if start_code_progress
+        json['user']['start_progress'] = JsonApi::Progress.as_json(start_code_progress)
+      end
+      render json: json.to_json
     else
       api_error 400, {error: 'update failed', errors: user.processing_errors}
     end
@@ -211,12 +216,14 @@ class Api::UsersController < ApplicationController
       return api_error(400, {error: "invalid start code", start_code_error: true}) if !code || code[:disabled]
     end
     user = User.process_new(params['user'], {:pending => true, :author => @api_user})
+    start_progress = nil
     if !user || user.errored?
       return api_error(400, {error: "user creation failed", errors: user && user.processing_errors})
     end
     if params['user']['start_code']
       # Process start code actions once the user is fully created (can't add supervisors beforehand)
-      Organization.parse_activation_code(params['user']['start_code'], user)
+      res = Organization.parse_activation_code(params['user']['start_code'], user)
+      start_progress = res[:progress]
     end
     UserMailer.schedule_delivery(:confirm_registration, user.global_id)
     UserMailer.schedule_delivery(:new_user_registration, user.global_id)
@@ -231,6 +238,7 @@ class Api::UsersController < ApplicationController
     d.generate_token!(!!d.settings['app'])
 
     res = JsonApi::User.as_json(user, :wrapper => true, :permissions => @api_user || user)
+    res['user']['start_progress'] = JsonApi::Progress.as_json(start_progress) if start_progress
     res['meta'] = JsonApi::Token.as_json(user, d)
     render json: res.to_json
   end

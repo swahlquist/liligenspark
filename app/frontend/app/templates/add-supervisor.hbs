@@ -82,7 +82,9 @@
       <div class="form-group">
         <div class="col-sm-9 col-sm-offset-3">
           <button type="submit" class='btn btn-primary' disabled={{linking}}>
-            {{#if linking}}
+            {{#if linking.start_code}}
+              {{t "Handling Start Code..." key='handling_start_code'}}
+            {{else if linking}}
               {{t "Adding Supervisor..." key='adding_supervisor'}}
             {{else}}
               {{#if error}}

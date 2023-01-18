@@ -159,7 +159,9 @@ module Supervising
       self.class.unlink_supervisor_from_user(supervisor, user)
     elsif action == 'start'
       res = Organization.parse_activation_code(key, self)
-      return false unless res && !res[:disabled]
+      return false if !res || res[:disabled]
+      @start_code_progress = res[:progress]
+      return true
     else
       return false
     end

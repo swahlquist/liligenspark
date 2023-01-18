@@ -11,6 +11,7 @@ import CoughDrop from '../app';
 import coughDropExtras from '../utils/extras';
 import session from '../utils/session';
 import i18n from '../utils/i18n';
+import progress_tracker from '../utils/progress_tracker';
 
 export default Route.extend({
   model: function() {
@@ -37,6 +38,18 @@ export default Route.extend({
     // TODO: this seems messy. got to be a cleaner way...
     controller.set('extras', coughDropExtras);
     var jump_to_speak = !!((stashes.get('current_mode') == 'speak' && !document.referrer) || (model && model.get('currently_premium') && model.get('preferences.auto_open_speak_mode')));
+
+    var progress = this.get('app_state.sessionUser.preferences.progress') || {};
+    if(!progress || (!progress.skipped_subscribe_modal && !progress.setup_done)) {
+      if(this.get('app_state.sessionUser.grace_period')) {
+        if(modal.route) {
+          jump_to_speak = false;
+        }
+      }
+    } else if(this.get('app_state.sessionUser.really_expired')) {
+      jump_to_speak = false;
+    }
+
     if(model && model.get('eval_ended')) { jump_to_speak = false; }
     if(model && model.get('id') && model.get('user_name') && !model.get('terms_agree')) {
       modal.open('terms-agree');
@@ -127,19 +140,36 @@ export default Route.extend({
       controller.set('registering', {saving: true});
       var _this = this;
       user.save().then(function(user) {
-        controller.set('registering', null);
         controller.set('start_code', null);
         var meta = persistence.meta('user', null);
         controller.set('triedToSave', false);
         user.set('password', null);
-        app_state.return_to_index();
-        if(meta && meta.access_token) {
-          session.override(meta);
+        var save_done = function() {
+          controller.set('registering', null);
+          app_state.return_to_index();
+          if(meta && meta.access_token) {
+            session.override(meta);
+          }
+        };
+        if(user.get('start_progress')) {
+          controller.set('registering', {saving: true, initializing: true})
+
+          progress_tracker.track(user.get('start_progress'), function(event) {
+            if(event.status == 'errored' || (event.status == 'finished' && event.result && event.result.translated === false)) {
+              controller.set('registering', {error: {progress: true}});
+            } else if(event.status == 'finished') {
+              save_done();
+            }
+          });
+        } else {
+          save_done();
         }
       }, function(err) {
         controller.set('registering', {error: true});
         if(err.errors && err.errors[0] == 'blocked email address') {
           controller.set('registering', {error: {email_blocked: true}});
+        } else if(err.errors && err.errors[0] && err.errors[0].start_code_error) {
+          controller.set('registering', {error: {start_code: true}});
         }
       });
     }

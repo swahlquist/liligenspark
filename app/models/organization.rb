@@ -1238,9 +1238,11 @@ class Organization < ActiveRecord::Base
       type ||= overrides['user_type'] || 'communicator'
       ovr = overrides.slice('home_board_key', 'locale', 'symbol_library', 'premium', 'supervisors')
       copier = nil
+      progress = nil
       if activate_for && !overrides['disabled']
         overrides['user_ids'] ||= []
         overrides['user_ids'] << activate_for.global_id
+        overrides['user_ids'].uniq!
         home_board = overrides['home_board_key']
         copy_board = nil
         locale = overrides['locale']
@@ -1282,13 +1284,13 @@ class Organization < ActiveRecord::Base
         activate_for.settings['preferences']['locale'] = locale if locale
         activate_for.settings['preferences']['preferred_symbols'] = symbol_library if symbol_library
         if !activate_for.settings['preferences']['home_board'] && copy_board
-          activate_for.copy_to_home_board(copy_board, (copier || activate_for).global_id, symbol_library)
+          progress = Progress.schedule(activate_for, :copy_to_home_board, copy_board, (copier || activate_for).global_id, symbol_library)
         end
         activate_for.settings['activations'] ||= []
         activate_for.settings['activations'] << {'ts' => Time.now.to_i, 'code' => orig_code}
         activate_for.save
       end
-      return {user_type: type, target: org_or_user, key: settings_key, disabled: !!overrides['disabled'], overrides: ovr}
+      return {user_type: type, target: org_or_user, key: settings_key, disabled: !!overrides['disabled'], overrides: ovr, progress: progress}
     else
       return false
     end
