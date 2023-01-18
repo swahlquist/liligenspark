@@ -257,22 +257,28 @@ class Api::SearchController < ApplicationController
     body = ""
     so_far = 0
     done = false
+    url_response = nil
     request.on_headers do |response|
-      # Some services (ahem, flickr) are returning a Location header, along with the response body
-      if response.headers['Location'] && (response.code >= 300 || (response.headers['Content-Length'] && response.headers['Content-Length'].to_i <= response.headers['Location'].length))
-        return ['redirect', URI.escape(response.headers['Location'])]
-      end
-      if response.success? || response.code == 200
-        # TODO: limit to accepted file types
-        content_type = response.headers['Content-Type']
-        if !content_type.match(/^image/) && !content_type.match(/^audio/) && !content_type.match(/text\/json/)
-          raise BadFileError, "Invalid file type, #{content_type}"
-        end
-      else
-        raise BadFileError, "File not retrieved, status #{response.code}"
-      end
+      # For some reason, headers aren't populated until first body chunk
+      url_response = response
     end
     request.on_body do |chunk|
+      if url_response
+        response = url_response
+        # Some services (ahem, flickr) are returning a Location header, along with the response body
+        if response.headers['Location'] && (response.code >= 300 || (response.headers['Content-Length'] && response.headers['Content-Length'].to_i <= response.headers['Location'].length))
+          return ['redirect', URI.escape(response.headers['Location'])]
+        end
+        if response.success? || response.code == 200
+          content_type = response.headers['Content-Type']
+          if !content_type.match(/^image/) && !content_type.match(/^audio/) && !content_type.match(/text\/json/)
+            raise BadFileError, "Invalid file type, #{content_type}"
+          end
+        else
+          raise BadFileError, "File not retrieved, status #{response.code}"
+        end
+        url_response = nil
+      end
       so_far += chunk.size
       if so_far < Uploader::CONTENT_LENGTH_RANGE
         body += chunk
@@ -287,6 +293,7 @@ class Api::SearchController < ApplicationController
       done = true
     end
     request.run
+    content_type ||= request.headers['Content-Type']
     return [content_type, body]
   end
   
