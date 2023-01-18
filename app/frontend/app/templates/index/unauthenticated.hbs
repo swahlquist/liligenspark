@@ -256,7 +256,7 @@
               {{#if persistence.online}}
                 <button type="submit" class="btn btn-primary" disabled={{registering.saving}} style="width: 100px;">
                   {{#if registering.initializing}}
-                    {{t "Handling Start Code..." key='processing_start_code'}}
+                    {{t "Processing..." key='processing'}}
                   {{else if registering.saving}}
                     {{t "Signing Up..." key='signing_up'}}
                   {{else}}
