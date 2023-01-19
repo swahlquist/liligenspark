@@ -1411,6 +1411,55 @@ describe Api::OrganizationsController, :type => :controller do
     end
   end
 
+  describe "start_code_lookup" do
+    it "should not require a token" do
+      org = Organization.create
+      code = Organization.activation_code(org, {})
+      codes = Organization.start_codes(org.reload)
+      get 'start_code_lookup', params: {code: code, v: codes[0][:v]}
+      json = assert_success_json
+    end
+
+    it "should require a verifier" do
+      org = Organization.create
+      code = Organization.activation_code(org, {})
+      codes = Organization.start_codes(org.reload)
+      get 'start_code_lookup', params: {code: code}
+      assert_error('invalid code')
+    end
+
+    it "should not require a verifier for an admin" do
+      org = Organization.create
+      token_user
+      org.add_manager(@user.user_name)
+      code = Organization.activation_code(org, {})
+      codes = Organization.start_codes(org.reload)
+      get 'start_code_lookup', params: {code: code}
+      json = assert_success_json
+    end
+
+    it "should not require a verifier for supervisor" do
+      token_user
+      code = Organization.activation_code(@user, {})
+      codes = Organization.start_codes(@user.reload)
+      get 'start_code_lookup', params: {code: code}
+      json = assert_success_json
+    end
+
+    it "should return token details" do
+      token_user
+      code = Organization.activation_code(@user, {})
+      codes = Organization.start_codes(@user.reload)
+      get 'start_code_lookup', params: {code: code}
+      json = assert_success_json
+      expect(json['code']).to eq(code)
+      expect(json['image_url']).to_not eq(nil)
+      expect(json['supervisor']).to eq(true)
+      expect(json['valid']).to eq(true)
+      expect(json['name']).to eq(@user.settings['name'])
+    end
+  end
+
   describe "generate_start_code" do
     it "should require a token" do
       post 'start_code', params: {organization_id: 'whatever'}

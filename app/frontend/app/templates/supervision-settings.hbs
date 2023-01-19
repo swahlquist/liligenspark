@@ -8,20 +8,20 @@
     {{#if model.supervisors_or_managing_org}}
       <table class="table table-hover">
         <tbody>
-        {{#if model.managing_org}}
+        {{#each model.managing_orgs as |org|}}
           <tr>
             <td style="text-align: center; vertical-align: middle; font-size: 40px;">
               <span class="glyphicon glyphicon-paperclip"></span>
             </td>
             <td>
-              <div style="font-size: 20px;">{{model.managing_org.name}}</div>
+              <div style="font-size: 20px;">{{org.name}}</div>
               <span class="text-muted">{{t "organization managers (editing allowed)" key='org_managers_editing_allowed'}}</span>
             </td>
             <td style="width: 30px; font-size: 20px; vertical-align: middle;">
-              <a href='#' {{action "remove_supervisor" "org"}} class="glyphicon glyphicon-trash"><span class='text-hide'>delete</span></a>
+              <a href='#' {{action "remove_supervisor" org.id "org"}} class="glyphicon glyphicon-trash"><span class='text-hide'>delete</span></a>
             </td>
           </tr>
-        {{/if}}
+        {{/each}}
         {{#each model.managing_supervision_orgs as |org|}}
           <tr>
             <td style="width: 60px; text-align: center; vertical-align: middle; font-size: 40px;">

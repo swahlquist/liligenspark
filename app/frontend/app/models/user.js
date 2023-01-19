@@ -121,6 +121,9 @@ CoughDrop.User = DS.Model.extend({
   managing_org: computed('organizations', function() {
     return (this.get('organizations') || []).find(function(o) { return o.type == 'user'; });
   }),
+  managing_orgs: computed('organizations', function() {
+    return (this.get('organizations') || []).filter(function(o) { return o.type == 'user'; });
+  }),
   org_board_keys: computed('organizations', function() {
     var res = [];
     (this.get('organizations') || []).forEach(function(org) {
@@ -165,12 +168,12 @@ CoughDrop.User = DS.Model.extend({
   pending_supervision_org: computed('organizations', function() {
     return (this.get('organizations') || []).find(function(o) { return o.type == 'supervisor' && o.pending; });
   }),
-  supervisor_names: computed('supervisors', 'is_managed', 'managing_org.name', function() {
+  supervisor_names: computed('supervisors', 'is_managed', 'managing_orgs', function() {
     var names = [];
-    if(this.get('is_managed') && this.get('managing_org.name')) {
-      names.push(this.get('managing_org.name'));
+    if(this.get('is_managed') && this.get('managing_orgs.length')) {
+      names = names.concat(this.get('managing_orgs').map(function(u) { return u.name; }));
     }
-    names = names.concat((this.get('supervisors') || []).map(function(u) { return u.name; }));
+    names = names.concat((this.get('supervisors') || []).map(function(u) { return u.name || u.user_name; }));
     return names.join(", ");
   }),
   supervisee_names: computed('supervisees', function() {

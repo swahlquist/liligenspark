@@ -13,6 +13,7 @@ export default modal.ModalController.extend({
   opening: function() {
     this.set('status', null);
     this.set('new_start_code', null);
+    this.set('link_code', null);
     (this.get('org_or_user.start_codes') || []).forEach(function(code) {
       emberSet(code, 'to_delete', false);
       emberSet(code, 'status', null);
@@ -89,6 +90,31 @@ export default modal.ModalController.extend({
       capabilities.sharing.copy_text(code)
       modal.success(i18n.t('code_copied_to_clipboard', "Code Copied to Clipboard!"));
     },
+    back: function() {
+      this.set('link_code', null);
+    },
+    copy_link: function() {
+      capabilities.sharing.copy_text(this.get('link_code.url'));
+      modal.success(i18n.t('link_copied_to_clipboard', "Link Copied to Clipboard!"));
+    },
+    copy_code: function() {
+      var elem = document.querySelector('#qr_code img');
+      if(elem) {
+        elem.alt = this.get('link_code.url');
+        capabilities.sharing.copy_elem(elem);
+        modal.success(i18n.t('qr_code_copied_to_clipboard', "QR Code Copied to Clipboard!"));
+      } else {
+        modal.error(i18n.t('copy_failed', "Failed to Copy Image, please try copying manually"));
+      }
+    },
+    code_link: function(code) {
+      var prefix = location.protocol + "//" + location.host;
+      if(capabilities.installed_app && capabilities.api_host) {
+        prefix = capabilities.api_host;
+      }
+      emberSet(code, 'url', prefix + "/register?code=" + encodeURIComponent(code.code) + "&v=" + code.v);
+      this.set('link_code', code);
+    },
     generate: function() {
       var _this = this;
       if(_this.get('invalid_code')) { return; }
@@ -104,6 +130,9 @@ export default modal.ModalController.extend({
       }
       if(_this.get('premium')) {
         ovr.premium = true;
+        if(_this.get('premium_symbols')) {
+          ovr.premium_symbols = true;
+        }
       }
       if(_this.get('supervisors')) {
         ovr.supervisors = [];

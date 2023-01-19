@@ -1,6 +1,6 @@
 class Api::OrganizationsController < ApplicationController
-  before_action :require_api_token
-  before_action :require_org, :except => [:show, :create, :index, :update, :destroy]
+  before_action :require_api_token, :except => [:start_code_lookup]
+  before_action :require_org, :except => [:show, :create, :index, :update, :destroy, :start_code_lookup]
 
   def require_org
     @org = Organization.find_by_global_id(params['organization_id'])
@@ -103,6 +103,34 @@ class Api::OrganizationsController < ApplicationController
       api_error(400, {error: 'code generation failed'}) unless code
       render json: {code: code}
     end
+  end
+
+  def start_code_lookup
+    code = Organization.parse_activation_code(params['code'])
+    if code && !code[:disabled] && code[:target]
+      hash = params['v']
+      valid = false
+      if params['v'] == GoSecure.sha512(Webhook.get_record_code(code[:target]), 'start_code_verifier')[0, 5]
+        valid = true
+      elsif code[:target].is_a?(User) && code[:target].allows?(@api_user, 'edit')
+        valid = true
+      elsif code[:target].is_a?(Organization) && code[:target].allows?(@api_user, 'edit')
+        valid = true
+      end
+      if valid
+        type = code[:target].is_a?(User) ? 'supervisor' : 'organization'
+        return render json: {
+          code: params['code'],
+          valid: true,
+          supervisor: type == 'supervisor',
+          organization: type == 'organization',
+          type: type,
+          image_url: code[:target].is_a?(User) ? code[:target].generated_avatar_url('fallback') : code[:target].settings['image_url'],
+          name: code[:target].settings['name']
+        }
+      end
+    end
+    api_error 400, {error: 'invalid code', code: params['code']}
   end
 
   def extras

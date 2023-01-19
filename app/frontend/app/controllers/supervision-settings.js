@@ -55,9 +55,13 @@ export default modal.ModalController.extend({
     close: function() {
       modal.close();
     },
-    remove_supervisor: function(id) {
+    remove_supervisor: function(id, type) {
       var user = this.get('model');
-      user.set('supervisor_key', "remove_supervisor-" + id);
+      var code = "remove_supervisor-" + id;
+      if(type == 'org') {
+        code = "remove_supervisor-org-" + id;
+      }
+      user.set('supervisor_key', code);
       user.save().then(null, function() {
         alert("sadness!");
       });

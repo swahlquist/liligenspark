@@ -8,6 +8,29 @@
         {{t "Ready to try %app_name% out for yourself? Every signup gets 2 months free to kick the tires and see if the app is going to work for them, no credit card required!" key='ready_to_try_coughdrop'}}
       </div>
       <form class="form-horizontal" {{action "saveProfile" on="submit"}}>
+      {{#if start_code_ref}}
+        <div class="form-group">
+          <label for="sponsor" class="col-sm-4 control-label">
+            {{#if start_code_ref.image_url}}
+              <img src={{start_code_ref.image_url}} style='width: 75px; height: 75px; object-fit: contain; object-position: center;'/>
+            {{else}}
+              <span class="glyphicon glyphicon-paperclip" style="font-size: 75px;"></span>
+            {{/if}}
+          </label>
+          <div class="col-sm-8">
+            <h4>
+              {{t "Invited By" key='invited_by'}} 
+              {{#if start_code_ref.organization}}
+                {{t "Organization - " key='organization_dash'}}
+              {{else}}
+                {{t "Supervisor - " key='supervisor_dash'}}
+              {{/if}}
+              <em>{{start_code_ref.name}}</em>
+            </h4>
+            <em>{{t "When you sign up using the provided start code, you will automatically be connected to the organization or user that invited you to join. Some default settings such as home board may also be set automatically for you." key='auto_start_code_explainer'}}</em>
+          </div>
+        </div>
+      {{/if}}
       <div class="form-group">
         <label for="name" class="col-sm-4 control-label">{{t "Name" key='name'}}</label>
         <div class="col-sm-8">

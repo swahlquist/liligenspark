@@ -5,14 +5,18 @@ import CoughDrop from '../app';
 import progress_tracker from '../utils/progress_tracker';
 
 export default Route.extend({
-  model: function() {
+  model: function(params) {
     var res = this.store.createRecord('user', {preferences: {}, referrer: CoughDrop.referrer, ad_referrer: CoughDrop.ad_referrer});
     res.set('watch_user_name_and_cookies', true);
+    res.set('reg_params', params);
     return res;
   },
   setupController: function(controller, model) {
     controller.set('model', model);
     controller.set('user', model);
+    if(model.get('reg_params.code') && model.get('reg_params.v')) {
+      controller.start_code_lookup();
+    }
     if(!app_state.get('domain_settings.full_domain')) {
       app_state.return_to_index();
       return;

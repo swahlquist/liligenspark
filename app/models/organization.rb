@@ -1151,6 +1151,7 @@ class Organization < ActiveRecord::Base
         opts['limit'] = opts['limit'].to_i if opts['limit']
         opts['expires'] = opts['expires'].to_i if opts['expires']
         opts['premium'] = true if opts['premium'] == true || opts['premium'] == 'true'
+        opts['premium_symbols'] = true if opts['premium'] && (opts['premium_symbols'] == true || opts['premium_symbols'] == 'true')
         org_or_user.settings['activation_settings'][settings_key] = opts
       end
       org_or_user.settings['activation_settings'][settings_key]['user_type'] = 'supporter' if type == 'supporter'
@@ -1193,8 +1194,9 @@ class Organization < ActiveRecord::Base
       hash[:locale] = opts['locale'] if opts['locale']
       hash[:symbol_library] = opts['symbol_library'] if opts['symbol_library']
       hash[:premium] = opts['premium'] if opts['premium'] != nil
+      hash[:v] = GoSecure.sha512(Webhook.get_record_code(org_or_user), 'start_code_verifier')[0, 5]
+      hash[:premium_symbols] = opts['prpremium_symbolsemium'] if opts['premium_symbols'] != nil
       hash[:supervisors] = opts['supervisors'] if opts['supervisors']
-      hash[:premium] = opts['premium'] if opts['premium'] != nil
       res << hash
     end
     res
@@ -1236,7 +1238,7 @@ class Organization < ActiveRecord::Base
         overrides['disabled'] = true
       end
       type ||= overrides['user_type'] || 'communicator'
-      ovr = overrides.slice('home_board_key', 'locale', 'symbol_library', 'premium', 'supervisors')
+      ovr = overrides.slice('home_board_key', 'locale', 'symbol_library', 'premium', 'premium_symbols', 'supervisors')
       copier = nil
       progress = nil
       if activate_for && !overrides['disabled']
@@ -1253,8 +1255,10 @@ class Organization < ActiveRecord::Base
           symbol_library ||= org_or_user.settings['preferred_symbols']
           if type == 'communicator'
             org_or_user.add_user(activate_for.user_name, false, !!overrides['premium'], false)
+            org_or_user.add_extras_to_user(activate_for.user_name) if overrides['premium'] && overrides['premium_symbols']
           elsif type == 'supporter'
             org_or_user.add_supervisor(activate_for.user_name, false, !!overrides['premium'])
+            org_or_user.add_extras_to_user(activate_for.user_name) if overrides['premium'] && overrides['premium_symbols']
           end
           (overrides['supervisors'] || []).each do |sup_name|
             u = User.find_by_path(sup_name)

@@ -1017,6 +1017,17 @@ var capabilities;
           }
           return promise;
         },
+        copy_elem: function(elem) {
+          var range = document.createRange();
+          range.selectNode(elem);
+          window.getSelection().addRange(range);
+          var res = document.execCommand('copy');
+          if(!res) {
+            capabilities.sharing.copy_text(text);
+          }
+          window.getSelection().removeAllRanges();
+          return res;
+        },
         copy_text: function(text) {
           var elem = document.querySelector('#text_copy')
           if(!elem) {
@@ -1028,15 +1039,7 @@ var capabilities;
           }
           window.getSelection().removeAllRanges();
           elem.innerText = text;
-          var range = document.createRange();
-          range.selectNode(elem);
-          window.getSelection().addRange(range);
-          var res = document.execCommand('copy');
-          if(!res) {
-            capabilities.sharing.copy_text(text);
-          }
-          window.getSelection().removeAllRanges();
-          return res;
+          return capabilities.sharing.copy_elem(elem);
         },
         share: function(type, message, url, image_url) {
           var promise = capabilities.mini_promise();
