@@ -98,6 +98,7 @@ class Api::OrganizationsController < ApplicationController
       rescue => e
         err = {error: e.message}
         err[:code_taken] = true if e.message == 'code is taken'
+        err[:invalid_board] = true if e.message == 'invalid home board'
         return api_error(400, err)
       end
       api_error(400, {error: 'code generation failed'}) unless code

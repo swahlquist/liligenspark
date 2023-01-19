@@ -153,9 +153,10 @@ export default modal.ModalController.extend({
           overrides: ovr
         }}).then(function(res) {
           _this.set('status', null);
+          _this.set('new_start_code', null);
           _this.get('org_or_user').reload();
         }, function(err) {
-          _this.set('status', {error: true, taken: err.result && err.result == 'code is taken'});
+          _this.set('status', {error: true, taken: err.result && err.result == 'code is taken', invalid_home: err.result && err.result == 'invalid home board'});
         });
       }
     }

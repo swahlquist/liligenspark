@@ -167,6 +167,8 @@
                     {{t "Generating..." key='generating'}}
                   {{else if status.taken}}
                     {{t "Code is Not Available" key='code_not_available'}}
+                  {{else if status.invalid_home}}
+                    {{t "Invalid Home Board" key='invalid_home_board'}}
                   {{else if status.error}}
                     {{t "Error Generating" key='error_generating'}}
                   {{else}}

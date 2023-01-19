@@ -1147,6 +1147,18 @@ class Organization < ActiveRecord::Base
           opts.delete('premium')
           opts.delete('supervisors')
         end
+        if opts['home_board_key']
+          if opts['home_board_key'].match(/^https?:\/\/[^\/]+\//)
+            opts['home_board_key'] = opts['home_board_key'].sub(/^https?:\/\/[^\/]+\//, '')
+          end
+          if org_or_user.is_a?(User)
+            hb = Board.find_by_path(opts['home_board_key'])
+            raise "invalid home board" unless hb && hb.allows?(org_or_user, 'view')
+          elsif org_or_user.is_a?(Organization)
+            keys = org_or_user.home_board_keys
+            raise "invalid home board" unless keys.include?(opts['home_board_key'])
+          end
+        end
         opts['supervisors'] = opts['supervisors'].split(/\s*,\s*/) if opts['supervisors'] && opts['supervisors'].is_a?(String)
         opts['limit'] = opts['limit'].to_i if opts['limit']
         opts['expires'] = opts['expires'].to_i if opts['expires']
@@ -1465,6 +1477,7 @@ class Organization < ActiveRecord::Base
     end
     if params[:home_board_key] || params[:home_board_keys]
       keys = params[:home_board_keys] || [params[:home_board_key]]
+      already_allowed = self.settings['deafult_home_boards'] || []
       self.settings.delete('default_home_board')
       self.settings['default_home_boards'] = []
       keys.each do |key|
@@ -1479,8 +1492,8 @@ class Organization < ActiveRecord::Base
           }
         elsif board
           management_ids = self.managers.map(&:global_id) + self.supervisors.map(&:global_id)
-          # if any of the managers or supervisors own the board, then it's ok
-          if management_ids.include?(board.user.global_id)
+          # if any of the managers or supervisors own the board, or did in the past, then it's ok
+          if management_ids.include?(board.user.global_id) || already_allowed.detect{|b| b['id'] == board.global_id || b['key'] == board.key }
             self.settings['default_home_boards'] << {
               'id' => board.global_id,
               'key' => board.key
