@@ -124,23 +124,26 @@ module Processable
     if Coughdrop::RESERVED_ROUTES.include?(suggestion) || (collision && collision != self)
       # try something else
       trailing_number = suggestion.match(/_\d+$/)
-      if collision
+      alt_trailing_number = nil
+      if collision && false
         without_trailing = suggestion.sub(/|\d+%/, '')
         # Check for additional collisions, otherwise we'll iterate through all of them one by one
         if self.class == User
-          last_coll = User.where(['lower(user_name) ILIKE ?', "#{without_trailing}%"]).order('user_name DESC')[0]
+          last_coll = User.where(['lower(user_name) ILIKE ?', "#{without_trailing}%"]).order('id DESC')[0]
           if last_coll
-            trailing_number = last_coll.user_name.match(/_\d+$/)
+            alt_trailing_number = last_coll.user_name.match(/_\d+$/)
           end
         elsif self.class == Board
-          last_coll = Board.where(['key ILIKE ?', "#{without_trailing}%"]).order('key DESC')[0]
+          last_coll = Board.where(['key ILIKE ?', "#{without_trailing}%"]).order('id DESC')[0]
           if last_coll
-            trailing_number = last_coll.key.match(/_\d+$/)
+            alt_trailing_number = last_coll.key.match(/_\d+$/)
           end
         end
       end
       if trailing_number && trailing_number[0]
         trailing_number = trailing_number[0][1..-1].to_i
+        alt_trailing_number = alt_trailing_number && alt_trailing_number[0][1..-1].to_i
+        trailing_number = alt_trailing_number if alt_trailing_number && alt_trailing_number > trailing_number
         suggestion = suggestion.sub(/_\d+$/, "_" + (trailing_number + 1).to_s)
       else
         suggestion += "_1"
