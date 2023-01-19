@@ -125,26 +125,26 @@ module Processable
       # try something else
       trailing_number = suggestion.match(/_\d+$/)
       alt_trailing_number = nil
-      if collision && false
-        without_trailing = suggestion.sub(/|\d+%/, '')
+      if collision
+        without_trailing = suggestion.sub(/_\d+$/, '')
         # Check for additional collisions, otherwise we'll iterate through all of them one by one
         if self.class == User
-          last_coll = User.where(['lower(user_name) ILIKE ?', "#{without_trailing}%"]).order('id DESC')[0]
+          last_coll = User.where(['lower(user_name) ILIKE ?', "#{without_trailing}\\_%"]).order('id DESC')[0]
           if last_coll
             alt_trailing_number = last_coll.user_name.match(/_\d+$/)
           end
         elsif self.class == Board
-          last_coll = Board.where(['key ILIKE ?', "#{without_trailing}%"]).order('id DESC')[0]
+          last_coll = Board.where(user_id: collision.user_id).where(['key ILIKE ?', "%#{without_trailing}\\_%"]).order('id DESC')[0]
           if last_coll
             alt_trailing_number = last_coll.key.match(/_\d+$/)
           end
         end
       end
-      if trailing_number && trailing_number[0]
-        trailing_number = trailing_number[0][1..-1].to_i
-        alt_trailing_number = alt_trailing_number && alt_trailing_number[0][1..-1].to_i
-        trailing_number = alt_trailing_number if alt_trailing_number && alt_trailing_number > trailing_number
-        suggestion = suggestion.sub(/_\d+$/, "_" + (trailing_number + 1).to_s)
+      if (trailing_number && trailing_number[0]) || (alt_trailing_number && alt_trailing_number[0])
+        trailing_number = trailing_number && trailing_number[0] && trailing_number[0][1..-1].to_i
+        alt_trailing_number = alt_trailing_number && alt_trailing_number[0] && alt_trailing_number[0][1..-1].to_i
+        trailing_number = alt_trailing_number if alt_trailing_number && (!trailing_number || alt_trailing_number > trailing_number)
+        suggestion = suggestion.sub(/_\d+$/, '') + "_" + (trailing_number + 1).to_s
       else
         suggestion += "_1"
       end
