@@ -313,13 +313,18 @@ export default Controller.extend({
     {name: i18n.t('even_more_sensitive', "Even More Sensitive (Minimal Movement Required)"), id: 'extra_sensitive'},
     {name: i18n.t('less_sensitive', "Less Sensitive (Extra Movement Required)"), id: 'less_sensitive'}
   ],
-  dwellSelectList: computed('head_tracking_capable', function() {
+  dwellSelectList: computed('head_tracking_capable', 'pending_preferences.device.dwell', 'pending_preferences.device.dwell_type', function() {
     var res = [
       {name: i18n.t('time_on_target', "Select by Looking/Dwelling on a Target"), id: 'dwell'},
       {name: i18n.t('button_select', "Select by Hitting a Switch or Button"), id: 'button'}
     ];
     if(this.get('head_tracking_capable')) {
-      res.push({name: i18n.t('expression', "Select by Facial Expression"), id: 'expression'});
+      if(this.get('pending_preferences.device.dwell') && (this.get('pending_preferences.device.dwell_type') == 'eyegaze_external')) {
+        // facial expressions not possible with third-party tracking currently
+      } else {
+        res.push({name: i18n.t('expression', "Select by Facial Expression"), id: 'expression'});
+      }
+
     }
     return res;
   }),
