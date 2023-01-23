@@ -23,6 +23,12 @@
         </div>
       </div>
       <div class='col-sm-6'>
+        <h4>{{t "Start Code Lookup" key='start_code_lookup'}}</h4>
+        <div style='margin-bottom: 30px;'>
+          {{input value=start_code placeholder="start code" class="form-control inline inline-masquerade input-sm"}}
+          <button class="btn btn-default btn-sm" {{action "start_code_lookup"}}>{{t "Lookup" key='lookup'}}</button>
+        </div>
+
         <h4>{{t "Blocked Cells" key='blocked_cells'}}</h4>
         {{#if blocked_cells.loading}}
           <p>{{t "Loading..." key='loading'}}</p>

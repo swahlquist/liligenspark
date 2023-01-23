@@ -67,6 +67,7 @@ Router.map(function() {
   this.route('ambassadors');
   this.route('limited', {path: '/limited'});
   this.route('utterance', { path: '/utterances/:id' });
+  this.route('start_codes', { path: '/start_codes/:id' });
   this.route('admin', { path: '/admin' });
   this.route('lesson', { path: '/lessons/:lesson_id/:lesson_code/:user_token'});
   this.route('organization', { path: '/organizations/:id' }, function() {

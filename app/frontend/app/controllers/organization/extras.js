@@ -46,6 +46,9 @@ export default Controller.extend({
     return res;
   }),
   actions: {
+    start_code_lookup: function() {
+      this.transitionToRoute('start_codes', this.get('start_code'));
+    },
     block_email: function() {
       var email = this.get('blocked_email_address');
       var _this = this;

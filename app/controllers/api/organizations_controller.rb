@@ -111,24 +111,34 @@ class Api::OrganizationsController < ApplicationController
     if code && !code[:disabled] && code[:target]
       hash = params['v']
       valid = false
+      include_users = false
       if params['v'] == GoSecure.sha512(Webhook.get_record_code(code[:target]), 'start_code_verifier')[0, 5]
         valid = true
       elsif code[:target].is_a?(User) && code[:target].allows?(@api_user, 'edit')
         valid = true
+        include_users = true
       elsif code[:target].is_a?(Organization) && code[:target].allows?(@api_user, 'edit')
         valid = true
+        include_users = true
       end
       if valid
         type = code[:target].is_a?(User) ? 'supervisor' : 'organization'
-        return render json: {
+        json = {
           code: params['code'],
           valid: true,
           supervisor: type == 'supervisor',
           organization: type == 'organization',
           type: type,
+          target_id: code[:target].global_id,
           image_url: code[:target].is_a?(User) ? code[:target].generated_avatar_url('fallback') : code[:target].settings['image_url'],
           name: code[:target].settings['name']
         }
+        if include_users && code[:user_ids]
+          user_ids = code[:user_ids] || []
+          json['overrides'] = code[:overrides]
+          json['users'] = User.find_all_by_global_id(user_ids[0, 50]).map{|u| r = JsonApi::User.as_json(u, limited_identity: true); }
+        end
+        return render json: json        
       end
     end
     api_error 400, {error: 'invalid code', code: params['code']}

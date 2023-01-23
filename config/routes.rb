@@ -22,7 +22,7 @@ Coughdrop::Application.routes.draw do
   # See how all your routes lay out with "rake routes".
 
   ember_handler = 'boards#index'
-  board_id_regex = /[a-zA-Z0-9_-]+\/[a-zA-Z0-9_:%-]+|\d+_\d+/
+  board_id_regex = /[a-zA-Z0-9_-]+\/[a-zA-Z0-9_:%-]+|\d+_\d+(-\d+_\d+)?/
   user_id_regex = /[a-zA-Z0-9_-]+/
 
   # protected_resque = Rack::Auth::Basic.new(Resque::Server) do |username, password|
@@ -43,6 +43,7 @@ Coughdrop::Application.routes.draw do
   get '/jobs' => 'boards#jobs'
   get '/about' => 'boards#about'
   get '/inflections/:word_id/:locale' => ember_handler
+  get '/start_codes/:code' => ember_handler
   
   get 'oauth2/token' => 'session#oauth'
   post 'oauth2/token/login' => 'session#oauth_login'

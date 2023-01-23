@@ -1306,7 +1306,7 @@ class Organization < ActiveRecord::Base
         activate_for.settings['activations'] << {'ts' => Time.now.to_i, 'code' => orig_code}
         activate_for.save
       end
-      return {user_type: type, target: org_or_user, key: settings_key, disabled: !!overrides['disabled'], overrides: ovr, progress: progress}
+      return {user_type: type, target: org_or_user, key: settings_key, disabled: !!overrides['disabled'], overrides: ovr, user_ids: overrides['user_ids'], progress: progress}
     else
       return false
     end

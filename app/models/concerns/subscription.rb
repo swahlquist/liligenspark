@@ -218,7 +218,7 @@ module Subscription
     self.update_setting({
       'expires_at' => self.expires_at,
       'activated_sources' => self.settings['activated_sources'],
-      'subscription' => {'transferred_to' => to_list}
+      'subscription' => {'transferred_to' => to_list, 'transfer_ts' => Time.now.to_i}
     })
   end
   
