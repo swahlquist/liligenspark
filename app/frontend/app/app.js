@@ -527,8 +527,9 @@ CoughDrop.Videos = {
   },
   untrack: function(dom_id, callback) {
     var player = CoughDrop.Videos.players[dom_id];
-    player.removeListener(callback);
-    
+    if(player) {
+      player.removeListener(callback);
+    }
   },
   player_ready: function(dom, window) {
     if(!dom.id) { return; }
@@ -577,7 +578,10 @@ CoughDrop.Videos = {
     CoughDrop.Videos.waiting[dom.id] = [];
   },
   player_status: function(event) {
-    var frame = event.source.frameElement || event.source.frameElementRef;
+    var frame = null;
+    try {
+      frame = event.frameRef || event.source.frameElement;
+    } catch(e) { }
     if(!frame) {
       var frames = document.getElementsByTagName('IFRAME');
       for(var idx = 0; idx < frames.length; idx++) {
@@ -586,7 +590,7 @@ CoughDrop.Videos = {
         }
       }
     }
-    if(frame.id) {
+    if(frame && frame.id) {
       CoughDrop.Videos.player_ready(frame, event.source);
       var player = CoughDrop.Videos.players[frame.id];
       if(player) {
@@ -610,7 +614,10 @@ CoughDrop.Videos = {
 
 window.addEventListener('message', function(event) {
   if(event.data && event.data.video_status) {
-    var frame = event.source.frameElement || event.source.frameElementRef;
+    var frame = null;
+    try {
+      frame = event.frameRef || event.source.frameElement;
+    } catch(e) { }
     if(!frame) {
       var frames = document.getElementsByTagName('IFRAME');
       for(var idx = 0; idx < frames.length; idx++) {
@@ -622,7 +629,7 @@ window.addEventListener('message', function(event) {
     if(frame && frame.id) {
       var dom_id = frame.id;
       var elem = frame;
-      event.source.frameElementRef = frame;
+      event.frameRef = frame;
       CoughDrop.Videos.player_status(event);
     }
   } else if(event.data && event.data.lesson_status) {
