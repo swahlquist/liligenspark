@@ -15,7 +15,11 @@ module Processable
       @errored = true
       return false
     else
-      self.save
+      if non_user_params[:allow_clone]
+        return self.save_possible_clone
+      else
+        self.save
+      end
     end
   end
   

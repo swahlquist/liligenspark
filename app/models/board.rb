@@ -28,6 +28,7 @@ class Board < ActiveRecord::Base
   before_save :check_inflections
   before_save :check_content_overrides
   after_save :post_process
+  after_save :assert_shallow_mapping
   after_destroy :flush_related_records
 #  replicated_model
  
@@ -41,26 +42,88 @@ class Board < ActiveRecord::Base
   # - it gains a new upstream link
   # - the author's supervision settings change
   # public boards anyone can view
-  add_permissions('view', ['*']) { self.public }
+  add_permissions('view', ['*']) { self.public && !@sub_id }
   # check cached list of explicitly-allowed private boards
   add_permissions('view', ['read_boards']) {|user| !self.public && user.can_view?(self) }
   add_permissions('view', 'edit', 'delete', 'share') {|user| user.can_edit?(self) }
+  # for a shallow clone, you need read permission on the original, and model permission on the shallow user
+  add_permissions('view', 'edit') {|user| @sub_id && (user.can_view?(self) && @sub_global.allows?(user, 'model')) }
   # explicitly-shared boards are viewable
 #  add_permissions('view', ['read_boards']) {|user| self.shared_with?(user) } # should be redundant due to board_caching
   # the author's supervisors can view the author's boards
   # the user (and co-authors) should have edit and sharing access
 #  add_permissions('view', ['read_boards']) {|user| self.author?(user) } # should be redundant due to board_caching
 #  add_permissions('view', 'edit', 'delete', 'share') {|user| self.author?(user) } # should be redundant due to board_caching
-  add_permissions('view', ['read_boards']) {|user| self.user && self.user.allows?(user, 'model') }
+  add_permissions('view', ['read_boards']) {|user| !@sub_id && self.user && self.user.allows?(user, 'model') }
   # the user and any of their editing supervisors/org admins should have edit access
-  add_permissions('view', ['read_boards']) {|user| self.user && self.user.allows?(user, 'edit') }
-  add_permissions('view', 'edit', 'delete', 'share') {|user| self.user && self.user.allows?(user, 'edit_boards') }
+  add_permissions('view', ['read_boards']) {|user| !@sub_id && self.user && self.user.allows?(user, 'edit') }
+  add_permissions('view', 'edit', 'delete', 'share') {|user| !@sub_id && self.user && self.user.allows?(user, 'edit_boards') }
   # the user should have edit and sharing access if a parent board is edit-shared including downstream with them
 #  add_permissions('view', ['read_boards']) {|user| self.shared_with?(user, true) } # should be redundant due to board_caching
 #  add_permissions('view', 'edit', 'delete', 'share') {|user| self.shared_with?(user, true) } # should be redundant due to board_caching
   # the user should have view access if the board is shared with any of their supervisees
 #  add_permissions('view', ['read_boards']) {|user| user.supervisees.any?{|u| self.shared_with?(u) } } # should be redundant due to board_caching
   cache_permissions
+
+  def key
+    orig_key = read_attribute('key')
+    if @sub_id && @sub_global
+      return "#{@sub_global.user_name}/my:#{orig_key.sub(/\//, ':')}"
+    elsif self.shallow_source
+      return self.shallow_source[:key]
+    else
+      return orig_key
+    end
+  end
+
+  def shallow_source
+    if self.settings && self.settings['shallow_source']
+      return {
+        key: self.settings['shallow_source']['key'],
+        id: self.settings['shallow_source']['id'],
+      }
+    end
+    return nil
+  end
+
+  def downstream_board_ids
+    res = (self.settings || {})['downstream_board_ids'] || []
+    if @sub_id && @sub_global
+      ue = @sub_global.user_extra
+      ids = []
+      lookup_ids = []
+      res.each do |id|
+        ids << "#{id}-#{@sub_id}"
+        if ue && ue.settings['replaced_boards'] && ue.settings['replaced_boards'][id]
+          lookup_ids << ue.settings['replaced_boards'][id]
+        end
+      end
+      Board.find_all_by_global_id(lookup_ids).each do |brd|
+        ids << brd.global_id
+        ids += brd.settings['downstream_board_ids'] || []
+      end
+      res = ids
+    end
+    res
+  end
+
+  def user
+    if @sub_global
+      @sub_global
+    else
+      super
+    end
+  end
+
+  def cache_key(prefix=nil)
+    id = (self.respond_to?(:global_id) && self.global_id) || self.id || 'nil'
+    updated = (self.updated_at || Time.now).to_f
+    key = "#{self.class.to_s}#{id}-#{updated}:#{Permissable.cache_token}"
+    if prefix
+      key = prefix + "/" + key
+    end
+    key
+  end  
 
   def starred_by?(user)
     user_id = user
@@ -101,11 +164,16 @@ class Board < ActiveRecord::Base
   end
   
   def button_set_id
-    id = self.settings && self.settings['board_downstream_button_set_id']
-    if !id
-      # TODO: sharding
-      bs = BoardDownstreamButtonSet.select('id').find_by(:board_id => self.id)
+    if @sub_id
+      bs = BoardDownstreamButtonSet.find_by(:board_id => self.id, :user_id => User.local_ids(@sub_id)[0])
       id = bs && bs.global_id
+    else
+      id = self.settings && self.settings['board_downstream_button_set_id']
+      if !id
+        # TODO: sharding
+        bs = BoardDownstreamButtonSet.select('id').find_by(:board_id => self.id)
+        id = bs && bs.global_id
+      end
     end
     return nil unless id
     full_id = id + "_" + GoSecure.sha512(id, 'button_set_id')[0, 10]
@@ -113,10 +181,12 @@ class Board < ActiveRecord::Base
   
   def board_downstream_button_set
     bs = nil
-    if self.settings && self.settings['board_downstream_button_set_id']
+    if @sub_id
+      bs = BoardDownstreamButtonSet.find_by(:board_id => self.id, :user_id => User.local_ids(@sub_id)[0])
+    elsif self.settings && self.settings['board_downstream_button_set_id']
       bs = BoardDownstreamButtonSet.find_by_global_id(self.settings['board_downstream_button_set_id'])
     else
-      bs = BoardDownstreamButtonSet.find_by(:board_id => self.id)
+      bs = BoardDownstreamButtonSet.find_by(:board_id => self.id, user_id: nil)
     end
     bs.assert_extra_data if bs
     bs
@@ -547,8 +617,19 @@ class Board < ActiveRecord::Base
     end
     return res
   end
+
+  def save_possible_clone
+    if @sub_id
+      copy_id = self.settings['copy_id'] || self.global_id.split(/-/)[0]
+      self.copy_for(@sub_global, {copy_id: copy_id})
+    else
+      self.save!
+      return self
+    end
+  end
   
   def generate_defaults
+    raise "cannot save a shallow clone" if @sub_id
     self.settings ||= {}
     self.settings['name'] ||= "Unnamed Board"
     self.settings['edit_key'] = Time.now.to_f.to_s + "-" + rand(9999).to_s
@@ -724,7 +805,23 @@ class Board < ActiveRecord::Base
   end
   
   def full_set_revision
-    self.settings['full_set_revision'] || self.current_revision || self.global_id
+    res = self.settings['full_set_revision'] || self.current_revision || self.global_id
+    if @sub_global
+      ue = @sub_global.user_extra
+      ids = self.settings['downstream_board_ids']
+      other_ids = []
+      if ue && ue.settings['replaced_boards']
+        ids.each do |id|
+          new_id = ue.settings['replaced_boards'][id]
+          other_ids << new_id if new_id
+        end
+      end
+      if other_ids.length > 0
+        revisions = Board.find_all_by_global_id(other_ids).map{|b| b.current_revision }
+        res = Digest::Md5.hexdigest(res + revisions.join(','))[0, 10]
+      end
+    end
+    res
   end
   
   def populate_buttons_from_labels(labels, labels_order)
@@ -807,6 +904,16 @@ class Board < ActiveRecord::Base
     schedule_downstream_checks(Board.last_scheduled_stamp)
   end
 
+  def assert_shallow_mapping
+    if @shallow_source_changed && (self.settings && self.settings['shallow_source']) && self.user
+      ue = UserExtra.find_or_create_by(user: self.user)
+      ue.settings['replaced_boards'] ||= {}
+      ue.settings['replaced_boards'][self.settings['shallow_source']['id'].split(/-/)[0]] = self.global_id
+      ue.settings['replaced_boards'][self.settings['shallow_source']['key'].split(/my:/)[1].sub(/:/, '/')] = self.global_id
+      ue.save
+    end
+  end
+
   def check_inflections
     # this used to be a background job, but I think it needs to be part of the original save now
     if @check_for_parts_of_speech
@@ -855,6 +962,7 @@ class Board < ActiveRecord::Base
   
   def update_self_references
     @update_self_references = false
+    return if @sub_id
     buttons = self.buttons || []
     self.using(:master).reload
     save_if_same_edit_key do
@@ -1000,7 +1108,25 @@ class Board < ActiveRecord::Base
   end
 
   def buttons
-    BoardContent.load_content(self, 'buttons')
+    res = BoardContent.load_content(self, 'buttons')
+    if @sub_id && @sub_global
+      res.each do |button|
+        if button['load_board']
+          if button['load_board']['id']
+            orig = button['load_board']['id'].split(/-/)[0]
+            button['load_board']['id'] = "#{orig}-#{@sub_global.global_id}"
+          end
+          if button['load_board']['key']
+            orig = button['load_board']['key']
+            if orig.match(/\/my:/)
+              orig = orig.split(/\/my:/)[1].sub(/:/, '/')
+            end
+            button['load_board']['key'] = "#{@sub_global.user_name}/my:#{orig.sub(/\//, ':')}"
+          end
+        end
+      end
+    end
+    res
   end
 
   def grid_buttons
@@ -1049,6 +1175,14 @@ class Board < ActiveRecord::Base
       end
       if self.parent_board_id != parent_board.id
         self.parent_board = parent_board
+        @shallow_source_changed = true
+        self.settings['shallow_source'] = nil
+        if parent_board.instance_variable_get('@sub_id')
+          self.settings['shallow_source'] = {
+            'key' => parent_board.key,
+            'id' => parent_board.global_id
+          }
+        end
         if parent_board.settings['protected']
           self.settings['protected'] = (self.settings['protected'] || {}).merge(parent_board.settings['protected'])
           if params['new_owner'] && self.settings['protected']['vocabulary'] && !self.settings['protected']['sub_owner']
@@ -1080,12 +1214,12 @@ class Board < ActiveRecord::Base
       end
       self.settings['locale'] = params['locale'] 
     end
-    if params['copy_key']
+    if params['copy_key'] && !@sub_id
       b = Board.find_by_path(params['copy_key'])
       if b && b.user_id == self.user_id && b.global_id != self.settings['copy_id'] && b.global_id != self.global_id
         self.settings['copy_id'] = b.global_id
         subs = Board.find_all_by_global_id(self.settings['downstream_board_ids'] || [])
-        copy_subs = subs.select{|b| b.settings['copy_id'] == self.global_id }
+        copy_subs = subs.select{|b| b.user_id == self.user_id && b.settings['copy_id'] == self.global_id }
         copy_subs.each{|brd| brd.settings['copy_id'] = b.global_id; brd.save_subtly }
       elsif params['copy_key'].blank?
         self.settings.delete('copy_id')
@@ -1326,6 +1460,7 @@ class Board < ActiveRecord::Base
   end
   
   def process_button(button)
+    raise "can't update button for a shallow clone" if @sub_id
     buttons = self.buttons
     found_button = buttons.detect{|b| b['id'].to_s == button['id'].to_s }
     if button['sound_id']
@@ -1354,6 +1489,7 @@ class Board < ActiveRecord::Base
   end
   
   def process_buttons(buttons, editor, secondary_editor=nil, translations=nil)
+    raise "can't update buttons for a shallow clone" if @sub_id
     add_voc_error = buttons.instance_variable_get('@add_voc_error')
     translations ||= {}
     clear_cached("images_and_sounds_with_fallbacks")
@@ -1465,6 +1601,7 @@ class Board < ActiveRecord::Base
   
   def rollback_board_set(date)
     boards = [self]
+    raise "can't rollback shallow clone" if @sub_id
     downstreams = self.settings['downstream_board_ids']
     downs = Board.find_all_by_global_id(downstreams).select{|b| b.cached_user_name == self.cached_user_name }
     boards += downs
@@ -1542,6 +1679,7 @@ class Board < ActiveRecord::Base
 
   def import_translation(translated_copy, locale, overwrite=false)
     raise "only copies can be imported for now" unless translated_copy.parent_board == self
+    raise "shallow clones cannot be updated" if @sub_id
     self.settings['translations'] ||= {}
     buttons = self.buttons
     translated_copy.settings['translations'] ||= {}
@@ -1573,6 +1711,7 @@ class Board < ActiveRecord::Base
     label_lang = dest_lang
     vocalization_lang = dest_lang
     return {done: true, translated: false, reason: 'mismatched user'} if user_local_id != self.user_id
+    raise "can't translate for a shallow clone" if @sub_id
     set_as_default_here = !!set_as_default
     set_as_default_here = false if self.settings['locale'] == label_lang
     if board_ids.blank? || board_ids.include?(self.global_id)
@@ -1789,6 +1928,7 @@ class Board < ActiveRecord::Base
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'pcs' && (!author || !author.subscription_hash['extras_enabled'])
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'symbolstix' && (!author || !author.subscription_hash['extras_enabled'])
     return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'lessonpix' && (!author || !author.subscription_hash['extras_enabled']) && !Uploader.lessonpix_credentials(author)
+    raise "can't swap images for a shallow clone" if @sub_id
     is_root = visited_board_ids.blank?
     # puts "SWAPPING FOR #{self.key} #{is_root}"
     cache = library.instance_variable_get('@library_cache')

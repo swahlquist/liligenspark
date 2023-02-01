@@ -968,6 +968,81 @@ describe Api::BoardsController, :type => :controller do
       expect(b.settings['undeleted']).to eq(true)
       expect(Board.find_by_global_id(b.global_id)).to_not eq(nil)
     end
+
+    it "should allow editing a clone" do
+      token_user
+      author = User.create
+      b = Board.new(user: author, public: true)
+      b.settings = {}
+      b.settings['buttons'] = [
+        {'id' => '1', 'label' => 'fred'}, {'id' => '2', 'label' => 'drop dead'}
+      ]
+      b.save
+      get :show, params: {id: b.global_id}
+      json = assert_success_json
+      expect(json['board']['id']).to eq(b.global_id)
+      expect(json['board']['key']).to eq(b.key)
+      expect(json['board']['permissions']).to eq({'user_id' => @user.global_id, 'view' => true})
+      expect(json['board']['shallow_clone']).to eq(nil)
+
+      get :show, params: {id: "#{b.global_id}-#{@user.global_id}"}
+      json = assert_success_json
+      expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
+      expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
+      expect(json['board']['shallow_clone']).to eq(true)
+      expect(json['board']['permissions']).to eq({'user_id' => @user.global_id, 'view' => true, 'edit' => true})
+
+      put :update, params: {
+        id: "#{b.global_id}-#{@user.global_id}", params: {board: {
+          buttons: [
+            {'id' => '2', 'label' => 'fred'}
+          ]
+        }}
+      }
+      json = assert_success_json
+      expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
+      expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
+      expect(json['board']['shallow_clone']).to eq(nil)
+      expect(json['board']['permissions']).to eq({'user_id' => @user.global_id, 'view' => true, 'edit' => true, 'share' => true, 'delete' => true})
+      b2 = Board.last
+      expect(b2).to_not eq(b)
+      expect(b2.shallow_source).to_not eq(nil)
+      expect(b2.shallow_source[:id]).to eq(json['board']['id'])
+      expect(b2.shallow_source[:key]).to eq(json['board']['key'])
+      ue = @user.reload.user_extra
+      expect(ue.settings['replaced_boards']).to_not eq(nil)
+      expect(ue.settings['replaced_boards']["#{b.global_id}"]).to eq(b2.global_id)
+      expect(Board.find_by_global_id("#{b.global_id}-#{@user.global_id}")).to eq(b2)
+    end
+
+    it "should not allow an unauthorized user to access another user's shallow clones" do
+      token_user
+      author = User.create
+      b = Board.new(user: author, public: true)
+      b.settings = {}
+      b.settings['buttons'] = [
+        {'id' => '1', 'label' => 'fred'}, {'id' => '2', 'label' => 'drop dead'}
+      ]
+      b.save
+      get :show, params: {id: b.global_id}
+      json = assert_success_json
+      expect(json['board']['id']).to eq(b.global_id)
+      expect(json['board']['key']).to eq(b.key)
+      expect(json['board']['permissions']).to eq({'user_id' => @user.global_id, 'view' => true})
+      expect(json['board']['shallow_clone']).to eq(nil)
+
+      get :show, params: {id: "#{b.global_id}-#{author.global_id}"}
+      assert_unauthorized
+
+      put :update, params: {
+        id: "#{b.global_id}-#{author.global_id}", params: {board: {
+          buttons: [
+            {'id' => '2', 'label' => 'fred'}
+          ]
+        }}
+      }
+      assert_unauthorized
+    end
   end
   
   describe "star" do

@@ -4899,4 +4899,66 @@ describe Board, :type => :model do
       expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b1.global_id, b2.global_id], visited: [b1.global_id, b2.global_id]})
     end
   end
+
+  describe "downstream_board_ids" do
+    it "should return list of board ids" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings['downstream_board_ids'] = ['a', 'b', 'c']
+      expect(b.downstream_board_ids).to eq(['a', 'b', 'c'])
+    end
+
+    it "should include replacements for shallow clones" do
+      u1 = User.create
+      b1 = Board.create(user: u1, public: true)
+      u2 = User.create
+      b2 = Board.create(user: u2, public: true)
+      b3 = Board.create(user: u1, public: true)
+      b1.settings['downstream_board_ids'] = [b3.global_id]
+      b1.save
+      expect(b1.downstream_board_ids).to eq([b3.global_id])
+      
+      bb = Board.find_by_global_id("#{b1.global_id}-#{u1.global_id}")
+      expect(bb.instance_variable_get('@sub_global')).to eq(u1)
+      expect(bb.global_id).to eq("#{b1.global_id}-#{u1.global_id}")
+      expect(bb.downstream_board_ids).to eq(["#{b3.global_id}-#{u1.global_id}"])
+
+      ue2 = UserExtra.create(user: u2)
+      ue2.settings['replaced_boards'] = {}
+      ue2.settings['replaced_boards'][b3.global_id] = b2.global_id
+      ue2.save
+      bb = Board.find_by_global_id("#{b1.global_id}-#{u2.global_id}")
+      expect(bb.instance_variable_get('@sub_global')).to eq(u2)
+      expect(bb.global_id).to eq("#{b1.global_id}-#{u2.global_id}")
+      expect(bb.downstream_board_ids).to eq(["#{b3.global_id}-#{u2.global_id}", "#{b2.global_id}"])
+    end
+
+    it "should still include replaced shallow clones in case they are linked more than once" do
+      u1 = User.create
+      b1 = Board.create(user: u1, public: true)
+      u2 = User.create
+      b2 = Board.create(user: u2, public: true)
+      b3 = Board.create(user: u1, public: true)
+      b4 = Board.create(user: u1, public: true)
+      b1.settings['downstream_board_ids'] = [b3.global_id]
+      b1.save
+      b2.settings['downstream_board_ids'] = [b4.global_id]
+      b2.save
+      expect(b1.downstream_board_ids).to eq([b3.global_id])
+      
+      bb = Board.find_by_global_id("#{b1.global_id}-#{u1.global_id}")
+      expect(bb.instance_variable_get('@sub_global')).to eq(u1)
+      expect(bb.global_id).to eq("#{b1.global_id}-#{u1.global_id}")
+      expect(bb.downstream_board_ids).to eq(["#{b3.global_id}-#{u1.global_id}"])
+
+      ue2 = UserExtra.create(user: u2)
+      ue2.settings['replaced_boards'] = {}
+      ue2.settings['replaced_boards'][b3.global_id] = b2.global_id
+      ue2.save
+      bb = Board.find_by_global_id("#{b1.global_id}-#{u2.global_id}")
+      expect(bb.instance_variable_get('@sub_global')).to eq(u2)
+      expect(bb.global_id).to eq("#{b1.global_id}-#{u2.global_id}")
+      expect(bb.downstream_board_ids).to eq(["#{b3.global_id}-#{u2.global_id}", "#{b2.global_id}", "#{b4.global_id}"])
+    end
+  end
 end

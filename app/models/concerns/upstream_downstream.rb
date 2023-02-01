@@ -282,7 +282,6 @@ module UpstreamDownstream
     ids -= already_visited_ids
     # TODO: sharding
     db_ids = self.class.local_ids(ids)
-    # TODO: invalidate user_link caches here
     time = Time.now
     Board.where(:id => db_ids).update_all(:updated_at => time)
     ids.each{|id| UserLink.invalidate_cache_for("Board:#{id}", time.to_f) }

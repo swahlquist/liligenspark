@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20230112200022) do
+ActiveRecord::Schema.define(version: 20230125210308) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -74,7 +74,8 @@ ActiveRecord::Schema.define(version: 20230112200022) do
     t.integer  "board_id"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.index ["board_id"], name: "index_board_downstream_button_sets_on_board_id", unique: true, using: :btree
+    t.integer  "user_id"
+    t.index ["board_id", "user_id"], name: "index_board_downstream_button_sets_on_board_id_and_user_id", unique: true, using: :btree
   end
 
   create_table "board_locales", force: :cascade do |t|
@@ -159,7 +160,7 @@ ActiveRecord::Schema.define(version: 20230112200022) do
     t.datetime "updated_at"
     t.string   "cluster_type", limit: 255
     t.string   "cluster_hash", limit: 255
-    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_hash", unique: true, using: :btree
+    t.index ["cluster_type", "cluster_hash"], name: "index_cluster_locations_on_cluster_type_and_cluster_hash", unique: true, using: :btree
   end
 
   create_table "contact_messages", force: :cascade do |t|

@@ -454,7 +454,7 @@ module Converters::CoughDrop
     Progress.update_current_progress(0.1, 'tracked downstreams')
 
     lookup_boards = [board]
-    board.settings['downstream_board_ids'].each do |id|
+    board.downstream_board_ids.each do |id|
       b = Board.find_by_path(id)
       if b && b.allows?(opts['user'], 'view')
         lookup_boards << b

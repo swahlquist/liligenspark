@@ -96,7 +96,7 @@
         <label for="public" class="col-sm-3 control-label">{{t "Visibility" key='visibility'}}</label>
         <div class="col-sm-9">
           {{#if model.copying_state}}
-            <em class='form-control-static'>{{t "Boards with protected content can't be made public" key='protected_boards_no_public'}}</em>
+            <p class='form-control-static'><em>{{t "Boards with protected content can't be made public" key='protected_boards_no_public'}}</em></p>
           {{else}}
             {{bound-select select_class="form-control" select_id="license" content=public_options selection=model.visibility action=(action (mut model.visibility)) }}
             {{#unless model.visibility_setting.private}}

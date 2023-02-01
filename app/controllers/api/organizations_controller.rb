@@ -553,7 +553,6 @@ class Api::OrganizationsController < ApplicationController
             vn = Board.vocab_name(brd)
             vocabs[vn] = (vocabs[vn] || 0) + 1 if vn
             sizes << (grid['rows'] || 3) * (grid['columns'] || 4)
-            brd.settings['downstream_board_ids'].length
           end
         else
           devices['No Device'] = (devices['No Device'] || 0) + 1

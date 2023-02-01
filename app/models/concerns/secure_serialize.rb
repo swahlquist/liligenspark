@@ -13,6 +13,7 @@ module SecureSerialize
   def rollback_to(date)
     version = self.versions.reverse_each.detect{|v| v.created_at < date }
     #version = prior_version.next || prior_version
+    raise "can't rollback a shallow clone" if @sub_id
     raise "no old version found for self.class.to_s:#{self.global_id}" if !version
     record = self.class.load_version(version) rescue nil
     raise "version couldn't be loaded" if !record

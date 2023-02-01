@@ -535,7 +535,7 @@ class Api::UsersController < ApplicationController
     all_ids = []
     roots.compact.each do |root|
       all_ids << root.global_id
-      all_ids += root.settings['downstream_board_ids'] || []
+      all_ids += root.downstream_board_ids
     end
     all_ids.uniq!
     res = {}

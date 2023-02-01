@@ -10,6 +10,11 @@ module JsonApi::Board
     json = {} #board.settings
     json['id'] = board.global_id
     json['key'] = board.key
+    if board.shallow_source
+      json['id'] = board.shallow_source[:id]
+      json['key'] = board.shallow_source[:key]
+    end
+    json['shallow_clone'] = true if board.instance_variable_get('@sub_id')
     json['simple_refs'] = true if args[:skip_subs]
     json['buttons'] = board.buttons
     ['grid', 'intro', 'background'].each do |key|
@@ -109,7 +114,7 @@ module JsonApi::Board
       end
     end
     if (json['permissions'] && json['permissions']['delete']) || (args[:permissions] && args[:permissions].allows?(args[:permissions], 'admin_support_actions'))
-      json['downstream_board_ids'] = board.settings['downstream_board_ids']
+      json['downstream_board_ids'] = board.downstream_board_ids
       if args[:permissions] && args[:permissions].respond_to?(:settings)
         # TODO: sharding
         user_ids = UserBoardConnection.where(:board_id => board.id).map(&:user_id)

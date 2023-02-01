@@ -36,6 +36,52 @@ describe GlobalId, :type => :model do
       expect(ButtonImage.find_by_global_id("1_" + i.id.to_s + "_" + i.nonce)).to eq(i)
       expect(ButtonImage.find_by_global_id("1_" + i.id.to_s + "_" + "abcdefg")).to eq(i)
     end
+
+    it "should look up global id with a sub_id" do
+      u = User.create
+      u2 = User.create
+      b = Board.create(user: u)
+      bb = Board.find_by_global_id(b.global_id)
+      expect(bb).to_not eq(nil)
+      expect(bb.instance_variable_get('@sub_id')).to eq(nil)
+
+      bb = Board.find_by_global_id("#{b.global_id}-#{u2.global_id}")
+      expect(bb).to_not eq(nil)
+      expect(bb.instance_variable_get('@sub_id')).to eq(u2.global_id)
+
+      bb = Board.find_by_global_id("#{b.global_id}-#{u.global_id}")
+      expect(bb).to_not eq(nil)
+      expect(bb.instance_variable_get('@sub_id')).to eq(u.global_id)
+    end
+
+    it "should return nil for a missing sub_id on a global id" do
+      u = User.create
+      u2 = User.create
+      b = Board.create(user: u)
+      bb = Board.find_by_global_id("#{b.global_id}-1_000")
+      expect(bb).to eq(nil)
+    end
+
+    it "should find a replacement for a global id when set for a sub_id" do
+      u = User.create
+      u2 = User.create
+      b = Board.create(user: u)
+      b2 = Board.create(user: u2)
+
+      bb = Board.find_by_global_id("#{b.global_id}-#{u2.global_id}")
+      expect(bb).to_not eq(nil)
+      expect(bb).to eq(b)
+      expect(bb.instance_variable_get('@sub_id')).to eq(u2.global_id)
+
+      ue = UserExtra.create(user: u2)
+      ue.settings['replaced_boards'] = {}
+      ue.settings['replaced_boards'][b.global_id] = b2.global_id
+      ue.save
+      bb = Board.find_by_global_id("#{b.global_id}-#{u2.global_id}")
+      expect(bb).to_not eq(nil)
+      expect(bb).to eq(b2)
+      expect(bb.instance_variable_get('@sub_id')).to eq(nil)
+    end
     
     it "should find_by_path" do
       u = User.create(:user_name => "bob")
@@ -51,6 +97,60 @@ describe GlobalId, :type => :model do
       expect(User.find_all_by_global_id([])).to eq([])
       expect(User.find_all_by_global_id(["0", "1", u1.global_id])).to eq([u1])
       expect(User.find_all_by_global_id([u1.global_id, u2.global_id, u1.id.to_s]).sort).to eq([u1, u2].sort)
+    end
+
+    it "should return multiple copies of the same record, one for each sub_id" do
+      u1 = User.create
+      u2 = User.create
+      u3 = User.create
+      b = Board.create(user: u1)
+      bs = Board.find_all_by_global_id([b.global_id, "#{b.global_id}-#{u1.global_id}", "#{b.global_id}-1_0000", "#{b.global_id}-#{u2.global_id}"])
+      expect(bs.length).to eq(3)
+      expect(bs[0]).to eq(b)
+      expect(bs[0].instance_variable_get('@sub_id')).to eq(nil)
+
+      expect(bs[1]).to eq(b)
+      expect(bs[1].instance_variable_get('@sub_id')).to eq(u1.global_id)
+
+      expect(bs[2]).to eq(b)
+      expect(bs[2].instance_variable_get('@sub_id')).to eq(u2.global_id)
+    end
+
+    it "should include substitutions by global_id when defined" do
+      u1 = User.create
+      u2 = User.create
+      u3 = User.create
+      b1 = Board.create(user: u1)
+      b2 = Board.create(user: u3)
+      ue3 = UserExtra.create(user: u3)
+      ue3.settings['replaced_boards'] = {}
+      ue3.settings['replaced_boards'][b1.global_id] = b2.global_id
+      ue3.save
+      bs = Board.find_all_by_global_id([b1.global_id, "#{b1.global_id}-#{u3.global_id}", b2.global_id, "#{b1.global_id}-#{u1.global_id}"])
+      expect(bs.length).to eq(3)
+      expect(bs[0]).to eq(b1)
+      expect(bs[0].instance_variable_get('@sub_id')).to eq(nil)
+      expect(bs[1]).to eq(b1)
+      expect(bs[1].instance_variable_get('@sub_id')).to eq(u1.global_id)
+      expect(bs[2]).to eq(b2)
+      expect(bs[2].instance_variable_get('@sub_id')).to eq(nil)
+    end
+
+    it "should not include sub-ids that are not valid" do
+      u1 = User.create
+      u2 = User.create
+      u3 = User.create
+      b = Board.create(user: u1)
+      bs = Board.find_all_by_global_id([b.global_id, "#{b.global_id}-#{u1.global_id}", "#{b.global_id}-1_0000", "#{b.global_id}-#{u2.global_id}"])
+      expect(bs.length).to eq(3)
+      expect(bs[0]).to eq(b)
+      expect(bs[0].instance_variable_get('@sub_id')).to eq(nil)
+
+      expect(bs[1]).to eq(b)
+      expect(bs[1].instance_variable_get('@sub_id')).to eq(u1.global_id)
+
+      expect(bs[2]).to eq(b)
+      expect(bs[2].instance_variable_get('@sub_id')).to eq(u2.global_id)
     end
     
     it "should require nonces when finding all by global id" do
@@ -81,6 +181,165 @@ describe GlobalId, :type => :model do
       expect(User.find_all_by_path([u1.global_id, u2.user_name]).sort_by(&:id)).to eq([u1, u2])
       expect(User.find_all_by_path([u1.user_name, u2.user_name]).sort_by(&:id)).to eq([u1, u2])
       expect(User.find_all_by_path([u1.user_name, u2.user_name, u1.global_id, "32", u2.global_id]).sort_by(&:id)).to eq([u1, u2])
+    end
+
+    describe "find_all_by_path" do
+      it "should work for a combo of global ids and board keys" do
+        u1 = User.create
+        u2 = User.create
+        u3 = User.create
+        b1 = Board.create(user: u1)
+        b2 = Board.create(user: u1)
+        b3 = Board.create(user: u1)
+        paths = [
+          b1.global_id,
+          b2.global_id,
+          "#{b1.global_id}-#{u3.global_id}",
+          "#{u1.global_id}-#{u1.global_id}",
+          "#{b2.global_id}-#{b2.global_id}",
+          b3.key,
+          "#{u3.user_name}/my:#{b3.key.sub(/\//, ':')}",
+          "#{u1.user_name}/my:#{b2.key.sub(/\//, ':')}",
+          "#{u2.user_name}/mine:#{b2.key.sub(/\//, ':')}",
+          "#{u2.user_name}/my:#{u2.user_name}",
+        ]
+        bs = Board.find_all_by_path(paths)
+        expect(bs.length).to eq(6)
+        expect(bs[0]).to eq(b1)
+        expect(bs[0].instance_variable_get('@sub_id')).to eq(nil)
+        expect(bs[1]).to eq(b1)
+        expect(bs[1].instance_variable_get('@sub_id')).to eq(u3.global_id)
+        expect(bs[2]).to eq(b2)
+        expect(bs[2].instance_variable_get('@sub_id')).to eq(nil)
+        expect(bs[3]).to eq(b3)
+        expect(bs[3].instance_variable_get('@sub_id')).to eq(nil)
+        expect(bs[4]).to eq(b2)
+        expect(bs[4].instance_variable_get('@sub_id')).to eq(u1.global_id)
+        expect(bs[5]).to eq(b3)
+        expect(bs[5].instance_variable_get('@sub_id')).to eq(u3.global_id)
+      end
+
+      it "should work for a combo of global ids and board keys with and without sub_ids" do
+        u1 = User.create
+        u2 = User.create
+        u3 = User.create
+        b1 = Board.create(user: u1)
+        b2 = Board.create(user: u1)
+        b3 = Board.create(user: u1)
+        paths = [
+          b1.global_id,
+          b2.global_id,
+          "#{b1.global_id}-#{u3.global_id}",
+          "#{u1.global_id}-#{u1.global_id}",
+          "#{b2.global_id}-#{b2.global_id}",
+          b3.key,
+          "#{u3.user_name}/my:#{b3.key.sub(/\//, ':')}",
+          "#{u1.user_name}/my:#{b2.key.sub(/\//, ':')}",
+          "#{u2.user_name}/mine:#{b2.key.sub(/\//, ':')}",
+          "#{u2.user_name}/my:#{u2.user_name}",
+        ]
+        bs = Board.find_all_by_path(paths)
+        expect(bs.length).to eq(6)
+        expect(bs[0]).to eq(b1)
+        expect(bs[0].instance_variable_get('@sub_id')).to eq(nil)
+        expect(bs[1]).to eq(b1)
+        expect(bs[1].instance_variable_get('@sub_id')).to eq(u3.global_id)
+        expect(bs[2]).to eq(b2)
+        expect(bs[2].instance_variable_get('@sub_id')).to eq(nil)
+        expect(bs[3]).to eq(b3)
+        expect(bs[3].instance_variable_get('@sub_id')).to eq(nil)
+        expect(bs[4]).to eq(b2)
+        expect(bs[4].instance_variable_get('@sub_id')).to eq(u1.global_id)
+        expect(bs[5]).to eq(b3)
+        expect(bs[5].instance_variable_get('@sub_id')).to eq(u3.global_id)
+      end
+
+      it "should return multiple compies of the same record if looked up for different sub_ids" do
+        u1 = User.create
+        u2 = User.create
+        u3 = User.create
+        b1 = Board.create(user: u1)
+        b2 = Board.create(user: u1)
+        b3 = Board.create(user: u1)
+        paths = [
+          b1.global_id,
+          b2.global_id,
+          "#{b1.global_id}-#{u3.global_id}",
+          "#{u1.global_id}-#{u1.global_id}",
+          "#{b2.global_id}-#{b2.global_id}",
+          b3.key,
+          "#{u3.user_name}/my:#{b3.key.sub(/\//, ':')}",
+          "#{u1.user_name}/my:#{b2.key.sub(/\//, ':')}",
+          "#{u2.user_name}/mine:#{b2.key.sub(/\//, ':')}",
+          "#{u2.user_name}/my:#{u2.user_name}",
+        ]
+        bs = Board.find_all_by_path(paths)
+        expect(bs.length).to eq(6)
+        expect(bs[0]).to eq(b1)
+        expect(bs[0].instance_variable_get('@sub_id')).to eq(nil)
+        expect(bs[1]).to eq(b1)
+        expect(bs[1].instance_variable_get('@sub_id')).to eq(u3.global_id)
+        expect(bs[2]).to eq(b2)
+        expect(bs[2].instance_variable_get('@sub_id')).to eq(nil)
+        expect(bs[3]).to eq(b3)
+        expect(bs[3].instance_variable_get('@sub_id')).to eq(nil)
+        expect(bs[4]).to eq(b2)
+        expect(bs[4].instance_variable_get('@sub_id')).to eq(u1.global_id)
+        expect(bs[5]).to eq(b3)
+        expect(bs[5].instance_variable_get('@sub_id')).to eq(u3.global_id)
+      end
+
+      it "should return replacements if available" do
+        u1 = User.create
+        u2 = User.create
+        u3 = User.create
+        b1 = Board.create(user: u1)
+        b2 = Board.create(user: u1)
+        b3 = Board.create(user: u1)
+        b4 = Board.create(user: u3)
+        b5 = Board.create(user: u3)
+        ue3 = UserExtra.create(user: u3)
+        ue3.settings['replaced_boards'] = {}
+        ue3.settings['replaced_boards'][b1.global_id] = b4.global_id
+        ue3.settings['replaced_boards'][b4.key] = b5.global_id
+        ue3.save
+
+        bs = Board.find_all_by_global_id([b1.global_id, b2.global_id, "#{b1.global_id}-#{u3.global_id}"])
+        expect(bs.length).to eq(3)
+
+        paths = [
+          b1.global_id,
+          b2.global_id,
+          "#{b1.global_id}-#{u3.global_id}",
+          "#{u1.global_id}-#{u1.global_id}",
+          "#{b2.global_id}-#{b2.global_id}",
+          b3.key,
+          "#{u3.user_name}/my:#{b4.key.sub(/\//, ':')}",
+          "#{u1.user_name}/my:#{b2.key.sub(/\//, ':')}",
+          "#{u2.user_name}/mine:#{b2.key.sub(/\//, ':')}",
+          "#{u2.user_name}/my:#{u2.user_name}",
+        ]
+        bs = Board.find_all_by_path(paths)
+        expect(bs.length).to eq(6)
+        expect(bs[0]).to eq(b1)
+        expect(bs[0].instance_variable_get('@sub_id')).to eq(nil)
+        expect(bs[1]).to eq(b2)
+        expect(bs[1].instance_variable_get('@sub_id')).to eq(nil)
+        expect(bs[2]).to eq(b4)
+        expect(bs[2].instance_variable_get('@sub_id')).to eq(nil)
+        expect(bs[3]).to eq(b5)
+        expect(bs[3].instance_variable_get('@sub_id')).to eq(nil)
+        expect(bs[4]).to eq(b3)
+        expect(bs[4].instance_variable_get('@sub_id')).to eq(nil)
+        expect(bs[5]).to eq(b2)
+        expect(bs[5].instance_variable_get('@sub_id')).to eq(u1.global_id)
+      end
+    end
+    it 
+
+    describe "find_batches_by_global_id" do
+      it "should have specs" do
+      end
     end
   end
   

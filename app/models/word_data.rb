@@ -613,6 +613,7 @@ class WordData < ActiveRecord::Base
     # record the translations on the source word
     word = find_word_record(text, source_lang)
     if !word && !text.match(/^[\+\:]/)
+      word ||= WordData.find_or_create_by(:word => text.downcase.strip, :locale => source_lang) rescue nil
       word ||= WordData.find_or_create_by(:word => text.downcase.strip, :locale => source_lang)
       word.data = {:word => text.downcase.strip}
     end

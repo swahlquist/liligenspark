@@ -46,7 +46,7 @@ More information about the file formats being used is available at https://www.o
       home_board = Board.find_by_path(user.settings['preferences']['home_board']['id'] || user.settings['preferences']['home_board']['key'])
       if home_board
         matched_board_ids[home_board.global_id] = true
-        home_board.settings['downstream_board_ids'].each{|id| matched_board_ids[id] = true }
+        home_board.downstream_board_ids.each{|id| matched_board_ids[id] = true }
         
         file = Tempfile.new(['home-board', '.obz'])
         path = file.path
@@ -69,7 +69,7 @@ More information about the file formats being used is available at https://www.o
       sidebar_board = Board.find_by_path(board['id'] || board['key']) if board['key']
       if sidebar_board
         matched_board_ids[sidebar_board.global_id] = true
-        sidebar_board.settings['downstream_board_ids'].each{|id| matched_board_ids[id] = true }
+        sidebar_board.downstream_board_ids.each{|id| matched_board_ids[id] = true }
           
         file = Tempfile.new(['sidebar-board', '.obz'])
         path = file.path

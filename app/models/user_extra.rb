@@ -115,7 +115,7 @@ class UserExtra < ApplicationRecord
       self.settings['board_tags'][tag] ||= []
       self.settings['board_tags'][tag] << board.global_id
       if downstream == true || downstream == 'true'
-        self.settings['board_tags'][tag] += board.settings['downstream_board_ids'] || []
+        self.settings['board_tags'][tag] += board.downstream_board_ids
       end
       self.settings['board_tags'][tag].uniq!
     end

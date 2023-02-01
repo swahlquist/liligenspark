@@ -241,6 +241,7 @@ module Sharing
       valid_deep_board_authors = {}
 
       # get the list of all possible downstream boards
+      # NOTE: shallow clones cannot be shared
       all_deep_board_ids = boards.map{|b| b.settings['downstream_board_ids'] || [] }.flatten.compact.uniq
       
       # for each explicitly-shared including-downstream board, mark all downstream boards

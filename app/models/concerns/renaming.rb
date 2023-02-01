@@ -64,7 +64,7 @@ module Renaming
     record = self
     to_key = (record_type == 'board') ? self.key : self.user_name
     raise "must be renamed already" if from_key == to_key
-    
+    raise "cannot rename for shallow clones" if @sub_id
     if record_type == 'board'
       # Stuff that's being updated
       # - Board.buttons[idx][load_board][key]

@@ -346,7 +346,7 @@ describe Relinking, :type => :model do
         {'load_board' => {'id' => b1.global_id}},
         {'load_board' => {'id' => b3.global_id}}
       ]
-      b3.replace_links!(b1, b2)
+      b3.replace_links!(b1.global_id, {id: b2.global_id, key: b2.key})
       expect(b3.settings['buttons']).to eq([
         {},
         {'id' => 2},
@@ -374,7 +374,7 @@ describe Relinking, :type => :model do
         {'load_board' => {'id' => b3.global_id}}
       ])
       BoardContent.generate_from(b3)
-      b3.replace_links!(b1, b2)
+      b3.replace_links!(b1.global_id, {id: b2.global_id, key: b2.key})
       expect(b3.buttons).to eq([
         {},
         {'id' => 2},
@@ -396,15 +396,15 @@ describe Relinking, :type => :model do
       expect(b1.settings['downstream_board_ids']).to eq([b1a.global_id])
       b2 = b1.copy_for(u2)
       expect(Board).to receive(:relink_board_for) do |user, opts|
-        boards = opts[:boards]
+        board_ids = opts[:board_ids]
         pending_replacements = opts[:pending_replacements]
         action = opts[:update_preference]
         expect(user).to eq(u2)
-        expect(boards.length).to eq(2)
-        expect(boards).to eq([b1, b1a])
+        expect(board_ids.length).to eq(2)
+        expect(board_ids).to eq([b1.global_id, b1a.global_id])
         expect(pending_replacements.length).to eq(2)
-        expect(pending_replacements[0]).to eq([b1, b2])
-        expect(pending_replacements[1][0]).to eq(b1a)
+        expect(pending_replacements[0]).to eq([b1.global_id, {id: b2.global_id, key: b2.key}])
+        expect(pending_replacements[1][0]).to eq(b1a.global_id)
         expect(action).to eq('update_inline')
       end
       Board.copy_board_links_for(u2, {:starting_old_board => b1, :starting_new_board => b2})
@@ -456,14 +456,14 @@ describe Relinking, :type => :model do
       expect(b1.settings['downstream_board_ids']).to eq([b1a.global_id])
       b2 = b1.copy_for(u2)
       expect(Board).to receive(:relink_board_for) do |user, opts|
-        boards = opts[:boards]
+        board_ids = opts[:board_ids]
         pending_replacements = opts[:pending_replacements]
         action = opts[:update_preference]
         expect(user).to eq(u2)
-        expect(boards.length).to eq(2)
-        expect(boards).to eq([b1, b1a])
+        expect(board_ids.length).to eq(2)
+        expect(board_ids).to eq([b1.global_id, b1a.global_id])
         expect(pending_replacements.length).to eq(1)
-        expect(pending_replacements[0]).to eq([b1, b2])
+        expect(pending_replacements[0]).to eq([b1.global_id, {id: b2.global_id, key: b2.key}])
         expect(action).to eq('update_inline')
       end
       Board.copy_board_links_for(u2, {:starting_old_board => b1, :starting_new_board => b2})
@@ -554,16 +554,16 @@ describe Relinking, :type => :model do
       expect(b1.settings['downstream_board_ids']).to eq([b1a.global_id])
       b2 = b1.copy_for(u3)
       expect(Board).to receive(:relink_board_for) do |user, opts|
-        boards = opts[:boards]
+        board_ids = opts[:board_ids]
         pending_replacements = opts[:pending_replacements]
         action = opts[:update_preference]
         expect(opts[:authorized_user]).to eq(u2)
         expect(user).to eq(u3)
-        expect(boards.length).to eq(2)
-        expect(boards).to eq([b1, b1a])
+        expect(board_ids.length).to eq(2)
+        expect(board_ids).to eq([b1.global_id, b1a.global_id])
         expect(pending_replacements.length).to eq(2)
-        expect(pending_replacements[0]).to eq([b1, b2])
-        expect(pending_replacements[1][0]).to eq(b1a)
+        expect(pending_replacements[0]).to eq([b1.global_id, {id: b2.global_id, key: b2.key}])
+        expect(pending_replacements[1][0]).to eq(b1a.global_id)
         expect(action).to eq('update_inline')
       end
       Board.copy_board_links_for(u3, {:starting_old_board => b1, :starting_new_board => b2, :authorized_user => u2})
@@ -580,15 +580,15 @@ describe Relinking, :type => :model do
       expect(b1.settings['downstream_board_ids']).to eq([b1a.global_id])
       b2 = b1.copy_for(u2)
       expect(Board).to receive(:relink_board_for) do |user, opts|
-        boards = opts[:boards]
+        board_ids = opts[:board_ids]
         pending_replacements = opts[:pending_replacements]
         action = opts[:update_preference]
         expect(user).to eq(u2)
-        expect(boards.length).to eq(2)
-        expect(boards).to eq([b1, b1a])
+        expect(board_ids.length).to eq(2)
+        expect(board_ids).to eq([b1.global_id, b1a.global_id])
         expect(pending_replacements.length).to eq(2)
-        expect(pending_replacements[0]).to eq([b1, b2])
-        expect(pending_replacements[1][0]).to eq(b1a)
+        expect(pending_replacements[0]).to eq([b1.global_id, {id: b2.global_id, key: b2.key}])
+        expect(pending_replacements[1][0]).to eq(b1a.global_id)
         expect(action).to eq('update_inline')
       end
       Board.copy_board_links_for(u2, {:starting_old_board => b1, :starting_new_board => b2, :make_public => true})

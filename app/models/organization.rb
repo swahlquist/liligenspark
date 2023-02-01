@@ -1104,7 +1104,7 @@ class Organization < ActiveRecord::Base
   end
 
   def update_user_available_boards
-    self.attached_users.each{|u| u.schedule(:update_available_boards) }
+    self.attached_users('all').each{|u| u.schedule(:update_available_boards) }
   end
 
   def self.activation_code(org_or_user, opts)

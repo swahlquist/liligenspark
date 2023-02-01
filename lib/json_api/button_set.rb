@@ -13,7 +13,7 @@ module JsonApi::ButtonSet
       json['key'] = board.key
       json['name'] = board.settings && board.settings['name']
       json['full_set_revision'] = button_set.data['full_set_revision'] || 'none'
-      json['root_url'] = button_set.url_for(args[:permissions], board.settings['full_set_revision'])
+      json['root_url'] = button_set.url_for(args[:permissions], board.full_set_revision)
     end
     json['encryption_settings'] = button_set.instance_variable_get('@linked_encryption_settings') || button_set.data['extra_data_encryption']
     

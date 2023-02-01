@@ -709,7 +709,7 @@ class User < ActiveRecord::Base
     board_ids += root_board_ids
     root_boards = Board.find_all_by_global_id(root_board_ids)
     root_boards.each do |board|
-      board_ids += board.settings['downstream_board_ids'] || []
+      board_ids += board.downstream_board_ids || []
     end
     
     board_ids.uniq
@@ -1608,7 +1608,7 @@ class User < ActiveRecord::Base
       :authorized_user => User.whodunnit_user(PaperTrail.request.whodunnit)
     })
     ids = [starting_old_board_id]
-    ids += (starting_old_board.reload.settings['downstream_board_ids'] || []) if starting_old_board
+    ids += (starting_old_board.reload.downstream_board_ids || []) if starting_old_board
     self.update_available_boards
     # This was happening too slowly/unreliably in a separate bg job
 #    button_set = BoardDownstreamButtonSet.update_for(starting_new_board.global_id, true)
@@ -1650,9 +1650,9 @@ class User < ActiveRecord::Base
     }) || {}
     updated_ids = [starting_new_board_id]
     ids = [starting_old_board_id]
-    ids += (starting_old_board.reload.settings['downstream_board_ids'] || []) if starting_old_board
+    ids += (starting_old_board.reload.downstream_board_ids || []) if starting_old_board
     ids.each do |id|
-      updated_ids << change_hash[id].global_id if change_hash[id]
+      updated_ids << change_hash[id][:id] if change_hash[id]
     end
     res = {
       'affected_board_ids' => ids.uniq,

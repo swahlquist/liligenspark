@@ -2,8 +2,9 @@ module Relinking
   extend ActiveSupport::Concern
   
   def links_to?(board, skip_disabled_links=false)
+    board_id = board.is_a?(String) ? board : board.global_id
     (self.buttons || []).each do |button|
-      if button['load_board'] && button['load_board']['id'] == board.global_id
+      if button['load_board'] && button['load_board']['id'] == board_id
         if skip_disabled_links
           return !button['hidden'] && !button['link_disabled']
         else
@@ -23,6 +24,10 @@ module Relinking
   end
   
   def copy_for(user, opts=nil)
+    @@cnt ||= 0
+    @@cnt += 1
+    puts "copy #{self.key} #{@@cnt}"
+
     opts ||= {}
     make_public = opts[:make_public] || false
     copy_id = opts[:copy_id]
@@ -33,17 +38,31 @@ module Relinking
 
     raise "missing user" unless user
     if !self.board_content_id || self.board_content_id == 0
-      BoardContent.generate_from(self)
+      puts "  content lookup"
+      orig = Board.find_by(id: self.id)
+      BoardContent.generate_from(orig)
+      self.reload
     end
     if self.settings['protected'] && self.settings['protected']['vocabulary']
+      puts "  copyable check"
       if !self.copyable_if_authorized?(self.user)
         # If the board author isn't allowed to create a copy, then
         # don't allow it in a batch
         raise "not authorized to copy #{self.global_id} by #{self.user.global_id}"
       end
     end
-    board = Board.new(:user_id => user.id, :parent_board_id => self.id)
-    board.key = board.generate_board_key(self.key.split(/\//)[1])
+    board = Board.new(:user_id => user.id, :parent_board_id => self.id, settings: {})
+    orig_key = self.key
+    if @sub_id
+      orig_key = orig_key.split(/my:/)[1].sub(/:/, '/')
+      board.settings['shallow_source'] = {
+        'key' => self.key,
+        'id' => self.global_id
+      }
+      board.instance_variable_set('@shallow_source_changed', true)
+    end
+    puts "  generating board key"
+    board.key = board.generate_board_key(orig_key.split(/\//)[1])
     disconnected = false
     if disconnect && copier && self.allows?(copier, 'edit')
       board.settings['copy_parent_board_id'] = self.global_id
@@ -51,6 +70,7 @@ module Relinking
       disconnected = true
     end
     board.settings['copy_id'] = copy_id
+    puts "  looking up source board"
     board.settings['source_board_id'] = self.source_board.global_id
     board.settings['name'] = self.settings['name']
     if !prefix.blank? && board.settings['name']
@@ -65,6 +85,7 @@ module Relinking
     board.settings['description'] = self.settings['description']
     board.settings['protected'] = self.settings['protected']
     if board.settings['protected'] && board.settings['protected']['vocabulary']
+      puts "  checking protected vocab"
       if new_owner && self.allows?(copier, 'edit') && !self.settings['protected']['sub_owner']
         # copyable_if_authorized is already checked above
         # also ensure that new_owners can't create more new_owners
@@ -76,6 +97,7 @@ module Relinking
         board.settings['protected']['sub_owner'] = self.settings['protected']['sub_owner'] || self.user.global_id != user.global_id
       end
     end
+    puts "  setting attributes"
     board.settings['image_url'] = self.settings['image_url']
     board.settings['locale'] = self.settings['locale']
     board.settings['locales'] = self.settings['locales']
@@ -99,11 +121,13 @@ module Relinking
     # board, and while that is useful for tracking, it's actually redundant
     # so we can postpone it and save some time for batch copies
     board.instance_variable_set('@map_later', true)
+    puts "  saving"
     board.save!
+    puts "  done saving"
     if !user.instance_variable_get('@already_updating_available_boards')
       user.update_available_boards
     end
-    # puts "  done COPYING #{self.global_id}"
+    puts "  done COPYING #{board.key}"
     board
   end
   
@@ -156,21 +180,25 @@ module Relinking
     return false
   end
   
-  def replace_links!(old_board, new_board)
+  def replace_links!(old_board_id, new_board_ref)
     buttons = self.buttons
+    raise "old_board must be an id" unless old_board_id.is_a?(String)
+    raise "new_board must be a ref" unless new_board_ref.is_a?(Hash)
+    raise "can't change links for a shallow clone" if @sub_id
     buttons.each_with_index do |button, idx|
-      if button['load_board'] && button['load_board']['id'] == old_board.global_id
-        button['load_board']['id'] = new_board.global_id
-        button['load_board']['key'] = new_board.key
+      if button['load_board'] && button['load_board']['id'] == old_board_id
+        button['load_board']['id'] = new_board_ref[:id]
+        button['load_board']['key'] = new_board_ref[:key]
       end
     end
     self.settings['buttons'] = buttons
-    self.settings['downstream_board_ids'] = (self.settings['downstream_board_ids'] || []).map{|id| id == old_board.global_id ? new_board.global_id : id }
+    self.settings['downstream_board_ids'] = (self.settings['downstream_board_ids'] || []).map{|id| id == old_board_id ? new_board_ref[:id] : id }
   end
 
   def slice_locales(locales_to_keep, ids_to_update=[], updater=nil)
     updater = User.find_by_path(updater) if updater.is_a?(String)
     return {sliced: false, reason: 'id not included'} unless ids_to_update.include?(self.global_id)
+    return {slices: false, reason: 'cannot slice shallow clones'} if @sub_id
     all_locales = [self.settings['locale']]
     trans = BoardContent.load_content(self, 'translations') || {}
     trans.each do |key, hash|
@@ -195,8 +223,9 @@ module Relinking
     self.save!
     sliced_ids = [self.global_id]
     if ids_to_update.length > 1
-      board_ids = ids_to_update & (self.settings['downstream_board_ids'] || [])
-      Board.find_batches_by_global_id(board_ids) do |board|
+      board_ids = ids_to_update & (self.downstream_board_ids || [])
+      Board.find_batches_by_global_id(board_ids, batch_size: 50) do |board|
+        # TODO: for shallow clones, create copies instead
         next unless board.allows?(updater, 'edit')
         res = board.slice_locales(locales_to_keep, [board.global_id], updater)
         sliced_ids << board.global_id if res[:sliced]
@@ -207,6 +236,7 @@ module Relinking
 
   def update_default_locale!(old_default_locale, new_default_locale)
     if new_default_locale && self.settings['locale'] == old_default_locale && old_default_locale != new_default_locale
+      raise "can't change locale for a shallow clone" if @sub_id
       buttons = self.buttons
       trans = BoardContent.load_content(self, 'translations') || {}
       anything_translated = false
@@ -266,7 +296,7 @@ module Relinking
         board_ids += [user.settings['preferences']['home_board']['id']] 
         board = Board.find_by_path(user.settings['preferences']['home_board']['id'])
         board.track_downstream_boards!
-        downstream_ids = board.settings['downstream_board_ids']
+        downstream_ids = board.downstream_board_ids
         if opts[:valid_ids]
           downstream_ids = downstream_ids & opts[:valid_ids]
         end
@@ -282,20 +312,19 @@ module Relinking
         sidebar_ids[brd['key']] = board.global_id
         board_ids += [board.global_id]
         board.track_downstream_boards!
-        downstream_ids = board.settings['downstream_board_ids']
+        downstream_ids = board.downstream_board_ids
         if opts[:valid_ids]
           downstream_ids = downstream_ids & opts[:valid_ids]
         end
         board_ids += downstream_ids
       end
 
-      boards = Board.find_all_by_path(board_ids)
-      pending_replacements = [[starting_old_board, starting_new_board]]
+      pending_replacements = [[starting_old_board.global_id, {id: starting_new_board.global_id, key: starting_new_board.key}]]
 
       # we will need to update user preferences 
       # if the home board or sidebar changed
       user_home_changed = relink_board_for(user, {
-        :boards => boards, 
+        :board_ids => board_ids,
         :copy_id => starting_new_board.global_id, 
         :old_default_locale => opts[:old_default_locale],
         :new_default_locale => opts[:new_default_locale],
@@ -312,7 +341,7 @@ module Relinking
         if @replacement_map && @replacement_map[id]
           idx = sidebar.index{|s| s['key'] == key }
           board = @replacement_map[id]
-          sidebar[idx]['key'] = board.key
+          sidebar[idx]['key'] = board[:key]
           sidebar_changed = true
         end
       end
@@ -323,8 +352,8 @@ module Relinking
           new_home = user_home_changed
           user.update_setting({
             'preferences' => {'home_board' => {
-              'id' => new_home.global_id,
-              'key' => new_home.key
+              'id' => new_home[:id],
+              'key' => new_home[:key]
             }}
           })
         end
@@ -348,29 +377,28 @@ module Relinking
       starting_old_board = opts[:starting_old_board] || raise("starting_old_board required")
       starting_new_board = opts[:starting_new_board] || raise("starting_new_board required")
       make_public = opts[:make_public] || false
-      board_ids = starting_old_board.settings['downstream_board_ids'] || []
+      board_ids = starting_old_board.downstream_board_ids || []
       if opts[:valid_ids]
         board_ids = board_ids & opts[:valid_ids]
       end
-      boards = Board.find_all_by_path(board_ids)
-      pending_replacements = [[starting_old_board, starting_new_board]]
+      pending_replacements = [[starting_old_board.global_id, {id: starting_new_board.global_id, key: starting_new_board.key}]]
       # puts "starting copies"
       user.instance_variable_set('@already_updating_available_boards', true)
-      boards.each do |orig|
+      Board.find_batches_by_global_id(board_ids, batch_size: 50) do |orig|
         if !orig.allows?(user, 'view') && !orig.allows?(auth_user, 'view')
           # TODO: make a note somewhere that a change should have happened but didn't due to permissions
         else
           copy = orig.copy_for(user, make_public: make_public, copy_id: starting_new_board.global_id, prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: opts[:copier])
           copy.update_default_locale!(opts[:old_default_locale], opts[:new_default_locale])
-          pending_replacements << [orig, copy]
+          pending_replacements << [orig.global_id, {id: copy.global_id, key: copy.key}]
         end
       end
       user.instance_variable_set('@already_updating_available_boards', false)
-      boards = [starting_old_board] + boards
+      board_ids = [starting_old_board.global_id] + board_ids
       # puts "done with copies"
 
       relink_board_for(user, {
-        :boards => boards, 
+        :board_ids => board_ids, 
         :copy_id => starting_new_board.global_id, 
         :pending_replacements => pending_replacements, 
         :update_preference => 'update_inline', 
@@ -389,52 +417,84 @@ module Relinking
     
     def relink_board_for(user, opts)
       auth_user = opts[:authorized_user]
-      boards = opts[:boards] || raise("boards required")
+      board_ids = opts[:board_ids] || raise("boards required")
       pending_replacements = opts[:pending_replacements] || raise("pending_replacements required")
       update_preference = opts[:update_preference]
       # maintain mapping of old boards to their replacements
       replacement_map = {}
-      pending_replacements.each do |old_board, new_board|
-        replacement_map[old_board.global_id] = new_board
+      pending_replacements.each do |old_board_id, new_board_ref|
+        replacement_map[old_board_id] = new_board_ref
       end
       # for each board that needs replacing...
       boards_to_save = []
+      board_ids_to_re_save = []
       user.instance_variable_set('@already_updating_available_boards', true)
       while pending_replacements.length > 0
-        old_board, new_board = pending_replacements.shift
+        old_board_id, new_board_ref = pending_replacements.shift
         # iterate through all the original boards and look for references to the old board
-        boards.each do |orig|
-          board = replacement_map[orig.global_id] || orig
+        to_save_hash = {}
+        boards_to_save.each{|b| to_save_hash[b.global_id] = b }
+        Board.find_batches_by_global_id(board_ids, batch_size: 50) do |orig|
+          board = to_save_hash[orig.global_id] || orig
+          if replacement_map[orig.global_id]
+            board = to_save_hash[replacement_map[orig.global_id][:id]]
+            board = Board.find_by_global_id(replacement_map[orig.global_id][:id])
+            board ||= orig
+          end
           # find all boards in the user's set that point to old_board_id
-          if board.links_to?(old_board)
+          if board.links_to?(old_board_id)
             if !board.allows?(user, 'view') && !board.allows?(auth_user, 'view')
               # TODO: make a note somewhere that a change should have happened but didn't due to permissions
-            elsif update_preference == 'update_inline' && board.allows?(user, 'edit')
+            elsif update_preference == 'update_inline' && !board.instance_variable_get('@sub_id') && board.allows?(user, 'edit')
               # if you explicitly said update instead of replace my boards, then go ahead
               # and update in-place.
-              board.replace_links!(old_board, new_board)
-              boards_to_save << board
-            elsif !board.just_for_user?(user)
+              board.replace_links!(old_board_id, new_board_ref)
+              if board_ids.length > 200
+                board.save_subtly
+                board_ids_to_re_save << board.global_id
+              else
+                boards_to_save << board
+                to_save_hash[board.global_id] = board
+              end
+            elsif board.instance_variable_get('@sub_id') || !board.just_for_user?(user)
               # if it's not already private for the user, make a private copy for the user 
               # and add to list of replacements to handle.
               copy = board.copy_for(user, make_public: opts[:make_public], copy_id: opts[:copy_id], prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: opts[:copier])
-              copy.replace_links!(old_board, new_board)
-              boards_to_save << copy
-              replacement_map[board.global_id] = copy
-              pending_replacements << [board, copy]
+              copy.replace_links!(old_board_id, new_board_ref)
+              if board_ids.length > 200
+                copy.save_subtly
+                board_ids_to_re_save << copy.global_id
+              else
+                boards_to_save << copy
+                to_save_hash[copy.global_id] = copy
+              end
+              replacement_map[board.global_id] = {id: copy.global_id, key: copy.key}
+              pending_replacements << [board.global_id, {id: copy.global_id, key: copy.key}]
             else
               # if it's private for the user, and no one else is using it, go ahead and
               # update it in-place
-              board.replace_links!(old_board, new_board)
-              boards_to_save << board
+              board.replace_links!(old_board_id, new_board_ref)
+              if board_ids.length > 200
+                board.save_subtly
+                board_ids_to_re_save << board.global_id
+              else
+                boards_to_save << board
+                to_save_hash[board.global_id] = board
+              end
             end
           else
           end
         end
+        boards_to_save.uniq!
+        board_ids_to_re_save.uniq!
       end
       user.instance_variable_set('@already_updating_available_boards', false)
       user.update_available_boards
       boards_to_save.uniq.each do |brd|
+        brd.update_default_locale!(opts[:old_default_locale], opts[:new_default_locale])
+        brd.save
+      end
+      Board.find_batches_by_global_id(board_ids_to_re_save, batch_size: 50) do |brd|
         brd.update_default_locale!(opts[:old_default_locale], opts[:new_default_locale])
         brd.save
       end

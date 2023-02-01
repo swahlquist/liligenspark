@@ -9,6 +9,16 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
   include Replicate
 
   before_save :generate_defaults
+
+  def board
+    if self.user_id
+      Board.find_by_global_id("#{self.board_id}-#{self.user_id}")
+    else
+      super
+    end
+  end
+
+  # TODO: huge buttonsets need to be pruned
   
   def generate_defaults(force=false)
     self.data ||= {}
@@ -43,7 +53,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     boards = Board.find_all_by_path(board_ids).uniq
     if allow_slow
       boards.each do |brd|
-        if !brd.board_downstream_button_set || brd.board_downstream_button_set.data['full_set_revision'] != brd.settings['full_set_revision']
+        if !brd.board_downstream_button_set || brd.board_downstream_button_set.data['full_set_revision'] != brd.settings.full_set_revision
           BoardDownstreamButtonSet.update_for(brd, true)
           brd.reload
           brd.board_downstream_button_set.reload if brd.board_downstream_button_set
@@ -251,13 +261,13 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       end
     end
     return {success: false, error: 'could not generate button set'} unless button_set && button_set.board
-    if button_set_revision != board.settings['full_set_revision'] && !just_generated
+    if button_set_revision != board.full_set_revision && !just_generated
       # Force-update the button set if it's stale
       just_generated = true
       self.update_for(board_id, true)
       button_set = board.reload.board_downstream_button_set
     end
-    url = button_set.board && button_set.url_for(user, button_set.board.settings['full_set_revision'], true)
+    url = button_set.board && button_set.url_for(user, button_set.board.full_set_revision, true)
     return {success: true, state: 'url_for', url: url} if url
     unviewable_ids = button_set.instance_variable_get('@unviewable_ids') || []
     remote_path = button_set.instance_variable_get('@remote_path')
@@ -364,19 +374,21 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     if board
       # Prevent loop from running forever
       traversed_ids << board.global_id
-      set = BoardDownstreamButtonSet.find_or_create_by(:board_id => board.id) rescue nil
-      set ||= BoardDownstreamButtonSet.find_or_create_by(:board_id => board.id)
+      set = BoardDownstreamButtonSet.find_or_create_by(:board_id => board.id, :user_id => board.instance_variable_get('@sub_id')) rescue nil
+      set ||= BoardDownstreamButtonSet.find_or_create_by(:board_id => board.id, :user_id => board.instance_variable_get('@sub_id'))
       set.data['source_id'] = nil if set.data['source_id'] == set.global_id
       # Don't re-update if you've updated more recently than when this
       # job was scheduled
       return if self.last_scheduled_stamp && (set.updated_at.to_i - 5) > self.last_scheduled_stamp
       
-      set.data['full_set_revision'] = board.settings['full_set_revision']
+      # TODO: board.full_set_revision is dependent on @sub_id now
+      set.data['full_set_revision'] = board.full_set_revision
       existing_board_ids = (set.data || {})['linked_board_ids'] || []
+      # TODO: a @sub_id version should only travel upstream while still in the known @sub_id list (somehow)
       Board.find_batches_by_global_id(board.settings['immediately_upstream_board_ids'] || [], :batch_size => 3) do |brd|
         set.data['found_upstream_board'] = true
         just_updated = false
-        if !brd.board_downstream_button_set || brd.board_downstream_button_set.data['full_set_revision'] != brd.settings['full_set_revision']
+        if !brd.board_downstream_button_set || brd.board_downstream_button_set.data['full_set_revision'] != brd.full_set_revision
           BoardDownstreamButtonSet.update_for(brd.global_id, false, traversed_ids)
           just_updated = true
           brd.reload
@@ -574,7 +586,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         # so I changed it to only update everyone with no source, since 
         # bs.buttons should update to the right source eventually
         if bs && bs.global_id != set.global_id && !bs.data['source_id'] # bs.data['source_id'] != set.global_id
-          bs.data['full_set_revision'] = brd.settings['full_set_revision']
+          bs.data['full_set_revision'] = brd.full_set_revision
           bs.data['source_id'] = set.global_id
           bs.data['buttons'] = nil
           bs.save
