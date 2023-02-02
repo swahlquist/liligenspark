@@ -18,8 +18,6 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     end
   end
 
-  # TODO: huge buttonsets need to be pruned
-  
   def generate_defaults(force=false)
     self.data ||= {}
     self.data['remote_salt'] ||= GoSecure.nonce('remote_salt')
@@ -53,7 +51,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     boards = Board.find_all_by_path(board_ids).uniq
     if allow_slow
       boards.each do |brd|
-        if !brd.board_downstream_button_set || brd.board_downstream_button_set.data['full_set_revision'] != brd.settings.full_set_revision
+        if !brd.board_downstream_button_set || brd.board_downstream_button_set.data['full_set_revision'] != brd.full_set_revision
           BoardDownstreamButtonSet.update_for(brd, true)
           brd.reload
           brd.board_downstream_button_set.reload if brd.board_downstream_button_set
@@ -538,7 +536,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
 
             button_data.keys.each{|k| button_data.delete(k) if button_data[k] == nil }
             # check for any linked buttons
-            if button['load_board'] && button['load_board']['id']
+            # (unless it's a meta_home link, then it should have its own button set)
+            if button['load_board'] && button['load_board']['id'] && !button['meta_home']
               linked_board = boards_hash[button['load_board']['id']]
               linked_board ||= Board.find_by_global_id(button['load_board']['id'])
               # hidden or disabled links shouldn't be tracked (why not???)
