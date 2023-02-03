@@ -79,7 +79,7 @@ module Relinking
       board.settings['prefix'] = prefix
     end
     board.settings['description'] = self.settings['description']
-    board.settings['protected'] = {}.merge(self.settings['protected'])
+    board.settings['protected'] = {}.merge(self.settings['protected']) if self.settings['protected']
     if board.settings['protected'] && board.settings['protected']['vocabulary']
       if new_owner && self.allows?(copier, 'edit') && !self.settings['protected']['sub_owner']
         # copyable_if_authorized is already checked above
