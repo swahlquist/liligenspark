@@ -25,7 +25,7 @@ export default modal.ModalController.extend({
   deleting_boards_count: computed('model.board', 'hierarchy', function() {
     var board = this.get('model.board');
     var other_board_ids = board.get('downstream_board_ids');
-    if(this.get('hierarchy')) {
+    if(this.get('hierarchy') && this.get('hierarchy').selected_board_ids) {
       other_board_ids = this.get('hierarchy').selected_board_ids();
     }
     return other_board_ids.length;
@@ -39,7 +39,7 @@ export default modal.ModalController.extend({
       var other_boards = [];
       if(this.get('delete_downstream')) {
         var other_board_ids = board.get('downstream_board_ids');
-        if(this.get('hierarchy') && !this.get('hierarchy.error')) {
+        if(this.get('hierarchy') && !this.get('hierarchy.error') && this.get('hierarchy').selected_board_ids) {
           other_board_ids = this.get('hierarchy').selected_board_ids();
         }
   

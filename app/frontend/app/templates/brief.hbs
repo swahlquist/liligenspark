@@ -446,11 +446,6 @@
         <div class='col-sm-3 col-sm-offset-3' style="text-align: right;">
           {{#unless app_state.installed_app}}
             <a href="https://github.com/CoughDrop" target="_blank">{{t "Developers" key='developers'}}</a> <span class='text-muted'>|</span>
-            {{#if persistence.online}}
-              {{#if app_state.domain_settings.full_domain}}
-                {{#link-to "jobs"}}{{t "Jobs" key='jobs'}}{{/link-to}} <span class='text-muted'>|</span>
-              {{/if}}
-            {{/if}}
           {{/unless}}
           {{#link-to "privacy"}}{{t "Privacy" key='privacy'}}{{/link-to}} <span class='text-muted'>|</span>
           {{#link-to "terms"}}{{t "Terms" key='terms'}}{{/link-to}}

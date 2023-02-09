@@ -29,7 +29,7 @@ export default modal.ModalController.extend({
   },
   start_copying: function() {
     var board_ids_to_include = null;
-    if(this.get('hierarchy')) {
+    if(this.get('hierarchy') && this.get('hierarchy').selected_board_ids) {
       board_ids_to_include = this.get('hierarchy').selected_board_ids();
       this.set('hierarchy', null);
     }
@@ -79,9 +79,10 @@ export default modal.ModalController.extend({
             });
           });
         } else if(_this.get('model.symbol_library') && _this.get('model.symbol_library') != 'original') {
-          return board.reload(true)
+          return board.reload(true);
         } else {
-          return RSVP.resolve();
+          return board.reload(true);
+          // return RSVP.resolve();
         }
       });
 
