@@ -47,7 +47,7 @@ class Board < ActiveRecord::Base
   add_permissions('view', ['read_boards']) {|user| !self.public && user.can_view?(self) }
   add_permissions('view', 'edit', 'delete', 'share') {|user| user.can_edit?(self) }
   # for a shallow clone, you need read permission on the original, and model permission on the shallow user
-  add_permissions('view', 'edit') {|user| @sub_id && (user.can_view?(self) && @sub_global.allows?(user, 'model')) }
+  add_permissions('view', 'edit') {|user| @sub_id && (self.public || user.can_view?(self)) && @sub_global.allows?(user, 'model') }
   # explicitly-shared boards are viewable
 #  add_permissions('view', ['read_boards']) {|user| self.shared_with?(user) } # should be redundant due to board_caching
   # the author's supervisors can view the author's boards
@@ -165,7 +165,7 @@ class Board < ActiveRecord::Base
   
   def button_set_id
     if @sub_id
-      bs = BoardDownstreamButtonSet.find_by(:board_id => self.id, :user_id => User.local_ids(@sub_id)[0])
+      bs = BoardDownstreamButtonSet.find_by(:board_id => self.id, :user_id => User.local_ids([@sub_id])[0])
       id = bs && bs.global_id
     else
       id = self.settings && self.settings['board_downstream_button_set_id']
@@ -182,7 +182,7 @@ class Board < ActiveRecord::Base
   def board_downstream_button_set
     bs = nil
     if @sub_id
-      bs = BoardDownstreamButtonSet.find_by(:board_id => self.id, :user_id => User.local_ids(@sub_id)[0])
+      bs = BoardDownstreamButtonSet.find_by(:board_id => self.id, :user_id => User.local_ids([@sub_id])[0])
     elsif self.settings && self.settings['board_downstream_button_set_id']
       bs = BoardDownstreamButtonSet.find_by_global_id(self.settings['board_downstream_button_set_id'])
     else
@@ -208,11 +208,9 @@ class Board < ActiveRecord::Base
     if self.public && self.home_popularity && self.settings && self.settings['home_board']
       # TODO: increment counter for this board with an expiration
       #    If the counter gets high enough, mark this as a common board
-      #    and schedule a future action to generate a zip-sync for faster downloading
+      #    and try to optimize for future use
       # TODO: also in that case, schedule an action to map all of the symbol libraries
       #    for the board set to get even faster symbol switching
-      # PROBLEM: you can't really create a zip of all symbols for fast downloading
-      #    because of skin tones, I guess you could at least do it for non-skinned images
     end
   end
 

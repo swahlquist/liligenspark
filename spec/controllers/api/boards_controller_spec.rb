@@ -602,6 +602,64 @@ describe Api::BoardsController, :type => :controller do
       expect(json['deleted']).to eq(nil)
       expect(json['never_existed']).to eq(nil)
     end
+
+    it "should return a shallow clone if specified" do
+      u = User.create
+      b = Board.create(user: u, public: true)
+      b.settings['name'] = 'a'
+      b.save
+      token_user
+      get :show, params: {id: "#{b.global_id}-#{@user.global_id}"}
+      json = assert_success_json
+      expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
+      expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
+      expect(json['board']['name']).to eq("a")
+
+      get :show, params: {id: "#{@user.user_name}/my:#{b.key.sub(/\//, ':')}"}
+      json = assert_success_json
+      expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
+      expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
+      expect(json['board']['name']).to eq("a")
+    end
+
+    it "should not allow access to an unauthorized shallow clone" do
+      u = User.create
+      b = Board.create(user: u)
+      token_user
+      get :show, params: {id: "#{b.global_id}-#{@user.global_id}"}
+      assert_unauthorized
+      
+      get :show, params: {id: "#{@user.user_name}/my:#{b.key.sub(/\//, ':')}"}
+      assert_unauthorized
+    end
+
+    it "should retrieve an updated shallow clone if edited" do
+      u = User.create
+      b = Board.create(user: u)
+      b.settings['name'] = 'a'
+      b.save
+      token_user
+      bb = Board.find_by_path("#{b.global_id}-#{@user.global_id}")
+      b2 = bb.copy_for(@user)
+      b2.settings['name'] = 'b'
+      b2.save
+
+      get :show, params: {id: "#{b.global_id}-#{@user.global_id}"}
+      json = assert_success_json
+      expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
+      expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
+      expect(json['board']['name']).to eq("b")
+
+      get :show, params: {id: "#{@user.user_name}/my:#{b.key.sub(/\//, ':')}"}
+      json = assert_success_json
+      expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
+      expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
+      expect(json['board']['name']).to eq("b")
+    end
+
+    it "should retrieve the original shallow clone if the updated clone is deleted" do
+      write_this_test
+    end
   end
   
   describe "create" do
@@ -1054,7 +1112,7 @@ describe Api::BoardsController, :type => :controller do
     it "should error on not found" do
       token_user
       post :star, params: {:board_id => "1_1"}
-      assert_not_found
+      assert_not_found('1_1')
     end
     
     it "should star the board and return a json response" do
@@ -1077,7 +1135,7 @@ describe Api::BoardsController, :type => :controller do
     it "should error on not found" do
       token_user
       delete :star, params: {:board_id => "1_1"}
-      assert_not_found
+      assert_not_found('1_1')
     end
 
     it "should star the board and return a json response" do

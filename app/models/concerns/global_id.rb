@@ -251,13 +251,13 @@ module GlobalId
           return nil unless user
           ue = user && user.user_extra
           res = nil
-          if ue && ue.settings && ue.settings['replaced_boards'] && ue.settings['replaced_boards'][orig_path.down]
-            res = find_by_global_id(ue.settings['replaced_boards'][orig_path])
+          if ue && ue.settings && ue.settings['replaced_boards'] && ue.settings['replaced_boards'][orig_path.downcase]
+            res = find_by_global_id(ue.settings['replaced_boards'][orig_path.downcase])
             user = nil
           else
             res = find_by(:key => orig_path)
           end
-          return nil unless res && user
+          return nil unless res
           if user
             res.instance_variable_set('@sub_id', user.global_id)
             res.instance_variable_set('@sub_global', user)

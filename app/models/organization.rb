@@ -1228,7 +1228,7 @@ class Organization < ActiveRecord::Base
 
       klass = code[0] == '9' ? User : Organization
       type = code[0] == '2' ? 'supporter' : 'communicator'
-      rest = code[1..-1]
+      rest = code[1..-1] || ''
       id_part = rest[0..-11]
       verifier = rest[-10..-1]
       return false unless verifier
