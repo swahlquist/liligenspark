@@ -308,16 +308,16 @@ describe GlobalId, :type => :model do
         expect(bs.length).to eq(3)
 
         paths = [
-          b1.global_id,
-          b2.global_id,
-          "#{b1.global_id}-#{u3.global_id}",
-          "#{u1.global_id}-#{u1.global_id}",
-          "#{b2.global_id}-#{b2.global_id}",
-          b3.key,
-          "#{u3.user_name}/my:#{b4.key.sub(/\//, ':')}",
-          "#{u1.user_name}/my:#{b2.key.sub(/\//, ':')}",
-          "#{u2.user_name}/mine:#{b2.key.sub(/\//, ':')}",
-          "#{u2.user_name}/my:#{u2.user_name}",
+          b1.global_id, # b1
+          b2.global_id, # b2
+          "#{b1.global_id}-#{u3.global_id}", # b4
+          "#{u1.global_id}-#{u1.global_id}", # garbage
+          "#{b2.global_id}-#{b2.global_id}", # garbage
+          b3.key, # b3
+          "#{u3.user_name}/my:#{b4.key.sub(/\//, ':')}", # b5
+          "#{u1.user_name}/my:#{b2.key.sub(/\//, ':')}", # b2-u1
+          "#{u2.user_name}/mine:#{b2.key.sub(/\//, ':')}", # garbage
+          "#{u2.user_name}/my:#{u2.user_name}", # garbage
         ]
         bs = Board.find_all_by_path(paths)
         expect(bs.length).to eq(6)
