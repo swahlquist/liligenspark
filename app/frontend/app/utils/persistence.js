@@ -593,7 +593,7 @@ var persistence = EmberObject.extend({
           var buff = new Uint8Array(res);
           var str = buff.reduce((acc, i) => acc += String.fromCharCode.apply(null, [i]), '')
           try {
-            return JSON.parse(str);
+            return persistence.bg_parse_json(str);
           } catch(e) {
             return RSVP.reject({error: 'JSON parse failed on decrypted content', err: e});
           }
@@ -601,7 +601,7 @@ var persistence = EmberObject.extend({
       });
     } else {
       try {
-        return RSVP.resolve(JSON.parse(str));
+        return persistence.bg_parse_json(str);
       } catch(e) {
         return RSVP.reject({error: 'JSON parse failed', err: e});
       }
@@ -615,28 +615,70 @@ var persistence = EmberObject.extend({
       });
     });
   },
+  bg_parse_json: function(str) {
+    if(!window.Worker) {
+      try {
+        return RSVP.resolve(JSON.parse(str))
+      } catch(e) { 
+        return RSVP.reject({error: "error parsing JSON without web worker"})
+      };
+    }
+    if(!persistence.bg_parser) {
+      persistence.bg_parser = {callbacks: {}};
+      var blob = new Blob([
+        'this.onmessage = function(message) {\n' +
+          'try {\n' + 
+            'postMessage({id: message.data.id, data: JSON.parse(message.data.str)});\n' +
+          '} catch(e) { postMessage({id: message.data.id, error: true}); }\n' + 
+        '};'
+        ], { type: "text/javascript" });
+      var workerUrl = URL.createObjectURL(blob);
+  
+      var w = new Worker(workerUrl/*"worker.js"*/);
+      w.onmessage = function(message) {
+        var cb = persistence.bg_parser.callbacks[message.data.id];
+        if(cb) {
+          if(message.data.error) {
+            cb.reject({error: 'error parsing JSON on web worker'});
+          } else {
+            cb.resolve(message.data.data);
+          }  
+        }
+      };
+      persistence.bg_parser.worker = w;
+    }
+    var defer = RSVP.defer();
+    var message_id = Math.random() + "." + (new Date()).getTime();
+    persistence.bg_parser.callbacks[message_id] = defer;
+    persistence.bg_parser.worker.postMessage({id: message_id, str: str});
+    return defer.promise;
+  },
   find_json: function(url) {
+    // TODO: replace JSON.parse with webworker if too big:
+    // https://stackoverflow.com/questions/10494285/is-delegating-json-parse-to-web-worker-worthwile-in-chrome-extension-ff-addon
     var _this = this;
     return new RSVP.Promise(function(resolve, reject) {
       _this.find_url(url, 'json').then(function(uri) {
         if(typeof(uri) == 'string' && uri.match(/^data:/)) {
-          var json = null;
           try {
-            json = JSON.parse(atob(uri.split(/,/)[1]));
+            persistence.bg_parse_json(atob(uri.split(/,/)[1])).then(function(json) {
+              resolve(json);
+            }, function(err) {
+              CoughDrop.track_error("No JSON dataURI");
+              reject({error: "No JSON dataURI result"});  
+            });
           } catch(e) {
             CoughDrop.track_error("error parsing JSON data URI", e);
             reject({error: "Error parsing JSON dataURI"});
           }
-          if(json) {
-            resolve(json);
-          } else {
-            CoughDrop.track_error("No JSON dataURI");
-            reject({error: "No JSON dataURI result"});
-          }
         } else if(typeof(uri) == 'string') {
-          var res = _this.ajax(uri + "?cr=" + Math.random(), {type: 'GET', dataType: 'json'});
+          var res = _this.ajax(uri + "?cr=" + Math.random(), {type: 'GET', dataType: 'text'});
           res.then(function(res) {
-            resolve(res);
+            persistence.bg_parse_json(res).then(function(json) { 
+              resolve(json);
+            }, function(err) {
+              reject(err);
+            });
           }, function(err) {
             if(err && err.message == 'error' && err.fakeXHR && err.fakeXHR.status == 0) {
               persistence.remove('dataCache', url);
@@ -663,28 +705,33 @@ var persistence = EmberObject.extend({
     return _this.store_url(url, 'json', encryption_settings).then(function(storage) {
       var data_uri = storage.data_uri || storage;
       var result = undefined;
-      if(typeof(data_uri) == 'string') {
+      if(typeof(data_uri) == 'string' && data_uri.match(/^data:/)) {
         try {
-          var result = JSON.parse(atob(data_uri.split(/,/)[1])) || [];
+          return persistence.bg_parse_json(atob(data_uri.split(/,/)[1])).then(function(result) {
+            return result || [];
+          });
         } catch(e) {
           console.error("json storage", e);
           return RSVP.reject({error: "Error parsing JSON dataURI storage"});
         }
       } else if(!json && storage && storage.local_url) {
         // Guaranteed to be a local URL, retrieve via AJAX
-        return persistence.ajax(storage.local_url, {type: 'GET', dataType: 'json'}).then(null, function(err) {
+        return persistence.ajax(storage.local_url, {type: 'GET', dataType: 'text'}).then(function(res) {
+          return persistence.bg_parse_json(res);
+        }, function(err) {
           if(err && err.message == 'error' && err.fakeXHR && err.fakeXHR.status == 0) {
             persistence.remove('dataCache', storage.local_url);
             persistence.url_cache[storage.local_url] = null;
           }
           return RSVP.reject(err);
         });
-      }
-      if(data_uri || result !== undefined) {
-        return result || json;
       } else {
-        console.error("nothing", url, json);
-        return RSVP.reject({error: "No JSON dataURI storage result"});
+        if(data_uri || result !== undefined) {
+          return result || json;
+        } else {
+          console.error("nothing", url, json);
+          return RSVP.reject({error: "No JSON dataURI storage result"});
+        }  
       }
     });
   },
