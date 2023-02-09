@@ -674,7 +674,7 @@ var persistence = EmberObject.extend({
         } else if(typeof(uri) == 'string') {
           var res = _this.ajax(uri + "?cr=" + Math.random(), {type: 'GET', dataType: 'text'});
           res.then(function(res) {
-            persistence.bg_parse_json(res).then(function(json) { 
+            persistence.bg_parse_json(res.text).then(function(json) { 
               resolve(json);
             }, function(err) {
               reject(err);
@@ -717,7 +717,7 @@ var persistence = EmberObject.extend({
       } else if(!json && storage && storage.local_url) {
         // Guaranteed to be a local URL, retrieve via AJAX
         return persistence.ajax(storage.local_url, {type: 'GET', dataType: 'text'}).then(function(res) {
-          return persistence.bg_parse_json(res);
+          return persistence.bg_parse_json(res.text);
         }, function(err) {
           if(err && err.message == 'error' && err.fakeXHR && err.fakeXHR.status == 0) {
             persistence.remove('dataCache', storage.local_url);
