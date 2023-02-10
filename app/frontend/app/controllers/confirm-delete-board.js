@@ -3,6 +3,7 @@ import RSVP from 'rsvp';
 import BoardHierarchy from '../utils/board_hierarchy';
 import { computed } from '@ember/object';
 import app_state from '../utils/app_state';
+import { later as runLater } from '@ember/runloop';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -67,10 +68,12 @@ export default modal.ModalController.extend({
         defer.start_delete = function() {
           _this.store.findRecord('board', id).then(function(b) {
             if(board.orphan || b.get('user_name') == board.get('user_name')) {
-              b.deleteRecord();
-              b.save().then(function() {
-                defer.resolve(b);
-              }, function(err) { defer.reject(err); });
+              runLater(function() {
+                b.deleteRecord();
+                b.save().then(function() {
+                  defer.resolve(b);
+                }, function(err) { defer.reject(err); });  
+              });
             }
           }, function(err) { defer.reject(err); });
         };
