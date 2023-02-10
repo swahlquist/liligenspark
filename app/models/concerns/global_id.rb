@@ -317,7 +317,7 @@ module GlobalId
       res += find_all_by_global_id(global_ids).to_a
       res += where(:key => keys).to_a unless keys.blank?
       res += where(:user_name => user_names).to_a unless user_names.blank?
-      res = res.uniq unless global_ids.any?{|id| id.match(/-/) } || sub_keys.length > 0
+      res = res.uniq unless global_ids.any?{|id| id && id.match(/-/) } || sub_keys.length > 0
       if sub_keys.length > 0
         where(key: sub_keys).each do |record|
           (sub_key_users[record.key.downcase] || []).each do |u|

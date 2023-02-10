@@ -454,7 +454,7 @@ module JsonApi::User
       end
       board_ids = user.board_set_ids
       # json['stats']['board_set'] = board_ids.uniq.length
-      json['stats']['user_boards'] = Board.where(:user_id => user.id).count
+      json['stats']['user_boards'] = Board.where(:user_id => user.id).select('id').first ? 1 : 0
       if json['permissions'] && json['permissions']['view_detailed']
         json['stats']['board_set_ids'] = board_ids.uniq
         if json['supervisees']

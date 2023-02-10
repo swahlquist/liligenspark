@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20230125210308) do
+ActiveRecord::Schema.define(version: 20230210210050) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -293,6 +293,7 @@ ActiveRecord::Schema.define(version: 20230125210308) do
     t.string   "profile_id"
     t.index ["author_id"], name: "index_log_sessions_on_author_id", using: :btree
     t.index ["device_id", "ended_at"], name: "index_log_sessions_on_device_id_and_ended_at", using: :btree
+    t.index ["needs_remote_push", "ended_at"], name: "index_log_sessions_on_needs_remote_push_and_ended_at", using: :btree
     t.index ["started_at", "log_type"], name: "index_log_sessions_on_started_at_and_log_type", using: :btree
     t.index ["user_id", "goal_id"], name: "index_log_sessions_on_user_id_and_goal_id", using: :btree
     t.index ["user_id", "highlighted"], name: "index_log_sessions_on_user_id_and_highlighted", using: :btree
