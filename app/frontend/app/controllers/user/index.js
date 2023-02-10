@@ -558,6 +558,12 @@ export default Controller.extend({
             _this.update_selected();
           }
         });
+      } else if(action == 'delete_orphans') {
+        modal.open('confirm-delete-board', {board: board, redirect: false, orphans: true}).then(function(res) {
+          if(res && res.update) {
+            _this.update_selected();
+          }
+        });
       } else {
         modal.open('confirm-remove-board', {action: action, tag: _this.get('current_tag'), board: board, user: this.get('model')}).then(function(res) {
           if(res && res.update) {

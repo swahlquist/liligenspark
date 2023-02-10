@@ -7,7 +7,7 @@ import app_state from '../utils/app_state';
 export default modal.ModalController.extend({
   opening: function() {
     this.set('hierarchy', null);
-    if(this.get('model.board')) {
+    if(this.get('model.board') && !this.get('model.orphans')) {
       this.get('model.board').reload();
       var _this = this;
       _this.set('hierarchy', {loading: true});
@@ -22,8 +22,12 @@ export default modal.ModalController.extend({
   using_user_names: computed('model.board.using_user_names', function() {
     return (this.get('model.board.using_user_names') || []).join(', ');
   }),
-  deleting_boards_count: computed('model.board', 'hierarchy', function() {
+  deleting_boards_count: computed('model.orphans', 'model.board', 'hierarchy', function() {
+    if(this.get('model.orgphans')) {
+      return this.get('model.board.children.length');
+    }
     var board = this.get('model.board');
+    // TODO: this will need to work differently for shallow copies
     var other_board_ids = board.get('downstream_board_ids');
     if(this.get('hierarchy') && this.get('hierarchy').selected_board_ids) {
       other_board_ids = this.get('hierarchy').selected_board_ids();
@@ -36,11 +40,15 @@ export default modal.ModalController.extend({
       var board = this.get('model.board');
       _this.set('model.deleting', true);
       var load_promises = [];
-      var other_boards = [];
+      var other_board_ids = [];
       if(this.get('delete_downstream')) {
-        var other_board_ids = board.get('downstream_board_ids');
-        if(this.get('hierarchy') && !this.get('hierarchy.error') && this.get('hierarchy').selected_board_ids) {
-          other_board_ids = this.get('hierarchy').selected_board_ids();
+        if(this.get('model.orphans')) {
+          other_board_ids = (this.get('model.board.children') || []).map(function(b) { return b.id; });
+        } else {
+          other_board_ids = board.get('downstream_board_ids');
+          if(this.get('hierarchy') && !this.get('hierarchy.error') && this.get('hierarchy').selected_board_ids) {
+            other_board_ids = this.get('hierarchy').selected_board_ids();
+          }  
         }
   
         other_board_ids.forEach(function(id) {
@@ -51,25 +59,47 @@ export default modal.ModalController.extend({
           }
         });
       }
-      board.deleteRecord();
-      var save = board.save();
+      var save = RSVP.resolve();
+      if(!this.get('model.orphans')) {
+        board.deleteRecord();
+        var save = board.save();  
+      }
 
-      var wait_for_loads = save.then(function() {
-        return RSVP.all_wait(load_promises);
-      });
-
-      var delete_others = wait_for_loads.then(function() {
-        var delete_promises = [];
-        other_boards.forEach(function(b) {
-          if(b.get('user_name') == board.get('user_name')) {
-            b.deleteRecord();
-            delete_promises.push(b.save());
-          }
+      var other_defers = [];
+      var next_defer = function() {
+        var d = other_defers.shift();
+        if(d) { d.start_delete(); }
+      };
+      other_board_ids.forEach(function(id) {
+        var defer = RSVP.defer();
+        defer.start_delete = function() {
+          _this.store.findRecord('board', id).then(function(b) {
+            if(b.get('user_name') == board.get('user_name')) {
+              b.deleteRecord();
+              b.save().then(function() {
+                defer.resolve(b);
+              }, function(err) { defer.reject(err); });
+            }
+          }, function(err) { defer.reject(err); });
+        };
+        defer.promise.then(function() {
+          next_defer();
+        }, function() {
+          next_defer();
         });
-        return RSVP.all_wait(delete_promises);
+        other_defers.push(defer);
       });
 
-      delete_others.then(function() {
+      var wait_for_deletes = save.then(function() {
+        return RSVP.all_wait(other_defers.map(function(d) { return d.promise; }));;
+      });
+
+      var concurrent_deletes = 5;
+      for(var idx = 0; idx < concurrent_deletes; idx ++) {
+        next_defer();
+      }
+
+      wait_for_deletes.then(function() {
         if(_this.get('model.redirect')) {
           app_state.return_to_index();
         }
