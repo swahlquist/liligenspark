@@ -55,8 +55,6 @@ export default modal.ModalController.extend({
       if(!this.get('model.orphans')) {
         board.deleteRecord();
         var save = board.save();  
-      } else {
-        board = board.board;
       }
 
       var other_defers = [];
