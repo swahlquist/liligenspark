@@ -17,7 +17,7 @@ export default modal.ModalController.extend({
         _this.set('hierarchy', {error: true});
       });
     }
-    this.set('delete_downstream', false);
+    this.set('delete_downstream', !!this.get('model.orphans'));
   },
   using_user_names: computed('model.board.using_user_names', function() {
     return (this.get('model.board.using_user_names') || []).join(', ');
@@ -43,21 +43,13 @@ export default modal.ModalController.extend({
       var other_board_ids = [];
       if(this.get('delete_downstream')) {
         if(this.get('model.orphans')) {
-          other_board_ids = (this.get('model.board.children') || []).map(function(b) { return b.id; });
+          other_board_ids = (this.get('model.board.children') || []).map(function(b) { return b.board.id; });
         } else {
           other_board_ids = board.get('downstream_board_ids');
           if(this.get('hierarchy') && !this.get('hierarchy.error') && this.get('hierarchy').selected_board_ids) {
             other_board_ids = this.get('hierarchy').selected_board_ids();
           }  
-        }
-  
-        other_board_ids.forEach(function(id) {
-          if(id != board.get('id')) {
-            load_promises.push(_this.store.findRecord('board', id).then(function(board) {
-              other_boards.push(board);
-            }));
-          }
-        });
+        }  
       }
       var save = RSVP.resolve();
       if(!this.get('model.orphans')) {

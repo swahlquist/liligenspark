@@ -559,6 +559,7 @@ export default Controller.extend({
           }
         });
       } else if(action == 'delete_orphans') {
+        board.name = board.board.name;
         modal.open('confirm-delete-board', {board: board, redirect: false, orphans: true}).then(function(res) {
           if(res && res.update) {
             _this.update_selected();
