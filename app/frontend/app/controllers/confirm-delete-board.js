@@ -55,6 +55,8 @@ export default modal.ModalController.extend({
       if(!this.get('model.orphans')) {
         board.deleteRecord();
         var save = board.save();  
+      } else {
+        board = board.board;
       }
 
       var other_defers = [];
@@ -66,7 +68,7 @@ export default modal.ModalController.extend({
         var defer = RSVP.defer();
         defer.start_delete = function() {
           _this.store.findRecord('board', id).then(function(b) {
-            if(b.get('user_name') == board.get('user_name')) {
+            if(board.orphan || b.get('user_name') == board.get('user_name')) {
               b.deleteRecord();
               b.save().then(function() {
                 defer.resolve(b);
