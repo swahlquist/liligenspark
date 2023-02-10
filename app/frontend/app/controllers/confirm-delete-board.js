@@ -23,7 +23,7 @@ export default modal.ModalController.extend({
     return (this.get('model.board.using_user_names') || []).join(', ');
   }),
   deleting_boards_count: computed('model.orphans', 'model.board', 'hierarchy', function() {
-    if(this.get('model.orgphans')) {
+    if(this.get('model.orphans')) {
       return this.get('model.board.children.length');
     }
     var board = this.get('model.board');
