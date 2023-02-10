@@ -29,6 +29,8 @@ module General
       begin
         method = self.send(method_name, *args)
         method.respond_to?(:deliver_now) ? method.deliver_now : method.deliver
+      rescue Aws::SES::Errors::InvalidParameterValue => e
+        # TODO: ...
       end
     end
   end
