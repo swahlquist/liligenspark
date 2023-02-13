@@ -117,7 +117,8 @@ module JsonApi::Board
       json['downstream_board_ids'] = board.downstream_board_ids
       if args[:permissions] && args[:permissions].respond_to?(:settings)
         # TODO: sharding
-        user_ids = UserBoardConnection.where(:board_id => board.id).map(&:user_id)
+        # TODO: this is timing out sometimes, maybe cache it daily or something?
+        user_ids = UserBoardConnection.where(:board_id => board.id).limit(20).map(&:user_id)
         user_names = User.where(:id => user_ids).select('id, user_name').map(&:user_name)
         valid_names = [args[:permissions].user_name] + (args[:permissions].settings['supervisees'] || []).map{|s| s['user_name'] }
         if args[:permissions].allows?(args[:permissions], 'admin_support_actions')

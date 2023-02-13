@@ -88,7 +88,7 @@ module JsonApi::User
       user.settings['preferences']['devices'] ||= {}
       nearest_device = nil
       if user.settings['preferences']['devices'].keys.length > 0
-        devices = ::Device.where(:user_id => user.id, :user_integration_id => nil).sort_by{|d| (d.settings['token_history'] || [])[-1] || 0 }.reverse
+        devices = ::Device.where(:user_id => user.id, :user_integration_id => nil).order('updated_at DESC').limit(10).sort_by{|d| (d.settings['token_history'] || [])[-1] || 0 }.reverse
         last_access = devices.map(&:last_used_at).compact.max
         json['last_access'] = last_access && last_access.iso8601
         if args[:device]
@@ -454,7 +454,7 @@ module JsonApi::User
       end
       board_ids = user.board_set_ids
       # json['stats']['board_set'] = board_ids.uniq.length
-      json['stats']['user_boards'] = Board.where(:user_id => user.id).select('id').first ? 1 : 0
+      json['stats']['user_boards'] = Board.where(:user_id => user.id).select('id').limit(1)[0] ? 1 : 0
       if json['permissions'] && json['permissions']['view_detailed']
         json['stats']['board_set_ids'] = board_ids.uniq
         if json['supervisees']
