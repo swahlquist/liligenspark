@@ -410,7 +410,7 @@ module JsonApi::User
       json['pending'] = true if user.settings['pending']
 
       json['membership_type'] = user.any_premium_or_grace_period? ? 'premium' : 'free'
-      json['memberhsip_type'] = 'lapsed' if json['membership_type'] == 'free' && user.fully_purchased?
+      json['membership_type'] = 'lapsed' if json['membership_type'] == 'free' && user.fully_purchased?
 
       json['stats'] = {}
       json['stats']['starred_boards'] = user.settings['starred_boards'] || 0
