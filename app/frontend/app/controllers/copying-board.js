@@ -88,7 +88,8 @@ export default modal.ModalController.extend({
 
       next.then(function(res) {
         if(modal.is_open('copying-board') || (res && res.translated)) {
-          app_state.set('board_reload_key', Math.random() + "-" + (new Date()).getTime());
+          board.reload();
+          board.set('should_reload', true);
           app_state.jump_to_board({
             id: board.get('id'),
             key: board.get('key')

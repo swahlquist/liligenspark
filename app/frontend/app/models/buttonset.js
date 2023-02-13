@@ -38,6 +38,9 @@ CoughDrop.Buttonset = DS.Model.extend({
     return res;
   },
   buttons_for_level: function(board_id, level) {
+    var key = board_id + "," + level;
+    var hash = this.get('board_level_counts') || {};
+    if(hash[key]) { return hash[key]; }
     var board_ids = {};
     var boards_to_check = [{id: board_id}];
     var buttons = this.get('buttons') || [];
@@ -68,6 +71,8 @@ CoughDrop.Buttonset = DS.Model.extend({
         }
       });
     }
+    hash[key] = count;
+    this.set('board_level_counts', hash);
     return count;
   },
   load_buttons: function(force) {

@@ -17,7 +17,13 @@ export default Route.extend({
   model: function(params) {
     CoughDrop.log.track('getting model');
     var res = this.modelFor('board');
+    if((app_state.get('board_reloads') || {})[res.get('id')]) {
+      res.set('should_reload', true);
+    }
     if(res.get('should_reload')) {
+      var do_reloads = (app_state.get('board_reloads') || {};
+      delete do_reloads[res.get('id')];
+      app_state.set('board_reloads', do_reloads);
       res.set('should_reload', false);
       CoughDrop.log.track('reloading');
       res.reload(!app_state.get('speak_mode'));

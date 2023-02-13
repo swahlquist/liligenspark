@@ -878,10 +878,11 @@ CoughDrop.Board = DS.Model.extend({
     // so if any of them are in-memory or in indexeddb, then we need to
     // reload or fetch them remotely to get the latest, updated version,
     // which will include the "my copy" information.
+    var do_reloads = app_state.get('board_reloads') || {};
     CoughDrop.store.peekAll('board').map(function(i) { return i; }).forEach(function(brd) {
       if(brd && affected_board_ids && affected_board_ids.indexOf(brd.get('id')) != -1) {
         if(!brd.get('isLoading') && !brd.get('isNew') && !brd.get('isDeleted')) {
-          brd.reload(true);
+          do_reloads[brd.get('id')] = true;
         }
         found_board_ids.push(brd.get('id'));
       }
@@ -889,10 +890,12 @@ CoughDrop.Board = DS.Model.extend({
     affected_board_ids.forEach(function(id) {
       if(found_board_ids.indexOf(id) == -1) {
         persistence.find('board', id).then(function() {
-          CoughDrop.store.findRecord('board', id).then(null, function() { });
+          // Mark as needing to be reloaded if ever retrieved
+          do_reloads[id] = true;
         }, function() { });
       }
     });
+    app_state.set('board_reloads', do_reloads);
   },
   button_visible: function(button_id) {
     var grid = this.get('grid');
