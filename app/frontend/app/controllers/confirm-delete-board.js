@@ -44,7 +44,7 @@ export default modal.ModalController.extend({
       var other_board_ids = [];
       if(this.get('delete_downstream')) {
         if(this.get('model.orphans')) {
-          other_board_ids = (this.get('model.board.children') || []).map(function(b) { return b.board.id; });
+          other_board_ids = (this.get('model.board.children') || []).map(function(b) { return b.board; });
         } else {
           other_board_ids = board.get('downstream_board_ids');
           if(this.get('hierarchy') && !this.get('hierarchy.error') && this.get('hierarchy').selected_board_ids) {
@@ -66,7 +66,11 @@ export default modal.ModalController.extend({
       other_board_ids.forEach(function(id) {
         var defer = RSVP.defer();
         defer.start_delete = function() {
-          _this.store.findRecord('board', id).then(function(b) {
+          var find = RSVP.resolve(id);
+          if(typeof id == 'string') {
+            find = _this.store.findRecord('board', id);
+          }
+          find.then(function(b) {
             if(board.orphan || b.get('user_name') == board.get('user_name')) {
               runLater(function() {
                 b.deleteRecord();
