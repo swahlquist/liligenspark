@@ -30,8 +30,14 @@ class Progress < ActiveRecord::Base
   
   def error!(e)
     self.settings ||= {}
-    self.settings['error'] = e.message.to_s
-    self.settings['backtrace'] = e.backtrace.to_s
+    if e
+      self.settings['error'] = e.message.to_s
+      self.settings['backtrace'] = e.backtrace.to_s
+    end
+    if @@progress_error
+      self.settings['error_result'] = @@progress_error
+      @@progress_error = nil
+    end
     self.finished_at = Time.now
     self.settings['state'] = 'errored'
     self.save!
@@ -40,6 +46,10 @@ class Progress < ActiveRecord::Base
   def error_message
     puts ([self.settings['error']] + JSON.parse(self.settings['backtrace'])).join("\n")
     nil
+  end
+
+  def self.set_error(str)
+    @@progress_error = str
   end
   
   def self.schedule(obj, method, *args)

@@ -46,6 +46,7 @@ module Relinking
       if !self.copyable_if_authorized?(self.user)
         # If the board author isn't allowed to create a copy, then
         # don't allow it in a batch
+        Progress.set_error("the board #{self.key} is not authorized for copying")
         raise "not authorized to copy #{self.global_id} by #{self.user.global_id}"
       end
     end

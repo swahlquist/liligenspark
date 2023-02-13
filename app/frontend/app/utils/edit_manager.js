@@ -2084,7 +2084,11 @@ var editManager = EmberObject.extend({
                 }, 100);
                 done_callback(event.result);
               } else if(event.status == 'errored') {
-                reject(i18n.t('re_linking_failed2', "Board re-linking failed while processing"));
+                if(event.result) {
+                  reject(i18n.t('re_linking_failed_custom', "Board re-linking failed: ") + event.result);
+                } else {
+                  reject(i18n.t('re_linking_failed2', "Board re-linking failed while processing"));
+                }
               }
             });
           }, function() {

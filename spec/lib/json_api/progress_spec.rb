@@ -41,6 +41,17 @@ describe JsonApi::Progress do
       expect(hash['status']).to eq('errored')
       expect(hash['result']['error']).to eq('progress job is taking too long, possibly crashed')
     end
+
+    it "should return an errr result if any" do
+      p = Progress.create
+      expect(p.settings['error_result']).to eq(nil)
+      Progress.set_error("bacon!")
+      p.error!(nil)
+      expect(p.settings['error_result']).to eq('bacon!')
+      hash = JsonApi::Progress.build_json(p)
+      expect(hash['status']).to eq('errored')
+      expect(hash['result']).to eq('bacon!')
+    end
   end
 
   describe "update_minutes_estimate" do

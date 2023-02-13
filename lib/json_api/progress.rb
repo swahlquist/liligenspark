@@ -20,6 +20,9 @@ module JsonApi::Progress
       json['finished_at'] = progress.finished_at.iso8601
       json['result'] = progress.settings['result']
     end
+    if json['status'] == 'errored' && progress.settings['error_result']
+      json['result'] = progress.settings['error_result']
+    end
     json['percent'] = progress.settings['percent'] if progress.settings['percent']
     json['sub_status'] = progress.settings['message_key'] if progress.settings['message_key']
     json['minutes_estimate'] = progress.settings['minutes_estimate'].round if progress.settings['minutes_estimate']

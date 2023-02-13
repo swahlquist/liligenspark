@@ -18,6 +18,35 @@ describe Progress, :type => :model do
       expect(Progress.find_by_global_id("1_#{p.id}_#{p.nonce}")).to eq(p)
     end
   end
+
+  describe "set_error" do
+    it "should set the error on the next record" do
+      p = Progress.create
+      expect(p.settings['error_result']).to eq(nil)
+      Progress.set_error("bacon!")
+      p.error!(nil)
+      expect(p.settings['error_result']).to eq('bacon!')
+    end
+
+    it "should not crash if no error set" do
+      p = Progress.create
+      expect(p.settings['error_result']).to eq(nil)
+      p.error!(nil)
+      expect(p.settings['error_result']).to eq(nil)
+    end
+
+    it "should only set the error once" do
+      p = Progress.create
+      p2 = Progress.create
+      expect(p.settings['error_result']).to eq(nil)
+      expect(p2.settings['error_result']).to eq(nil)
+      Progress.set_error("bacon!")
+      p.error!(nil)
+      p2.error!(nil)
+      expect(p.settings['error_result']).to eq('bacon!')
+      expect(p2.settings['error_result']).to eq(nil)
+    end
+  end
   
   describe "generate_defaults" do
     it "should always have a nonce" do
