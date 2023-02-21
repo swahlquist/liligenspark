@@ -1245,14 +1245,20 @@ describe BoardDownstreamButtonSet, :type => :model do
       u = User.create
       b = Board.create(user: u)
       bs = BoardDownstreamButtonSet.create(board: b)
-      bs2 = BoardDownstreamButtonSet.create
+      bs2 = BoardDownstreamButtonSet.create(board: b)
       expect(bs2).to receive(:skip_extra_data_processing?).and_return(true).at_least(1).times
       bs2.data['source_id'] = bs.global_id
+      bs2.data['full_set_revision'] = 'asdfasdf'
       bs2.save
       expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
-      expect(b).to receive(:board_downstream_button_set).and_return(bs2)
+      expect(b).to receive(:full_set_revision).and_return('asdfasdf').at_least(1).times
+      expect(b).to receive(:board_downstream_button_set).and_return(bs2).at_least(1).times
       expect(BoardDownstreamButtonSet).to receive(:find_by_global_id).with(bs.global_id).and_return(bs)
-      expect(bs).to receive(:url_for).with(u, nil, true).and_return('asdf')
+      expect(bs).to receive(:url_for) do |a, b, c|
+        expect(a).to eq(u)
+        expect(b).to eq('asdfasdf')
+        expect(c).to eq(true)
+      end.and_return('asdf')
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({state: 'url_for', success: true, url: 'asdf'})
     end
 
@@ -1294,8 +1300,8 @@ describe BoardDownstreamButtonSet, :type => :model do
       u = User.create
       b = Board.create(user: u)
       bs = BoardDownstreamButtonSet.create(board: b)
-      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b)
-      expect(b).to receive(:board_downstream_button_set).and_return(bs)
+      expect(Board).to receive(:find_by_global_id).with(b.global_id).and_return(b).at_least(1).times
+      expect(b).to receive(:board_downstream_button_set).and_return(bs).at_least(1).times
       expect(bs).to receive(:detach_extra_data)
       expect(bs).to receive(:extra_data_private_url).and_return('asdf').at_least(1).times
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({state: 'fresh', success: true, url: 'asdf'})

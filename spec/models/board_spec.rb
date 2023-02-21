@@ -750,7 +750,7 @@ describe Board, :type => :model do
       expect(b.current_revision).to eq(b.settings['revision_hashes'][-1][0])
       b.settings['grid']['rows'] = 4
       b.generate_defaults
-      expect(b.settings['revision_hashes'].length).to eq(4)
+      expect(b.settings['revision_hashes'].length).to eq(3)
       expect(b.current_revision).to eq(b.settings['revision_hashes'][-1][0])
     end
     
@@ -3673,13 +3673,13 @@ describe Board, :type => :model do
   describe 'swap_images' do
     it 'should return on an empty library' do
       b = Board.new
-      expect(b.swap_images(nil, nil, nil)).to eq({done: true, swapped: false, reason: 'no library specified'})
-      expect(b.swap_images('', nil, nil)).to eq({done: true, swapped: false, reason: 'no library specified'})
+      expect(b.swap_images(nil, nil, nil)).to eq({done: true, id: nil, swapped: false, reason: 'no library specified'})
+      expect(b.swap_images('', nil, nil)).to eq({done: true, id: nil, swapped: false, reason: 'no library specified'})
     end
     
     it 'should return on a mismatched board' do
       b = Board.new
-      expect(b.swap_images('arasaac', nil, [], 'asdf')).to eq({done: true, swapped: false, reason: 'mismatched user'})
+      expect(b.swap_images('arasaac', nil, [], 'asdf')).to eq({done: true, id: nil, swapped: false, reason: 'mismatched user'})
     end
     
     it 'should call Uploader.find_image for all image buttons' do
@@ -3696,7 +3696,7 @@ describe Board, :type => :model do
         'content_type' => 'image/png'
       }])
       res = b.swap_images('bacon', u, [])
-      expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
     end
     
     it 'should create and set button images for changed images, including creating board_button_image connections' do
@@ -3713,7 +3713,7 @@ describe Board, :type => :model do
         'content_type' => 'image/png'
       }])
       res = b.swap_images('bacon', u, [])
-      expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       b.reload
       b.instance_variable_set('@map_later', nil)
       b.save
@@ -3737,7 +3737,7 @@ describe Board, :type => :model do
       expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false).and_return([])
       expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false).and_return([])
       res = b.swap_images('bacon', u, [])
-      expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
     end
 
     it 'should do nothing when asking for premium images but not enabled' do
@@ -3751,7 +3751,7 @@ describe Board, :type => :model do
       ]
       b.save
       res = b.swap_images('pcs', u, [])
-      expect(res).to eq({done: true, swapped: false, reason: "not authorized to access premium library"})
+      expect(res).to eq({done: true, id: b.global_id, swapped: false, reason: "not authorized to access premium library"})
     end
 
     it 'should look up default images for a quicker lookup process' do
@@ -3771,7 +3771,7 @@ describe Board, :type => :model do
       expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false).and_return([])
       expect(Uploader).to_not receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false)
       res = b.swap_images('bacon', u, [])
-      expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
     end
 
     it 'should skip keyboard boards if specified' do
@@ -3816,7 +3816,7 @@ describe Board, :type => :model do
         'content_type' => 'image/png'
       }])
       res = b.swap_images('bacon', u, [])
-      expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       img = ButtonImage.last
       expect(b.settings['buttons']).to eq([
         {'id' => 1, 'label' => 'hats', 'image_id' => 'asdf'},
@@ -3859,7 +3859,7 @@ describe Board, :type => :model do
       bi2 = bis2[0]
       bis3 = b3.reload.button_images
       expect(bis3.count).to eq(0)
-      expect(res).to eq({done: true, library: 'bacon', board_ids: [b.global_id, b2.global_id], updated: [b.global_id, b2.global_id], visited: [b.global_id, b2.global_id, b3.global_id]})
+      expect(res).to eq({done: true, library: 'bacon', id: b.global_id, board_ids: [b.global_id, b2.global_id], updated: [b.global_id, b2.global_id], visited: [b.global_id, b2.global_id, b3.global_id]})
       expect(b.reload.settings['buttons']).to eq([
         {'id' => 1, 'label' => 'cats', 'image_id' => bi.global_id, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
       ])
@@ -3908,7 +3908,7 @@ describe Board, :type => :model do
       bi2 = bis2[0]
       bis3 = b3.reload.button_images
       expect(bis3.count).to eq(0)
-      expect(res).to eq({done: true, library: 'bacon', board_ids: [b.global_id, "new:#{b.global_id}"], updated: [b.global_id, b2.global_id], visited: [b.global_id, b2.global_id, b3.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'bacon', board_ids: [b.global_id, "new:#{b.global_id}"], updated: [b.global_id, b2.global_id], visited: [b.global_id, b2.global_id, b3.global_id]})
       expect(b.reload.settings['buttons']).to eq([
         {'id' => 1, 'label' => 'cats', 'image_id' => bi.global_id, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
       ])
@@ -3956,7 +3956,7 @@ describe Board, :type => :model do
       expect(bis2.count).to eq(0)
       bis3 = b3.reload.button_images
       expect(bis3.count).to eq(0)
-      expect(res).to eq({done: true, library: 'bacon', board_ids: [b.global_id, b2.global_id, b3.global_id], updated: [b.global_id], visited: [b.global_id, b2.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'bacon', board_ids: [b.global_id, b2.global_id, b3.global_id], updated: [b.global_id], visited: [b.global_id, b2.global_id]})
       expect(b.reload.settings['buttons']).to eq([
         {'id' => 1, 'label' => 'cats', 'image_id' => bi.global_id, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
       ])
@@ -4002,7 +4002,7 @@ describe Board, :type => :model do
       expect(bis2.count).to eq(0)
       bis3 = b3.reload.button_images
       expect(bis3.count).to eq(0)
-      expect(res).to eq({done: true, library: 'bacon', board_ids: [b.global_id, b3.global_id], updated: [b.global_id], visited: [b.global_id, b2.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'bacon', board_ids: [b.global_id, b3.global_id], updated: [b.global_id], visited: [b.global_id, b2.global_id]})
       expect(b.reload.settings['buttons']).to eq([
         {'id' => 1, 'label' => 'cats', 'image_id' => bi.global_id, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
       ])
@@ -4081,7 +4081,7 @@ describe Board, :type => :model do
       bi2 = bis2[0]
       bis3 = b3.reload.button_images
       expect(bis3.count).to eq(0)
-      expect(res).to eq({done: true, library: 'bacon', board_ids: [b.global_id, b2.global_id], updated: [b.global_id, b2.global_id], visited: [b.global_id, b2.global_id, b3.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'bacon', board_ids: [b.global_id, b2.global_id], updated: [b.global_id, b2.global_id], visited: [b.global_id, b2.global_id, b3.global_id]})
       expect(b.reload.buttons).to eq([
         {'id' => 1, 'label' => 'cats', 'image_id' => bi.global_id, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
       ])
@@ -4592,13 +4592,13 @@ describe Board, :type => :model do
       u2 = User.create
       b = Board.create(user: u1)
       u1.settings['extras_disabled'] = true
-      expect(b.swap_images('twemoji', nil, [], 'bacon', [], [])).to eq({done: true, swapped: false, reason: 'mismatched user'})
-      expect(b.swap_images(nil, nil, [], u1.id, [], [])).to eq({done: true, swapped: false, reason: 'no library specified'})
-      expect(b.swap_images('original', nil, [], u1.id, [], [])).to eq({done: true, swapped: true, reason: 'kept same'})
-      expect(b.swap_images('twemoji', nil, [], u1.id, [], [])).to eq({done: true, swapped: false, reason: 'author required'})
-      expect(b.swap_images('pcs', u1, [], u1.id, [], [])).to eq({done: true, swapped: false, reason: 'not authorized to access premium library'})
+      expect(b.swap_images('twemoji', nil, [], 'bacon', [], [])).to eq({done: true, id: b.global_id, swapped: false, reason: 'mismatched user'})
+      expect(b.swap_images(nil, nil, [], u1.id, [], [])).to eq({done: true, id: b.global_id, swapped: false, reason: 'no library specified'})
+      expect(b.swap_images('original', nil, [], u1.id, [], [])).to eq({done: true, id: b.global_id, swapped: true, reason: 'kept same'})
+      expect(b.swap_images('twemoji', nil, [], u1.id, [], [])).to eq({done: true, id: b.global_id, swapped: false, reason: 'author required'})
+      expect(b.swap_images('pcs', u1, [], u1.id, [], [])).to eq({done: true, id: b.global_id, swapped: false, reason: 'not authorized to access premium library'})
       u1.settings['extras_disabled'] = false
-      expect(b.swap_images('pcs', u1, [], u1.id, [], [])).to eq({done: true, library: 'pcs', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(b.swap_images('pcs', u1, [], u1.id, [], [])).to eq({done: true, id: b.global_id, library: 'pcs', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
     end
 
     it "should not swap images if there were previously no images on the button" do
@@ -4613,7 +4613,7 @@ describe Board, :type => :model do
         'hat' => {'url' => 'https://www.example.com/hat.png'}
       })
       res = b.swap_images('twemoji', u, [], nil)
-      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       bis = ButtonImage.all.order('id ASC')
       expect(bis.count).to eq(0)
     end
@@ -4634,7 +4634,7 @@ describe Board, :type => :model do
       b.settings['images_not_mapped'] = true
       expect(b.known_button_images.length).to eq(1)
       res = b.swap_images('twemoji', u, [], nil)
-      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       bis = ButtonImage.all.order('id ASC')
       expect(bis.count).to eq(3)
       expect(bis[1].url).to eq("https://www.example.com/hat.png")
@@ -4657,7 +4657,7 @@ describe Board, :type => :model do
       })
       b.settings['images_not_mapped'] = true
       res = b.swap_images('twemoji', u, [], nil)
-      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       bis = ButtonImage.all.order('id ASC')
       expect(bis.count).to eq(2)
       expect(b.reload.buttons.map{|b| b['image_id'] }).to eq([bi2.global_id, bi2.global_id])
@@ -4681,7 +4681,7 @@ describe Board, :type => :model do
       
       b.settings['images_not_mapped'] = true
       res = b.swap_images('twemoji', u, [], nil)
-      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       bis = ButtonImage.all.order('id ASC')
       expect(bis.count).to eq(3)
       expect(bis[2].url).to eq('https://www.example.com/cat2.png')
@@ -4703,7 +4703,7 @@ describe Board, :type => :model do
 
       b.settings['images_not_mapped'] = true
       res = b.swap_images('twemoji', u, [], nil)
-      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       bis = ButtonImage.all.order('id ASC')
       expect(bis.count).to eq(2)
       expect(bis[1].url).to eq("https://www.example.com/cat.png")
@@ -4728,7 +4728,7 @@ describe Board, :type => :model do
       expect(b.known_button_images.length).to eq(2)
 
       res = b.swap_images('twemoji', u, [], nil)
-      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       bis = ButtonImage.all.order('id ASC')
       expect(bis.count).to eq(3)
       expect(bis[2].url).to eq("https://www.example.com/hat.png")
@@ -4749,7 +4749,7 @@ describe Board, :type => :model do
       })
 
       res = b.swap_images('twemoji', u, [], nil)
-      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       bis = ButtonImage.all.order('id ASC')
       expect(bis.count).to eq(3)
       expect(bis[1].url).to eq("https://www.example.com/hat.png")
@@ -4772,7 +4772,7 @@ describe Board, :type => :model do
       b.settings['images_not_mapped'] = true
       b.instance_variable_set('@buttons_changed', false)
       res = b.swap_images('twemoji', u, [], nil)
-      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       bis = ButtonImage.all.order('id ASC')
       expect(bis.count).to eq(1)
       expect(b.settings['swapped_library']).to eq(nil)
@@ -4796,7 +4796,7 @@ describe Board, :type => :model do
       b.settings['images_not_mapped'] = true
       expect(b.known_button_images.length).to eq(1)
       res = b.swap_images('twemoji', u, [], nil)
-      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       bis = ButtonImage.all.order('id ASC')
       expect(bis.count).to eq(4)
       expect(bis[1].url).to eq("https://www.example.com/hat.png")
@@ -4822,7 +4822,7 @@ describe Board, :type => :model do
       })
 
       res = b.swap_images('twemoji', u, [], nil)
-      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'twemoji', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       bis = ButtonImage.all.order('id ASC')
       expect(bis.count).to eq(3)
       expect(bis[1].url).to eq("https://www.example.com/hat.png")
@@ -4850,7 +4850,7 @@ describe Board, :type => :model do
       expect(b2.reload.settings['downstream_board_ids']).to eq([b1.global_id])
 
       res = b1.swap_images('twemoji', u, [], nil)
-      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b1.global_id, b2.global_id], visited: [b1.global_id, b2.global_id]})
+      expect(res).to eq({done: true, id: b1.global_id, library: 'twemoji', board_ids: [], updated: [b1.global_id, b2.global_id], visited: [b1.global_id, b2.global_id]})
     end
 
     it "should stop at boards with a different author" do
@@ -4874,7 +4874,7 @@ describe Board, :type => :model do
       expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
 
       res = b1.swap_images('twemoji', u, [], nil)
-      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b1.global_id], visited: [b1.global_id, b2.global_id]})
+      expect(res).to eq({done: true, id: b1.global_id, library: 'twemoji', board_ids: [], updated: [b1.global_id], visited: [b1.global_id, b2.global_id]})
     end
 
     it "should not get stuck in an infinite loop with circular references" do
@@ -4896,7 +4896,7 @@ describe Board, :type => :model do
       expect(b2.reload.settings['downstream_board_ids']).to eq([b1.global_id])
 
       res = b1.swap_images('twemoji', u, [], nil)
-      expect(res).to eq({done: true, library: 'twemoji', board_ids: [], updated: [b1.global_id, b2.global_id], visited: [b1.global_id, b2.global_id]})
+      expect(res).to eq({done: true, id: b1.global_id, library: 'twemoji', board_ids: [], updated: [b1.global_id, b2.global_id], visited: [b1.global_id, b2.global_id]})
     end
   end
 
@@ -4914,8 +4914,11 @@ describe Board, :type => :model do
       u2 = User.create
       b2 = Board.create(user: u2, public: true)
       b3 = Board.create(user: u1, public: true)
+      b4 = Board.create(user: u1, public: true)
       b1.settings['downstream_board_ids'] = [b3.global_id]
       b1.save
+      b2.settings['downstream_board_ids'] = [b4.global_id]
+      b2.save
       expect(b1.downstream_board_ids).to eq([b3.global_id])
       
       bb = Board.find_by_global_id("#{b1.global_id}-#{u1.global_id}")
@@ -4930,7 +4933,7 @@ describe Board, :type => :model do
       bb = Board.find_by_global_id("#{b1.global_id}-#{u2.global_id}")
       expect(bb.instance_variable_get('@sub_global')).to eq(u2)
       expect(bb.global_id).to eq("#{b1.global_id}-#{u2.global_id}")
-      expect(bb.downstream_board_ids).to eq(["#{b3.global_id}-#{u2.global_id}", "#{b2.global_id}"])
+      expect(bb.downstream_board_ids).to eq(["#{b3.global_id}-#{u2.global_id}", "#{b4.global_id}"])
     end
 
     it "should still include replaced shallow clones in case they are linked more than once" do
@@ -4958,7 +4961,7 @@ describe Board, :type => :model do
       bb = Board.find_by_global_id("#{b1.global_id}-#{u2.global_id}")
       expect(bb.instance_variable_get('@sub_global')).to eq(u2)
       expect(bb.global_id).to eq("#{b1.global_id}-#{u2.global_id}")
-      expect(bb.downstream_board_ids).to eq(["#{b3.global_id}-#{u2.global_id}", "#{b2.global_id}", "#{b4.global_id}"])
+      expect(bb.downstream_board_ids).to eq(["#{b3.global_id}-#{u2.global_id}", "#{b4.global_id}"])
     end
   end
 end

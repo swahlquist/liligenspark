@@ -134,6 +134,23 @@ class ButtonImage < ActiveRecord::Base
       self.track_image_use(img)
     end
   end
+
+  def image_library
+    bi = self
+    lib = 'unknown'
+    if bi.settings['license'] && bi.settings['license']['uneditable'] && bi.settings['license']['author_name'] && bi.settings['license']['author_url']
+      lib = 'arasaac' if bi.settings['license']['author_url'].match(/arasaac/i)
+      lib = 'twemoji' if bi.settings['license']['author_name'].match(/twitter/i)
+      lib = 'mulberry' if bi.settings['license']['author_name'].match(/paxtoncrafts/i)
+      lib = 'noun-project' if bi.settings['license']['author_url'].match(/thenounproject/i)
+      lib = 'sclera' if bi.settings['license']['author_name'].match(/sclera/i)
+      lib = 'tawasol' if bi.settings['license']['author_name'].match(/mada/i)
+      lib = 'symbolstix' if bi.settings['license']['author_name'].match(/news2you/i)
+      lib = 'pcs' if bi.settings['license']['author_name'].match(/tobii/i)
+      lib = 'lessonpix' if bi.settings['license']['author_name'].match(/lessonpix/i)
+    end
+    lib
+  end
   
   def process_params(params, non_user_params)
     raise "user required as image author" unless self.user_id || non_user_params[:user] || non_user_params[:no_author]

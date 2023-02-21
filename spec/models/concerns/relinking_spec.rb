@@ -239,6 +239,26 @@ describe Relinking, :type => :model do
       expect(b2.parent_board_id).to eq(nil)
       expect(b2.settings['protected']).to eq({'vocabulary' => true, 'vocabulary_owner_id' => u2.global_id, 'sub_owner' => false})
     end
+
+    it "should properly copy a shallow clone" do
+      u1 = User.create
+      b = Board.create(user: u1)
+      u2 = User.create
+      bb = Board.find_by_path("#{b.global_id}-#{u2.global_id}")
+      b2 = bb.copy_for(u2, copier: u2)
+      expect(b2.id).to_not eq(b.id)
+      expect(b2.settings['shallow_source']).to eq({'id' => "#{b.global_id}-#{u2.global_id}", 'key' => "#{u2.user_name}/my:#{b.key.sub(/\//, ':')}"})
+    end
+
+    it "should not allow unauthorized copying of a shallow clone" do
+      u1 = User.create
+      b = Board.create(user: u1)
+      u2 = User.create
+      b.settings['protected'] = {'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id}
+      b.save
+      b = Board.find_by_path("#{b.global_id}-#{u2.global_id}")
+      expect{ b.copy_for(u2, copier: u1, new_owner: true) }.to raise_error("not authorized to copy #{b.global_id} by #{u2.global_id}")
+    end
   end
 
   describe "update_default_locale!" do
@@ -698,6 +718,131 @@ describe Relinking, :type => :model do
       expect(b3a.buttons[0]['load_board']['key']).to_not eq(b1.key)
       b3b = Board.find_by_path(b3a.buttons[0]['load_board']['key'])
       expect(b3b.settings['protected']).to eq({'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id, 'sub_owner' => true})
+    end
+
+    it "should copy shallow clones" do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(:user => u1, :public => true)
+      b1a = Board.create(:user => u1, :public => true)
+      b1.settings['buttons'] = [{'id' => 1, 'load_board' => {'key' => b1a.key, 'id' => b1a.global_id}}]
+      b1.save!
+      b1.track_downstream_boards!
+      expect(b1.settings['downstream_board_ids']).to eq([b1a.global_id])
+      bb1 = Board.find_by_path("#{b1.global_id}-#{u2.global_id}")
+      b2 = bb1.copy_for(u2, unshallow: true)
+      expect(Board).to receive(:relink_board_for) do |user, opts|
+        board_ids = opts[:board_ids]
+        pending_replacements = opts[:pending_replacements]
+        action = opts[:update_preference]
+        expect(user).to eq(u2)
+        expect(board_ids.length).to eq(2)
+        expect(board_ids).to eq(["#{b1.global_id}-#{u2.global_id}", "#{b1a.global_id}-#{u2.global_id}"])
+        expect(pending_replacements.length).to eq(2)
+        expect(pending_replacements[0]).to eq(["#{b1.global_id}-#{u2.global_id}", {id: b2.global_id, key: b2.key}])
+        expect(pending_replacements[1][0]).to eq("#{b1a.global_id}-#{u2.global_id}")
+        expect(action).to eq('update_inline')
+      end
+      Board.copy_board_links_for(u2, {:starting_old_board => bb1, :starting_new_board => b2})
+    end
+
+    it "should include copies of already-edited shallow clones in the copy batch" do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(:user => u1, :public => true)
+      b1a = Board.create(:user => u1, :public => true)
+      b1a.settings['name'] = 'cheddar'
+      b1a.save
+      b1.settings['buttons'] = [{'id' => 1, 'load_board' => {'key' => b1a.key, 'id' => b1a.global_id}}]
+      b1.save!
+      b1.track_downstream_boards!
+      expect(b1.settings['downstream_board_ids']).to eq([b1a.global_id])
+      bb1 = Board.find_by_path("#{b1.global_id}-#{u2.global_id}")
+      bb1a = Board.find_by_path("#{b1a.global_id}-#{u2.global_id}").copy_for(u2)
+      bb1a.settings['name'] = "bacon"
+      bb1a.save
+      expect(bb1a.settings['shallow_source']).to_not eq(nil)
+      b2 = bb1.copy_for(u2, unshallow: true)
+      expect(Board).to receive(:relink_board_for) do |user, opts|
+        board_ids = opts[:board_ids]
+        pending_replacements = opts[:pending_replacements]
+        action = opts[:update_preference]
+        expect(user).to eq(u2)
+        expect(board_ids.length).to eq(2)
+        expect(board_ids).to eq(["#{b1.global_id}-#{u2.global_id}", "#{b1a.global_id}-#{u2.global_id}"])
+        expect(pending_replacements.length).to eq(3)
+        expect(pending_replacements[0]).to eq(["#{b1.global_id}-#{u2.global_id}", {id: b2.global_id, key: b2.key}])
+        expect(pending_replacements[1][0]).to eq(bb1a.global_id)
+        expect(pending_replacements[2][0]).to eq("#{b1a.global_id}-#{u2.global_id}")
+        bbb = Board.find_by_path(pending_replacements[1][1][:key])
+        expect(bbb.settings['name']).to eq('bacon')
+        expect(action).to eq('update_inline')
+      end
+      Board.copy_board_links_for(u2, {:starting_old_board => bb1, :starting_new_board => b2})
+    end
+
+    it "should create new copies of multiple levels of shallow clones, including some edited ones" do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(user: u1, public: true)
+      b1a = Board.create(user: u1, public: true)
+      b1b = Board.create(user: u1, public: true)
+      b1c = Board.create(user: u1, public: true)
+      b1.settings['name'] = 'oldtop'
+      b1.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'key' => b1a.key, 'id' => b1a.global_id}},
+        {'id' => 1, 'load_board' => {'key' => b1b.key, 'id' => b1b.global_id}}
+      ]
+      b1.save!
+      b1.track_downstream_boards!
+
+      b1a.settings['name'] = 'olda'
+      b1a.settings['buttons'] = [
+        {'id' => 1, 'load_board' => {'key' => b1c.key, 'id' => b1c.global_id}},
+        {'id' => 1, 'load_board' => {'key' => b1b.key, 'id' => b1b.global_id}}
+      ]
+      b1a.save!
+      b1a.track_downstream_boards!
+      b1.track_downstream_boards!
+
+      b1b.settings['name'] = 'oldb'
+      b1b.save!
+
+      b1c.settings['name'] = 'oldc'
+      b1c.save!
+
+      bb1b = Board.find_by_global_id("#{b1b.global_id}-#{u2.global_id}")
+      b2b = bb1b.copy_for(u2)
+      expect(b2b.shallow_key).to eq(bb1b.key)
+      expect(b2b.key).to_not eq(bb1b.key)
+      b2b.settings['name'] = 'newb'
+      b2b.save!
+
+      bb1 = Board.find_by_global_id("#{b1.global_id}-#{u2.global_id}")
+      b2 = bb1.copy_for(u2, unshallow: true)
+      expect(Board).to receive(:relink_board_for) do |user, opts|
+        board_ids = opts[:board_ids]
+        pending_replacements = opts[:pending_replacements]
+        action = opts[:update_preference]
+        expect(user).to eq(u2)
+        expect(board_ids.length).to eq(4)
+        expect(board_ids).to eq(["#{b1.global_id}-#{u2.global_id}", "#{b1a.global_id}-#{u2.global_id}", "#{b1b.global_id}-#{u2.global_id}", "#{b1c.global_id}-#{u2.global_id}"])
+        expect(pending_replacements.length).to eq(5)
+        expect(pending_replacements[0]).to eq(["#{b1.global_id}-#{u2.global_id}", {id: b2.global_id, key: b2.key}])
+        puts JSON.pretty_generate(pending_replacements)
+        expect(pending_replacements[1][0]).to eq("#{b1a.global_id}-#{u2.global_id}")
+        expect(pending_replacements[1][1]).to_not match("#{u2.global_id}")
+        expect(pending_replacements[2][0]).to eq("#{b1c.global_id}-#{u2.global_id}")
+        expect(pending_replacements[2][1]).to_not match("#{u2.global_id}")
+        expect(pending_replacements[3][0]).to eq("#{b2b.global_id}")
+        expect(pending_replacements[3][1]).to_not match("#{u2.global_id}")
+        expect(pending_replacements[4][0]).to eq("#{b1b.global_id}-#{u2.global_id}")
+        expect(pending_replacements[4][1]).to_not match("#{u2.global_id}")
+        bbb = Board.find_by_path(pending_replacements[3][1][:key])
+        expect(bbb.settings['name']).to eq('newb')
+        expect(action).to eq('update_inline')
+      end
+      Board.copy_board_links_for(u2, {:starting_old_board => bb1, :starting_new_board => b2})
     end
   end
  

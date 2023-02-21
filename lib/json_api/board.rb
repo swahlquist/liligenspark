@@ -8,12 +8,8 @@ module JsonApi::Board
   
   def self.build_json(board, args={})
     json = {} #board.settings
-    json['id'] = board.global_id
-    json['key'] = board.key
-    if board.shallow_source
-      json['id'] = board.shallow_source[:id]
-      json['key'] = board.shallow_source[:key]
-    end
+    json['id'] = board.shallow_id
+    json['key'] = board.shallow_key
     json['shallow_clone'] = true if board.instance_variable_get('@sub_id')
     json['simple_refs'] = true if args[:skip_subs]
     json['buttons'] = board.buttons

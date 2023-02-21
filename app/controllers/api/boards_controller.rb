@@ -131,7 +131,7 @@ class Api::BoardsController < ApplicationController
           Rails.logger.warn('popularity search')
           locs.search_by_text(q).limit(100).with_pg_search_rank.each do |bl|
             board_ids << bl.board_id
-            ranks[bl.board_id] = bl.pg_search_rank
+            ranks[bl.board_id] = 0 - (bl.pg_search_rank * (bl.popularity || 1))
           end
         end
         boards = boards.where(id: board_ids)
@@ -244,11 +244,11 @@ class Api::BoardsController < ApplicationController
           # For private user searches this will limit to the user's first 25 boards
           # since no search has been performed yet, so it will most likely
           # not be useful
-          limited_boards = limited_boards.limit(25) if limited_boards.respond_to?(:limit)
-          limited_boards = limited_boards[0, 25]
+          limited_boards = limited_boards.limit(15) if limited_boards.respond_to?(:limit)
+          limited_boards = limited_boards[0, 15]
           boards = limited_boards
           # TODO: this was maybe too demanding on memory
-          # boards = Board.sort_for_query(limited_boards, params['q'], params['locale'], 0, 25)
+          boards = Board.sort_for_query(limited_boards, params['q'], params['locale'], 0, 25)
         end
       end
     end
@@ -432,8 +432,9 @@ class Api::BoardsController < ApplicationController
     else
       version_date = Date.parse(request.headers['X-CoughDrop-Version']) rescue nil
       add_voc_error = version_date && version_date < Date.parse('August 3, 2021')
-      board = board.process(processed_params['board'], {:allow_clone => true, :user => @api_user, :updater => @api_user, add_voc_error: add_voc_error})
-      res = !!board
+      new_board = board.process(processed_params['board'], {:allow_clone => true, :user => @api_user, :updater => @api_user, add_voc_error: add_voc_error})
+      board = new_board if new_board.is_a?(Board)
+      res = !!new_board
     end
     if res
       render json: JsonApi::Board.as_json(board, :wrapper => true, :permissions => @api_user).to_json
@@ -542,8 +543,12 @@ class Api::BoardsController < ApplicationController
   def destroy
     board = Board.find_by_path(params['id'])
     return unless exists?(board)
-    return unless allowed?(board, 'delete')
-    board.destroy
+    if board.instance_variable_get('@sub_id')
+      return unless allowed?(board, 'edit')
+    else
+      return unless allowed?(board, 'delete')
+      board.destroy
+    end
     render json: JsonApi::Board.as_json(board, :wrapper => true).to_json
   end
   

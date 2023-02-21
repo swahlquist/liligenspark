@@ -703,6 +703,8 @@ describe Api::UsersController, :type => :controller do
       expect(o.user?(u)).to eq(true)
       expect(u.settings['preferences']['locale']).to eq('fr')
       expect(u.settings['preferences']['preferred_symbols' => 'symbolstix'])
+      Worker.process_queues
+      u.reload
       
       expect(u.settings['preferences']['home_board']).to_not eq(nil)
       expect(u.settings['preferences']['home_board']['key']).to_not eq(nil)
@@ -2102,6 +2104,45 @@ describe Api::UsersController, :type => :controller do
       hash[b3.key] = b3.current_revision
       hash[b4.global_id] = b4.reload.current_revision
       hash[b4.key] = b4.current_revision
+      expect(json).to eq(hash)
+    end
+
+    it "should include starred boards only if in the user preferences" do
+      token_user
+      b1 = Board.create(:user => @user)
+      b2 = Board.create(:user => @user)
+      b3 = Board.create(:user => @user)
+      b4 = Board.create(:user => @user)
+      b5 = Board.create(:user => @user)
+      b1.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b2.global_id}}]
+      b1.instance_variable_set('@buttons_changed', true)
+      b1.save
+      b2.settings['buttons'] = [{'id' => 1, 'load_board' => {'id' => b3.global_id}}]
+      b2.instance_variable_set('@buttons_changed', true)
+      b2.save
+      @user.settings['preferences']['home_board'] = {'id' => b1.global_id, 'key' => b1.key}
+
+      @user.settings['preferences']['sidebar_boards'] = [{'key' => b4.key}]
+      @user.settings['preferences']['sync_starred_boards'] = true
+      @user.settings['starred_board_ids'] = [b5.global_id]
+      @user.save
+      Worker.process_queues
+      Worker.process_queues
+      expect(b1.reload.settings['downstream_board_ids'].sort).to eq([b2.global_id, b3.global_id].sort)
+      get 'board_revisions', params: {:user_id => @user.global_id}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      hash = {}
+      hash[b1.global_id] = b1.reload.current_revision
+      hash[b1.key] = b1.current_revision
+      hash[b2.global_id] = b2.reload.current_revision
+      hash[b2.key] = b2.current_revision
+      hash[b3.global_id] = b3.reload.current_revision
+      hash[b3.key] = b3.current_revision
+      hash[b4.global_id] = b4.reload.current_revision
+      hash[b4.key] = b4.current_revision
+      hash[b5.global_id] = b5.reload.current_revision
+      hash[b5.key] = b5.current_revision
       expect(json).to eq(hash)
     end
   end

@@ -99,6 +99,15 @@ describe GlobalId, :type => :model do
       expect(User.find_all_by_global_id([u1.global_id, u2.global_id, u1.id.to_s]).sort).to eq([u1, u2].sort)
     end
 
+    it "should return a correct single result with sub_id" do
+      u = User.create
+      b = Board.create(user: u)
+      bb = Board.find_all_by_global_id(["#{b.global_id}-#{u.global_id}"])
+      expect(bb.length).to eq(1)
+      expect(bb[0].id).to eq(b.id)
+      expect(bb[0].instance_variable_get('@sub_id')).to eq(u.global_id)
+    end
+
     it "should return multiple copies of the same record, one for each sub_id" do
       u1 = User.create
       u2 = User.create
@@ -217,6 +226,20 @@ describe GlobalId, :type => :model do
         expect(bs[4].instance_variable_get('@sub_id')).to eq(u1.global_id)
         expect(bs[5]).to eq(b3)
         expect(bs[5].instance_variable_get('@sub_id')).to eq(u3.global_id)
+      end
+
+      it "should return a correct single result with sub_id" do
+        u = User.create
+        b = Board.create(user: u)
+        bb = Board.find_all_by_path(["#{b.global_id}-#{u.global_id}"])
+        expect(bb.length).to eq(1)
+        expect(bb[0].id).to eq(b.id)
+        expect(bb[0].instance_variable_get('@sub_id')).to eq(u.global_id)
+
+        bb = Board.find_all_by_path(["#{u.user_name}/my:#{b.key.sub(/\//, ':')}"])
+        expect(bb.length).to eq(1)
+        expect(bb[0].id).to eq(b.id)
+        expect(bb[0].instance_variable_get('@sub_id')).to eq(u.global_id)
       end
 
       it "should work for a combo of global ids and board keys with and without sub_ids" do
@@ -338,6 +361,18 @@ describe GlobalId, :type => :model do
     it 
 
     describe "find_batches_by_global_id" do
+      it "should return a correct single result with sub_id" do
+        u = User.create
+        b = Board.create(user: u)
+        bb = []
+        Board.find_batches_by_global_id(["#{b.global_id}-#{u.global_id}"]) do |board|
+          bb << board
+        end
+        expect(bb.length).to eq(1)
+        expect(bb[0].id).to eq(b.id)
+        expect(bb[0].instance_variable_get('@sub_id')).to eq(u.global_id)
+      end
+
       it "should have specs" do
       end
     end

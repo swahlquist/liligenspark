@@ -1,7 +1,7 @@
 module GlobalId
   extend ActiveSupport::Concern
 
-  def global_id
+  def global_id(actual=false)
     if self.class.protected_global_id
       if self.nonce == 'legacy'
         self.id ? "1_#{self.id}" : nil
@@ -10,8 +10,10 @@ module GlobalId
       end
     else
       res = self.id ? "1_#{self.id}" : nil
-      if @sub_id && res
-        res += "-" + @sub_id
+      if !actual
+        if @sub_id && res
+          res += "-" + @sub_id
+        end
       end
       res
     end
@@ -115,14 +117,14 @@ module GlobalId
       users_for = {}
 
       # Check for any ids that have sub_id defined and look up replacements
-      id_hashes.map do |h|
+      id_hashes = id_hashes.map do |h|
         res = h
         users_for[res[:id]] ||= []
         if h[:sub_id]
           u = sub_users[h[:sub_id][:id].to_s]
           if u && u.user_extra && u.user_extra.settings && u.user_extra.settings['replaced_boards'] && u.user_extra.settings['replaced_boards'][h[:orig]]
             res = id_pieces(u.user_extra.settings['replaced_boards'][h[:orig]])
-            id_hashes << res
+            # id_hashes << res
             users_for[res[:id]] ||= []
             users_for[res[:id]] << nil
           else
@@ -185,14 +187,13 @@ module GlobalId
       users_for = {}
 
       # Check for any ids that have sub_id defined and look up replacements
-      id_hashes.map do |h|
+      id_hashes = id_hashes.map do |h|
         res = h
         if h[:sub_id]
           u = sub_users[h[:sub_id][:id]]
           users_for[res[:id]] ||= []
           if u && u.user_extra && u.user_extra.settings && u.user_extra.settings['replaced_boards'] && u.user_extra.settings['replaced_boards'][h[:orig]]
             res = id_pieces(u.user_extra.settings['replaced_boards'][h[:orig]])
-            id_hashes << res
             users_for[res[:id]] ||= []
             users_for[res[:id]] << nil
           else
@@ -218,8 +219,8 @@ module GlobalId
               if users[0]
                 obj.instance_variable_set('@sub_id', users[0].global_id)
                 obj.instance_variable_set('@sub_global', users[0])
-                block.call(obj)
               end
+              block.call(obj)
             elsif !users || users.length < 1
               block.call(obj)
             else

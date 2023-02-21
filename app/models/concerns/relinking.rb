@@ -54,11 +54,14 @@ module Relinking
     orig_key = self.key
     if @sub_id
       orig_key = orig_key.split(/my:/)[1].sub(/:/, '/')
-      board.settings['shallow_source'] = {
-        'key' => self.key,
-        'id' => self.global_id
-      }
-      board.instance_variable_set('@shallow_source_changed', true)
+      if !opts[:unshallow]
+        board.settings['shallow_source'] = {
+          'key' => self.key,
+          'id' => self.global_id
+        }
+        # board.settings['immediately_upstream_board_ids'] = self.settings['immediately_upstream_board_ids']
+        board.instance_variable_set('@shallow_source_changed', true)
+      end
     end
     board.key = board.generate_board_key(orig_key.split(/\//)[1])
     disconnected = false
@@ -115,10 +118,12 @@ module Relinking
     # board.map_images has to create a record for each image in the
     # board, and while that is useful for tracking, it's actually redundant
     # so we can postpone it and save some time for batch copies
-    board.instance_variable_set('@map_later', true)
-    board.save!
-    if !user.instance_variable_get('@already_updating_available_boards')
-      user.update_available_boards
+    if !opts[:skip_save]
+      board.instance_variable_set('@map_later', true)
+      board.save!
+      if !user.instance_variable_get('@already_updating_available_boards')
+        user.update_available_boards
+      end
     end
     puts "  done COPYING #{board.key}"
     board
@@ -383,9 +388,12 @@ module Relinking
         if !orig.allows?(user, 'view') && !orig.allows?(auth_user, 'view')
           # TODO: make a note somewhere that a change should have happened but didn't due to permissions
         else
-          copy = orig.copy_for(user, make_public: make_public, copy_id: starting_new_board.global_id, prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: opts[:copier])
+          copy = orig.copy_for(user, make_public: make_public, copy_id: starting_new_board.global_id, prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: opts[:copier], unshallow: true)
           copy.update_default_locale!(opts[:old_default_locale], opts[:new_default_locale])
           pending_replacements << [orig.global_id, {id: copy.global_id, key: copy.key}]
+          if orig.shallow_source
+            pending_replacements << [orig.shallow_source[:id], {id: copy.global_id, key: copy.key}]
+          end
         end
 
         (orig.buttons || []).each do |button|
@@ -490,7 +498,7 @@ module Relinking
               elsif board.instance_variable_get('@sub_id') || !board.just_for_user?(user)
                 # if it's not already private for the user, make a private copy for the user 
                 # and add to list of replacements to handle.
-                copy = board.copy_for(user, make_public: opts[:make_public], copy_id: opts[:copy_id], prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: opts[:copier])
+                copy = board.copy_for(user, make_public: opts[:make_public], copy_id: opts[:copy_id], prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: opts[:copier], unshallow: true)
                 copy.replace_links!(old_board_id, new_board_ref)
                 if board_ids.length > 200
                   copy.save_subtly

@@ -1477,7 +1477,7 @@ class Organization < ActiveRecord::Base
     end
     if params[:home_board_key] || params[:home_board_keys]
       keys = params[:home_board_keys] || [params[:home_board_key]]
-      already_allowed = self.settings['deafult_home_boards'] || []
+      already_allowed = self.settings['default_home_boards'] || []
       self.settings.delete('default_home_board')
       self.settings['default_home_boards'] = []
       keys.each do |key|

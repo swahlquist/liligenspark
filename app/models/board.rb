@@ -65,12 +65,10 @@ class Board < ActiveRecord::Base
 #  add_permissions('view', ['read_boards']) {|user| user.supervisees.any?{|u| self.shared_with?(u) } } # should be redundant due to board_caching
   cache_permissions
 
-  def key
+  def key(actual=false)
     orig_key = read_attribute('key')
-    if @sub_id && @sub_global
+    if @sub_id && @sub_global && !actual
       return "#{@sub_global.user_name}/my:#{orig_key.sub(/\//, ':')}"
-    elsif self.shallow_source
-      return self.shallow_source[:key]
     else
       return orig_key
     end
@@ -86,6 +84,14 @@ class Board < ActiveRecord::Base
     return nil
   end
 
+  def shallow_id
+    (shallow_source || {})[:id] || self.global_id
+  end
+
+  def shallow_key
+    (shallow_source || {})[:key] || self.key
+  end
+
   def downstream_board_ids
     res = (self.settings || {})['downstream_board_ids'] || []
     if @sub_id && @sub_global
@@ -93,14 +99,15 @@ class Board < ActiveRecord::Base
       ids = []
       lookup_ids = []
       res.each do |id|
-        ids << "#{id}-#{@sub_id}"
+        new_id = "#{id}-#{@sub_id}"
+        ids << new_id
         if ue && ue.settings['replaced_boards'] && ue.settings['replaced_boards'][id]
-          lookup_ids << ue.settings['replaced_boards'][id]
+          lookup_ids << new_id #ue.settings['replaced_boards'][id]
+
         end
       end
       Board.find_all_by_global_id(lookup_ids).each do |brd|
-        ids << brd.global_id
-        ids += brd.settings['downstream_board_ids'] || []
+        ids += brd.downstream_board_ids
       end
       res = ids
     end
@@ -616,12 +623,11 @@ class Board < ActiveRecord::Base
     return res
   end
 
-  def save_possible_clone
+  def generate_possible_clone
     if @sub_id
       copy_id = self.settings['copy_id'] || self.global_id.split(/-/)[0]
-      self.copy_for(@sub_global, {copy_id: copy_id})
+      self.copy_for(@sub_global, {copy_id: copy_id, skip_save: true})
     else
-      self.save!
       return self
     end
   end
@@ -693,7 +699,7 @@ class Board < ActiveRecord::Base
       self.settings['revision_hashes'] << @track_revision
       self.current_revision = data_hash
     end
-    self.settings['revision_hashes'] = self.settings['revision_hashes'].slice(-3, 3)
+    self.settings['revision_hashes'] = self.settings['revision_hashes'].slice(-3, 3) if self.settings['revision_hashes'].length > 3
 
     if @map_later
       self.settings['images_not_mapped'] = true
@@ -751,6 +757,7 @@ class Board < ActiveRecord::Base
     # search_string is limited to 4096
     # self.search_string = self.fully_listed? ? (self.settings['search_string'] || '')[0, 4096] : nil
     self.generate_stats unless self.settings['stars']
+
     true
   end
   
@@ -806,7 +813,7 @@ class Board < ActiveRecord::Base
     res = self.settings['full_set_revision'] || self.current_revision || self.global_id
     if @sub_global
       ue = @sub_global.user_extra
-      ids = self.settings['downstream_board_ids']
+      ids = self.settings['downstream_board_ids'] || []
       other_ids = []
       if ue && ue.settings['replaced_boards']
         ids.each do |id|
@@ -874,7 +881,7 @@ class Board < ActiveRecord::Base
       return
     end
     
-    rev = (((self.settings || {})['revision_hashes'] || [])[-2] || [])[0]
+    rev = (((self.settings || {})['revision_hashes'] || [])[-2] || [])[0] || current_revision
     notify('board_buttons_changed', {'revision' => rev, 'reason' => @buttons_changed}) if @buttons_changed && !@brand_new
     content_changed = @button_links_changed || @brand_new || @buttons_changed
     self.map_images # NOTE: this clears @buttons_changed
@@ -906,8 +913,8 @@ class Board < ActiveRecord::Base
     if @shallow_source_changed && (self.settings && self.settings['shallow_source']) && self.user
       ue = UserExtra.find_or_create_by(user: self.user)
       ue.settings['replaced_boards'] ||= {}
-      ue.settings['replaced_boards'][self.settings['shallow_source']['id'].split(/-/)[0]] = self.global_id
-      ue.settings['replaced_boards'][self.settings['shallow_source']['key'].split(/my:/)[1].sub(/:/, '/')] = self.global_id
+      ue.settings['replaced_boards'][self.settings['shallow_source']['id'].split(/-/)[0]] = self.global_id(true)
+      ue.settings['replaced_boards'][self.settings['shallow_source']['key'].split(/my:/)[1].sub(/:/, '/')] = self.global_id(true)
       ue.save
     end
   end
@@ -1614,6 +1621,18 @@ class Board < ActiveRecord::Base
   end
   
   def flush_related_records
+    ue = self.user && self.user.user_extra
+    if ue && ue.settings['replaced_boards']
+      id = self.global_id(true)
+      changed = false
+      ue.settings['replaced_boards'].each do |key, val|
+        if val == id
+          ue.settings['replaced_boards'].delete(key) 
+          changed = true
+        end
+      end
+      ue.save if changed
+    end
     DeletedBoard.process(self)
   end
   
@@ -1815,7 +1834,7 @@ class Board < ActiveRecord::Base
       return {done: true, translated: false, reason: 'board not in list'}
     end
     visited_board_ids << self.global_id
-    downstreams = self.settings['immediately_downstream_board_ids'] - visited_board_ids
+    downstreams = self.get_immediately_downstream_board_ids - visited_board_ids
     Board.find_all_by_path(downstreams).each do |brd|
       brd.translate_set(translations, {
         'source' => source_lang,
@@ -1838,6 +1857,7 @@ class Board < ActiveRecord::Base
     return {done: true, updated: false, reason: 'mismatched user'} if user_local_id != self.user_id
     return {done: true, updated: false, reason: 'no privacy level specified'} if !privacy_level || privacy_level.blank?
     return {done: true, updated: false, reason: 'author required'} unless author
+    raise "can't update on shallow clones" if @sub_id
     if (board_ids.blank? || board_ids.include?(self.global_id))
       updated_board_ids << self.global_id
       whodunnit = PaperTrail.request.whodunnit
@@ -1855,7 +1875,7 @@ class Board < ActiveRecord::Base
       return {done: true, updated: false, reason: 'board not in list'}
     end
     visited_board_ids << self.global_id
-    downstreams = self.settings['immediately_downstream_board_ids'] - visited_board_ids
+    downstreams = self.get_immediately_downstream_board_ids - visited_board_ids
     Board.find_all_by_path(downstreams).each do |brd|
       brd.update_privacy(privacy_level, author, board_ids, user_local_id, visited_board_ids, updated_board_ids)
       visited_board_ids << brd.global_id
@@ -1873,18 +1893,7 @@ class Board < ActiveRecord::Base
         votes = {}
         res = 'opensymbols'
         self.known_button_images.each do |bi|
-          lib = 'unknown'
-          if bi.settings['license'] && bi.settings['license']['uneditable'] && bi.settings['license']['author_name'] && bi.settings['license']['author_url']
-            lib = 'arasaac' if bi.settings['license']['author_url'].match(/arasaac/i)
-            lib = 'twemoji' if bi.settings['license']['author_name'].match(/twitter/i)
-            lib = 'mulberry' if bi.settings['license']['author_name'].match(/paxtoncrafts/i)
-            lib = 'noun-project' if bi.settings['license']['author_url'].match(/thenounproject/i)
-            lib = 'sclera' if bi.settings['license']['author_name'].match(/sclera/i)
-            lib = 'tawasol' if bi.settings['license']['author_name'].match(/mada/i)
-            lib = 'symbolstix' if bi.settings['license']['author_name'].match(/news2you/i)
-            lib = 'pcs' if bi.settings['license']['author_name'].match(/tobii/i)
-            lib = 'lessonpix' if bi.settings['license']['author_name'].match(/lessonpix/i)
-          end
+          lib = bi.image_library || 'unknown'
           if ['arasaac', 'twemoji', 'noun-project', 'sclera', 'mulberry', 'tawasol'].include?(lib)
             votes['opensymbols'] = (votes['opensymbols'] || 0) + 1
           end            
@@ -1919,93 +1928,101 @@ class Board < ActiveRecord::Base
     user_local_id ||= self.user_id
     copy_id = (board_ids || []).detect{|id| id.match(/^new/)}
     copy_id = copy_id.split(/:/)[1] if copy_id
-    return {done: true, swapped: false, reason: 'mismatched user'} if user_local_id != self.user_id
-    return {done: true, swapped: false, reason: 'no library specified'} if !library || library.blank?
-    return {done: true, swapped: true, reason: 'kept same'} if library == 'original' || library == 'default'
-    return {done: true, swapped: false, reason: 'author required'} unless author
-    return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'pcs' && (!author || !author.subscription_hash['extras_enabled'])
-    return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'symbolstix' && (!author || !author.subscription_hash['extras_enabled'])
-    return {done: true, swapped: false, reason: 'not authorized to access premium library'} if library == 'lessonpix' && (!author || !author.subscription_hash['extras_enabled']) && !Uploader.lessonpix_credentials(author)
-    raise "can't swap images for a shallow clone" if @sub_id
+    return {done: true, id: self.global_id, swapped: false, reason: 'mismatched user'} if user_local_id != self.user_id
+    return {done: true, id: self.global_id, swapped: false, reason: 'no library specified'} if !library || library.blank?
+    return {done: true, id: self.global_id, swapped: true, reason: 'kept same'} if library == 'original' || library == 'default'
+    return {done: true, id: self.global_id, swapped: false, reason: 'author required'} unless author
+    return {done: true, id: self.global_id, swapped: false, reason: 'not authorized to access premium library'} if library == 'pcs' && (!author || !author.subscription_hash['extras_enabled'])
+    return {done: true, id: self.global_id, swapped: false, reason: 'not authorized to access premium library'} if library == 'symbolstix' && (!author || !author.subscription_hash['extras_enabled'])
+    return {done: true, id: self.global_id, swapped: false, reason: 'not authorized to access premium library'} if library == 'lessonpix' && (!author || !author.subscription_hash['extras_enabled']) && !Uploader.lessonpix_credentials(author)
+    swap_board = self
+    if @sub_id
+      swap_board = self.copy_for(@sub_global, skip_save: true)
+    end
     is_root = visited_board_ids.blank?
     # puts "SWAPPING FOR #{self.key} #{is_root}"
     cache = library.instance_variable_get('@library_cache')
-    cache ||= LibraryCache.find_or_create_by(library: library, locale: self.settings['locale'] || 'en')
+    cache ||= LibraryCache.find_or_create_by(library: library, locale: swap_board.settings['locale'] || 'en')
     library.instance_variable_set('@library_cache', cache)
     cache.instance_variable_set('@ease_saving', true) if is_root
-    if (board_ids.blank? || board_ids.include?(self.global_id) || (copy_id && self.settings['copy_id'] == copy_id))
-      updated_board_ids << self.global_id
-      # puts " checking if important"
-      words = self.buttons.map{|b| [b['label'], b['vocalization']] }.flatten.compact.uniq
-      # Important boards (i.e. boards that show up in the suggested list), should
-      # definitely have their swap alternates cached indefinitely
-      important_board = false
-      if self.settings['never_edited'] && self.settings['source_board_id']
-        ref = (self.settings['copy_id'] && Board.find_by_path(self.settings['copy_id'])) || self
-        sb = ref.source_board
-        important_user = library.instance_variable_get('@important_user') || User.find_by_path('important_stars')
-        library.instance_variable_set('@important_user', important_user)
-        if sb && sb != self && sb.starred_by?(important_user)
-          important_board = true
-        end
-      end
-      # puts " checking for default images"
-      # TODO: don't replace user-uploaded images
-      defaults = Uploader.default_images(library, words, self.settings['locale'] || 'en', author, true, important_board)
-      # puts " mapping buttons"
-      image_urls = 
-      bis = self.known_button_images
-      buttons = self.buttons.map do |button|
-        # skip buttons that don't currently have an image
-        next button unless button['image_id']
-        next button if button['label'] && button['label'].match(/CoughDrop/)
-        old_bi = bis.detect{|i| i.global_id == button['image_id'] }
-        # skip buttons that have manually-uploaded image
-        if old_bi && old_bi.url && old_bi.url.match(/coughdrop-usercontent/)
-          # puts "SAFE PIC"
-        elsif (button['label'] || button['vocalization'])
-          image_data = defaults[button['label'] || button['vocalization']]
-          if !image_data && (!defaults['_missing'] || !defaults['_missing'].include?(button['label'] || button['vocalization']))
-            # puts " SEARCHING FOR #{button['label']}"
-            image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, 'en', author, nil, true, important_board) || [])[0]
-          end
-          new_bi = ButtonImage.find_by_global_id(image_data['coughdrop_image_id']) if image_data && image_data['coughdrop_image_id']
-          if new_bi
-            button['image_id'] = new_bi.global_id
-            new_bi.assert_fallback(old_bi)
-            @buttons_changed = 'swapped images'
-          elsif image_data
-            # puts " GENERATING BUTTONIMAGE"
-            image_data['button_label'] = button['label']
-            new_bi = ButtonImage.process_new(image_data, {user: author})
-            new_bi.assert_fallback(old_bi)
-            button['image_id'] = new_bi.global_id
-            @buttons_changed = 'swapped images'
+    if (board_ids.blank? || board_ids.include?(swap_board.global_id) || (copy_id && swap_board.settings['copy_id'] == copy_id))
+      updated_board_ids << swap_board.global_id
+      if !library.instance_variable_get('@skip_swapped') || swap_board.current_library(true) != library
+        # puts " checking if important"
+        words = swap_board.buttons.map{|b| [b['label'], b['vocalization']] }.flatten.compact.uniq
+        # Important boards (i.e. boards that show up in the suggested list), should
+        # definitely have their swap alternates cached indefinitely
+        important_board = false
+        if swap_board.settings['never_edited'] && swap_board.settings['source_board_id']
+          ref = (swap_board.settings['copy_id'] && Board.find_by_path(swap_board.settings['copy_id'])) || swap_board
+          sb = ref.source_board
+          important_user = library.instance_variable_get('@important_user') || User.find_by_path('important_stars')
+          library.instance_variable_set('@important_user', important_user)
+          if sb && sb != swap_board && sb.starred_by?(important_user)
+            important_board = true
           end
         end
-        button
+        # puts " checking for default images"
+        defaults = Uploader.default_images(library, words, swap_board.settings['locale'] || 'en', author, true, important_board)
+        # puts " mapping buttons"
+        image_urls = 
+        bis = swap_board.known_button_images
+        # TODO: skip images that already have the correct library
+        buttons = swap_board.buttons.map do |button|
+          # skip buttons that don't currently have an image
+          next button unless button['image_id']
+          next button if button['label'] && button['label'].match(/CoughDrop/)
+          old_bi = bis.detect{|i| i.global_id == button['image_id'] }
+          # skip buttons that have manually-uploaded image
+          if old_bi && old_bi.url && old_bi.url.match(/coughdrop-usercontent/)
+            # puts "SAFE PIC"
+          elsif library.instance_variable_get('@skip_swapped') && (old_bi.image_library == library || (['arasaac', 'twemoji', 'noun-project', 'sclera', 'mulberry', 'tawasol'].include?(old_bi.image_library) && library == 'opensybmols'))
+            # puts "ALREADY SWAPPED"
+          elsif (button['label'] || button['vocalization'])
+            image_data = defaults[button['label'] || button['vocalization']]
+            if !image_data && (!defaults['_missing'] || !defaults['_missing'].include?(button['label'] || button['vocalization']))
+              # puts " SEARCHING FOR #{button['label']}"
+              image_data ||= (Uploader.find_images(button['label'] || button['vocalization'], library, 'en', author, nil, true, important_board) || [])[0]
+            end
+            new_bi = ButtonImage.find_by_global_id(image_data['coughdrop_image_id']) if image_data && image_data['coughdrop_image_id']
+            if new_bi
+              button['image_id'] = new_bi.global_id
+              new_bi.assert_fallback(old_bi)
+              @buttons_changed = 'swapped images'
+            elsif image_data
+              # puts " GENERATING BUTTONIMAGE"
+              image_data['button_label'] = button['label']
+              new_bi = ButtonImage.process_new(image_data, {user: author})
+              new_bi.assert_fallback(old_bi)
+              button['image_id'] = new_bi.global_id
+              @buttons_changed = 'swapped images'
+            end
+          end
+          button
+        end
+        # puts " saving"
       end
-      # puts " saving"
       whodunnit = PaperTrail.request.whodunnit
       PaperTrail.request.whodunnit = "user:#{author.global_id}.board.swap_images"
       if @buttons_changed
-        self.settings['buttons'] = buttons
-        self.settings['swapped_library'] = library
+        swap_board.settings['buttons'] = buttons
+        swap_board.settings['swapped_library'] = library
         @map_later = true
-        self.save 
+        swap_board.save 
       end
       PaperTrail.request.whodunnit = whodunnit
     else
-      return {done: true, swapped: false, reason: 'board not in list'}
+      return {done: true, id: self.global_id, swapped: false, reason: 'board not in list'}
     end
-    visited_board_ids << self.global_id
-    downstreams = self.settings['immediately_downstream_board_ids'] - visited_board_ids
+    visited_board_ids << swap_board.global_id
+    downstreams = swap_board.get_immediately_downstream_board_ids - visited_board_ids
     Board.find_all_by_path(downstreams).each do |brd|
       if board_ids.instance_variable_get('@skip_keyboard') && brd.key.match(/keyboard$/)
         # When swapping images, don't touch the keyboards, 
         # there's no point and the pic will get weird via search
       else
-        brd.swap_images(library, author, board_ids, user_local_id, visited_board_ids, updated_board_ids)
+        res = brd.swap_images(library, author, board_ids, user_local_id, visited_board_ids, updated_board_ids)
+        brd = Board.find_by_global_id(res[:id]) if res[:id] && res[:id] != brd.global_id
       end
       visited_board_ids << brd.global_id
     end
@@ -2013,7 +2030,7 @@ class Board < ActiveRecord::Base
       cache.instance_variable_set('@ease_saving', false)
       cache.save_if_added 
     end
-    {done: true, library: library, board_ids: board_ids, visited: visited_board_ids.uniq, updated: updated_board_ids.uniq}
+    {done: true, id: swap_board.global_id, library: library, board_ids: board_ids, visited: visited_board_ids.uniq, updated: updated_board_ids.uniq}
   end  
   
   def default_listeners(notification_type)

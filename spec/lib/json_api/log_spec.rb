@@ -258,6 +258,8 @@ describe JsonApi::Log do
           'incorrect' => 0
         },
         'stats' => {
+          'avg_speech_length' => 0,
+          'avg_utterance_length' => 0,
           'session_seconds' => 0,
           'total_correct' => 0,
           'total_incorrect' => 0,

@@ -390,7 +390,7 @@ describe User, :type => :model do
       expect(Board).to receive(:where).with(:id => [b.id]).and_return(o)
       expect(o).to receive(:select).with('id').and_return([b])
       u.track_boards(true)
-      expect(Worker.scheduled_for?(:slow, Board, :perform_action, {'method' => 'refresh_stats', 'arguments' => [[b.global_id]]})).to eq(true)
+      expect(Worker.scheduled_for?(:slow, Board, :perform_action, {'method' => 'refresh_stats', 'arguments' => [[b.global_id], Time.now.to_i]})).to eq(true)
     end
 
     it "should trigger board updates for updated home_board" do
@@ -415,7 +415,7 @@ describe User, :type => :model do
       u.generate_defaults
       expect(u.settings['home_board_changed']).to eq(true)
       u.track_boards(true)
-      expect(Worker.scheduled_for?(:slow, Board, :perform_action, {'method' => 'refresh_stats', 'arguments' => [[b2.global_id]]})).to eq(true)
+      expect(Worker.scheduled_for?(:slow, Board, :perform_action, {'method' => 'refresh_stats', 'arguments' => [[b2.global_id], Time.now.to_i]})).to eq(true)
     end
 
     it "should create missing connections" do
@@ -1207,16 +1207,16 @@ describe User, :type => :model do
       expect(b1.settings['downstream_board_ids']).to eq([b1a.global_id])
       b2 = b1.copy_for(u3)
       expect(Board).to receive(:relink_board_for) do |user, opts|
-        boards = opts[:boards]
+        board_ids = opts[:board_ids]
         pending_replacements = opts[:pending_replacements]
         action = opts[:update_preference]
         expect(opts[:authorized_user]).to eq(u2)
         expect(user).to eq(u3)
-        expect(boards.length).to eq(2)
-        expect(boards).to eq([b1, b1a])
+        expect(board_ids.length).to eq(2)
+        expect(board_ids).to eq([b1.global_id, b1a.global_id])
         expect(pending_replacements.length).to eq(2)
-        expect(pending_replacements[0]).to eq([b1, b2])
-        expect(pending_replacements[1][0]).to eq(b1a)
+        expect(pending_replacements[0]).to eq([b1.global_id, {id: b2.global_id, key: b2.key}])
+        expect(pending_replacements[1][0]).to eq(b1a.global_id)
         expect(action).to eq('update_inline')
       end
       u3.copy_board_links(old_board_id: b1.global_id, new_board_id: b2.global_id, ids_to_copy: [], make_public: false, user_for_paper_trail: "user:#{u2.global_id}")

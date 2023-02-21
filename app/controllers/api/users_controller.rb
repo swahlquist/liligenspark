@@ -554,9 +554,9 @@ class Api::UsersController < ApplicationController
     return api_error(400, {error: 'too many ids'}) if ids.length > 25
     boards = Board.find_all_by_global_id(ids)
     res = []
-    boards.each do |board|
+    boards.select{|b| b.allows?(user, 'view')}.each do |board|
       board.track_usage!
-      res << JsonApi::Board.as_json(board, :permissions => @api_user, :skip_subs => true)
+      res << JsonApi::Board.as_json(board, :permissions => @api_user, :wrapper => true, :skip_subs => true)['board']
     end
     render json: res
   end

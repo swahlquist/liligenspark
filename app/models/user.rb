@@ -570,7 +570,7 @@ class User < ActiveRecord::Base
     @do_track_boards = false
     if frd != true
       args = {'id' => self.id, 'method' => 'track_boards', 'arguments' => [true]}
-      self.schedule_once_for(!RedisInit.any_queue_pressure? ? :whenever : :slow, :track_boards, true)
+      self.schedule_once_for(RedisInit.any_queue_pressure? ? :whenever : :slow, :track_boards, true)
       return true
     end
     # TODO: trigger background process to create user_board_connection records for all boards
@@ -1661,6 +1661,7 @@ class User < ActiveRecord::Base
     if swap_library && swap_library != 'default' && swap_library != 'original'
       ids = res['new_board_ids']
       ids.instance_variable_set('@skip_keyboard', true)
+      swap_library.instance_variable_set('@skip_swapped', true)
       starting_new_board.swap_images(swap_library, self, ids)
       res['swap_library'] = swap_library
     end

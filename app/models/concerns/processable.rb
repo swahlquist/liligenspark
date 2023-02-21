@@ -10,16 +10,17 @@ module Processable
     params = (params || {}).with_indifferent_access
     non_user_params = (non_user_params || {}).with_indifferent_access
     @processing_errors = []
-    res = self.process_params(params.with_indifferent_access, non_user_params)
+    obj = self
+    if non_user_params[:allow_clone]
+      obj = self.generate_possible_clone
+    end
+    res = obj.process_params(params.with_indifferent_access, non_user_params)
     if res == false
       @errored = true
       return false
     else
-      if non_user_params[:allow_clone]
-        return self.save_possible_clone
-      else
-        self.save
-      end
+      res = obj.save
+      obj == self ? res : obj
     end
   end
   

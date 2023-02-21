@@ -2685,16 +2685,20 @@ describe Organization, :type => :model do
       o3.add_manager(u2.user_name, false)
       expect(Organization.attached_orgs(u1).map{|o| o.except('added')}.sort_by{|o| o['id'] }).to eq([
         {
-          'id' => o1.global_id, 'type' => 'user', 'eval' => false, 'sponsored' => false, 'status' => 'unchecked', 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => []
+          'id' => o1.global_id, 'type' => 'user', 'eval' => false, 'sponsored' => false, 'status' => 'unchecked', 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => [],
+          'home_board_keys' => []
         }, {
-          'id' => o2.global_id, 'type' => 'supervisor', 'extra_colors' => nil, 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => [], 'home_board_keys' => []
+          'id' => o2.global_id, 'type' => 'supervisor', 'extra_colors' => nil, 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => [], 'home_board_keys' => [],
+          'note_templates' => o1.note_templates
         }, {
-          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => true, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => [], 'home_board_keys' => []
+          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => true, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => [], 'home_board_keys' => [],
+          'note_templates' => o1.note_templates
         }
       ])
       expect(Organization.attached_orgs(u2).map{|o| o.except('added')}).to eq([
         {
-          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => [], 'home_board_keys' => []     
+          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => [], 'home_board_keys' => [],
+          'note_templates' => o1.note_templates
         }
       ])
     end
@@ -2745,13 +2749,16 @@ describe Organization, :type => :model do
       expect(Organization.attached_orgs(u1.reload).map{|o| o.except('added')}.sort_by{|o| o['id'] }).to eq([
         {
           'id' => o1.global_id, 'type' => 'user', 'eval' => false, 'sponsored' => false, 'status' => 'unchecked', 'pending' => false, 'name' => o1.settings['name'],"image_url"=>nil,
-          'external_auth' => true, 'external_auth_connected' => true, 'external_auth_alias' => 'bob@example.com', 'lesson_ids' => []
+          'external_auth' => true, 'external_auth_connected' => true, 'external_auth_alias' => 'bob@example.com', 'lesson_ids' => [],
+          'home_board_keys' => []
         }, {
           'id' => o2.global_id, 'type' => 'supervisor', 'extra_colors' => nil, 'pending' => false, 'name' => o1.settings['name'],"image_url"=>nil,
-          'external_auth' => true, 'external_auth_connected' => true, 'external_auth_alias' => 'bob', 'lesson_ids' => [], 'home_board_keys' => []
+          'external_auth' => true, 'external_auth_connected' => true, 'external_auth_alias' => 'bob', 'lesson_ids' => [], 'home_board_keys' => [],
+          'note_templates' => o1.note_templates
         }, {
           'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => true, 'name' => o1.settings['name'],"image_url"=>nil,
-          'external_auth' => true, 'external_auth_alias' => 'bobby@example.com', 'lesson_ids' => [], 'home_board_keys' => []
+          'external_auth' => true, 'external_auth_alias' => 'bobby@example.com', 'lesson_ids' => [], 'home_board_keys' => [],
+          'note_templates' => o1.note_templates
         }
       ])
     end
@@ -2775,13 +2782,16 @@ describe Organization, :type => :model do
         {
           'id' => o1.global_id, 'type' => 'user', 'eval' => false, 'sponsored' => false, 'status' => 'unchecked', 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'profile' => {
             'profile_id' => 'squinch', 'template_id' => '1_1111', 'frequency' => 1000
-          }, 'lesson_ids' => []
+          }, 'lesson_ids' => [],
+          'home_board_keys' => []
         }, {
           'id' => o2.global_id, 'type' => 'supervisor', 'extra_colors' => nil, 'pending' => false, "image_url"=>nil, 'name' => o1.settings['name'], 'profile' => {
             'profile_id' => 'squib', 'template_id' => '1_22222', 'frequency' => 2000
-          }, 'lesson_ids' => [], 'home_board_keys' => []
+          }, 'lesson_ids' => [], 'home_board_keys' => [],
+          'note_templates' => o1.note_templates
         }, {
-          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => true, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => [], 'home_board_keys' => []
+          'id' => o3.global_id, 'type' => 'manager', 'extra_colors' => nil, 'admin' => false, 'full_manager' => true, "image_url"=>nil, 'name' => o1.settings['name'], 'lesson_ids' => [], 'home_board_keys' => [],
+          'note_templates' => o1.note_templates
         }
       ])
     end
@@ -2991,6 +3001,24 @@ describe Organization, :type => :model do
       expect(o.home_board_keys).to eq([b1.key, b2.key])
       expect(o.settings['default_home_board']).to eq(nil)
     end
+
+    it "should keep existing home board keys if re-entered, even if no longer allowed" do
+      o = Organization.create
+      o.settings['default_home_board'] = {'key' => 'asdf'}
+      o.save
+      u = User.create
+      b1 = Board.create(user: u, public: true)
+      b2 = Board.create(user: u, public: true)
+      b3 = Board.create(user: u)
+      o.process({'home_board_keys' => [b1.key, b2.key, b3.key]}, {'updater' => u})
+      expect(o.home_board_keys).to eq([b1.key, b2.key])
+      expect(o.settings['default_home_board']).to eq(nil)
+      expect(o.settings['default_home_boards']).to_not eq(nil)
+      b2.public = false
+      b2.save
+      o.process({'home_board_keys' => [b1.key, b2.key, b3.key]}, {'updater' => u})
+      expect(o.home_board_keys).to eq([b1.key, b2.key])
+    end
   end
 
   describe "start codes" do
@@ -3141,26 +3169,29 @@ describe Organization, :type => :model do
           {
             code: code,
             disabled: false,
-            locale: 'es'
+            locale: 'es',
+            v: GoSecure.sha512(Webhook.get_record_code(o), 'start_code_verifier')[0, 5]
           },
           {
             code: code2,
             disabled: false,
             locale: 'fr',
-            symbol_library: 'pcs'
+            symbol_library: 'pcs',
+            v: GoSecure.sha512(Webhook.get_record_code(o), 'start_code_verifier')[0, 5]
           }
         ])
       end
       
       it "should return start codes saved on a user" do
         u = User.create
+        b = Board.create(user: u, public: true)
         code = Organization.activation_code(u, {'user_type' => 'communicator'})
         expect(code).to_not eq(nil)
         rnd = "9#{code[-11..-8]}"
         u.reload
         expect(u.settings['activation_settings'].keys).to eq([rnd])
 
-        code2 = Organization.activation_code(u, {'user_type' => 'communicator', 'home_board_key' => 'asdf'})
+        code2 = Organization.activation_code(u, {'user_type' => 'communicator', 'home_board_key' => b.key})
         expect(code2).to_not eq(nil)
         rnd2 = "9#{code2[-11..-8]}"
         u.reload
@@ -3169,12 +3200,15 @@ describe Organization, :type => :model do
         expect(Organization.start_codes(u)).to eq([
           {
             code: code,
-            disabled: false
+            disabled: false,
+            v: GoSecure.sha512(Webhook.get_record_code(u), 'start_code_verifier')[0, 5]
+
           },
           {
             code: code2,
             disabled: false,
-            home_board_key: 'asdf'
+            home_board_key: b.key,
+            v: GoSecure.sha512(Webhook.get_record_code(u), 'start_code_verifier')[0, 5]
           }
         ])
       end
@@ -3288,9 +3322,11 @@ describe Organization, :type => :model do
 
         u = User.create
         res = Organization.parse_activation_code(code, u)
+        Worker.process_queues
         expect(!!res).to_not eq(false)
         o.reload
         expect(o.user?(u)).to eq(true)
+        u.reload
         expect(u.settings['preferences']['home_board']).to_not eq(nil)
         brd = Board.find_by_path(u.settings['preferences']['home_board']['key'])
         expect(brd).to_not eq(b)
@@ -3308,9 +3344,11 @@ describe Organization, :type => :model do
 
         u = User.create
         res = Organization.parse_activation_code(code, u)
+        Worker.process_queues
         expect(!!res).to_not eq(false)
         o.reload
         expect(o.user?(u)).to eq(true)
+        u.reload
         expect(u.settings['preferences']['home_board']).to_not eq(nil)
         brd = Board.find_by_path(u.settings['preferences']['home_board']['key'])
         expect(brd).to_not eq(b)
@@ -3358,7 +3396,9 @@ describe Organization, :type => :model do
         o = Organization.create
         s = User.create
         b2 = Board.create(user: s, public: true)
+        o.process({:home_board_key => b2.key}, {updater: s})
         code = Organization.activation_code(o, {'user_type' => 'communicator', 'home_board_key' => b2.key})
+        o.process({:home_board_key => nil}, {updater: s})
 
         u = User.create
         res = Organization.parse_activation_code(code, u)
@@ -3371,8 +3411,10 @@ describe Organization, :type => :model do
       it "should not copy a new home board if the specified board isn't available for the supervisor" do
         s = User.create
         u2 = User.create
-        b = Board.create(user: u2)
+        b = Board.create(user: u2, public: true)
         code = Organization.activation_code(s, {'home_board_key' => b.global_id})
+        b.public = false
+        b.save
         expect(code).to_not eq(nil)
         u = User.create
         expect(u.supervisor_user_ids).to eq([])
@@ -3390,6 +3432,7 @@ describe Organization, :type => :model do
         u = User.create
         expect(u.supervisor_user_ids).to eq([])
         res = Organization.parse_activation_code(code, u)
+        Worker.process_queues
         u.reload
         expect(u.supervisor_user_ids).to eq([s.global_id])
         expect(u.settings['preferences']['home_board']).to_not eq(nil)

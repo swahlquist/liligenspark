@@ -242,8 +242,8 @@ describe Api::BoardsController, :type => :controller do
       expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json['board'].length).to eq(2)
-      expect(json['board'][0]['id']).to eq(b2.global_id)
-      expect(json['board'][1]['id']).to eq(b.global_id)
+      expect(json['board'][0]['id']).to eq(b.global_id)
+      expect(json['board'][1]['id']).to eq(b2.global_id)
     end
     
     it "should allow filtering by board category" do  
@@ -385,8 +385,8 @@ describe Api::BoardsController, :type => :controller do
       get :index, params: {public: true, locale: 'es', q: 'cheese', sort: 'popularity'}
       json = assert_success_json
       expect(json['board'].length).to eq(2)
-      expect(json['board'][0]['id']).to eq(b1.global_id)
-      expect(json['board'][1]['id']).to eq(b2.global_id)
+      expect(json['board'][0]['id']).to eq(b2.global_id)
+      expect(json['board'][1]['id']).to eq(b1.global_id)
 
       get :index, params: {public: true, locale: 'es_US', q: 'frog', sort: 'home_popularity'}
       json = assert_success_json
@@ -410,7 +410,7 @@ describe Api::BoardsController, :type => :controller do
       b2.save
       bl1 = BoardLocale.create(board_id: b1.id, popularity: 5, home_popularity: 3, locale: 'en', search_string: "whatever cheese is good for you")
       bl2 = BoardLocale.create(board_id: b1.id, popularity: 1, home_popularity: 1, locale: 'en', search_string: "I don't know what to say about this, but, well, um, cheese")
-      bl3 = BoardLocale.create(board_id: b1.id, popularity: 1, home_popularity: 1, locale: 'es', search_string: "whatever cheese is good for you")
+      bl3 = BoardLocale.create(board_id: b1.id, popularity: 200, home_popularity: 1, locale: 'es', search_string: "whatever cheese is good for you cheese cheese")
       bl4 = BoardLocale.create(board_id: b2.id, popularity: 1, home_popularity: 1, locale: 'es', search_string: "this is the best frog I have ever eaten with cheese")
       Board.where(id: b2.id).update_all(home_popularity: 5)
 
@@ -424,12 +424,12 @@ describe Api::BoardsController, :type => :controller do
       get :index, params: {public: true, locale: 'es', q: 'cheese', sort: 'popularity'}
       json = assert_success_json
       expect(json['board'].length).to eq(2)
-      expect(json['board'][0]['id']).to eq(b1.global_id)
-      expect(json['board'][0]['name']).to eq('ahoo')
-      expect(json['board'][0]['localized_name']).to eq('ahem')
-      expect(json['board'][1]['id']).to eq(b2.global_id)
-      expect(json['board'][1]['name']).to eq('ahii')
-      expect(json['board'][1]['localized_name']).to eq('ahoy')
+      expect(json['board'][0]['id']).to eq(b2.global_id)
+      expect(json['board'][0]['name']).to eq('ahii')
+      expect(json['board'][0]['localized_name']).to eq('ahoy')
+      expect(json['board'][1]['id']).to eq(b1.global_id)
+      expect(json['board'][1]['name']).to eq('ahoo')
+      expect(json['board'][1]['localized_name']).to eq('ahem')
 
       get :index, params: {public: true, locale: 'es_US', q: 'frog', sort: 'home_popularity'}
       json = assert_success_json
@@ -499,8 +499,8 @@ describe Api::BoardsController, :type => :controller do
       get :index, params: {user_id: u.global_id, locale: 'es_US', q: 'frog', sort: 'home_popularity'}
       json = assert_success_json
       expect(json['board'].length).to eq(3)
-      expect(json['board'][0]['id']).to eq(b2.global_id)
-      expect(json['board'][1]['id']).to eq(b3.global_id)
+      expect(json['board'][0]['id']).to eq(b3.global_id)
+      expect(json['board'][1]['id']).to eq(b2.global_id)
       expect(json['board'][2]['id']).to eq(b1.global_id)
     end
   end
@@ -658,7 +658,40 @@ describe Api::BoardsController, :type => :controller do
     end
 
     it "should retrieve the original shallow clone if the updated clone is deleted" do
-      write_this_test
+      u = User.create
+      b = Board.create(user: u, public: true)
+      b.settings['name'] = 'a'
+      b.save
+      token_user
+      bb = Board.find_by_path("#{b.global_id}-#{@user.global_id}")
+      b2 = bb.copy_for(@user)
+      b2.settings['name'] = 'b'
+      b2.save
+
+      get :show, params: {id: "#{b.global_id}-#{@user.global_id}"}
+      json = assert_success_json
+      expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
+      expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
+      expect(json['board']['name']).to eq("b")
+
+      get :show, params: {id: "#{@user.user_name}/my:#{b.key.sub(/\//, ':')}"}
+      json = assert_success_json
+      expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
+      expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
+      expect(json['board']['name']).to eq("b")
+
+      b2.destroy
+      get :show, params: {id: "#{b.global_id}-#{@user.global_id}"}
+      json = assert_success_json
+      expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
+      expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
+      expect(json['board']['name']).to eq("a")
+
+      get :show, params: {id: "#{@user.user_name}/my:#{b.key.sub(/\//, ':')}"}
+      json = assert_success_json
+      expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
+      expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
+      expect(json['board']['name']).to eq("a")
     end
   end
   
@@ -877,6 +910,7 @@ describe Api::BoardsController, :type => :controller do
       token_user
       b = Board.create(:user => @user)
       put :update, params: {:id => b.global_id, :board => {:name => "cool board 2"}}
+
       json = JSON.parse(response.body)
       expect(json['error']).to eq("board update failed")
       expect(json['errors']).to eq(["bacon"])
@@ -1051,15 +1085,19 @@ describe Api::BoardsController, :type => :controller do
       expect(json['board']['permissions']).to eq({'user_id' => @user.global_id, 'view' => true, 'edit' => true})
 
       put :update, params: {
-        id: "#{b.global_id}-#{@user.global_id}", params: {board: {
+        id: "#{b.global_id}-#{@user.global_id}", board: {
+          name: 'best board',
           buttons: [
             {'id' => '2', 'label' => 'fred'}
           ]
-        }}
+        }
       }
       json = assert_success_json
       expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
       expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
+      expect(json['board']['name']).to eq("best board")
+      b.reload
+      expect(b.settings['name']).to_not eq('best board')
       expect(json['board']['shallow_clone']).to eq(nil)
       expect(json['board']['permissions']).to eq({'user_id' => @user.global_id, 'view' => true, 'edit' => true, 'share' => true, 'delete' => true})
       b2 = Board.last
@@ -1145,7 +1183,7 @@ describe Api::BoardsController, :type => :controller do
       expect(response).to be_successful
       expect(b.reload.settings['starred_user_ids']).to eq([])
       json = JSON.parse(response.body)
-      expect(json).to eq({'starred' => false, 'stars' => 0})
+      expect(json).to eq({'starred' => false, 'stars' => 0, 'user_id' => @user.global_id})
     end
   end
   
@@ -1178,6 +1216,42 @@ describe Api::BoardsController, :type => :controller do
       json = JSON.parse(response.body)
       expect(json['board']['id']).to eq(b.global_id)
     end
+
+    it "should not error when deleting a shallow clone" do
+      token_user
+      user = User.create
+      b = Board.create(:user => user, public: true)
+      delete :destroy, params: {:id => "#{b.global_id}-#{@user.global_id}"}
+      expect(response).to be_successful
+      expect(Board.find_by(:id => b.id)).to_not eq(nil)
+      json = JSON.parse(response.body)
+      expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
+    end
+
+    it "should revert to the originals when deleting an edited shallow clone" do
+      token_user
+      user = User.create
+      b = Board.create(:user => user, public: true)
+      bb = Board.find_by_global_id("#{b.global_id}-#{@user.global_id}")
+      b2 = bb.copy_for(@user)
+      b2.settings['name'] = "better board"
+      b2.save
+      expect(b2.id).to_not eq(b.id)
+      delete :destroy, params: {:id => "#{b.global_id}-#{@user.global_id}"}
+      expect(response).to be_successful
+      expect(Board.find_by(:id => b2.id)).to eq(nil)
+      expect(Board.find_by(:id => b.id)).to_not eq(nil)
+      json = JSON.parse(response.body)
+      expect(json['board']['id']).to eq(bb.global_id)
+      expect(json['board']['name']).to eq("better board")
+      expect(json['board']['shallow_clone']).to eq(nil)
+
+      get :show, params: {id: "#{b.global_id}-#{@user.global_id}"}
+      json = JSON.parse(response.body)
+      expect(json['board']['shallow_clone']).to eq(true)
+      expect(json['board']['name']).to eq("Unnamed Board")
+      expect(json['board']['id']).to eq(bb.global_id)
+    end
   end
   
   describe "stats" do
@@ -1207,7 +1281,7 @@ describe Api::BoardsController, :type => :controller do
       get :stats, params: {:board_id => b.global_id}
       expect(response).to be_successful
       hash = JSON.parse(response.body)
-      expect(hash['uses']).to eq(3)
+      expect(hash['uses']).to eq(4)
     end
   end
   

@@ -328,7 +328,8 @@ describe UserMailer, :type => :mailer do
       expect(html).to match(/just signed up/)
       expect(html).to match(/#{u.user_name}/)
       expect(html).to match(/Location: Paris, Texas, US/)
-      expect(html).to match(/Start Code: asdf, qqqq/)
+      expect(html).to match(/Start Code:/)
+      expect(html).to match(/asdf, qqqq/)
       
       text = message_body(m, :text)
       expect(text).to match(/just signed up/)

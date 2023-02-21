@@ -9,8 +9,8 @@ module JsonApi::ButtonSet
     board = button_set.board
     json = {}
     if board
-      json['id'] = board.global_id
-      json['key'] = board.key
+      json['id'] = board.shallow_id
+      json['key'] = board.shallow_key
       json['name'] = board.settings && board.settings['name']
       json['full_set_revision'] = button_set.data['full_set_revision'] || 'none'
       json['root_url'] = button_set.url_for(args[:permissions], board.full_set_revision)
