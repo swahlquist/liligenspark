@@ -1207,8 +1207,9 @@ class Organization < ActiveRecord::Base
       hash[:symbol_library] = opts['symbol_library'] if opts['symbol_library']
       hash[:premium] = opts['premium'] if opts['premium'] != nil
       hash[:v] = GoSecure.sha512(Webhook.get_record_code(org_or_user), 'start_code_verifier')[0, 5]
-      hash[:premium_symbols] = opts['prpremium_symbolsemium'] if opts['premium_symbols'] != nil
+      hash[:premium_symbols] = opts['premium_symbols'] if opts['premium_symbols'] != nil
       hash[:supervisors] = opts['supervisors'] if opts['supervisors']
+      hash[:supporter_type] = true if opts['user_type'] == 'supporter'
       res << hash
     end
     res

@@ -1823,7 +1823,7 @@ describe Api::BoardsController, :type => :controller do
       assert_unauthorized
     end
     
-    it "should schedule a swap" do
+    it "should schedule an update" do
       token_user
       b = Board.create(:user => @user)
       post 'update_privacy', params: {:board_id => b.global_id, 'privacy' => 'public', 'board_ids_to_update' => []}

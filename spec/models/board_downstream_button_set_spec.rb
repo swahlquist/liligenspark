@@ -792,6 +792,135 @@ describe BoardDownstreamButtonSet, :type => :model do
         "tr"=>{"en"=>["hat"], "es"=>["hatzy", "hatz"]},
         "visible_level"=>1}])
     end
+
+    it "should generate correct button list for shallow clones with edited sub-boards" do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(user: u1, public: true)
+      b2 = Board.create(user: u1, public: true)
+      b3 = Board.create(user: u1, public: true)
+      b4 = Board.create(user: u1, public: true)
+      b3.process({'buttons' => [
+        {'id' => 1, 'label' => 'land', 'load_board' => {'id' => b4.global_id, 'key' => b4.key}},
+        {'id' => 11, 'label' => 'wish'}
+      ]}, {'user' => u1}) 
+      Worker.process_queues
+      Worker.process_queues
+      b2.process({'buttons' => [
+        {'id' => 2, 'label' => 'yours', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}},
+        {'id' => 22, 'label' => 'dish'}
+      ]}, {'user' => u1})
+      Worker.process_queues
+      Worker.process_queues
+      b1.process({'buttons' => [
+        {'id' => 3, 'label' => 'island', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}},
+        {'id' => 33, 'label' => 'fish'}
+      ]}, {'user' => u1})
+      b4.process({'buttons' => [
+        {'id' => 4, 'label' => 'squish'}
+      ]}, {'user' => u1})
+      Worker.process_queues
+      Worker.process_queues
+      BoardDownstreamButtonSet.update_for(b1.global_id, true)
+      bs1 = b1.reload.board_downstream_button_set.reload
+      expect(b2.reload.board_downstream_button_set).to eq(nil)
+      expect(b3.reload.board_downstream_button_set).to eq(nil)
+      expect(b4.reload.board_downstream_button_set).to eq(nil)
+      
+      bb2 = Board.find_by_global_id("#{b2.global_id}-#{u2.global_id}")
+      bb2 = bb2.copy_for(u2)
+      b5 = Board.create(user: u2)
+      b5.process({'buttons' => [
+        {'id' => 5, 'label' => 'finish'}
+      ]}, {'user' => u2})
+      bb2.process({'buttons' => [
+        {'id' => 2, 'label' => 'yours', 'load_board' => {'id' => b5.global_id, 'key' => b5.key}},
+        {'id' => 22, 'label' => 'delish'}
+      ]}, {'user' => u2})
+      Worker.process_queues
+      Worker.process_queues
+      set = BoardDownstreamButtonSet.update_for("#{b1.global_id}-#{u2.global_id}", true)
+      expect(set).to_not eq(nil)
+      expect(set.board_id).to eq(b1.id)
+      expect(set.user_id).to eq(u2.id)
+      bb1 = Board.find_by_global_id("#{b1.global_id}-#{u2.global_id}")
+      bbs1 = bb1.board_downstream_button_set
+      expect(bbs1).to eq(set)
+      expect(bbs1.id).to_not eq(bs1.id)
+      expect(bbs1.data['buttons']).to eq([
+        {
+          'board_id' => "#{b1.global_id}-#{u2.global_id}",
+          'board_key' => "#{u2.user_name}/my:#{b1.key.sub(/\//, ':')}",
+          'depth' => 0,
+          'hidden' => false,
+          'hidden_link' => false,
+          'id' => 3,
+          'label' => 'island',
+          'link_disabled' => false,
+          'linked_board_id' => "#{b2.global_id}-#{u2.global_id}",
+          'linked_board_key' => "#{u2.user_name}/my:#{b2.key.sub(/\//, ':')}",
+          'linked_level' => 1,
+          'locale' => 'en',
+          'preferred_link' => true,
+          'visible_level' => 1
+        },
+        {
+          'board_id' => "#{b1.global_id}-#{u2.global_id}",
+          'board_key' => "#{u2.user_name}/my:#{b1.key.sub(/\//, ':')}",
+          'depth' => 0,
+          'hidden' => false,
+          'hidden_link' => false,
+          'id' => 33,
+          'label' => 'fish',
+          'link_disabled' => false,
+          'linked_level' => 1,
+          'locale' => 'en',
+          'visible_level' => 1
+        },
+        {
+          'board_id' => "#{b2.global_id}-#{u2.global_id}",
+          'board_key' => "#{u2.user_name}/my:#{b2.key.sub(/\//, ':')}",
+          'depth' => 1,
+          'hidden' => false,
+          'hidden_link' => false,
+          'id' => 2,
+          'label' => 'yours',
+          'link_disabled' => false,
+          'linked_board_id' => b5.global_id,
+          'linked_board_key' => b5.key,
+          'linked_level' => 1,
+          'locale' => 'en',
+          'preferred_link' => true,
+          'visible_level' => 1
+        },
+        {
+          'board_id' => "#{b2.global_id}-#{u2.global_id}",
+          'board_key' => "#{u2.user_name}/my:#{b2.key.sub(/\//, ':')}",
+          'depth' => 1,
+          'hidden' => false,
+          'hidden_link' => false,
+          'id' => 22,
+          'label' => 'delish',
+          'link_disabled' => false,
+          'linked_level' => 1,
+          'locale' => 'en',
+          'visible_level' => 1
+        },
+        {
+          'board_id' => b5.global_id,
+          'board_key' => b5.key,
+          'depth' => 2,
+          'hidden' => false,
+          'hidden_link' => false,
+          'id' => 5,
+          'label' => 'finish',
+          'link_disabled' => false,
+          'linked_level' => 1,
+          'locale' => 'en',
+          'visible_level' => 1
+        },
+      ])
+    end
   end
   
   describe "for_user" do

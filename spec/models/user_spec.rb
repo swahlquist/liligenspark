@@ -1271,6 +1271,45 @@ describe User, :type => :model do
       res = u.copy_board_links(old_board_id: b.global_id, new_board_id: b2.global_id, swap_library: 'bacon')
       expect(res['swap_library']).to eq('bacon')
     end
+
+    it "should correctly make copies of shallow clones as well as replaced shallow clones" do
+      u1 = User.create
+      u2 = User.create
+      User.link_supervisor_to_user(u1, u2, nil, true)
+      b1 = Board.create(:user => u2)
+      b2 = Board.create(:user => u2)
+      b3 = Board.create(:user => u2)
+      b2.settings['name'] = "Chatty Choo Choo"
+      b2.settings['prefix'] = "Chatty"
+      b2.save
+      b2.settings['buttons'] = [{'id' => 2, 'load_board' => {'key' => b3.key, 'id' => b3.global_id}}]
+      b2.save!
+      b2.track_downstream_boards!
+      b1.settings['buttons'] = [{'id' => 1, 'load_board' => {'key' => b2.key, 'id' => b2.global_id}}]
+      b1.save!
+      b1.track_downstream_boards!
+      bb3 = Board.find_by_global_id("#{b3.global_id}-#{u1.global_id}")
+      b3u1 = bb3.copy_for(u1)
+
+      bb1 = Board.find_by_global_id("#{b1.global_id}-#{u1.global_id}")
+      b1u1 = bb1.copy_for(u1, unshallow: true)
+      expect(b1u1.global_id).to_not eq(bb1.global_id)
+      expect(b1u1.shallow_id).to_not eq(bb1.global_id)
+      res = u1.copy_board_links(old_board_id: b1.global_id, new_board_id: b1u1.global_id, ids_to_copy: [], user_for_paper_trail: "user:#{u1.global_id}", copy_prefix: 'Noisy', :copier => nil, :disconnect => nil, :new_owner => nil)
+      expect(res).to_not eq(false)
+      expect(res['affected_board_ids']).to eq([b1.global_id, b2.global_id, b3.global_id])
+      expect(res['new_board_ids']).to be_include(b1u1.global_id)
+      expect(res['new_board_ids']).to_not be_include(b3u1.global_id)
+      expect(res['new_board_ids'].length).to eq(3)
+      expect(Board.count).to eq(7)
+      b5 = Board.last
+      expect(b5.parent_board_id).to eq(b3.id)
+      expect(b5.settings['name']).to eq("Noisy Unnamed Board")
+
+      b4 = Board.find_by_global_id(res['new_board_ids'][1])
+      expect(b4.parent_board_id).to eq(b2.id)
+      expect(b4.settings['name']).to eq("Noisy Choo Choo")
+    end
   end
  
   describe "notify_of_changes" do
@@ -3275,6 +3314,21 @@ describe User, :type => :model do
       expect(u).to_not receive(:notify).with('home_board_changed')
       u.process_home_board({'id' => b.global_id}, {})
       expect(u.settings['preferences']['home_board']).to eq( {'id' => b.global_id, 'key' => b.key, 'locale' => 'en'})
+    end
+
+    it "should allow a user to copy an org-affiliated private home board as their new home board, including links" do
+      o = Organization.create
+      u = User.create
+      o.add_manager(u.user_name)
+      o.settings['default_home_board'] = {'key' => 'asdf'}
+      o.save
+      b1 = Board.create(user: u)
+      o.process({'home_board_keys' => [b1.key]}, {'updater' => u})
+
+      u.process({'preferences' => {'home_board' => {'id' => b1.global_id, 'key' => b1.key, 'copy' => true, 'copy_from_org' => o.global_id}}}, {'updater' => u})
+      expect(u.settings['preferences']['home_board']).to_not eq(nil) 
+      bb = Board.find_by_global_id(u.settings['preferences']['home_board']['id'])
+      expect(bb.parent_board).to eq(b1)
     end
   end
 

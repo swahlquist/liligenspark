@@ -372,8 +372,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     if board
       # Prevent loop from running forever
       traversed_ids << board.global_id
-      set = BoardDownstreamButtonSet.find_or_create_by(:board_id => board.id, :user_id => board.instance_variable_get('@sub_id')) rescue nil
-      set ||= BoardDownstreamButtonSet.find_or_create_by(:board_id => board.id, :user_id => board.instance_variable_get('@sub_id'))
+      set = BoardDownstreamButtonSet.find_or_create_by(:board_id => board.id, :user_id => Board.local_ids([board.instance_variable_get('@sub_id')].compact)[0]) rescue nil
+      set ||= BoardDownstreamButtonSet.find_or_create_by(:board_id => board.id, :user_id => Board.local_ids([board.instance_variable_get('@sub_id')].compact)[0])
       set.data['source_id'] = nil if set.data['source_id'] == set.global_id
       # Don't re-update if you've updated more recently than when this
       # job was scheduled
@@ -486,8 +486,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
             button_data = {
               'id' => button['id'],
               'locale' => board_to_visit.settings['locale'] || 'en',
-              'board_id' => board_to_visit.global_id,
-              'board_key' => board_to_visit.key,
+              'board_id' => board_to_visit.shallow_id,
+              'board_key' => board_to_visit.shallow_key,
               'hidden' => !!button['hidden'],
               'hidden_link' => !!bv[:hidden],
               'visible_level' => visible_level,
@@ -542,8 +542,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
               linked_board ||= Board.find_by_global_id(button['load_board']['id'])
               # hidden or disabled links shouldn't be tracked (why not???)
               if linked_board # && !button['hidden'] && !button['link_disabled']
-                button_data['linked_board_id'] = linked_board.global_id
-                button_data['linked_board_key'] = linked_board.key
+                button_data['linked_board_id'] = linked_board.shallow_id
+                button_data['linked_board_key'] = linked_board.shallow_key
                 button_data['home_lock'] = true if button['home_lock']
               end
               # mark the first link to each board as "preferred"
@@ -594,7 +594,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       # TODO: clear out existing caches for a button set (and maybe lost boards and source_id board on update
       BoardDownstreamButtonSet.schedule_once_for('slow', :flush_caches, board_ids_to_flush, Time.now.to_i)
 
-      if board.settings['board_downstream_button_set_id'] != set.global_id
+      if board.settings['board_downstream_button_set_id'] != set.global_id && !board.instance_variable_get('@sub_id')
         # TODO: race condition?
         board.update_setting('board_downstream_button_set_id', set.global_id)
       end

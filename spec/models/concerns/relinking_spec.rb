@@ -1856,5 +1856,171 @@ describe Relinking, :type => :model do
       expect(b2.buttons[1]['label']).to eq('never')
       expect(b2.settings['translations']).to eq({'1' => {'fr' => {'label' => 'maintenant'}, 'de' => {'label' => 'da'}, 'es' => {'label' => 'dias'}}, '2' => {'fr' => {'label' => 'jamais'}}})     
     end
+    
+    it "should create copies for shallow clones" do
+      u = User.create
+      u2 = User.create
+      b1 = Board.create(user: u, public: true)
+      b2 = Board.create(user: u, public: true)
+      b3 = Board.create(user: u)
+      b1.process({'buttons' => [
+        {'id' => '1', 'label' => 'watch', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}},
+        {'id' => '2', 'label' => 'scotch'}
+      ]}, {'user' => u})
+      b1.settings['translations'] = {'1' => {'fr' => {'label' => 'heur'}, 'es' => {'label' => 'dias'}}, '2' => {'fr' => {'label' => 'liquide'}}}
+      b1.save
+      expect(b1.buttons[0]['load_board']['id']).to eq(b2.global_id)
+      b2.process({'buttons' => [
+        {'id' => '1', 'label' => 'now', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}},
+        {'id' => '2', 'label' => 'never'}
+      ]}, {'user' => u})
+      b2.settings['translations'] = {'1' => {'fr' => {'label' => 'maintenant'}, 'de' => {'label' => 'da'}, 'es' => {'label' => 'dias'}}, '2' => {'fr' => {'label' => 'jamais'}}}
+      b2.save
+      expect(b2.buttons[0]['load_board']['id']).to eq(b3.global_id)
+      b3.process({'buttons' => [
+        {'id' => '1', 'label' => 'water'},
+        {'id' => '2', 'label' => 'fowl'}
+      ]}, {'user' => u})
+      b3.settings['translations'] = {'1' => {'fr' => {'label' => 'eau'}, 'de' => {'label' => 'splash'}, 'es' => {'label' => 'splish'}}, '2' => {'fr' => {'label' => 'fowler'}}}
+      b3.save
+
+      Worker.process_queues
+
+      bb1 = Board.find_by_global_id("#{b1.global_id}-#{u2.global_id}")
+      res = bb1.reload.slice_locales(['fr', 'de'], ["#{b1.global_id}-#{u2.global_id}", "#{b2.global_id}-#{u2.global_id}", "#{b3.global_id}-#{u2.global_id}"], u2)
+      expect(res).to eq({sliced: true, ids: ["#{b1.global_id}-#{u2.global_id}", "#{b2.global_id}-#{u2.global_id}"]})
+      expect(b1.reload.settings['locale']).to eq('en')
+      expect(BoardContent.load_content(b1, 'translations')['default']).to eq(nil)
+      expect(b1.buttons[0]['label']).to eq('watch')
+      expect(b1.buttons[1]['label']).to eq('scotch')
+
+      bb1 = Board.find_by_global_id("#{b1.global_id}-#{u2.global_id}")
+      expect(bb1.id).to_not eq(b1.id)
+      expect(bb1.reload.settings['locale']).to eq('fr')
+      expect(BoardContent.load_content(bb1, 'translations')['default']).to eq('fr')
+      expect(bb1.buttons[0]['label']).to eq('heur')
+      expect(bb1.buttons[1]['label']).to eq('liquide')
+      expect(BoardContent.load_content(bb1, 'translations')).to eq({
+        '1' => {'fr' => {'label' => 'heur'}},
+        '2' => {'fr' => {'label' => 'liquide'}},
+        'board_name' => {},
+        'current_label' => 'fr',
+        'current_vocalization' => 'fr',
+        'default' => 'fr'
+      })
+
+      bb2 = Board.find_by_global_id("#{b2.global_id}-#{u2.global_id}")
+      expect(bb2.id).to_not eq(b2.id)
+      expect(b2.reload.settings['locale']).to eq('en')
+      expect(BoardContent.load_content(b2, 'translations')['default']).to eq(nil)
+      expect(b2.buttons[0]['label']).to eq('now')
+      expect(b2.buttons[1]['label']).to eq('never')
+
+      expect(bb2.reload.settings['locale']).to eq('fr')
+      expect(BoardContent.load_content(bb2, 'translations')['default']).to eq('fr')
+      expect(bb2.buttons[0]['label']).to eq('maintenant')
+      expect(bb2.buttons[1]['label']).to eq('jamais')
+      expect(BoardContent.load_content(bb2, 'translations')).to eq({
+        '1' => {'fr' => {'label' => 'maintenant'}, 'de' => {'label' => 'da'}},
+        '2' => {'fr' => {'label' => 'jamais'}},
+        'board_name' => {},
+        'current_label' => 'fr',
+        'current_vocalization' => 'fr',
+        'default' => 'fr'
+      })
+
+      bb3 = Board.find_by_global_id("#{b3.global_id}-#{u2.global_id}")
+      expect(bb3.id).to eq(b3.id)
+      expect(b3.reload.settings['locale']).to eq('en')
+      expect(BoardContent.load_content(b3, 'translations')['default']).to eq(nil)
+      expect(b3.buttons[0]['label']).to eq('water')
+      expect(b3.buttons[1]['label']).to eq('fowl')
+    end
+
+    it "should not update shallow clones that aren't authorized" do
+      u = User.create
+      u2 = User.create
+      b1 = Board.create(user: u, public: true)
+      b2 = Board.create(user: u, public: true)
+      b3 = Board.create(user: u)
+      b1.process({'buttons' => [
+        {'id' => '1', 'label' => 'watch', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}},
+        {'id' => '2', 'label' => 'scotch'}
+      ]}, {'user' => u})
+      b1.settings['translations'] = {'1' => {'fr' => {'label' => 'heur'}, 'es' => {'label' => 'dias'}}, '2' => {'fr' => {'label' => 'liquide'}}}
+      b1.save
+      expect(b1.buttons[0]['load_board']['id']).to eq(b2.global_id)
+      b2.process({'buttons' => [
+        {'id' => '1', 'label' => 'now', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}},
+        {'id' => '2', 'label' => 'never'}
+      ]}, {'user' => u})
+      b2.settings['translations'] = {'1' => {'fr' => {'label' => 'maintenant'}, 'de' => {'label' => 'da'}, 'es' => {'label' => 'dias'}}, '2' => {'fr' => {'label' => 'jamais'}}}
+      b2.save
+      expect(b2.buttons[0]['load_board']['id']).to eq(b3.global_id)
+      b3.process({'buttons' => [
+        {'id' => '1', 'label' => 'water'},
+        {'id' => '2', 'label' => 'fowl'}
+      ]}, {'user' => u})
+      b3.settings['translations'] = {'1' => {'fr' => {'label' => 'eau'}, 'de' => {'label' => 'splash'}, 'es' => {'label' => 'splish'}}, '2' => {'fr' => {'label' => 'fowler'}}}
+      b3.save
+
+      Worker.process_queues
+
+      bb2 = Board.find_by_global_id("#{b2.global_id}-#{u2.global_id}")
+      prebb2 = bb2.copy_for(u2)
+      prebb2.settings['name'] = "ahem"
+      prebb2.save
+
+      bb1 = Board.find_by_global_id("#{b1.global_id}-#{u2.global_id}")
+      res = bb1.reload.slice_locales(['fr', 'de'], ["#{b1.global_id}-#{u2.global_id}", "#{b2.global_id}-#{u2.global_id}", "#{b3.global_id}-#{u2.global_id}"], u2)
+      expect(res).to eq({sliced: true, ids: ["#{b1.global_id}-#{u2.global_id}", prebb2.global_id]})
+      expect(b1.reload.settings['locale']).to eq('en')
+      expect(BoardContent.load_content(b1, 'translations')['default']).to eq(nil)
+      expect(b1.buttons[0]['label']).to eq('watch')
+      expect(b1.buttons[1]['label']).to eq('scotch')
+
+      bb1 = Board.find_by_global_id("#{b1.global_id}-#{u2.global_id}")
+      expect(bb1.id).to_not eq(b1.id)
+      expect(bb1.reload.settings['locale']).to eq('fr')
+      expect(BoardContent.load_content(bb1, 'translations')['default']).to eq('fr')
+      expect(bb1.buttons[0]['label']).to eq('heur')
+      expect(bb1.buttons[1]['label']).to eq('liquide')
+      expect(BoardContent.load_content(bb1, 'translations')).to eq({
+        '1' => {'fr' => {'label' => 'heur'}},
+        '2' => {'fr' => {'label' => 'liquide'}},
+        'board_name' => {},
+        'current_label' => 'fr',
+        'current_vocalization' => 'fr',
+        'default' => 'fr'
+      })
+
+      bb2 = Board.find_by_global_id("#{b2.global_id}-#{u2.global_id}")
+      expect(bb2.id).to_not eq(b2.id)
+      expect(bb2.id).to eq(prebb2.id)
+      expect(b2.reload.settings['locale']).to eq('en')
+      expect(BoardContent.load_content(b2, 'translations')['default']).to eq(nil)
+      expect(b2.buttons[0]['label']).to eq('now')
+      expect(b2.buttons[1]['label']).to eq('never')
+
+      expect(bb2.reload.settings['locale']).to eq('fr')
+      expect(BoardContent.load_content(bb2, 'translations')['default']).to eq('fr')
+      expect(bb2.buttons[0]['label']).to eq('maintenant')
+      expect(bb2.buttons[1]['label']).to eq('jamais')
+      expect(BoardContent.load_content(bb2, 'translations')).to eq({
+        '1' => {'fr' => {'label' => 'maintenant'}, 'de' => {'label' => 'da'}},
+        '2' => {'fr' => {'label' => 'jamais'}},
+        'board_name' => {},
+        'current_label' => 'fr',
+        'current_vocalization' => 'fr',
+        'default' => 'fr'
+      })
+
+      bb3 = Board.find_by_global_id("#{b3.global_id}-#{u2.global_id}")
+      expect(bb3.id).to eq(b3.id)
+      expect(b3.reload.settings['locale']).to eq('en')
+      expect(BoardContent.load_content(b3, 'translations')['default']).to eq(nil)
+      expect(b3.buttons[0]['label']).to eq('water')
+      expect(b3.buttons[1]['label']).to eq('fowl')
+    end
   end
 end

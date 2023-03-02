@@ -101,7 +101,7 @@ module Relinking
     board.settings['locales'] = self.settings['locales']
     board.settings['translations'] = BoardContent.load_content(self, 'translations')
     board.settings['background'] = BoardContent.load_content(self, 'background')
-    board.settings['buttons'] = self.buttons
+    board.settings['buttons'] = BoardContent.load_content(self, 'buttons')
     board.settings['grid'] = BoardContent.load_content(self, 'grid')
     board.settings['intro'] = BoardContent.load_content(self, 'intro')
     board.settings['downstream_board_ids'] = self.settings['downstream_board_ids']
@@ -196,7 +196,6 @@ module Relinking
   def slice_locales(locales_to_keep, ids_to_update=[], updater=nil)
     updater = User.find_by_path(updater) if updater.is_a?(String)
     return {sliced: false, reason: 'id not included'} unless ids_to_update.include?(self.global_id)
-    return {slices: false, reason: 'cannot slice shallow clones'} if @sub_id
     all_locales = [self.settings['locale']]
     trans = BoardContent.load_content(self, 'translations') || {}
     trans.each do |key, hash|
@@ -207,23 +206,28 @@ module Relinking
     board_locales_to_keep = locales_to_keep & all_locales
     return {sliced: false, reason: 'no locales would be kept'} if board_locales_to_keep.length == 0
     return {sliced: true, ids: [self.global_id], reason: 'already includes only specified locales'} if locales_to_keep.sort == all_locales.sort && ids_to_update == [self.global_id]
-    if !board_locales_to_keep.include?(self.settings['locale'])
-      self.update_default_locale!(self.settings['locale'], board_locales_to_keep[0])
+    update_board = self
+    if @sub_id
+      return {sliced: false, reason: 'unauthorized'} unless self.allows?(@sub_global, 'edit') 
+      update_board = self.copy_for(@sub_global, skip_save: true)
     end
-    trans = self.settings['translations'] || trans
+
+    if !board_locales_to_keep.include?(update_board.settings['locale'])
+      update_board.update_default_locale!(update_board.settings['locale'], board_locales_to_keep[0])
+    end
+    trans = {}.merge(update_board.settings['translations'] || trans)
     trans.each do |key, hash|
       if hash.is_a?(Hash)
         trans[key] = hash.slice(*board_locales_to_keep)
       end
     end
-    self.settings['translations'] = trans
-    self.instance_variable_set('@map_later', true)
-    self.save!
+    update_board.settings['translations'] = trans
+    update_board.instance_variable_set('@map_later', true)
+    update_board.save!
     sliced_ids = [self.global_id]
     if ids_to_update.length > 1
       board_ids = ids_to_update & (self.downstream_board_ids || [])
       Board.find_batches_by_global_id(board_ids, batch_size: 50) do |board|
-        # TODO: for shallow clones, create copies instead
         next unless board.allows?(updater, 'edit')
         res = board.slice_locales(locales_to_keep, [board.global_id], updater)
         sliced_ids << board.global_id if res[:sliced]
@@ -442,7 +446,6 @@ module Relinking
       update_preference = opts[:update_preference]
       # maintain mapping of old boards to their replacements
       replacement_map = {}
-      puts "relinking"
       pending_replacements.each do |old_board_id, new_board_ref|
         replacement_map[old_board_id] = new_board_ref
       end

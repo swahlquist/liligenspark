@@ -34,6 +34,7 @@ class Progress < ActiveRecord::Base
       self.settings['error'] = e.message.to_s
       self.settings['backtrace'] = e.backtrace.to_s
     end
+    @@progress_error ||= nil
     if @@progress_error
       self.settings['error_result'] = @@progress_error
       @@progress_error = nil

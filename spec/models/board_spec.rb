@@ -889,6 +889,30 @@ describe Board, :type => :model do
       expect(b.full_set_revision).to_not eq(hash)
       expect(b.current_revision).to_not eq(current)
     end
+
+    it "should update upstream boards when a shallow clone is edited" do
+      u = User.create
+      b1 = Board.create(:user => u, public: true)
+      b2 = Board.create(:user => u, public: true)
+      b1.settings['buttons'] = [{'id' => 1, 'label' => 'art', 'load_board' => {'id' => b2.global_id}}]
+      b1.instance_variable_set('@buttons_changed', true)
+      b1.save
+      Worker.process_queues
+      expect(b1.reload.settings['downstream_board_ids']).to eq([b2.global_id])
+      expect(b2.reload.settings['immediately_upstream_board_ids']).to eq([b1.global_id])
+      bb2 = Board.find_by_global_id("#{b2.global_id}-#{u.global_id}")
+      b2c = bb2.copy_for(u)
+      Worker.process_queues
+      b1.reload
+      bb1 = Board.find_by_global_id("#{b1.global_id}-#{u.global_id}")
+      reva = bb1.full_set_revision
+      expect(reva).to_not eq(b1.full_set_revision)
+      b2c.settings['buttons'] = [{'id' => 1, 'label' => 'cart'}]
+      b2c.instance_variable_set('@buttons_changed', true)
+      b2c.save
+      Worker.process_queues
+      expect(bb1.reload.full_set_revision).to_not eq(reva)
+    end
   end
 
   describe "labels" do
@@ -3668,6 +3692,45 @@ describe Board, :type => :model do
       expect(b2.reload.public).to eq(false)
       expect(b3.reload.public).to eq(false)
     end
+
+    it "should allow batch updating shallow clones" do
+      u = User.create
+      u2 = User.create
+      b = Board.create(:user => u, public: true)
+      b2 = Board.create(:user => u, public: true)
+      b3 = Board.create(:user => u)
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u})
+      b2.process({'buttons' => [
+        {'id' => 2, 'label' => 'hats', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ]}, {user: u})
+      b3.process({'buttons' => [
+        {'id' => 3, 'label' => 'flats'}
+      ]}, {user: u})
+      Worker.process_queues
+      expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
+
+      bb1 = Board.find_by_global_id("#{b.global_id}-#{u2.global_id}")
+      expect(bb1.id).to eq(b.id)
+      res = bb1.update_privacy('unlisted', u, [bb1.global_id, "#{b2.global_id}-#{u2.global_id}", "#{b3.global_id}-#{u2.global_id}"])
+      expect(res).to eq({done: true, privacy_level: 'unlisted', board_ids: [bb1.global_id, "#{b2.global_id}-#{u2.global_id}", "#{b3.global_id}-#{u2.global_id}"], updated: [bb1.global_id, "#{b2.global_id}-#{u2.global_id}"], visited: [bb1.global_id, "#{b2.global_id}-#{u2.global_id}", "#{b3.global_id}-#{u2.global_id}"]})
+      expect(b.reload.public).to eq(true)
+      expect(b2.reload.public).to eq(true)
+      expect(b3.reload.public).to eq(false)
+      bb1 = Board.find_by_global_id("#{b.global_id}-#{u2.global_id}")
+      expect(bb1.id).to_not eq(b.id)
+      expect(bb1.public).to eq(true)
+      expect(bb1.settings['unlisted']).to eq(true)
+      bb2 = Board.find_by_global_id("#{b2.global_id}-#{u2.global_id}")
+      expect(bb2.id).to_not eq(b2.id)
+      expect(bb2.public).to eq(true)
+      expect(bb2.settings['unlisted']).to eq(true)
+      bb3 = Board.find_by_global_id("#{b3.global_id}-#{u2.global_id}")
+      expect(bb3.id).to eq(b3.id)
+      expect(bb3.public).to eq(false)
+    end
   end
   
   describe 'swap_images' do
@@ -4119,11 +4182,233 @@ describe Board, :type => :model do
         'content_type' => 'image/png'
       }])
       res = b.swap_images('bacon', u, [])
-      expect(res).to eq({done: true, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
+      expect(res).to eq({done: true, id: b.global_id, library: 'bacon', board_ids: [], updated: [b.global_id], visited: [b.global_id]})
       img = ButtonImage.last
       expect(b.settings['buttons']).to eq([
         {'id' => 1, 'label' => 'hats', 'image_id' => 'asdf'},
         {'id' => 2, 'label' => 'cats', 'image_id' => img.global_id}
+      ])
+    end
+
+    it "should create copies for shallow clones" do
+      u = User.create
+      b = Board.create(:user => u, public: true)
+      b2 = Board.create(:user => u, public: true)
+      b3 = Board.create(:user => u, public: true)
+      u2 = User.create
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'image_id' => 'asdf', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u})
+      b2.process({'buttons' => [
+        {'id' => 2, 'label' => 'hats', 'image_id' => 'asdf', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ]}, {user: u})
+      b3.process({'buttons' => [
+        {'id' => 3, 'label' => 'flats'}
+      ]}, {user: u})
+      Worker.process_queues
+      expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
+      
+      expect(Uploader).to receive(:find_images).with('hats', 'bacon', 'en', u, nil, true, false).and_return([{
+        'url' => 'http://www.example.com/hat.png', 'content_type' => 'image/png'
+      }])
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false).and_return([{
+        'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
+      }])
+      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true, false)
+      bb = Board.find_by_path("#{b.global_id}-#{u2.global_id}")
+      expect(bb.id).to eq(b.id)
+      bb2 = Board.find_by_path("#{b2.global_id}-#{u2.global_id}")
+      expect(bb2.id).to eq(b2.id)
+      res = bb.swap_images('bacon', u, [bb.global_id, bb2.global_id])
+      Worker.process_queues
+      bis = b.reload.button_images
+      expect(bis.count).to eq(0)
+      bi = bis[0]
+      bis2 = b2.reload.button_images
+      expect(bis2.count).to eq(0)
+      bi2 = bis2[0]
+      bis3 = b3.reload.button_images
+      expect(bis3.count).to eq(0)
+
+      bb = Board.find_by_path("#{b.global_id}-#{u2.global_id}")
+      expect(bb.id).to_not eq(b.id)
+      bb2 = Board.find_by_path("#{b2.global_id}-#{u2.global_id}")
+      expect(bb2.id).to_not eq(b2.id)
+      bb3 = Board.find_by_path("#{b3.global_id}-#{u2.global_id}")
+      expect(bb3.id).to eq(b3.id)
+
+      expect(res).to eq({done: true, library: 'bacon', 
+        id: bb.global_id,
+        board_ids: ["#{b.global_id}-#{u2.global_id}", "#{b2.global_id}-#{u2.global_id}"], 
+        updated: ["#{b.global_id}-#{u2.global_id}", "#{b2.global_id}-#{u2.global_id}"], 
+        visited: [bb.global_id, bb2.global_id, "#{b3.global_id}-#{u2.global_id}"]
+      })
+      bis = bb.reload.button_images
+      expect(bis.count).to eq(1)
+      bi = bis[0]
+      bis2 = bb2.reload.button_images
+      expect(bis2.count).to eq(1)
+      bi2 = bis2[0]
+      bis3 = bb3.reload.button_images
+      expect(bis3.count).to eq(0)
+
+      expect(bb.reload.buttons).to eq([
+        {'id' => 1, 'label' => 'cats', 'image_id' => bi.global_id, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ])
+      expect(bb2.reload.buttons).to eq([
+        {'id' => 2, 'label' => 'hats', 'image_id' => bi2.global_id, 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ])
+      expect(bb3.reload.buttons).to eq([
+        {'id' => 3, 'label' => 'flats', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'}
+      ])
+    end
+
+    it "should stop swapping images for shallow clone when the user name changes" do
+      u = User.create
+      u3 = User.create
+      b = Board.create(:user => u, public: true)
+      b2 = Board.create(:user => u3, public: true)
+      b3 = Board.create(:user => u, public: true)
+      u2 = User.create
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'image_id' => 'asdf', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u})
+      b2.process({'buttons' => [
+        {'id' => 2, 'label' => 'hats', 'image_id' => 'asdf', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ]}, {user: u})
+      b3.process({'buttons' => [
+        {'id' => 3, 'label' => 'flats'}
+      ]}, {user: u})
+      Worker.process_queues
+      expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
+      
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false).and_return([{
+        'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
+      }])
+      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true, false)
+      bb = Board.find_by_path("#{b.global_id}-#{u2.global_id}")
+      expect(bb.id).to eq(b.id)
+      bb2 = Board.find_by_path("#{b2.global_id}-#{u2.global_id}")
+      expect(bb2.id).to eq(b2.id)
+      res = bb.swap_images('bacon', u, [bb.global_id, bb2.global_id])
+      Worker.process_queues
+      bis = b.reload.button_images
+      expect(bis.count).to eq(0)
+      bi = bis[0]
+      bis2 = b2.reload.button_images
+      expect(bis2.count).to eq(0)
+      bi2 = bis2[0]
+      bis3 = b3.reload.button_images
+      expect(bis3.count).to eq(0)
+
+      bb = Board.find_by_path("#{b.global_id}-#{u2.global_id}")
+      expect(bb.id).to_not eq(b.id)
+      bb2 = Board.find_by_path("#{b2.global_id}-#{u2.global_id}")
+      expect(bb2.id).to eq(b2.id)
+      bb3 = Board.find_by_path("#{b3.global_id}-#{u2.global_id}")
+      expect(bb3.id).to eq(b3.id)
+
+      expect(res).to eq({done: true, library: 'bacon', 
+        id: bb.global_id,
+        board_ids: ["#{b.global_id}-#{u2.global_id}", "#{b2.global_id}-#{u2.global_id}"], 
+        updated: ["#{b.global_id}-#{u2.global_id}",], 
+        visited: [bb.global_id, bb2.global_id]
+      })
+      bis = bb.reload.button_images
+      expect(bis.count).to eq(1)
+      bi = bis[0]
+      bis2 = bb2.reload.button_images
+      expect(bis2.count).to eq(0)
+      bis3 = bb3.reload.button_images
+      expect(bis3.count).to eq(0)
+
+      expect(bb.reload.buttons).to eq([
+        {'id' => 1, 'label' => 'cats', 'image_id' => bi.global_id, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ])
+      expect(b2.reload.buttons).to eq([
+        {'id' => 2, 'label' => 'hats', 'image_id' => 'asdf', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ])
+      expect(bb2.reload.buttons).to eq([
+        {'id' => 2, 'label' => 'hats', 'image_id' => 'asdf', 'load_board' => {'id' => bb3.shallow_id, 'key' => bb3.shallow_key}}
+      ])
+      expect(bb3.reload.buttons).to eq([
+        {'id' => 3, 'label' => 'flats', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'}
+      ])
+    end
+
+    it "should not swap images for shallow clones where access is not authorized" do
+      u = User.create
+      b = Board.create(:user => u, public: true)
+      b2 = Board.create(:user => u)
+      b3 = Board.create(:user => u)
+      u2 = User.create
+      b.process({'buttons' => [
+        {'id' => 1, 'label' => 'cats', 'image_id' => 'asdf', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {user: u})
+      b2.process({'buttons' => [
+        {'id' => 2, 'label' => 'hats', 'image_id' => 'asdf', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ]}, {user: u})
+      b3.process({'buttons' => [
+        {'id' => 3, 'label' => 'flats'}
+      ]}, {user: u})
+      Worker.process_queues
+      expect(b.reload.settings['downstream_board_ids']).to eq([b2.global_id, b3.global_id])
+      expect(b2.reload.settings['downstream_board_ids']).to eq([b3.global_id])
+      
+      expect(Uploader).to receive(:find_images).with('cats', 'bacon', 'en', u, nil, true, false).and_return([{
+        'url' => 'http://www.example.com/cat.png', 'content_type' => 'image/png'
+      }])
+      expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true, false)
+      bb = Board.find_by_path("#{b.global_id}-#{u2.global_id}")
+      expect(bb.id).to eq(b.id)
+      bb2 = Board.find_by_path("#{b2.global_id}-#{u2.global_id}")
+      expect(bb2.id).to eq(b2.id)
+      res = bb.swap_images('bacon', u, [bb.global_id, bb2.global_id])
+      Worker.process_queues
+      bis = b.reload.button_images
+      expect(bis.count).to eq(0)
+      bi = bis[0]
+      bis2 = b2.reload.button_images
+      expect(bis2.count).to eq(0)
+      bi2 = bis2[0]
+      bis3 = b3.reload.button_images
+      expect(bis3.count).to eq(0)
+
+      bb = Board.find_by_path("#{b.global_id}-#{u2.global_id}")
+      expect(bb.id).to_not eq(b.id)
+      bb2 = Board.find_by_path("#{b2.global_id}-#{u2.global_id}")
+      expect(bb2.id).to eq(b2.id)
+      bb3 = Board.find_by_path("#{b3.global_id}-#{u2.global_id}")
+      expect(bb3.id).to eq(b3.id)
+
+      expect(res).to eq({done: true, library: 'bacon', 
+        id: bb.global_id,
+        board_ids: ["#{b.global_id}-#{u2.global_id}", "#{b2.global_id}-#{u2.global_id}"], 
+        updated: ["#{b.global_id}-#{u2.global_id}"], 
+        visited: [bb.global_id, "#{b2.global_id}-#{u2.global_id}"]
+      })
+      bis = bb.reload.button_images
+      expect(bis.count).to eq(1)
+      bi = bis[0]
+      bis2 = bb2.reload.button_images
+      expect(bis2.count).to eq(0)
+      bi2 = bis2[0]
+      bis3 = bb3.reload.button_images
+      expect(bis3.count).to eq(0)
+
+      expect(bb.reload.buttons).to eq([
+        {'id' => 1, 'label' => 'cats', 'image_id' => bi.global_id, 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ])
+      expect(b2.reload.buttons).to eq([
+        {'id' => 2, 'label' => 'hats', 'image_id' => 'asdf', 'load_board' => {'id' => b3.global_id, 'key' => b3.key}}
+      ])
+      expect(bb2.reload.buttons).to eq([
+        {'id' => 2, 'label' => 'hats', 'image_id' => 'asdf', 'load_board' => {'id' => bb3.global_id, 'key' => bb3.shallow_key}}
+      ])
+      expect(bb3.reload.buttons).to eq([
+        {'id' => 3, 'label' => 'flats', 'part_of_speech' => 'noun', 'suggested_part_of_speech' => 'noun'}
       ])
     end
   end

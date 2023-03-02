@@ -1857,19 +1857,23 @@ class Board < ActiveRecord::Base
     return {done: true, updated: false, reason: 'mismatched user'} if user_local_id != self.user_id
     return {done: true, updated: false, reason: 'no privacy level specified'} if !privacy_level || privacy_level.blank?
     return {done: true, updated: false, reason: 'author required'} unless author
-    raise "can't update on shallow clones" if @sub_id
+    update_board = self
+    if @sub_id
+      return {done: true, updated: false, reason: 'unauthorized'} unless self.allows?(@sub_global, 'edit') 
+      update_board = self.copy_for(@sub_global, skip_save: true)
+    end
     if (board_ids.blank? || board_ids.include?(self.global_id))
       updated_board_ids << self.global_id
       whodunnit = PaperTrail.request.whodunnit
       PaperTrail.request.whodunnit = "user:#{author.global_id}.board.swap_images"
-      self.public = (privacy_level == 'public'|| privacy_level == 'unlisted')
-      self.settings['unlisted'] = (privacy_level == 'unlisted')
-      @map_later = true
-      @edit_description = {
+      update_board.public = (privacy_level == 'public'|| privacy_level == 'unlisted')
+      update_board.settings['unlisted'] = (privacy_level == 'unlisted')
+      update_board.instance_variable_set('@map_later', true)
+      update_board.instance_variable_set('@edit_description', {
         'timestamp' => Time.now.to_f,
         'notes' => 'batch set to public'
-      }
-      self.save 
+      })
+      update_board.save 
       PaperTrail.request.whodunnit = whodunnit
     else
       return {done: true, updated: false, reason: 'board not in list'}
@@ -1880,7 +1884,7 @@ class Board < ActiveRecord::Base
       brd.update_privacy(privacy_level, author, board_ids, user_local_id, visited_board_ids, updated_board_ids)
       visited_board_ids << brd.global_id
     end
-    self.schedule_update_available_boards('all') if self.id
+    update_board.schedule_update_available_boards('all') if update_board.id
     {done: true, privacy_level: privacy_level, board_ids: board_ids, visited: visited_board_ids.uniq, updated: updated_board_ids.uniq}
   end
 
@@ -1936,7 +1940,9 @@ class Board < ActiveRecord::Base
     return {done: true, id: self.global_id, swapped: false, reason: 'not authorized to access premium library'} if library == 'symbolstix' && (!author || !author.subscription_hash['extras_enabled'])
     return {done: true, id: self.global_id, swapped: false, reason: 'not authorized to access premium library'} if library == 'lessonpix' && (!author || !author.subscription_hash['extras_enabled']) && !Uploader.lessonpix_credentials(author)
     swap_board = self
+    swap_board_id = swap_board.global_id
     if @sub_id
+      return {done: true, id: self.global_id, swapped: false, reason: 'unauthorized'} unless self.allows?(@sub_global, 'view') 
       swap_board = self.copy_for(@sub_global, skip_save: true)
     end
     is_root = visited_board_ids.blank?
@@ -1945,8 +1951,8 @@ class Board < ActiveRecord::Base
     cache ||= LibraryCache.find_or_create_by(library: library, locale: swap_board.settings['locale'] || 'en')
     library.instance_variable_set('@library_cache', cache)
     cache.instance_variable_set('@ease_saving', true) if is_root
-    if (board_ids.blank? || board_ids.include?(swap_board.global_id) || (copy_id && swap_board.settings['copy_id'] == copy_id))
-      updated_board_ids << swap_board.global_id
+    if (board_ids.blank? || board_ids.include?(swap_board_id) || (copy_id && swap_board.settings['copy_id'] == copy_id))
+      updated_board_ids << swap_board_id
       if !library.instance_variable_get('@skip_swapped') || swap_board.current_library(true) != library
         # puts " checking if important"
         words = swap_board.buttons.map{|b| [b['label'], b['vocalization']] }.flatten.compact.uniq
@@ -1965,7 +1971,6 @@ class Board < ActiveRecord::Base
         # puts " checking for default images"
         defaults = Uploader.default_images(library, words, swap_board.settings['locale'] || 'en', author, true, important_board)
         # puts " mapping buttons"
-        image_urls = 
         bis = swap_board.known_button_images
         # TODO: skip images that already have the correct library
         buttons = swap_board.buttons.map do |button|
@@ -2015,7 +2020,7 @@ class Board < ActiveRecord::Base
       return {done: true, id: self.global_id, swapped: false, reason: 'board not in list'}
     end
     visited_board_ids << swap_board.global_id
-    downstreams = swap_board.get_immediately_downstream_board_ids - visited_board_ids
+    downstreams = self.get_immediately_downstream_board_ids - visited_board_ids
     Board.find_all_by_path(downstreams).each do |brd|
       if board_ids.instance_variable_get('@skip_keyboard') && brd.key.match(/keyboard$/)
         # When swapping images, don't touch the keyboards, 

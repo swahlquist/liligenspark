@@ -3282,4 +3282,62 @@ describe Api::UsersController, :type => :controller do
       assert_error('code not found')
     end
   end
+
+  describe "boards" do
+    it "should require an api token" do
+      get 'boards', params: {user_id: 'asdf'}
+      assert_missing_token
+    end
+
+    it "should require a valid user" do
+      token_user
+      get 'boards', params: {user_id: 'asdf'}
+      assert_not_found('asdf')
+    end
+
+    it "should require modeling permission" do
+      token_user
+      u = User.create
+      get 'boards', params: {user_id: u.global_id}
+      assert_unauthorized
+    end
+
+    it "should error for more than 25 ids" do
+      token_user
+      get 'boards', params: {user_id: @user.global_id, ids: (['1'] * 26).join(',')}
+      assert_error('too many ids')
+    end
+
+    it "should return a list of matching boards" do
+      token_user
+      b1 = Board.create(user: @user)
+      b2 = Board.create(user: @user)
+      get 'boards', params: {user_id: @user.global_id, ids: [b1.global_id, b2.global_id].join(',')}
+      json = assert_success_json
+      expect(json.length).to eq(2)
+      expect(json.sort_by{|b| b['id'] }[0]['id']).to eq(b1.global_id)
+      expect(json.sort_by{|b| b['id'] }[1]['id']).to eq(b2.global_id)
+    end
+
+    it "should not return data on unauthorized boards" do
+      token_user
+      u = User.create
+      b = Board.create(user: u)
+      get 'boards', params: {user_id: @user.global_id, ids: b.global_id}
+      json = assert_success_json
+      expect(json).to eq([])
+    end
+
+    it "should return shallow clones if specified" do
+      token_user
+      u = User.create
+      b1 = Board.create(user: u, public: true)
+      b2 = Board.create(user: @user)
+      get 'boards', params: {user_id: @user.global_id, ids: ["#{b1.global_id}-#{@user.global_id}", b2.global_id].join(',')}
+      json = assert_success_json
+      expect(json.length).to eq(2)
+      expect(json[0]['id']).to eq("#{b1.global_id}-#{@user.global_id}")
+      expect(json[1]['id']).to eq(b2.global_id)
+    end
+  end
 end
