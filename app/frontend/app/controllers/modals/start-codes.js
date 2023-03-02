@@ -60,6 +60,13 @@ export default modal.ModalController.extend({
 
     return list;
   }),
+  user_types: computed(function() {
+    var list = [];
+    list.push({name: i18n.t('communicator', "Communicator"), id: 'communicator'});
+    list.push({name: i18n.t('supporter', "Supporter"), id: 'supporter'});
+
+    return list;
+  }),
   actions: {
     new: function() {
       this.set('new_start_code', !this.get('new_start_code'));
@@ -146,6 +153,9 @@ export default modal.ModalController.extend({
       var path = '/api/v1/users/' + _this.get('model.user.id') + '/start_code';
       if(_this.get('model.org')) {
         path = '/api/v1/organizations/' + _this.get('model.org.id') + '/start_code';
+        if(_this.get('user_type') == 'supporter') {
+          ovr.user_type = 'supporter';
+        }
       }
       if(_this.get('model.user') || _this.get('model.org')) {
         _this.set('status', {generating: true});

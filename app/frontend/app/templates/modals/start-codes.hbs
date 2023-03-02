@@ -67,9 +67,16 @@
                   {{#if code.symbol_library}}
                     <div>{{t "Symbols:" key='symbols_colon'}} {{code.symbol_library}}</div>
                   {{/if}}
-                  {{#if code.premium}}
-                    <div><b>{{t "Sponsored" key='sponsored'}}</b></div>
-                  {{/if}}
+                  <div>
+                    {{#if code.premium}}
+                      <b>{{t "Sponsored" key='sponsored'}}</b>
+                    {{/if}}
+                    {{#if code.supporter_type}}
+                      <b>{{t "Supporter" key='supporer'}}</b>
+                    {{else}}
+                      <b>{{t "Communicator" key='communicator'}}</b>
+                    {{/if}}
+                  </div>
                   {{#if code.premium_symbols}}
                     <div><b>{{t "Premium Symbols" key='premium_symbols'}}</b></div>
                   {{/if}}
@@ -108,6 +115,13 @@
               </div>
             </div>
             {{#if model.org}}
+              <div class="form-group">
+                <label for="user_type" class="col-sm-3 control-label">{{t "User Type" key='user_type'}}</label>
+                <div class="col-sm-9">
+                  {{bound-select select_class="form-control" select_id="user_type" content=user_types selection=user_type action=(action (mut user_type)) }}
+                </div>
+              </div>
+              
               <div class="form-group">
                 <label for="premium" class="col-sm-3 control-label">{{t "Sponsored" key='sponsored'}}</label>
                 <div class="col-sm-9">

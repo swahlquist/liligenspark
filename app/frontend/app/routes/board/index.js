@@ -21,7 +21,7 @@ export default Route.extend({
       res.set('should_reload', true);
     }
     if(res.get('should_reload')) {
-      var do_reloads = (app_state.get('board_reloads') || {};
+      var do_reloads = app_state.get('board_reloads') || {};
       delete do_reloads[res.get('id')];
       app_state.set('board_reloads', do_reloads);
       res.set('should_reload', false);

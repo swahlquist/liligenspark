@@ -823,7 +823,7 @@ class Board < ActiveRecord::Base
       end
       if other_ids.length > 0
         revisions = Board.find_all_by_global_id(other_ids).map{|b| b.current_revision }
-        res = Digest::Md5.hexdigest(res + revisions.join(','))[0, 10]
+        res = Digest::MD5.hexdigest(res + revisions.join(','))[0, 10]
       end
     end
     res
