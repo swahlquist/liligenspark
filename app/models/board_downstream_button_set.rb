@@ -12,7 +12,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
 
   def board
     if self.user_id
-      Board.find_by_global_id("#{self.board_id}-#{self.user_id}")
+      Board.find_by_global_id("#{self.related_global_id(self.board_id)}-#{self.related_global_id(self.user_id)}")
     else
       super
     end
@@ -379,11 +379,17 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       # job was scheduled
       return if self.last_scheduled_stamp && (set.updated_at.to_i - 5) > self.last_scheduled_stamp
       
-      # TODO: board.full_set_revision is dependent on @sub_id now
       set.data['full_set_revision'] = board.full_set_revision
       existing_board_ids = (set.data || {})['linked_board_ids'] || []
-      # TODO: a @sub_id version should only travel upstream while still in the known @sub_id list (somehow)
-      Board.find_batches_by_global_id(board.settings['immediately_upstream_board_ids'] || [], :batch_size => 3) do |brd|
+      up_ids = board.settings['immediately_upstream_board_ids'] || []
+      # Shallow clones shouldn't travel upstream beyond the root board in the set
+      if board.instance_variable_get('@sub_id')
+        up_ids = []
+        if board.root_board && board.root_board != board
+          up_ids = [board.root_board.global_id]
+        end
+      end
+      Board.find_batches_by_global_id(up_ids, :batch_size => 3) do |brd|
         set.data['found_upstream_board'] = true
         just_updated = false
         if !brd.board_downstream_button_set || brd.board_downstream_button_set.data['full_set_revision'] != brd.full_set_revision

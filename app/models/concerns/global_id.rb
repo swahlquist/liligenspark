@@ -54,7 +54,7 @@ module GlobalId
         res = nil if !pieces[:nonce] && (!res || res.nonce != "legacy")
         res = nil if res && res.nonce != pieces[:nonce] && res.nonce != "legacy"
       end
-      if sub_user
+      if sub_user && res
         res.instance_variable_set('@sub_id', sub_user.global_id)
         res.instance_variable_set('@sub_global', sub_user)
       end

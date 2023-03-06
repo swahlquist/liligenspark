@@ -672,14 +672,57 @@ class User < ActiveRecord::Base
       star = board.starred_by?(self)
       self.settings['starred_board_ids'] ||= []
       if star
-        self.settings['starred_board_ids'] << board.global_id if board
+        self.settings['starred_board_ids'] << board.shallow_id if board
         self.settings['starred_board_ids'].uniq!
       else
-        self.settings['starred_board_ids'] = self.settings['starred_board_ids'] - [board.global_id]
+        self.settings['starred_board_ids'] = self.settings['starred_board_ids'] - [board.shallow_id]
       end
       self.settings['starred_boards'] = self.settings['starred_board_ids'].length
       self.save_with_sync('star_list_changed')
     end
+  end
+
+  def starred_board_refs
+    refs = []
+    user = self
+    brds = {}
+    Board.find_all_by_global_id(user.settings['starred_board_ids'] || []).each do |b|
+      brds[b.global_id] = b
+      brds[b.global_id(true)] = b
+    end
+    (user.settings['starred_board_ids'] || []).each do |id|
+      brd = brds[id]
+      if brd
+        refs << {'id' => brd.global_id, 'key' => brd.key, 'image_url' => brd.settings['image_url'], 'name' => brd.settings['name']}
+      end
+    end
+    if refs.length < 12
+      home_board_id = (user.settings['preferences']['home_boards'] || {})['id']
+      ::Board.find_suggested(user.settings['preferences']['locale'] || 'en', 5).each do |board|
+        if home_board_id == board.global_id
+        elsif !brds[board.global_id] && refs.length < 12
+          if board.settings['board_style']
+            refs << {
+              'id' => board.global_id,
+              'key' => board.key,
+              'name' => board.settings['name'],
+              'suggested' => true,
+              'style' => board.settings['board_style'],
+              'image_url' => board.settings['image_url']
+            }
+          else
+            refs << {
+              'id' => board.global_id,
+              'key' => board.key,
+              'name' => board.settings['name'],
+              'suggested' => true,
+              'image_url' => board.settings['image_url']
+            }
+          end
+        end
+      end
+    end
+    refs
   end
   
   def board_set_ids(opts=nil)

@@ -2883,7 +2883,7 @@ describe Subscription, :type => :model do
       u1.transfer_subscription_to(u2)
       expect(u1.settings['subscription']).to eq({
         'expiration_source' => 'grace_period',
-        'tranfer_ts' => Time.now.to_i,
+        'transfer_ts' => Time.now.to_i,
         'transferred_to' => [u2.global_id],
         'bacon' => '1234'
       })

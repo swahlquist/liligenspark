@@ -28,6 +28,7 @@ class Api::BoardsController < ApplicationController
     end
     start = Time.now.to_i
     boards = boards.includes(:board_content)
+    other_boards = nil
 
     Rails.logger.warn('checking key')
     self.class.trace_execution_scoped(['boards/key_check']) do
@@ -62,6 +63,19 @@ class Api::BoardsController < ApplicationController
             Rails.logger.warn('filtering by share board ids')
             boards = boards.where(arel[:user_id].eq(user.id).or(arel[:id].in(Board.local_ids(shared_board_ids))))
           else
+            if !params['q'] && !params['locale'] && !params['offset'] && user.allows?(@api_user, 'model')
+              if user.settings['preferences'] && (!user.settings['preferences']['home_board'] || user.settings['preferences']['sync_starred_boards'])
+                shallow_clone_ids = user.starred_board_refs.select{|r| r['key'] && r['key'].match(/^#{user.user_name}\/my:/)}.map{|c| c['id'] }
+                ue = UserExtra.find_by(user: user)
+                if ue && ue.settings['replaced_roots']
+                  ue.settings['replaced_roots'].each do |id, hash|
+                    shallow_clone_ids << hash['id']
+                  end
+                end
+                # Include in the results shallow clone roots that aren't currently owned by the user
+                other_boards = Board.order('id DESC').find_all_by_global_id(shallow_clone_ids).select{|b| b.user_id != user.id } if shallow_clone_ids.length > 0
+              end
+            end
             boards = boards.where(:user_id => user.id)
           end
         end
@@ -112,6 +126,7 @@ class Api::BoardsController < ApplicationController
           locs = locs.where(board_id: board_ids)
         end
         board_ids = []
+
         if params['sort'] == 'home_popularity'
           Rails.logger.warn('home_popularity search')
           locs.search_by_text_for_home_popularity(q).limit(100).with_pg_search_rank.each do |bl|
@@ -256,7 +271,7 @@ class Api::BoardsController < ApplicationController
     json = nil
     Rails.logger.warn('start paginated result')
     self.class.trace_execution_scoped(['boards/json_paginate']) do
-      json = JsonApi::Board.paginate(params, boards, {locale: params['locale']})
+      json = JsonApi::Board.paginate(params, boards, {locale: params['locale'], extra_results: other_boards})
       json[:meta]['progress'] = JsonApi::Progress.as_json(progress) if progress
     end
     if cache_key
@@ -545,6 +560,11 @@ class Api::BoardsController < ApplicationController
     return unless exists?(board)
     if board.instance_variable_get('@sub_id')
       return unless allowed?(board, 'edit')
+      ue = UserExtra.find_by(user: board.instance_variable_get('@sub_global'))
+      if ue && ue.settings['replaced_roots']
+        ue.settings['replaced_roots'].delete(board.global_id(true))
+        ue.save
+      end
     else
       return unless allowed?(board, 'delete')
       board.destroy

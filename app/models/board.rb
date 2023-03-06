@@ -142,30 +142,37 @@ class Board < ActiveRecord::Base
   end
   
   def star(user, star, locale=nil)
-    self.settings ||= {}
-    locale ||= self.settings['locale'] || 'en'
-    self.settings['starred_user_ids'] ||= []
+    board = self
+    if @sub_id
+      # shallow clones cannot be saved
+      board = Board.find_by(id: board.id)
+    end
+    board.settings ||= {}
+    locale ||= board.settings['locale'] || 'en'
+    board.settings['starred_user_ids'] ||= []
     if user
       user_id = user.global_id
       user_id = 'bump' if user.user_name == 'star_bump'
       if star
         if !starred_by?(user)
-          self.settings['starred_user_ids'] << "#{locale}:#{user_id}"
+          board.settings['starred_user_ids'] << "#{locale}:#{user_id}"
         end
       else
-        self.settings['starred_user_ids'] = self.settings['starred_user_ids'].select{|id| id != user_id && !id.to_s.match(/.+:#{user_id}/) }
+        board.settings['starred_user_ids'] = board.settings['starred_user_ids'].select{|id| id != user_id && !id.to_s.match(/.+:#{user_id}/) }
       end
-      self.settings['never_edited'] = false
-      self.generate_stats
-      user.schedule(:remember_starred_board!, self.global_id)
+      board.settings['never_edited'] = false
+      board.generate_stats
+      user.schedule(:remember_starred_board!, self.shallow_id)
     end
+    board
   end
 
   def star!(user, star)
     pre_whodunnit = PaperTrail.request.whodunnit
     PaperTrail.request.whodunnit = "job:star_user"
-    self.star(user, star)
-    res = self.save
+    board = self.star(user, star)
+    res = board.save
+    self.reload if @sub_id
     PaperTrail.request.whodunnit = pre_whodunnit
     res
   end
@@ -209,6 +216,25 @@ class Board < ActiveRecord::Base
       res = res.parent_board
     end
     res
+  end
+
+  def root_board
+    # Root board is the most-likely home board, or where the user started to get to this board
+    if self.settings['home_board']
+      return self
+    elsif self.settings['copy_id']
+      copy_id = self.settings['copy_id']
+      # Make sure to factor in @sub_id information
+      if self.shallow_source
+        return Board.find_by_global_id("#{copy_id}-#{self.related_global_id(self.user_id)}")
+      elsif @sub_id
+        return Board.find_by_global_id("#{copy_id}-#{@sub_global.global_id}")
+      else
+        return Board.find_by_global_id(copy_id)
+      end
+    else
+      return self
+    end
   end
 
   def track_usage!
@@ -915,6 +941,14 @@ class Board < ActiveRecord::Base
       ue.settings['replaced_boards'] ||= {}
       ue.settings['replaced_boards'][self.settings['shallow_source']['id'].split(/-/)[0]] = self.global_id(true)
       ue.settings['replaced_boards'][self.settings['shallow_source']['key'].split(/my:/)[1].sub(/:/, '/')] = self.global_id(true)
+      root = self.root_board
+      if root && root != self
+        ue.settings['replaced_roots'] ||= {}
+        ue.settings['replaced_roots'][root.global_id(true)] = {
+          'id' => root.shallow_id, 
+          'key' => root.shallow_key
+        }
+      end
       ue.save
     end
   end
@@ -1223,6 +1257,7 @@ class Board < ActiveRecord::Base
       b = Board.find_by_path(params['copy_key'])
       if b && b.user_id == self.user_id && b.global_id != self.settings['copy_id'] && b.global_id != self.global_id
         self.settings['copy_id'] = b.global_id
+        @shallow_source_changed = true
         subs = Board.find_all_by_global_id(self.settings['downstream_board_ids'] || [])
         copy_subs = subs.select{|b| b.user_id == self.user_id && b.settings['copy_id'] == self.global_id }
         copy_subs.each{|brd| brd.settings['copy_id'] = b.global_id; brd.save_subtly }
@@ -1235,6 +1270,7 @@ class Board < ActiveRecord::Base
       ref_board = Board.find_by_global_id(params['source_id'])
       if ref_board && ref_board.allows?(non_user_params[:user], 'edit')
         self.settings['copy_id'] ||= ref_board.settings['copy_id'] || ref_board.global_id
+        @shallow_source_changed = true
         self.settings['locale'] ||= ref_board.settings['locale']
       end
     end

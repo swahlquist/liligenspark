@@ -17,6 +17,66 @@ describe Api::BoardsController, :type => :controller do
       expect(json['board'].length).to eq(1)
       expect(json['board'][0]['id']).to eq(b.global_id)
     end
+
+    it "should return root shallow clones for a user" do
+      token_user
+      u1 = User.create
+      u2 = @user
+      b1 = Board.create(user: u1, public: true)
+      b2 = Board.create(user: u1, public: true)
+      b3 = Board.create(user: u2)
+      b1.process({'buttons' => [
+        {'id' => 1, 'label' => 'chicken', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {'user' => u1})
+      Worker.process_queues
+      bb1 = Board.find_by_global_id("#{b1.global_id}-#{u2.global_id}")
+      bb1.star!(u2, true)
+      Worker.process_queues
+      u2.reload
+      refs = u2.starred_board_refs
+      expect(refs.length).to eq(1)
+      expect(refs[0]['id']).to eq(bb1.global_id)
+      get 'index', params: {user_id: u2.global_id}
+      json = assert_success_json
+      expect(json['board'].length).to eq(2)
+      expect(json['board'][0]['id']).to eq(b3.global_id)
+      expect(json['board'][1]['id']).to eq(bb1.global_id)
+    end
+
+    it "should include root shallow clones for edited boards, even if they're not in the root list" do
+      token_user
+      u1 = User.create
+      u2 = @user
+      b1 = Board.create(user: u1, public: true)
+      b2 = Board.create(user: u1, public: true)
+      b3 = Board.create(user: u2)
+      b4 = Board.create(user: u1, public: true)
+      b1.process({'buttons' => [
+        {'id' => 1, 'label' => 'chicken', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {'user' => u1})
+      b2.process({'copy_key' => b1.global_id}, {'user' => u1})
+      Worker.process_queues
+      bb4 = Board.find_by_global_id("#{b4.global_id}-#{u2.global_id}")
+      bb4.star!(u2, true)
+      Worker.process_queues
+      bb2 = Board.find_by_global_id("#{b2.global_id}-#{u2.global_id}")
+      bb2 = bb2.copy_for(u2, {copy_id: b1.global_id})
+      Worker.process_queues
+      u2.reload
+      ue2 = UserExtra.find_by(user: u2)
+      expect(ue2.settings['replaced_roots']).to_not eq(nil)
+      refs = u2.starred_board_refs
+      expect(refs.length).to eq(2)
+      expect(refs[0]['id']).to eq(bb4.global_id)
+      expect(refs[1]['id']).to eq(b1.global_id)
+      get 'index', params: {user_id: u2.global_id}
+      json = assert_success_json
+      expect(json['board'].length).to eq(4)
+      expect(json['board'][0]['id']).to eq(bb2.shallow_id)
+      expect(json['board'][1]['id']).to eq(b3.global_id)
+      expect(json['board'][2]['id']).to eq("#{b4.global_id}-#{u2.global_id}")
+      expect(json['board'][3]['id']).to eq("#{b1.global_id}-#{u2.global_id}")
+    end
     
     it "should require view_detailed permissions when filtering by user_id" do
       u = User.create
@@ -1111,6 +1171,57 @@ describe Api::BoardsController, :type => :controller do
       expect(Board.find_by_global_id("#{b.global_id}-#{@user.global_id}")).to eq(b2)
     end
 
+    it "should set copy_id to match on an edited shallow clone" do
+      token_user
+      author = User.create
+      b = Board.new(user: author, public: true)
+      b.settings = {'copy_id' => '1_456'}
+      b.settings['buttons'] = [
+        {'id' => '1', 'label' => 'fred'}, {'id' => '2', 'label' => 'drop dead'}
+      ]
+      b.save
+      get :show, params: {id: b.global_id}
+      json = assert_success_json
+      expect(json['board']['id']).to eq(b.global_id)
+      expect(json['board']['key']).to eq(b.key)
+      expect(json['board']['permissions']).to eq({'user_id' => @user.global_id, 'view' => true})
+      expect(json['board']['shallow_clone']).to eq(nil)
+
+      get :show, params: {id: "#{b.global_id}-#{@user.global_id}"}
+      json = assert_success_json
+      expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
+      expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
+      expect(json['board']['shallow_clone']).to eq(true)
+      expect(json['board']['permissions']).to eq({'user_id' => @user.global_id, 'view' => true, 'edit' => true})
+
+      put :update, params: {
+        id: "#{b.global_id}-#{@user.global_id}", board: {
+          name: 'best board',
+          buttons: [
+            {'id' => '2', 'label' => 'fred'}
+          ]
+        }
+      }
+      json = assert_success_json
+      expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
+      expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
+      expect(json['board']['name']).to eq("best board")
+      b.reload
+      expect(b.settings['name']).to_not eq('best board')
+      expect(json['board']['shallow_clone']).to eq(nil)
+      expect(json['board']['permissions']).to eq({'user_id' => @user.global_id, 'view' => true, 'edit' => true, 'share' => true, 'delete' => true})
+      b2 = Board.last
+      expect(b2).to_not eq(b)
+      expect(b2.settings['copy_id']).to eq('1_456')
+      expect(b2.shallow_source).to_not eq(nil)
+      expect(b2.shallow_source[:id]).to eq(json['board']['id'])
+      expect(b2.shallow_source[:key]).to eq(json['board']['key'])
+      ue = @user.reload.user_extra
+      expect(ue.settings['replaced_boards']).to_not eq(nil)
+      expect(ue.settings['replaced_boards']["#{b.global_id}"]).to eq(b2.global_id)
+      expect(Board.find_by_global_id("#{b.global_id}-#{@user.global_id}")).to eq(b2)
+    end    
+
     it "should not allow an unauthorized user to access another user's shallow clones" do
       token_user
       author = User.create
@@ -1251,6 +1362,33 @@ describe Api::BoardsController, :type => :controller do
       expect(json['board']['shallow_clone']).to eq(true)
       expect(json['board']['name']).to eq("Unnamed Board")
       expect(json['board']['id']).to eq(bb.global_id)
+    end
+
+    it "should remove a replaced root for a root that was added when a shallow clone was created" do
+      u = User.create
+      token_user
+      b1 = Board.create(user: u, public: true)
+      b2 = Board.create(user: u, public: true)
+      b1.process({'buttons' => [
+        {'id' => 1, 'label' => 'cat', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {'user' => u})
+      b2.process({'copy_key' => b1.global_id}, {'user' => u})
+      expect(b2.settings['copy_id']).to eq(b1.global_id)
+      expect(b2.root_board).to eq(b1)
+      Worker.process_queues
+      bb2 = Board.find_by_global_id("#{b2.global_id}-#{@user.global_id}")
+      bb2 = bb2.copy_for(@user, {copy_id: b1.global_id})
+      expect(bb2.settings['copy_id']).to eq(b1.global_id)
+      Worker.process_queues
+      ue = UserExtra.find_by(user: @user)
+      expect(ue).to_not eq(nil)
+      expect(ue.settings['replaced_roots']).to_not eq(nil)
+      expect(ue.settings['replaced_roots'][b1.global_id]).to eq({'id' => "#{b1.global_id}-#{@user.global_id}", 'key' => "#{@user.user_name}\/my:#{b1.key.sub(/\//, ':')}"})
+      delete :destroy, params: {id: "#{b1.global_id}-#{@user.global_id}"}
+      json = assert_success_json
+      ue.reload
+      expect(ue.settings['replaced_roots']).to_not eq(nil)
+      expect(ue.settings['replaced_roots'][b1.global_id]).to eq(nil)
     end
   end
   

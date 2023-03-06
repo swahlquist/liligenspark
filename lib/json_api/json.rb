@@ -60,6 +60,9 @@ module JsonApi::Json
       end
     end
     results = where[0, per_page]
+    if args[:extra_results] && args[:extra_results].length > 0
+      results += args[:extra_results]
+    end
     args[:page_results] = results
     if self.respond_to?(:page_data)
       args[:page_data] = self.page_data(results, args)
