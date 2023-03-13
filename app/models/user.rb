@@ -693,7 +693,13 @@ class User < ActiveRecord::Base
     (user.settings['starred_board_ids'] || []).each do |id|
       brd = brds[id]
       if brd
-        refs << {'id' => brd.global_id, 'key' => brd.key, 'image_url' => brd.settings['image_url'], 'name' => brd.settings['name']}
+        id = brd.global_id
+        key = brd.key
+        if FeatureFlags.feature_enabled_for?('shallow_clones', user)
+          id = "#{brd.global_id(true)}-#{user.global_id}"
+          key = "#{user.user_name}/my:#{brd.key.sub(/\//, ':')}"
+        end
+        refs << {'id' => id, 'key' => key, 'image_url' => brd.settings['image_url'], 'name' => brd.settings['name']}
       end
     end
     if refs.length < 12
@@ -701,10 +707,16 @@ class User < ActiveRecord::Base
       ::Board.find_suggested(user.settings['preferences']['locale'] || 'en', 5).each do |board|
         if home_board_id == board.global_id
         elsif !brds[board.global_id] && refs.length < 12
+          id = board.global_id
+          key = board.key
+          if FeatureFlags.feature_enabled_for?('shallow_clones', user)
+            id = "#{board.global_id(true)}-#{user.global_id}"
+            key = "#{user.user_name}/my:#{board.key.sub(/\//, ':')}"
+          end
           if board.settings['board_style']
             refs << {
-              'id' => board.global_id,
-              'key' => board.key,
+              'id' => id,
+              'key' => key,
               'name' => board.settings['name'],
               'suggested' => true,
               'style' => board.settings['board_style'],
@@ -712,8 +724,8 @@ class User < ActiveRecord::Base
             }
           else
             refs << {
-              'id' => board.global_id,
-              'key' => board.key,
+              'id' => id,
+              'key' => key,
               'name' => board.settings['name'],
               'suggested' => true,
               'image_url' => board.settings['image_url']
