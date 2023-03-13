@@ -207,6 +207,7 @@ class Board < ActiveRecord::Base
   end
 
   def source_board
+    # Source board is the originally-created board that this was probably copied from
     res = nil
     if self.settings && self.settings['source_board_id']
       res = Board.find_by_path(self.settings['source_board_id'])

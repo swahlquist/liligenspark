@@ -1,5 +1,8 @@
 module Relinking
   extend ActiveSupport::Concern
+  COPYING_BATCH_SIZE = 200
+  RELINKING_BATCH_SIZE = 200
+  BOARD_CUTOFF_SIZE = 200
   
   def links_to?(board, skip_disabled_links=false)
     board_id = board.is_a?(String) ? board : board.global_id
@@ -26,7 +29,7 @@ module Relinking
   def copy_for(user, opts=nil)
     @@cnt ||= 0
     @@cnt += 1
-    puts "copy #{self.key} #{@@cnt}"
+    # puts "copy #{self.key} #{@@cnt}"
 
     opts ||= {}
     make_public = opts[:make_public] || false
@@ -125,7 +128,7 @@ module Relinking
         user.update_available_boards
       end
     end
-    puts "  done COPYING #{board.key}"
+    # puts "  done COPYING #{board.key}"
     board
   end
   
@@ -342,8 +345,7 @@ module Relinking
       sidebar_ids.each do |key, id|
         if @replacement_map && @replacement_map[id]
           idx = sidebar.index{|s| s['key'] == key }
-          board = @replacement_map[id]
-          sidebar[idx]['key'] = board[:key]
+          sidebar[idx]['key'] = @replacement_map[id][:key]
           sidebar_changed = true
         end
       end
@@ -367,6 +369,7 @@ module Relinking
         home = Board.find_by_path(user.settings['preferences']['home_board']['id'])
         home.track_downstream_boards!
       end
+      user.update_available_boards
       true
     end
 
@@ -387,12 +390,40 @@ module Relinking
       # puts "starting copies"
       user.instance_variable_set('@already_updating_available_boards', true)
 
-      boards_link_to = {}
-      Board.find_batches_by_global_id(board_ids, batch_size: 50) do |orig|
+      copy_board_links_batch(user.global_id, board_ids, {
+        auth_user: auth_user,
+        starting_new_board: starting_new_board,
+        starting_old_board: starting_old_board,
+        copier: opts[:copier],
+        make_public: opts[:make_public],
+        pending_replacements: pending_replacements,
+        copy_prefix: opts[:copy_prefix],
+        new_owner: opts[:new_owner],
+        disconnect: opts[:disconnect],
+        old_default_locale: opts[:old_default_locale],
+        new_default_locale: opts[:new_default_locale]
+      })
+    end
+
+    def copy_board_links_batch(user_id, board_ids, opts)
+      Progress.update_minutes_estimate(rand(60).to_i)
+      user = User.find_by_global_id(user_id)
+      user.instance_variable_set('@already_updating_available_boards', true)
+      auth_user = opts[:auth_user] || User.find_by_global_id(opts[:auth_user_id])
+      starting_new_board = opts[:starting_new_board] || Board.find_by_global_id(opts[:starting_new_board_id])
+      starting_old_board = opts[:starting_old_board] || Board.find_by_global_id(opts[:starting_old_board_id])
+      copier = opts[:copier] || User.find_by_global_id(opts[:copier_id])
+      make_public = opts[:make_public] || false
+      pending_replacements = opts[:pending_replacements]
+      opts[:all_board_ids] ||= board_ids
+      opts[:board_links] ||= {}
+      id_batch = board_ids[0..COPYING_BATCH_SIZE] || []
+      more_board_ids = board_ids[(COPYING_BATCH_SIZE+1)..-1] || []
+      Board.find_batches_by_global_id(id_batch, batch_size: 50) do |orig|
         if !orig.allows?(user, 'view') && !orig.allows?(auth_user, 'view')
           # TODO: make a note somewhere that a change should have happened but didn't due to permissions
         else
-          copy = orig.copy_for(user, make_public: make_public, copy_id: starting_new_board.global_id, prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: opts[:copier], unshallow: true)
+          copy = orig.copy_for(user, make_public: make_public, copy_id: starting_new_board.global_id, prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: copier, unshallow: true)
           copy.update_default_locale!(opts[:old_default_locale], opts[:new_default_locale])
           pending_replacements << [orig.global_id, {id: copy.global_id, key: copy.key}]
           if orig.shallow_source
@@ -402,65 +433,101 @@ module Relinking
 
         (orig.buttons || []).each do |button|
           if button['load_board'] && button['load_board']['id']
-            boards_link_to[button['load_board']['id']] ||= []
-            boards_link_to[button['load_board']['id']] << orig.global_id
-            boards_link_to[button['load_board']['id']].uniq!
+            opts[:board_links][button['load_board']['id']] ||= []
+            opts[:board_links][button['load_board']['id']] << orig.global_id
+            opts[:board_links][button['load_board']['id']].uniq!
           end
         end
       end
-      user.instance_variable_set('@already_updating_available_boards', false)
-      board_ids = [starting_old_board.global_id] + board_ids
-      (starting_old_board.buttons || []).each do |button|
-        if button['load_board'] && button['load_board']['id']
-          boards_link_to[button['load_board']['id']] ||= []
-          boards_link_to[button['load_board']['id']] << starting_old_board.global_id
-          boards_link_to[button['load_board']['id']].uniq!
+      if more_board_ids.length > 0
+        # TODO: move this to a follow-on progress result and return that instead,
+        # including support for all callees handling a progress result
+        copy_board_links_batch(user_id, more_board_ids, {
+          auth_user_id: auth_user.global_id,
+          all_board_ids: opts[:all_board_ids],
+          starting_new_board_id: starting_new_board.global_id,
+          starting_old_board_id: starting_old_board.global_id,
+          copier_id: opts[:copier_id],
+          make_public: opts[:make_public],
+          pending_replacements: pending_replacements,
+          copy_prefix: opts[:copy_prefix],
+          new_owner: opts[:new_owner],
+          disconnect: opts[:disconnect],
+          old_default_locale: opts[:old_default_locale],
+          new_default_locale: opts[:new_default_locale],
+          board_links: opts[:board_links]
+        })
+      else
+        user.instance_variable_set('@already_updating_available_boards', false)
+        board_ids = [starting_old_board.global_id] + opts[:all_board_ids]
+        (starting_old_board.buttons || []).each do |button|
+          if button['load_board'] && button['load_board']['id']
+            opts[:board_links][button['load_board']['id']] ||= []
+            opts[:board_links][button['load_board']['id']] << starting_old_board.global_id
+            opts[:board_links][button['load_board']['id']].uniq!
+          end
         end
+
+        # puts "done with copies"
+
+        # TODO: store all these temporarily in a JobStash
+        relink_board_for(user, {
+          :board_ids => board_ids, 
+          :copy_id => starting_new_board.global_id, 
+          :pending_replacements => pending_replacements, 
+          :boards_linking_list => opts[:board_links],
+          :update_preference => 'update_inline', 
+          :make_public => make_public, 
+          :copy_prefix => opts[:copy_prefix],
+          :new_owner => opts[:new_owner],
+          :disconnect => opts[:disconnect],
+          :authorized_user => auth_user,
+          :old_default_locale => opts[:old_default_locale],
+          :new_default_locale => opts[:new_default_locale]
+        })
+        user.update_available_boards
+        # puts "done with relinking"
+        @replacement_map
       end
-
-      puts "done with copies"
-
-      relink_board_for(user, {
-        :board_ids => board_ids, 
-        :copy_id => starting_new_board.global_id, 
-        :pending_replacements => pending_replacements, 
-        :boards_linking_list => boards_link_to,
-        :update_preference => 'update_inline', 
-        :make_public => make_public, 
-        :copy_prefix => opts[:copy_prefix],
-        :new_owner => opts[:new_owner],
-        :disconnect => opts[:disconnect],
-        :authorized_user => auth_user,
-        :old_default_locale => opts[:old_default_locale],
-        :new_default_locale => opts[:new_default_locale]
-      })
-      user.update_available_boards
-      # puts "done with relinking"
-      @replacement_map
     end
     
     def relink_board_for(user, opts)
-      auth_user = opts[:authorized_user]
+      auth_user = opts[:authorized_user] || User.find_by_global_id(opts[:authorized_user_id])
       board_ids = opts[:board_ids] || raise("boards required")
       pending_replacements = opts[:pending_replacements] || raise("pending_replacements required")
+      # TODO: store all these opts in a JobStash
+      relink_board_batch_for(user.global_id, pending_replacements, opts)
+    end
+
+    def relink_board_batch_for(user_id, pending_replacements, opts)
+      Progress.update_minutes_estimate(rand(60).to_i)
+      user = User.find_by_global_id(user_id)
       update_preference = opts[:update_preference]
+      auth_user = opts[:authorized_user] || User.find_by_global_id(opts[:authorized_user_id])
+      opts.delete(:authorized_user)
+      opts[:authorized_user_id] = auth_user.global_id if auth_user
+      board_ids = opts[:board_ids] || raise("boards required")
+      pending_replacements = pending_replacements || raise("pending_replacements required")
       # maintain mapping of old boards to their replacements
-      replacement_map = {}
+      opts[:replacement_map] ||= {}
       pending_replacements.each do |old_board_id, new_board_ref|
-        replacement_map[old_board_id] = new_board_ref
+        opts[:replacement_map][old_board_id] = new_board_ref
       end
       # for each board that needs replacing...
       boards_to_save = []
       boards_link_to = opts[:boards_linking_list]
       board_ids_to_re_save = []
       user.instance_variable_set('@already_updating_available_boards', true)
-      while pending_replacements.length > 0
-        old_board_id, new_board_ref = pending_replacements.shift
-        puts "#{pending_replacements.length} subs left after #{old_board_id} -> #{new_board_ref[:id]}"
+      replacements = pending_replacements[0..RELINKING_BATCH_SIZE] || []
+      more_replacements = [] + (pending_replacements[(RELINKING_BATCH_SIZE+1)..-1] || [])
+      rep_count = replacements.length
+      while replacements.length > 0
+        old_board_id, new_board_ref = replacements.shift
+        # puts "#{pending_replacements.length} subs left after #{old_board_id} -> #{new_board_ref[:id]}"
         # iterate through all the original boards and look for references to the old board
         to_save_hash = {}
         if !boards_link_to
-          puts "generating full link list"
+          # puts "generating full link list"
           boards_link_to = {}
           Board.find_batches_by_global_id(board_ids, batch_size: 50) do |orig|
             brd_id = orig.global_id
@@ -472,15 +539,16 @@ module Relinking
               end
             end
           end
+          opts[:boards_linking_list] = boards_link_to
         end
         boards_to_save.each{|b| to_save_hash[b.global_id] = b }
         if boards_link_to[old_board_id]
-          puts "  found #{boards_link_to[old_board_id].length} links"
+          # puts "  found #{boards_link_to[old_board_id].length} links"
           Board.find_batches_by_global_id(boards_link_to[old_board_id], batch_size: 50) do |orig|
             board = to_save_hash[orig.global_id] || orig
-            if replacement_map[orig.global_id]
-              board = to_save_hash[replacement_map[orig.global_id][:id]]
-              board ||= Board.find_by_global_id(replacement_map[orig.global_id][:id])
+            if opts[:replacement_map][orig.global_id]
+              board = to_save_hash[opts[:replacement_map][orig.global_id][:id]]
+              board ||= Board.find_by_global_id(opts[:replacement_map][orig.global_id][:id])
               board ||= orig
             end
             # find all boards in the user's set that point to old_board_id
@@ -491,7 +559,7 @@ module Relinking
                 # if you explicitly said update instead of replace my boards, then go ahead
                 # and update in-place.
                 board.replace_links!(old_board_id, new_board_ref)
-                if board_ids.length > 200
+                if board_ids.length > BOARD_CUTOFF_SIZE
                   board.save_subtly
                   board_ids_to_re_save << board.global_id
                 else
@@ -503,20 +571,25 @@ module Relinking
                 # and add to list of replacements to handle.
                 copy = board.copy_for(user, make_public: opts[:make_public], copy_id: opts[:copy_id], prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: opts[:copier], unshallow: true)
                 copy.replace_links!(old_board_id, new_board_ref)
-                if board_ids.length > 200
+                if board_ids.length > BOARD_CUTOFF_SIZE
                   copy.save_subtly
                   board_ids_to_re_save << copy.global_id
                 else
                   boards_to_save << copy
                   to_save_hash[copy.global_id] = copy
                 end
-                replacement_map[board.global_id] = {id: copy.global_id, key: copy.key}
-                pending_replacements << [board.global_id, {id: copy.global_id, key: copy.key}]
+                opts[:replacement_map][board.global_id] = {id: copy.global_id, key: copy.key}
+                if rep_count < RELINKING_BATCH_SIZE
+                  rep_count += 1
+                  replacements << [board.global_id, {id: copy.global_id, key: copy.key}]
+                else
+                  more_replacements << [board.global_id, {id: copy.global_id, key: copy.key}]
+                end
               else
                 # if it's private for the user, and no one else is using it, go ahead and
                 # update it in-place
                 board.replace_links!(old_board_id, new_board_ref)
-                if board_ids.length > 200
+                if board_ids.length > BOARD_CUTOFF_SIZE
                   board.save_subtly
                   board_ids_to_re_save << board.global_id
                 else
@@ -541,9 +614,15 @@ module Relinking
         brd.update_default_locale!(opts[:old_default_locale], opts[:new_default_locale])
         brd.save
       end
-      @replacement_map = replacement_map
-      
-      return replacement_map[user.settings['preferences']['home_board']['id']] if user.settings['preferences'] && user.settings['preferences']['home_board']
+      if more_replacements.length > 0
+        # TODO: move this to a follow-on progress result and return that instead,
+        # including support for all callees handling a progress result
+        relink_board_batch_for(user_id, more_replacements, opts)
+      else
+        @replacement_map = opts[:replacement_map]
+        
+        return opts[:replacement_map][user.settings['preferences']['home_board']['id']] if user.settings['preferences'] && user.settings['preferences']['home_board']
+      end
     end
 
     def cluster_related_boards(user)

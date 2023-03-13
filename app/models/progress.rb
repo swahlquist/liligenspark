@@ -20,6 +20,26 @@ class Progress < ActiveRecord::Base
     self.settings['state'] = 'started'
     self.save!
   end
+
+  def self.chain(progress)
+    if @@running_progresses[Worker.thread_id]
+      current_progress = @@running_progresses[Worker.thread_id]
+      progress.settings['root_id'] = current_progress.settings['root_id'] || current_progress.global_id
+      progress.save
+      current_progress.settings['following_id'] = progress.global_id
+      root = current_progress
+      root = Progress.find_by_global_id(current_progress.settings['root_id']) if current_progress.settings['root_id']
+      root.settings['last_following_id'] = progress.global_id
+      root.save
+      current_progress.save unless current_progress == root
+    end
+  end
+
+  def last_in_chain
+    if self.settings['last_following_id']
+      return Progress.find_by_global_id(self.settings['last_following_id'])
+    end
+  end
   
   def finish!
     self.finished_at = Time.now

@@ -9,19 +9,20 @@ module JsonApi::Progress
     json = {}
     json['id'] = progress.global_id
     json['status_url'] = "#{JsonApi::Json.current_host}/api/v1/progress/#{json['id']}"
-    json['status'] = progress.settings['state']
-    if progress.started_at && !progress.finished_at && progress.updated_at && progress.updated_at < 2.hours.ago
+    last_progress = progress.last_in_chain || progress
+    json['status'] = last_progress.settings['state']
+    if last_progress.started_at && !last_progress.finished_at && last_progress.updated_at && last_progress.updated_at < 2.hours.ago
       json['status'] = 'errored' 
       json['result'] = {'error' => 'progress job is taking too long, possibly crashed'}
-    elsif progress.started_at
-      json['started_at'] = progress.started_at.iso8601
+    elsif last_progress.started_at
+      json['started_at'] = last_progress.started_at.iso8601
     end
-    if progress.finished_at
-      json['finished_at'] = progress.finished_at.iso8601
-      json['result'] = progress.settings['result']
+    if last_progress.finished_at
+      json['finished_at'] = last_progress.finished_at.iso8601
+      json['result'] = last_progress.settings['result']
     end
-    if json['status'] == 'errored' && progress.settings['error_result']
-      json['result'] = progress.settings['error_result']
+    if json['status'] == 'errored' && last_progress.settings['error_result']
+      json['result'] = last_progress.settings['error_result']
     end
     json['percent'] = progress.settings['percent'] if progress.settings['percent']
     json['sub_status'] = progress.settings['message_key'] if progress.settings['message_key']
