@@ -906,12 +906,22 @@ class Organization < ActiveRecord::Base
       new_activation = true
       self.settings['activated_extras'] = activated + 1
       self.save
+      self.schedule(:extras_users, true)
     end
     User.purchase_extras({'premium_symbols' => true, 'user_id' => user.global_id, 'source' => 'org_added', 'org_id' => self.global_id, 'new_activation' => new_activation})
   end
 
-  def extras_users
-    self.attached_users('all').select{|u| u.extras_for_org?(self) }
+  def extras_users(force=false)
+    if !self.settings['extras_user_ids'] || force
+      res = self.attached_users('all').select{|u| u.extras_for_org?(self) }
+      self.settings['extras_user_ids'] = res.map(&:global_id)
+      self.save
+      res
+    else
+      hash = {}
+      self.settings['extras_user_ids'].each{|id| hash[id] = true; }
+      self.attached_users('all').select{|u| hash[u.global_id] }
+    end
   end
   
   def add_user(user_key, pending, sponsored=true, eval_account=false)
@@ -953,6 +963,7 @@ class Organization < ActiveRecord::Base
     any_link = user && !!UserLink.links_for(user).detect{|l| (l['type'] == 'org_user' || l['type'] == 'org_supervisor') && l['record_code'] == Webhook.get_record_code(self)}
     if any_link
       User.deactivate_extras({'user_id' => user.global_id, 'org_id' => self.global_id, 'ignore_errors' => true})
+      self.schedule(:extras_users, true)
       return true
     end
     false
