@@ -58,6 +58,9 @@ export default Component.extend({
     list.forEach(function(item) {
       var color = colors[color_index % colors.length];
       item.style = htmlSafe('width: ' + Math.round(item.score / max * 100) + '%; border: 2px solid ' + color[0] + '; background: ' + color[1] + '; height: 40px; border-radius: 5px; color: #fff; font-size: 12px; padding-left: 3px;');
+      if(item.score > 0) {
+        item.style = htmlSafe(item.style + 'min-width: 15px;');
+      }
       color_index++;
     });
     return list.sortBy('index').reverse();
