@@ -1240,7 +1240,7 @@ class User < ActiveRecord::Base
     end
     # Finally, create a brand new copy
     new_home = original.copy_for(self)
-    self.copy_board_links(old_board_id: original.global_id, new_board_id: new_home.global_id, ids_to_copy: [], user_for_paper_trail: "user:#{updater.global_id}", copier_id: updater.global_id, swap_library: symbol_library)
+    self.copy_board_links(old_board_id: original.global_id, new_board_id: new_home.global_id, ids_to_copy: [], auth_user: updater, user_for_paper_trail: "user:#{updater.global_id}", copier_id: updater.global_id, swap_library: symbol_library)
     self.settings['preferences']['home_board'] = {
       'id' => new_home.global_id,
       'key' => new_home.key
@@ -1700,7 +1700,7 @@ class User < ActiveRecord::Base
       :make_public => make_public, 
       :new_owner => opts[:new_owner],
       :disconnect => opts[:disconnect],
-      :authorized_user => User.whodunnit_user(PaperTrail.request.whodunnit)
+      :authorized_user => opts[:auth_user] || User.whodunnit_user(PaperTrail.request.whodunnit)
     }) || {}
     updated_ids = [starting_new_board_id]
     ids = [starting_old_board_id]

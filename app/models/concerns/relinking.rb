@@ -406,7 +406,6 @@ module Relinking
     end
 
     def copy_board_links_batch(user_id, board_ids, opts)
-      Progress.update_minutes_estimate(rand(60).to_i)
       user = User.find_by_global_id(user_id)
       user.instance_variable_set('@already_updating_available_boards', true)
       auth_user = opts[:auth_user] || User.find_by_global_id(opts[:auth_user_id])
@@ -419,6 +418,7 @@ module Relinking
       opts[:board_links] ||= {}
       id_batch = board_ids[0..COPYING_BATCH_SIZE] || []
       more_board_ids = board_ids[(COPYING_BATCH_SIZE+1)..-1] || []
+      Progress.update_minutes_estimate((opts[:all_board_ids].length * 3) + (board.length), "copying, #{board_ids.length} left")
       Board.find_batches_by_global_id(id_batch, batch_size: 50) do |orig|
         if !orig.allows?(user, 'view') && !orig.allows?(auth_user, 'view')
           # TODO: make a note somewhere that a change should have happened but didn't due to permissions
@@ -500,7 +500,7 @@ module Relinking
     end
 
     def relink_board_batch_for(user_id, pending_replacements, opts)
-      Progress.update_minutes_estimate(rand(60).to_i)
+      Progress.update_minutes_estimate(pending_replacements.length * 3, "replacing links, #{pending_replacements.length} left")
       user = User.find_by_global_id(user_id)
       update_preference = opts[:update_preference]
       auth_user = opts[:authorized_user] || User.find_by_global_id(opts[:authorized_user_id])
@@ -523,6 +523,7 @@ module Relinking
       rep_count = replacements.length
       while replacements.length > 0
         old_board_id, new_board_ref = replacements.shift
+        Progress.update_minutes_estimate(pending_replacements.length * 3, "replacing links to #{old_board_id} from #{replacements.length}, #{pending_replacements.length} left")
         # puts "#{pending_replacements.length} subs left after #{old_board_id} -> #{new_board_ref[:id]}"
         # iterate through all the original boards and look for references to the old board
         to_save_hash = {}

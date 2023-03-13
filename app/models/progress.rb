@@ -138,11 +138,12 @@ class Progress < ActiveRecord::Base
     end
   end
 
-  def self.update_minutes_estimate(minutes)
+  def self.update_minutes_estimate(minutes, message_key=nil)
     @@running_progresses ||= {}
     progress = @@running_progresses[Worker.thread_id]
     if progress && progress.settings['minutes_estimate'] != minutes
       progress.settings['minutes_estimate'] = minutes.round
+      progress.settings['message_key'] = message_key.to_s if message_key
       progress.save
     end
   end
