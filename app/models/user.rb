@@ -1652,7 +1652,6 @@ class User < ActiveRecord::Base
     })
     ids = [starting_old_board_id]
     ids += (starting_old_board.reload.downstream_board_ids || []) if starting_old_board
-    self.update_available_boards
     # This was happening too slowly/unreliably in a separate bg job
 #    button_set = BoardDownstreamButtonSet.update_for(starting_new_board.global_id, true)
     {'affected_board_ids' => ids.uniq}
@@ -1710,7 +1709,7 @@ class User < ActiveRecord::Base
     end
     # This was happening too slowly/unreliably in a separate bg job
     self.update_available_boards
-    button_set = BoardDownstreamButtonSet.update_for(starting_new_board.global_id, true)
+    # button_set = BoardDownstreamButtonSet.update_for(starting_new_board.global_id, true)
     res
   ensure
     PaperTrail.request.whodunnit = prior

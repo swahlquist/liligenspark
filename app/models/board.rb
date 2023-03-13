@@ -1690,7 +1690,10 @@ class Board < ActiveRecord::Base
     protected_sources = (user && user.enabled_protected_sources(true)) || []
     ButtonImage.cached_copy_urls(bis, user, nil, protected_sources)
     # JsonApi::Image.as_json(i, :original_and_fallback => true).slice('id', 'url', 'fallback_url', 'protected_source'))
-    res['images'] = bis.map{|i| JsonApi::Image.as_json(i, :allowed_sources => protected_sources) }
+    # TODO: pass preferred_source and allow board button images to have a full hash of mappings for different libraries
+    # and return the result preferred by the user if authorized
+    pref = user && user.settings['preferences']['preferred_symbols']
+    res['images'] = bis.map{|i| JsonApi::Image.as_json(i, :preferred_source => pref, :allowed_sources => protected_sources) }
     if (self.buttons || []).detect{|b| b && b['sound_id']}
       res['sounds'] = self.known_button_sounds.map{|s| JsonApi::Sound.as_json(s) }#.slice('id', 'url') }
     else

@@ -1755,7 +1755,7 @@ describe Api::UsersController, :type => :controller do
       assert_unauthorized
     end
     
-    it "should rename the board" do
+    it "should rename the user" do
       token_user
       o = Organization.create(:admin => true)
       o.add_manager(@user.user_name, true)
@@ -1777,7 +1777,21 @@ describe Api::UsersController, :type => :controller do
       expect(json).not_to eq(nil)
       expect(json['error']).to eq('user rename failed')
     end
-    
+
+    it "should not fail on miscapitalization" do
+      token_user
+      o = Organization.create(:admin => true)
+      o.add_manager(@user.user_name, true)
+
+      expect(@user.reload.user_name).to_not eq('wilford')
+      post :rename, params: {:user_id => @user.global_id, :old_key => @user.user_name.upcase, :new_key => "wilford"}
+      expect(response).to be_successful
+      json = JSON.parse(response.body)
+      expect(json).to eq({'rename' => true, 'key' => "wilford"})
+      expect(@user.reload.user_name).to eq('wilford')
+    end
+
+
     it "should require a valid new_key" do
       token_user
       o = Organization.create(:admin => true)

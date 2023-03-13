@@ -69,13 +69,25 @@ class ButtonImage < ActiveRecord::Base
   end
 
   def assert_fallback(button_image)
+    # When swapping images, user the fallback image after the swap if one wasn't already defined
+    changed = false
     if button_image && !button_image.settings['protected']
       if self.settings['protected'] && !self.settings['fallback']
         self.settings['fallback'] = button_image.settings.slice('pending', 'content_type', 'width', 'height', 'source_url', 'hc', 'license')
         self.settings['fallback']['url'] = button_image.url
-        self.save
+        changed = true
       end
     end
+    if button_image && button_image.settings['library_alternates']
+      button_image.settings['library_alternates'].each do |library, hash|
+        self.settings['library_alternates'] ||= {}
+        if !self.settings['library_alternates'][library]
+          self.settings['library_alternates'][library] = hash
+          changed = true
+        end
+      end
+    end
+    self.save if changed
   end
 
   def generate_fallback(force=false)
@@ -167,6 +179,8 @@ class ButtonImage < ActiveRecord::Base
       self.settings['avatar'] = !!params['avatar'] if params['avatar'] != nil
       self.settings['badge'] = !!params['badge'] if params['badge'] != nil
       self.settings['authorless'] = true if non_user_params[:no_author]
+
+      self.settings['library_alternates'] = params['library_alternates'] if params['library_alternates']
       
       # TODO: raise a stink if content_type, width or height are not provided
       process_license(params['license']) if params['license']

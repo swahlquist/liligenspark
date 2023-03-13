@@ -30,7 +30,7 @@ describe Api::BoardsController, :type => :controller do
       ]}, {'user' => u1})
       Worker.process_queues
       bb1 = Board.find_by_global_id("#{b1.global_id}-#{u2.global_id}")
-      bb1.star!(u2, true)
+      b1.star!(u2, true)
       Worker.process_queues
       u2.reload
       refs = u2.starred_board_refs
@@ -57,7 +57,7 @@ describe Api::BoardsController, :type => :controller do
       b2.process({'copy_key' => b1.global_id}, {'user' => u1})
       Worker.process_queues
       bb4 = Board.find_by_global_id("#{b4.global_id}-#{u2.global_id}")
-      bb4.star!(u2, true)
+      b4.star!(u2, true)
       Worker.process_queues
       bb2 = Board.find_by_global_id("#{b2.global_id}-#{u2.global_id}")
       bb2 = bb2.copy_for(u2, {copy_id: b1.global_id})

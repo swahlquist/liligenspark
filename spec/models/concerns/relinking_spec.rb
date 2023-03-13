@@ -829,7 +829,6 @@ describe Relinking, :type => :model do
         expect(board_ids).to eq(["#{b1.global_id}-#{u2.global_id}", "#{b1a.global_id}-#{u2.global_id}", "#{b1b.global_id}-#{u2.global_id}", "#{b1c.global_id}-#{u2.global_id}"])
         expect(pending_replacements.length).to eq(5)
         expect(pending_replacements[0]).to eq(["#{b1.global_id}-#{u2.global_id}", {id: b2.global_id, key: b2.key}])
-        puts JSON.pretty_generate(pending_replacements)
         expect(pending_replacements[1][0]).to eq("#{b1a.global_id}-#{u2.global_id}")
         expect(pending_replacements[1][1]).to_not match("#{u2.global_id}")
         expect(pending_replacements[2][0]).to eq("#{b1c.global_id}-#{u2.global_id}")

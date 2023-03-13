@@ -55,6 +55,40 @@ describe JsonApi::Board do
       expect(json['buttons']).to eq([{"id"=>1, "label"=>"asdf"}, {"id"=>2, "label"=>"qwer"}])
       expect(json['grid']).to eq({"columns"=>2, "order"=>[[nil, 1], [2, nil]], "rows"=>2})
     end
+
+    it "should update full_set_revision on downstream shallow clone" do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(user: u1, public: true)
+      b2 = Board.create(user: u1, public: true)
+      b1.process({'buttons' => [
+        {'id' => 1, 'label' => 'escape', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {'user' => u1})
+      b2.process({'copy_key' => b1.global_id}, {'user' => u1})
+      Worker.process_queues
+      Worker.process_queues
+      bb1 = Board.find_by_global_id("#{b1.global_id}-#{u2.global_id}")
+      b1.reload
+      json1 = JsonApi::Board.as_json(b1)
+      expect(json1['full_set_revision']).to eq(b1.full_set_revision)
+      json2 = JsonApi::Board.as_json(bb1)
+      expect(json2['full_set_revision']).to eq(bb1.full_set_revision)
+      expect(json1['full_set_revision']).to eq(json2['full_set_revision'])
+
+      bb2 = Board.find_by_global_id("#{b2.global_id}-#{u2.global_id}")
+      bb2 = bb2.copy_for(u2, {'copy_id' => b1.global_id})
+      Worker.process_queues
+      u2.user_extra.reload
+      bb1.instance_variable_get('@sub_global').reload
+      json3 = JsonApi::Board.as_json(bb1.reload)
+      expect(json3['full_set_revision']).to eq(bb1.full_set_revision)
+      expect(json2['full_set_revision']).to_not eq(json3['full_set_revision'])
+
+      b1.reload
+      json4 = JsonApi::Board.as_json(b1)
+      expect(json4['full_set_revision']).to eq(b1.full_set_revision)
+      expect(json4['full_set_revision']).to eq(json1['full_set_revision'])
+    end
   end
   
   describe "extra_includes" do
