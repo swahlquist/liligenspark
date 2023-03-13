@@ -418,7 +418,7 @@ module Relinking
       opts[:board_links] ||= {}
       id_batch = board_ids[0..COPYING_BATCH_SIZE] || []
       more_board_ids = board_ids[(COPYING_BATCH_SIZE+1)..-1] || []
-      Progress.update_minutes_estimate((opts[:all_board_ids].length * 3) + (board.length), "copying, #{board_ids.length} left")
+      Progress.update_minutes_estimate((opts[:all_board_ids].length * 3) + (board_ids.length), "copying, #{board_ids.length} left")
       Board.find_batches_by_global_id(id_batch, batch_size: 50) do |orig|
         if !orig.allows?(user, 'view') && !orig.allows?(auth_user, 'view')
           # TODO: make a note somewhere that a change should have happened but didn't due to permissions
