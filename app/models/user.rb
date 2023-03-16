@@ -177,7 +177,7 @@ class User < ActiveRecord::Base
   def audit_protected_sources
     found_sources = []
     # Check home board
-    # Chack any user-authored boards
+    # Check any user-authored boards
     if self.settings['preferences']['home_board']
       board_ids = []
       b = Board.find_by_path(self.settings['preferences']['home_board']['id'])
@@ -214,7 +214,8 @@ class User < ActiveRecord::Base
   end
 
   def track_protected_source(source_id)
-    self.reload.settings['activated_sources'] ||= []
+    self.using(:master).reload
+    self.settings['activated_sources'] ||= []
     # The first time a user leverages a third-party symbol library by 
     # saving a board with an image, log it as activated (unless it happens)
     # during the free trial, in which case it needs to be tracked at
@@ -1235,7 +1236,7 @@ class User < ActiveRecord::Base
       self.settings['preferences']['home_board']['locale'] = home_board['locale'] || home.settings['locale']
       self.settings['preferences']['home_board']['level'] = home_board['level'] if home_board['level']
       self.save
-      self.schedule(:audit_protected_sources)
+      self.schedule_audit_protected_sources
       return true
     end
     # Finally, create a brand new copy
@@ -1248,8 +1249,13 @@ class User < ActiveRecord::Base
     self.settings['preferences']['home_board']['locale'] = home_board['locale'] || new_home.settings['locale']
     self.settings['preferences']['home_board']['level'] = home_board['level'] if home_board['level']
     self.save
-    self.schedule(:audit_protected_sources)
+    self.schedule_audit_protected_sources
     return true
+  end
+
+  def schedule_audit_protected_sources
+    ra_cnt = RemoteAction.where(path: "#{self.global_id}", action: 'audit_protected_sources').count
+    RemoteAction.create(path: "#{self.global_id}", act_at: 10.minutes.from_now, action: 'audit_protected_sources') if ra_cnt == 0
   end
   
   def process_home_board(home_board, non_user_params)
@@ -1297,7 +1303,7 @@ class User < ActiveRecord::Base
     end
     if (self.settings['preferences']['home_board'] || {}).slice('id', 'key').to_json != json
       notify('home_board_changed')
-      self.schedule(:audit_protected_sources)
+      self.schedule_audit_protected_sources
     end
   end
   
@@ -1719,12 +1725,13 @@ class User < ActiveRecord::Base
       starting_new_board.swap_images(swap_library, self, ids)
       res['swap_library'] = swap_library
     end
+    PaperTrail.request.whodunnit = prior
     # This was happening too slowly/unreliably in a separate bg job
     self.update_available_boards
     # button_set = BoardDownstreamButtonSet.update_for(starting_new_board.global_id, true)
     res
-  ensure
-    PaperTrail.request.whodunnit = prior
+  # ensure
+  #   PaperTrail.request.whodunnit = prior
   end
 
   def self.whodunnit_user(whodunnit)

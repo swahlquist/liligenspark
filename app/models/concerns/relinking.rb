@@ -108,6 +108,7 @@ module Relinking
     board.settings['grid'] = BoardContent.load_content(self, 'grid')
     board.settings['intro'] = BoardContent.load_content(self, 'intro')
     board.settings['downstream_board_ids'] = self.settings['downstream_board_ids']
+    self.current_library if !self.settings['common_library'] && !self.settings['swapped_library']
     board.settings['common_library'] = self.settings['common_library'] if self.settings['common_library']
     board.settings['swapped_library'] = self.settings['swapped_library'] if self.settings['swapped_library']
     board.settings['word_suggestions'] = self.settings['word_suggestions']
@@ -117,6 +118,7 @@ module Relinking
     board.settings['never_edited'] = true
     board.public = true if make_public
     board.settings.delete('unlisted') if make_public
+    board.instance_variable_set('@skip_board_post_checks', true) if opts[:skip_user_update]
     BoardContent.apply_clone(self, board) if self.board_content_id && self.board_content_id != 0
     # board.map_images has to create a record for each image in the
     # board, and while that is useful for tracking, it's actually redundant
@@ -212,7 +214,7 @@ module Relinking
     update_board = self
     if @sub_id
       return {sliced: false, reason: 'unauthorized'} unless self.allows?(@sub_global, 'edit') 
-      update_board = self.copy_for(@sub_global, skip_save: true)
+      update_board = self.copy_for(@sub_global, skip_save: true, skip_user_update: true)
     end
 
     if !board_locales_to_keep.include?(update_board.settings['locale'])
@@ -418,12 +420,12 @@ module Relinking
       opts[:board_links] ||= {}
       id_batch = board_ids[0..COPYING_BATCH_SIZE] || []
       more_board_ids = board_ids[(COPYING_BATCH_SIZE+1)..-1] || []
-      Board.find_batches_by_global_id(id_batch, batch_size: 25) do |orig|
+      Board.find_batches_by_global_id(id_batch, batch_size: 15) do |orig|
         Progress.update_minutes_estimate((opts[:all_board_ids].length * 3) + (board_ids.length), "copying #{orig.key}, #{board_ids.length} left")
         if !orig.allows?(user, 'view') && !orig.allows?(auth_user, 'view')
           # TODO: make a note somewhere that a change should have happened but didn't due to permissions
         else
-          copy = orig.copy_for(user, make_public: make_public, copy_id: starting_new_board.global_id, prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: copier, unshallow: true)
+          copy = orig.copy_for(user, make_public: make_public, copy_id: starting_new_board.global_id, prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: copier, unshallow: true, skip_user_update: true)
           copy.update_default_locale!(opts[:old_default_locale], opts[:new_default_locale])
           pending_replacements << [orig.global_id, {id: copy.global_id, key: copy.key}]
           if orig.shallow_source
@@ -570,7 +572,7 @@ module Relinking
               elsif board.instance_variable_get('@sub_id') || !board.just_for_user?(user)
                 # if it's not already private for the user, make a private copy for the user 
                 # and add to list of replacements to handle.
-                copy = board.copy_for(user, make_public: opts[:make_public], copy_id: opts[:copy_id], prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: opts[:copier], unshallow: true)
+                copy = board.copy_for(user, make_public: opts[:make_public], copy_id: opts[:copy_id], prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: opts[:copier], unshallow: true, skip_user_update: true)
                 copy.replace_links!(old_board_id, new_board_ref)
                 if board_ids.length > BOARD_CUTOFF_SIZE
                   copy.save_subtly

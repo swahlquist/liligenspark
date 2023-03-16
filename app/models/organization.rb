@@ -1115,7 +1115,10 @@ class Organization < ActiveRecord::Base
   end
 
   def update_user_available_boards
-    self.attached_users('all').each{|u| u.schedule(:update_available_boards) }
+    self.attached_users('all').each do |u| 
+      ra_cnt = RemoteAction.where(path: u.global_id, action: 'update_available_boards').count
+      RemoteAction.create(path: u.global_id, action: 'update_available_boards', act_at: 5.minutes.from_now) if ra_cnt == 0
+    end
   end
 
   def self.activation_code(org_or_user, opts)
@@ -1487,6 +1490,7 @@ class Organization < ActiveRecord::Base
         self.schedule(:assert_profile, prof)
       end
     end
+    boards_changed = false
     if params[:home_board_key] || params[:home_board_keys]
       keys = params[:home_board_keys] || [params[:home_board_key]]
       already_allowed = self.settings['default_home_boards'] || []
@@ -1513,8 +1517,11 @@ class Organization < ActiveRecord::Base
           end
         end
       end
+      if already_allowed.to_json != self.settings['default_home_boards'].to_json
+        boards_changed = true
+      end
       self.settings.delete('default_home_boards') if self.settings['default_home_boards'].empty?
-      self.schedule(:update_user_available_boards) if self.id
+      self.schedule(:update_user_available_boards) if self.id && boards_changed
     end
     
     if params[:management_action]

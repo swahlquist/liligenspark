@@ -217,9 +217,6 @@ module Sharing
       org_links = all_links.select{|l| ['org_user', 'org_manager', 'org_supervisor'].include?(l['type']) }
       return [] if links.length == 0 && org_links.length == 0
       
-#      cached = user.get_cached("all_shared_board_ids/#{plus_editing}")
-#      return cached if cached
-
       # all explicitly-shared boards
       shallow_board_ids = links.select{|l| plus_editing ? (l['state'] && l['state']['allow_editing']) : true }.map{|l| l['record_code'].split(/:/)[1] }
       if !plus_editing
@@ -237,23 +234,23 @@ module Sharing
       deep_board_ids = deep_board_shares.map{|l| l['record_code'].split(/:/)[1] }.uniq
 
       # get all those boards
-      boards = Board.find_all_by_global_id(deep_board_ids)
       valid_deep_board_authors = {}
+      all_deep_board_ids = []
+      Board.find_batches_by_global_id(deep_board_ids, {batch_size: 50}) do |board|
+        # get the list of all possible downstream boards
+        # NOTE: shallow clones cannot be shared
+        all_deep_board_ids += board.settings['downstream_board_ids'] || []
 
-      # get the list of all possible downstream boards
-      # NOTE: shallow clones cannot be shared
-      all_deep_board_ids = boards.map{|b| b.settings['downstream_board_ids'] || [] }.flatten.compact.uniq
-      
-      # for each explicitly-shared including-downstream board, mark all downstream boards
-      # as possibly-shared if they were authored by any of the root board's authors
-      boards.each do |b| 
-        b.author_ids(plus_editing).each do |author_id|
-          valid_deep_board_authors[b.global_id] ||= []; valid_deep_board_authors[b.global_id] << author_id
-          (b.settings['downstream_board_ids'] || []).each do |id|
+        # for each explicitly-shared including-downstream board, mark all downstream boards
+        # as possibly-shared if they were authored by any of the root board's authors
+        board.author_ids(plus_editing).each do |author_id|
+          valid_deep_board_authors[board.global_id] ||= []; valid_deep_board_authors[board.global_id] << author_id
+          (board.settings['downstream_board_ids'] || []).each do |id|
             valid_deep_board_authors[id] ||= []; valid_deep_board_authors[id] << author_id
           end
         end
       end
+      all_deep_board_ids = all_deep_board_ids.flatten.compact.uniq
       
       valid_deep_board_ids = []
       # for every downstream board, mark it as shared if one of the current board's authors
@@ -266,8 +263,10 @@ module Sharing
       
       all_board_ids = (shallow_board_ids + valid_deep_board_ids).uniq
 
-#      user.set_cached("all_shared_board_ids/#{plus_editing}", all_board_ids)
-      user.boards_updated_at = Time.now
+      if !plus_editing
+        # If you update it every time, then it will require an update every time you toggle the plus_editing arg
+        user.boards_updated_at = Time.now 
+      end
       user.settings['all_shared_board_ids'][sub_key] = {
         'timestamp' => user.boards_updated_at.to_f.round(2),
         'list' => all_board_ids

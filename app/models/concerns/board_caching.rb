@@ -18,7 +18,28 @@ module BoardCaching
   def update_available_boards
     # find all private boards authored by this user
     # TODO: sharding
-    authored = Board.where(:public => false, :user_id => self.id).select('id').map(&:global_id)
+
+    if self.settings && self.settings['available_private_board_ids'] && (self.settings['available_private_board_ids']['generated'] || 0) > 60.minutes.ago.to_i
+      # Schedule for later if already run recently
+      if (self.settings['available_private_board_ids']['view'] ||[]).length > 500
+        ra_cnt = RemoteAction.where(path: self.global_id, action: 'update_available_boards').count
+        RemoteAction.create(path: self.global_id, action: 'update_available_boards', act_at: 30.minutes.from_now) if ra_cnt == 0
+        return
+      end
+    end
+    self.settings ||= {}
+    self.settings['available_private_board_ids'] ||= {
+      'view' => [],
+      'edit' => []
+    }
+    self.settings['available_private_board_ids']['generated'] = Time.now.to_i
+    self.save(touch: false)
+    authored = []
+    Board.where(:public => false, :user_id => self.id).select('id').find_in_batches(batch_size: 200) do |batch|
+      batch.each do |brd|
+        authored << brd.global_id
+      end
+    end
     # find all private boards shared with this user
     # find all private boards where this user is a co-author
     # find all private boards downstream of boards shared with this user
@@ -27,6 +48,7 @@ module BoardCaching
     self.clear_cached("all_shared_board_ids/false")
     view_shared = Board.all_shared_board_ids_for(self, false)
     edit_shared = Board.all_shared_board_ids_for(self, true)
+
 
     # find all private boards available to this user's supervisees
     # find all private boards downstream of boards edit-shared with this user's supervisees
@@ -46,16 +68,29 @@ module BoardCaching
     # generate a list of all private boards this user can view
     view_ids = (edit_ids + view_shared + supervisee_view_shared).uniq
     # TODO: sharding
-    view_ids = Board.where(:public => false, :id => self.class.local_ids(view_ids)).select('id').map(&:global_id).sort
-    edit_ids = Board.where(:id => self.class.local_ids(edit_ids)).select('id').map(&:global_id).sort
-    self.settings ||= {}
-    self.settings['available_private_board_ids'] ||= {
-      'view' => [],
-      'edit' => []
-    }
-    ab_json = self.settings['available_private_board_ids'].to_json
+    new_view_ids = []
+    new_edit_ids = []
+    added_edit_ids = []
+    Board.where(:public => false, :id => self.class.local_ids(view_ids)).select('id').find_in_batches(batch_size: 100) do |batch|
+      batch.each do |brd|
+        new_view_ids << brd.global_id
+        if edit_ids.include?(brd.global_id)
+          new_edit_ids << brd.global_id 
+          added_edit_ids << brd.global_id
+        end
+      end
+    end
+    view_ids = new_view_ids.sort
+    Board.where(:id => self.class.local_ids(edit_ids - added_edit_ids)).select('id').find_in_batches(batch_size: 100) do |batch|
+      batch.each do |brd|
+        new_edit_ids << brd.global_id
+      end
+    end
+    edit_ids = new_edit_ids.uniq.sort
+    ab_json = self.settings['available_private_board_ids'].slice('view', 'edit').to_json
     self.settings['available_private_board_ids']['view'] = view_ids
     self.settings['available_private_board_ids']['edit'] = edit_ids
+    self.settings['available_private_board_ids']['generated'] = Time.now.to_i
     # save those lists
     @do_track_boards = false
     self.boards_updated_at = Time.now
@@ -63,10 +98,11 @@ module BoardCaching
     self.assert_current_record!
     # if the lists changed, schedule this same update for all users
     # who would have been affected by a change (supervisors)
-    if ab_json != self.settings['available_private_board_ids'].to_json
+    if ab_json != self.settings['available_private_board_ids'].slice('view', 'edit').to_json
       self.save_with_sync('board_list_changed')
       self.supervisors.each do |sup|
-        sup.schedule_once_for(:slow, :update_available_boards)
+        ra_cnt = RemoteAction.where(path: sup.global_id, action: 'update_available_boards').count
+        RemoteAction.create(path: sup.global_id, action: 'update_available_boards', act_at: 5.minutes.from_now) if ra_cnt == 0
       end
     else
       self.save

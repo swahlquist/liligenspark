@@ -106,6 +106,7 @@ describe BoardCaching, :type => :model do
       Worker.process_queues
       Worker.process_queues
       Worker.process_queues
+      RemoteAction.process_all
       expect(u2.reload.private_viewable_board_ids.sort).to eq([b.global_id, b2.global_id])
       expect(u3.reload.private_viewable_board_ids.sort).to eq([b.global_id, b2.global_id])
       expect(u1.reload.private_viewable_board_ids.sort).to eq([b.global_id, b2.global_id])
@@ -193,7 +194,7 @@ describe BoardCaching, :type => :model do
       Worker.process_queues
 
       expect(RemoteAction.where(action: 'update_available_boards', path: u3.global_id).count).to eq(1)
-
+      RemoteAction.process_all
       Worker.process_queues
       expect(u2.reload.private_viewable_board_ids.sort).to eq([b.global_id, b2.global_id])
       expect(u3.reload.private_viewable_board_ids.sort).to eq([b.global_id, b2.global_id])
@@ -305,26 +306,31 @@ describe BoardCaching, :type => :model do
       expect(u1.reload.supervisors).to eq([u2])
       expect(u2.reload.supervisors).to eq([u1])
       u1.reload.update_available_boards
-      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
-        'id' => u2.id,
-        'method' => 'update_available_boards',
-        'arguments' => []
-      })).to eq(true)
+      expect(RemoteAction.find_by(path: u2.global_id, action: 'update_available_boards')).to_not eq(nil)
+      # expect(Worker.scheduled_for?(:slow, User, :perform_action, {
+      #   'id' => u2.id,
+      #   'method' => 'update_available_boards',
+      #   'arguments' => []
+      # })).to eq(true)
       Worker.process_queues
       expect(u1.reload.supervisors).to eq([u2])
       expect(u2.reload.supervisors).to eq([u1])
-      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
-        'id' => u1.id,
-        'method' => 'update_available_boards',
-        'arguments' => []
-      })).to eq(true)
+      expect(RemoteAction.find_by(path: u1.global_id, action: 'update_available_boards')).to_not eq(nil)
+      # expect(Worker.scheduled_for?(:slow, User, :perform_action, {
+      #   'id' => u1.id,
+      #   'method' => 'update_available_boards',
+      #   'arguments' => []
+      # })).to eq(true)
+      RemoteAction.process_all
       Worker.process_queues
       Worker.process_queues
+      expect(RemoteAction.find_by(path: u1.global_id, action: 'update_available_boards')).to eq(nil)
       expect(Worker.scheduled_for?(:slow, User, :perform_action, {
         'id' => u1.id,
         'method' => 'update_available_boards',
         'arguments' => []
       })).to eq(false)
+      expect(RemoteAction.find_by(path: u2.global_id, action: 'update_available_boards')).to eq(nil)
       expect(Worker.scheduled_for?(:slow, User, :perform_action, {
         'id' => u2.id,
         'method' => 'update_available_boards',
@@ -364,11 +370,12 @@ describe BoardCaching, :type => :model do
       expect(u2.supervisors).to eq([])
       Worker.flush_queues
       u1.reload.update_available_boards
-      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
-        'id' => u2.id,
-        'method' => 'update_available_boards',
-        'arguments' => []
-      })).to eq(true)
+      expect(RemoteAction.find_by(path: u2.global_id, action: 'update_available_boards')).to_not eq(nil)
+      # expect(Worker.scheduled_for?(:slow, User, :perform_action, {
+      #   'id' => u2.id,
+      #   'method' => 'update_available_boards',
+      #   'arguments' => []
+      # })).to eq(true)
     end
 
     # if a shared board is changed from public to private, I should see it
@@ -571,11 +578,12 @@ describe BoardCaching, :type => :model do
       u2.save
       u1.update_available_boards
       expect(u1.private_viewable_board_ids).to eq([b.global_id])
-      expect(Worker.scheduled_for?(:slow, User, :perform_action, {
-        'id' => u4.id,
-        'method' => 'update_available_boards',
-        'arguments' => []
-      })).to eq(true)
+      expect(RemoteAction.find_by(path: u4.global_id, action: 'update_available_boards')).to_not eq(nil)
+      # expect(Worker.scheduled_for?(:slow, User, :perform_action, {
+      #   'id' => u4.id,
+      #   'method' => 'update_available_boards',
+      #   'arguments' => []
+      # })).to eq(true)
     end
   end
 end

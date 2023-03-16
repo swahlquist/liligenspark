@@ -920,7 +920,6 @@ class Board < ActiveRecord::Base
     if @update_self_references
       self.update_self_references
     end
-
     
     if @check_for_parts_of_speech
       self.schedule(:check_for_parts_of_speech_and_inflections)
@@ -930,8 +929,11 @@ class Board < ActiveRecord::Base
     if self.settings && self.settings['undeleted'] && (self.settings['image_urls'] || self.settings['sound_urls'])
       self.schedule(:restore_urls)
     end
-    schedule(:update_affected_users, @brand_new) if content_changed
-    schedule(:current_library, true) if content_changed
+    if !@skip_board_post_checks
+      schedule(:update_affected_users, @brand_new) if content_changed
+      schedule(:current_library, true) if content_changed && !self.settings['common_library'] && !self.settings['swapped_library']
+    end
+    @skip_board_post_checks = false
 
     schedule_downstream_checks(Board.last_scheduled_stamp)
   end
@@ -1034,7 +1036,6 @@ class Board < ActiveRecord::Base
     
     # TODO: sharding
     users = User.where(:id => User.local_ids(user_ids))
-    # TODO: finer-grained control, user.sync_stamp instead of just user.updated_at
     users.find_in_batches(batch_size: 20) do |batch|
       batch.each{|user| user.save_with_sync('boards_changed') }
     end
@@ -1900,7 +1901,7 @@ class Board < ActiveRecord::Base
     update_board = self
     if @sub_id
       return {done: true, updated: false, reason: 'unauthorized'} unless self.allows?(@sub_global, 'edit') 
-      update_board = self.copy_for(@sub_global, skip_save: true)
+      update_board = self.copy_for(@sub_global, skip_save: true, skip_user_update: true,)
     end
     if (board_ids.blank? || board_ids.include?(self.global_id))
       updated_board_ids << self.global_id
@@ -1957,7 +1958,7 @@ class Board < ActiveRecord::Base
           end
         end
         self.settings['common_library'] = res
-        self.save
+        self.save_subtly
         return res
       elsif !RedisInit.any_queue_pressure?
         self.schedule(:current_library, true)
@@ -1983,7 +1984,7 @@ class Board < ActiveRecord::Base
     swap_board_id = swap_board.global_id
     if @sub_id
       return {done: true, id: self.global_id, swapped: false, reason: 'unauthorized'} unless self.allows?(@sub_global, 'view') 
-      swap_board = self.copy_for(@sub_global, skip_save: true)
+      swap_board = self.copy_for(@sub_global, skip_save: true, skip_user_update: true)
     end
     is_root = visited_board_ids.blank?
     # puts "SWAPPING FOR #{self.key} #{is_root}"

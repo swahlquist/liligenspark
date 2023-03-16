@@ -174,7 +174,7 @@ module Subscription
       self.save_with_sync('org_sub_cancel')
       # self.schedule(:update_subscription, {'resume' => true})
     end
-    self.schedule(:audit_protected_sources)
+    self.schedule_audit_protected_sources
   rescue ActiveRecord::StaleObjectError
     puts "stale :-/"
     if @link_to_save
@@ -396,7 +396,7 @@ module Subscription
     else
       res = false
     end
-    self.schedule(:audit_protected_sources)
+    self.schedule_audit_protected_sources
     res
   rescue ActiveRecord::StaleObjectError
     return false
