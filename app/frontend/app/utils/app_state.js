@@ -708,7 +708,9 @@ var app_state = EmberObject.extend({
     if(state && state.key) {
       if(app_state.get('currentBoardState.key') != state.key) {
         buttonTracker.transitioning = true;
-        stashes.persist('board_level', state.level || state.default_level);
+        if(state.level || state.default_level) {
+          stashes.persist('board_level', state.level || state.default_level);
+        }
         if(stashes.get('override_label_locale')) {
           // If manually-set for the session, revert
           // to the preferred value

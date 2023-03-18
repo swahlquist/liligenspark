@@ -393,7 +393,7 @@ CoughDrop.Board = DS.Model.extend({
             b.label = trans[b.id][label_locale].label;
           }
           if(vocalization_locale != current_locale) {
-            if(trans[b.id][vocalization_locale] && trans[b.id][vocalization_locale].vocalization) {
+            if(trans[b.id][vocalization_locale] && (trans[b.id][vocalization_locale].vocalization || trans[b.id][vocalization_locale].label)) {
               b.vocalization = (trans[b.id][vocalization_locale].vocalization || trans[b.id][vocalization_locale].label);
             } else if(vocalization_locale.split(/_|-/)[0] != current_locale.split(/_|-/)[0]) {
               delete b['vocalization'];
@@ -411,7 +411,7 @@ CoughDrop.Board = DS.Model.extend({
   contextualized_buttons: function(label_locale, vocalization_locale, history, capitalize, inflection_shift) {
     var t = (this.get('updated') || (new Date()))
     if(t.getTime) { t = t.getTime(); }
-    var state = JSON.stringify({hh: this.get('update_hash'), u: t, ll: label_locale, vl: vocalization_locale, h: history, c: capitalize, is: inflection_shift, sp: app_state.get('speak_mode'), fw: app_state.get('focus_words'), uid: app_state.get('sessionUser.id'), ai: app_state.get('referenced_user.preferences.auto_inflections'), sk: app_state.get('referenced_user.preferences.skin'), r: this.get('current_revision')});
+    var state = JSON.stringify({hh: this.get('update_hash'), u: t, ll: label_locale, vl: vocalization_locale, h: history, c: capitalize, is: inflection_shift, sp: app_state.get('speak_mode'), fw: app_state.get('focus_words'), fid: this.get('focus_id'), uid: app_state.get('sessionUser.id'), ai: app_state.get('referenced_user.preferences.auto_inflections'), sk: app_state.get('referenced_user.preferences.skin'), r: this.get('current_revision')});
     if(this.get('last_cb.state') == state) {
       return this.get('last_cb.results');
     }
@@ -431,7 +431,7 @@ CoughDrop.Board = DS.Model.extend({
       if(b.hidden) { _this.set('hidden_buttons', true)};
     });
     if(app_state.get('speak_mode')) {
-      if(label_locale == vocalization_locale) {
+      if((label_locale || '').split(/-|_/)[0] == (vocalization_locale || '').split(/-|_/)[0]) {
         if(app_state.get('focus_words')) {
           var ids = app_state.get('focus_words.board_ids') || {};
           if(app_state.get('focus_words.user_id') == app_state.get('sessionUser.id') && ids[_this.get('id')]) {

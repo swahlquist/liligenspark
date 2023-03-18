@@ -93,6 +93,7 @@ export default modal.ModalController.extend({
     if(cat == 'saved') {
       _this.set('browse.items', _this.get('user_list'));
     } else {
+      _this.set('browse', _this.get('browse') || {});
       _this.set('browse.pending', true);
       var opts = {sort: 'popularity'};
       if(cat == 'shared_reading') {
