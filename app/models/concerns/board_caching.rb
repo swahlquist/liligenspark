@@ -38,6 +38,7 @@ module BoardCaching
     Board.where(:public => false, :user_id => self.id).select('id').find_in_batches(batch_size: 200) do |batch|
       batch.each do |brd|
         authored << brd.global_id
+        authored << brd.shallow_id if brd.shallow_id != brd.global_id
       end
     end
     # find all private boards shared with this user

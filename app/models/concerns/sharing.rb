@@ -206,6 +206,7 @@ module Sharing
       
     def all_shared_board_ids_for(user, plus_editing=false)
       return [] unless user
+      ts = Time.now.to_i
       user.settings ||= {}
       user.settings['all_shared_board_ids'] ||= {}
       sub_key = plus_editing ? 'editing' : 'viewing'
@@ -251,6 +252,8 @@ module Sharing
         end
       end
       all_deep_board_ids = all_deep_board_ids.flatten.compact.uniq
+      # Protection against performance-sucking overloads
+      all_deep_board_ids = [] if all_deep_board_ids.length > 10000
       
       valid_deep_board_ids = []
       # for every downstream board, mark it as shared if one of the current board's authors
@@ -264,7 +267,7 @@ module Sharing
       all_board_ids = (shallow_board_ids + valid_deep_board_ids).uniq
 
       if !plus_editing
-        # If you update it every time, then it will require an update every time you toggle the plus_editing arg
+        # If you update it in both cases, then it will require an update every time you toggle the plus_editing arg
         user.boards_updated_at = Time.now 
       end
       user.settings['all_shared_board_ids'][sub_key] = {

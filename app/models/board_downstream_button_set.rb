@@ -25,7 +25,9 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     @cached_extra_data = nil
     if !skip_extra_data_processing? || force
       self.data['board_ids'] = self.buttons.map{|b| b['board_id'] }.compact.uniq
-      self.data['public_board_ids'] = Board.where(:id => Board.local_ids(self.data['board_ids']), :public => true).select('id').map(&:global_id)
+      # find_by_global_id is required to retrieve shallow clones instead of originals
+      self.data['public_board_ids'] = Board.where(public: true).select('id').find_all_by_global_id(self.data['board_ids']).map(&:global_id)
+      # Board.where(:id => Board.local_ids(self.data['board_ids']), :public => true).select('id').map(&:global_id)
       self.data['linked_board_ids'] = self.buttons.map{|b| b['linked_board_id'] }.compact.uniq
       self.data['button_count'] = self.buttons.length
       self.data['board_count'] = self.buttons.map{|b| b['board_id'] }.uniq.length
@@ -157,15 +159,34 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     end
     @linked_encryption_settings = button_set.data['extra_data_encryption'] if button_set != original
 
-    public_board_ids = button_set.data['public_board_ids'] || Board.where(:id => Board.local_ids(button_set.data['board_ids']), :public => true).select('id').map(&:global_id)
+    # find_by_global_id is required to retrieve shallow clones instead of originals
+    public_board_ids = button_set.data['public_board_ids'] || Board.where(public: true).select('id').find_all_by_global_id(button_set.data['board_ids']).map(&:global_id)
+    #Board.where(:id => Board.local_ids(button_set.data['board_ids']), :public => true).select('id').map(&:global_id)
     public_board_ids.each{|id| allowed_ids[id] = true }
     if user
+      allowed_prefixes = {}
+      allowed_uids = nil
       user.private_viewable_board_ids.each do |id|
         allowed_ids[id] = true
+        allowed_prefixes[id] = true
       end
       if user.possible_admin?
         if Organization.admin_manager?(user)
           button_set.data['board_ids'].each{|id| allowed_ids[id] = true }
+        end
+      end
+      button_set.data['board_ids'].each do |id|
+        # Shallow clones need to check permission on the source board AND the shallow clone user
+        # NOTE: if the shallow clone was copied, then the board's shallow_id should be included in private list
+        if id.match(/-/) && !allowed_ids[id]
+          if !allowed_uids
+            # Only run these checks if needed by one or more board ids
+            ids = button_set.data['board_ids'].map{|id| id.split(/-/, 2)[1] }.compact.uniq
+            allowed_uids = {}
+            User.find_batches_by_global_id(ids, batch_size: 25) {|u| allowed_uids[user.global_id] = u.allows?(user, 'model') }
+          end
+          bid, uid = id.split(/-/, 2)
+          allowed_ids[id] = true if allowed_prefixes[bid] && allowed_uids[uid]
         end
       end
     end

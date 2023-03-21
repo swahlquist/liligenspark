@@ -23,9 +23,9 @@ module JsonApi::Image
         if lib == pref
         elsif image.settings['library_alternates'] && image.settings['library_alternates'][pref]
           settings = image.settings['library_alternates'][pref]
-        elsif pref == 'opensymbols' && image.settings['library_alternates']['arasaac']
+        elsif pref == 'opensymbols' && image.settings['library_alternates'] && image.settings['library_alternates']['arasaac']
           settings = image.settings['library_alternates']['arasaac']
-        elsif pref == 'opensymbols' && image.settings['library_alternates']['twemoji']
+        elsif pref == 'opensymbols' && image.settings['library_alternates'] && image.settings['library_alternates']['twemoji']
           settings = image.settings['library_alternates']['twemoji']
         end
       end
