@@ -1155,8 +1155,8 @@ class Organization < ActiveRecord::Base
     org_or_user.settings['activation_settings'] ||= {}
     if !org_or_user.settings['activation_settings'][settings_key]
       org_or_user.settings['activation_settings'][settings_key] = {}
-      if (opts.keys.map(&:to_s) & ['home_board_key', 'locale', 'symbol_library', 'premium', 'supervisors', 'limit', 'expires', 'code']).length > 0
-        opts = opts.slice('home_board_key', 'locale', 'symbol_library', 'premium', 'supervisors', 'limit', 'expires', 'code')
+      if (opts.keys.map(&:to_s) & ['home_board_key', 'locale', 'symbol_library', 'premium', 'premium_symbols', 'supervisors', 'limit', 'expires', 'code']).length > 0
+        opts = opts.slice('home_board_key', 'locale', 'symbol_library', 'premium', 'premium_symbols', 'supervisors', 'limit', 'expires', 'code')
         if org_or_user.is_a?(User)
           opts.delete('premium')
           opts.delete('supervisors')
