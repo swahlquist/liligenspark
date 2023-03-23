@@ -90,6 +90,7 @@ export default Controller.extend({
     'parent_object',
     'show_all_boards',
     // 'filterString',
+    'model.id',
     'model.my_boards',
     'model.prior_home_boards',
     'model.public_boards',
@@ -152,8 +153,8 @@ export default Controller.extend({
       res.results = list;
       var board_ids = {};
       var new_list = [];
+      var _this = this;
       if(this.get('parent_object')) {
-        var _this = this;
         list.forEach(function(ref) {
           if(ref.board.id == _this.get('parent_object.board.id')) {
             ref.str = "a " + ref.board.name;
@@ -165,8 +166,22 @@ export default Controller.extend({
       } else {
         var copies = {};
         var roots = [];
+        var shallow_roots = {};
         list.forEach(function(b) {
-          if(emberGet(b, 'copy_id') && emberGet(b, 'copy_id') != emberGet(b, 'id')) {
+          if(emberGet(b, 'id').match(/-/) && (!emberGet(b, 'copy_id') || emberGet(b, 'copy_id') == emberGet(b, 'id') || emberGet(b, 'copy_id') == emberGet(b, 'id').split(/-/)[0])) {
+            var user_id = emberGet(b, 'id').split(/-/)[1];
+            if(user_id == _this.get('model.id')) {
+              shallow_roots[emberGet(b, 'copy_id') || emberGet(b, 'id').split(/-/)[0]] = b;
+            }
+          }
+        });
+        list.forEach(function(b) {
+          if(emberGet(b, 'id').match(/-/) && emberGet(b, 'id').split(/-/)[1] == _this.get('model.id') && emberGet(b, 'copy_id') && shallow_roots[emberGet(b, 'copy_id')]) {
+            // Shallow clones are a little trickier to get added as sub-boards to their root
+            var shallow = shallow_roots[emberGet(b, 'copy_id')];
+            copies[emberGet(shallow, 'id')] = copies[emberGet(shallow, 'id')] || [];
+            copies[emberGet(shallow, 'id')].push(b);
+          } else if(emberGet(b, 'copy_id') && emberGet(b, 'copy_id') != emberGet(b, 'id')) {
             var copy_id = emberGet(b, 'copy_id');
             copies[copy_id] = copies[copy_id] || [];
             copies[copy_id].push(b);

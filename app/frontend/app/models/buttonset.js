@@ -575,7 +575,7 @@ CoughDrop.Buttonset = DS.Model.extend({
             if(image) {
               button.image = image.get('best_url');
             }
-            emberSet(button, 'image', emberGet(button, 'image') || Ember.templateHelpers.path('blank.png'));
+            emberSet(button, 'image', emberGet(button, 'image') || Ember.templateHelpers.path('images/blank.gif'));
             if(emberGet(button, 'image') && CoughDropImage.personalize_url) {
               emberSet(button, 'image', CoughDropImage.personalize_url(button.image, app_state.get('currentUser.user_token'), app_state.get('referenced_user.preferences.skin'), button.no_skin));
             }
@@ -994,7 +994,7 @@ CoughDrop.Buttonset.fix_image = function(button, images) {
     button.image_license = image.get('license');
     button.hc = image.get('hc');
   }
-  emberSet(button, 'image', emberGet(button, 'image') || Ember.templateHelpers.path('blank.png'));
+  emberSet(button, 'image', emberGet(button, 'image') || Ember.templateHelpers.path('images/blank.gif'));
 
   emberSet(button, 'current_depth', (button.pre_buttons || []).length);
   if(CoughDrop.remote_url(button.image)) {

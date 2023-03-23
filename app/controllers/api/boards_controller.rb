@@ -63,18 +63,25 @@ class Api::BoardsController < ApplicationController
             Rails.logger.warn('filtering by share board ids')
             boards = boards.where(arel[:user_id].eq(user.id).or(arel[:id].in(Board.local_ids(shared_board_ids))))
           else
-            if !params['q'] && !params['locale'] && !params['offset'] && user.allows?(@api_user, 'model')
-              if user.settings['preferences'] && (!user.settings['preferences']['home_board'] || user.settings['preferences']['sync_starred_boards'])
-                shallow_clone_ids = user.starred_board_refs.select{|r| r['key'] && r['key'].match(/^#{user.user_name}\/my:/)}.map{|c| c['id'] }
-                ue = UserExtra.find_by(user: user)
-                if ue && ue.settings['replaced_roots']
-                  ue.settings['replaced_roots'].each do |id, hash|
-                    shallow_clone_ids << hash['id']
-                  end
-                end
-                # Include in the results shallow clone roots that aren't currently owned by the user
-                other_boards = Board.order('id DESC').find_all_by_global_id(shallow_clone_ids).select{|b| b.user_id != user.id } if shallow_clone_ids.length > 0
+            if !params['q'] && !params['locale'] && !params['public'] && !params['offset'] && user.allows?(@api_user, 'model')
+              shallow_clone_ids = []
+              if user.settings['preferences'] && user.settings['preferences']['home_board']['id'].match(/-/))
+                # Include the home board if it's a shallow clone
+                shallow_clone_ids << user.settings['preferences']['home_board']['id']
               end
+              if user.settings['preferences'] && (!user.settings['preferences']['home_board'] || user.settings['preferences']['sync_starred_boards'])
+                # Include any shallow clone roots that are in the user's starred list
+                shallow_clone_ids += user.starred_board_refs.select{|r| !r['suggested'] && r['key'] && r['key'].match(/^#{user.user_name}\/my:/)}.map{|c| c['id'] }
+              end
+              # Also include any shallow clone roots that have had a sub-board edited
+              ue = UserExtra.find_by(user: user)
+              if ue && ue.settings['replaced_roots']
+                ue.settings['replaced_roots'].each do |id, hash|
+                  shallow_clone_ids << hash['id']
+                end
+              end
+              # Include in the results shallow clone roots that aren't currently owned by the user
+              other_boards = Board.order('id DESC').find_all_by_global_id(shallow_clone_ids.uniq).select{|b| b.user_id != user.id } if shallow_clone_ids.length > 0
             end
             boards = boards.where(:user_id => user.id)
           end
