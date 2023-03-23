@@ -65,13 +65,13 @@ class Api::BoardsController < ApplicationController
           else
             if !params['q'] && !params['locale'] && !params['public'] && !params['offset'] && user.allows?(@api_user, 'model')
               shallow_clone_ids = []
-              if user.settings['preferences'] && user.settings['preferences']['home_board']['id'].match(/-/))
+              if user.settings['preferences'] && user.settings['preferences']['home_board']['id'].match(/-/)
                 # Include the home board if it's a shallow clone
                 shallow_clone_ids << user.settings['preferences']['home_board']['id']
               end
               if user.settings['preferences'] && (!user.settings['preferences']['home_board'] || user.settings['preferences']['sync_starred_boards'])
                 # Include any shallow clone roots that are in the user's starred list
-                shallow_clone_ids += user.starred_board_refs.select{|r| !r['suggested'] && r['key'] && r['key'].match(/^#{user.user_name}\/my:/)}.map{|c| c['id'] }
+                shallow_clone_ids += user.starred_board_refs.select{|r| !r['suggested'] && r['key'] && r['key'].match(/^#{user.user_name}\/my:/) }.map{|c| c['id'] }
               end
               # Also include any shallow clone roots that have had a sub-board edited
               ue = UserExtra.find_by(user: user)
