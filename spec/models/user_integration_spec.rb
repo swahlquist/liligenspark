@@ -447,12 +447,14 @@ describe UserIntegration, :type => :model do
     end
     
     it "should include a decipherable user_id" do
-      ui = UserIntegration.create
-      u = User.create
-      token = ui.user_token(u)
-      expect(token).to_not eq(nil)
-      user_id = token.split(/:/)[0]
-      expect(UserIntegration.deobfuscate_user_id(user_id, ui.settings['obfuscation_offset'])).to eq(u.global_id)
+      10.times do 
+        ui = UserIntegration.create
+        u = User.create
+        token = ui.user_token(u)
+        expect(token).to_not eq(nil)
+        user_id = token.split(/:/)[0]
+        expect(UserIntegration.deobfuscate_user_id(user_id, ui.settings['obfuscation_offset'])).to eq(u.global_id)
+      end
     end
     
     it "should generate unique values for obfuscation_offset" do

@@ -38,7 +38,7 @@ class UserIntegration < ActiveRecord::Base
       hash = {}
       '0123456789'.each_char do |n|
         val = nil
-        while !val || hash.to_a.map(&:last).include?(val)
+        while !val || val < 10 || hash.to_a.map(&:last).include?(val)
           val = rand(99)
         end
         hash[n] = val
@@ -47,7 +47,6 @@ class UserIntegration < ActiveRecord::Base
     end
     self.for_button = !!(self.settings['button_webhook_url'] || self.settings['board_render_url'])
     self.assert_device
-    # TODO: assert device
   end
   
   def self.security_token

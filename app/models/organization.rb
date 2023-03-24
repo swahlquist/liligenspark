@@ -894,6 +894,9 @@ class Organization < ActiveRecord::Base
 
   def add_extras_to_user(user_key)
     user = User.find_by_path(user_key)
+    if defined?(Octopus) && user
+      user = User.using(:master).find_by_path(user_key)
+    end
     raise "invalid user, #{user_key}" unless user
     valid = self.attached_users('all').detect{|u| u.global_id == user.global_id }
     raise "user not attached to org" unless valid
@@ -915,7 +918,7 @@ class Organization < ActiveRecord::Base
     if !self.settings['extras_user_ids'] || force
       res = self.attached_users('all').select{|u| u.extras_for_org?(self) }
       self.settings['extras_user_ids'] = res.map(&:global_id)
-      self.save
+      self.save unless self.destroyed?
       res
     else
       hash = {}
@@ -1282,9 +1285,11 @@ class Organization < ActiveRecord::Base
           symbol_library ||= org_or_user.settings['preferred_symbols']
           if type == 'communicator'
             org_or_user.add_user(activate_for.user_name, false, !!overrides['premium'], false)
+            org_or_user.reload
             org_or_user.add_extras_to_user(activate_for.user_name) if overrides['premium'] && overrides['premium_symbols']
           elsif type == 'supporter'
             org_or_user.add_supervisor(activate_for.user_name, false, !!overrides['premium'])
+            org_or_user.reload
             org_or_user.add_extras_to_user(activate_for.user_name) if overrides['premium'] && overrides['premium_symbols']
           end
           (overrides['supervisors'] || []).each do |sup_name|

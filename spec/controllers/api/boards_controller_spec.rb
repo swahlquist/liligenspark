@@ -33,6 +33,8 @@ describe Api::BoardsController, :type => :controller do
       b1.star!(u2, true)
       Worker.process_queues
       u2.reload
+      u2.enable_feature('shallow_clones')
+      u2.save
       refs = u2.starred_board_refs
       expect(refs.length).to eq(1)
       expect(refs[0]['id']).to eq(bb1.global_id)
@@ -47,6 +49,8 @@ describe Api::BoardsController, :type => :controller do
       token_user
       u1 = User.create
       u2 = @user
+      u2.enable_feature('shallow_clones')
+      u2.save
       b1 = Board.create(user: u1, public: true)
       b2 = Board.create(user: u1, public: true)
       b3 = Board.create(user: u2)
@@ -59,16 +63,20 @@ describe Api::BoardsController, :type => :controller do
       bb4 = Board.find_by_global_id("#{b4.global_id}-#{u2.global_id}")
       b4.star!(u2, true)
       Worker.process_queues
+      u2.reload
+      expect(u2.settings['starred_board_ids']).to eq([b4.global_id])
       bb2 = Board.find_by_global_id("#{b2.global_id}-#{u2.global_id}")
       bb2 = bb2.copy_for(u2, {copy_id: b1.global_id})
       Worker.process_queues
       u2.reload
+      expect(u2.settings['starred_board_ids']).to eq([b4.global_id])
       ue2 = UserExtra.find_by(user: u2)
       expect(ue2.settings['replaced_roots']).to_not eq(nil)
-      refs = u2.starred_board_refs
+      expect(ue2.settings['replaced_roots']).to eq("#{b1.global_id}" => {'id' => "#{b1.global_id}-#{u2.global_id}", 'key' => "#{u2.user_name}/my:#{b1.key.sub(/\//, ':')}"})
+      refs = u2.reload.starred_board_refs
       expect(refs.length).to eq(2)
       expect(refs[0]['id']).to eq(bb4.global_id)
-      expect(refs[1]['id']).to eq(b1.global_id)
+      expect(refs[1]['id']).to eq("#{b1.global_id}-#{u2.global_id}")
       get 'index', params: {user_id: u2.global_id}
       json = assert_success_json
       expect(json['board'].length).to eq(4)
@@ -562,6 +570,284 @@ describe Api::BoardsController, :type => :controller do
       expect(json['board'][0]['id']).to eq(b3.global_id)
       expect(json['board'][1]['id']).to eq(b2.global_id)
       expect(json['board'][2]['id']).to eq(b1.global_id)
+    end
+
+    it "should include starred shallow clones" do
+      token_user
+      ub = Board.create(:user => @user)
+      u = User.create
+      b = Board.create(:user => u, public: true)
+      post :star, params: {:board_id => b.global_id}
+      expect(response).to be_successful
+      expect(b.reload.settings['starred_user_ids']).to eq(["en:" + @user.global_id])
+      json = JSON.parse(response.body)
+      expect(json).to eq({'starred' => true, 'stars' => 1, 'user_id' => @user.global_id})
+
+      post :star, params: {:board_id => "#{b.global_id}-#{@user.global_id}"}
+      expect(response).to be_successful
+      expect(b.reload.settings['starred_user_ids']).to eq(["en:" + @user.global_id])
+      json = JSON.parse(response.body)
+      expect(json).to eq({'starred' => true, 'stars' => 1, 'user_id' => @user.global_id})
+      Worker.process_queues
+      expect(@user.reload.settings['starred_board_ids']).to eq([b.global_id, "#{b.global_id}-#{@user.global_id}"])
+
+      @user.settings['preferences']['sync_starred_boards'] = true
+      @user.save
+      expect(@user.starred_board_refs.length).to eq(2)
+
+      get :index, params: {:user_id => @user.global_id}
+      json = assert_success_json
+      expect(json['board'].length).to eq(2)
+      expect(json['board'][0]['id']).to eq(ub.global_id)
+      expect(json['board'][1]['id']).to eq("#{b.global_id}-#{@user.global_id}")
+    end
+
+    it "should include a shallow clone home board" do
+      token_user
+      ub = Board.create(:user => @user)
+      u = User.create
+      b = Board.create(:user => u, public: true)
+      post :star, params: {:board_id => b.global_id}
+      expect(response).to be_successful
+      expect(b.reload.settings['starred_user_ids']).to eq(["en:" + @user.global_id])
+      json = JSON.parse(response.body)
+      expect(json).to eq({'starred' => true, 'stars' => 1, 'user_id' => @user.global_id})
+
+      post :star, params: {:board_id => "#{b.global_id}-#{@user.global_id}"}
+      expect(response).to be_successful
+      expect(b.reload.settings['starred_user_ids']).to eq(["en:" + @user.global_id])
+      json = JSON.parse(response.body)
+      expect(json).to eq({'starred' => true, 'stars' => 1, 'user_id' => @user.global_id})
+      Worker.process_queues
+      expect(@user.reload.settings['starred_board_ids']).to eq([b.global_id, "#{b.global_id}-#{@user.global_id}"])
+
+      @user.settings['preferences']['sync_starred_boards'] = true
+      @user.save
+      expect(@user.starred_board_refs.length).to eq(2)
+
+      b2 = Board.create(user: u, public: true)
+      @user.settings['preferences']['home_board'] = {'id' => "#{b2.global_id}-#{@user.global_id}", 'key' => "#{@user.user_name}/my:#{b2.key.sub(/\//, ':')}"}
+      @user.save
+
+      get :index, params: {:user_id => @user.global_id}
+      json = assert_success_json
+      expect(json['board'].length).to eq(3)
+      expect(json['board'].map{|b| b['id'] }.sort).to eq([ub.global_id, "#{b.global_id}-#{@user.global_id}", "#{b2.global_id}-#{@user.global_id}"])
+      expect(json['board'][0]['id']).to eq(ub.global_id)
+    end
+
+    it "should include roots of edited shallow clones, even if not starred" do
+      token_user
+      ub = Board.create(:user => @user)
+      u = User.create
+      b = Board.create(:user => u, public: true)
+      post :star, params: {:board_id => b.global_id}
+      expect(response).to be_successful
+      expect(b.reload.settings['starred_user_ids']).to eq(["en:" + @user.global_id])
+      json = JSON.parse(response.body)
+      expect(json).to eq({'starred' => true, 'stars' => 1, 'user_id' => @user.global_id})
+
+      post :star, params: {:board_id => "#{b.global_id}-#{@user.global_id}"}
+      expect(response).to be_successful
+      expect(b.reload.settings['starred_user_ids']).to eq(["en:" + @user.global_id])
+      json = JSON.parse(response.body)
+      expect(json).to eq({'starred' => true, 'stars' => 1, 'user_id' => @user.global_id})
+      Worker.process_queues
+      expect(@user.reload.settings['starred_board_ids']).to eq([b.global_id, "#{b.global_id}-#{@user.global_id}"])
+
+      @user.settings['preferences']['sync_starred_boards'] = true
+      @user.save
+      expect(@user.starred_board_refs.length).to eq(2)
+
+      b2 = Board.create(user: u, public: true)
+      @user.settings['preferences']['home_board'] = {'id' => "#{b2.global_id}-#{@user.global_id}", 'key' => "#{@user.user_name}/my:#{b2.key.sub(/\//, ':')}"}
+      @user.save
+
+      b3 = Board.create(user: u, public: true)
+      b4 = Board.create(user: u, public: true)
+      b3.process({'buttons' => [
+        {'id' => 1, 'label' => 'can', 'load_board' => {'key' => b4.key, 'id' => b4.global_id}}
+      ]}, {'user' => u})
+      b4.settings['copy_id'] = b3.global_id
+      b4.save_subtly
+      Worker.process_queues
+      expect(b3.reload.downstream_board_ids).to eq([b4.global_id])
+
+      put :update, params: {:id => "#{b4.global_id}-#{@user.global_id}", :board => {:name => "cool board 2", :buttons => [{'id' => 1, 'label' => 'cat'}]}}
+      bb4 = Board.find_by_global_id("#{b4.global_id}-#{@user.global_id}")
+      expect(bb4.id).to_not eq(b4.id)
+      expect(bb4.settings['name']).to eq('cool board 2')
+      assert_success_json
+      Worker.process_queues
+      Worker.process_queues
+      ue = UserExtra.find_by(user: @user)
+      expect(ue.settings['replaced_roots']).to eq({"#{b3.global_id}" => {'id' => "#{b3.global_id}-#{@user.global_id}", 'key' => "#{@user.user_name}/my:#{b3.key.sub(/\//, ':')}"}})
+
+      get :index, params: {:user_id => @user.global_id}
+      json = assert_success_json
+      expect(json['board'].length).to eq(5)
+      expect(json['board'].map{|b| b['id'] }.sort).to eq([ub.global_id, "#{b.global_id}-#{@user.global_id}", "#{b2.global_id}-#{@user.global_id}", "#{b3.global_id}-#{@user.global_id}", "#{b4.global_id}-#{@user.global_id}"])
+      expect(json['board'][0]['id']).to eq(ub.global_id)
+      expect(json['board'][1]['id']).to eq("#{b4.global_id}-#{@user.global_id}")
+      s1 = json['board'].detect{|b| b['id'] == "#{b3.global_id}-#{@user.global_id}"}
+      s2 = json['board'].detect{|b| b['id'] == "#{b4.global_id}-#{@user.global_id}"}
+      expect(s1['copy_id']).to eq(nil)
+      expect(s1['shallow_clone']).to eq(true)
+      expect(s2['copy_id']).to eq(b3.global_id)
+      expect(s2['shallow_clone']).to eq(nil)
+      expect(b4.reload.settings['name']).to_not eq('cool board 2')
+      expect(bb4.reload.settings['name']).to eq('cool board 2')
+      expect(s2['name']).to eq('cool board 2')
+    end
+
+    it "should include edited shallow clone roots in a way that edited shallow clone sub-boards can be matched to them" do
+      token_user
+      ub = Board.create(:user => @user)
+      u = User.create
+      b = Board.create(:user => u, public: true)
+      post :star, params: {:board_id => b.global_id}
+      expect(response).to be_successful
+      expect(b.reload.settings['starred_user_ids']).to eq(["en:" + @user.global_id])
+      json = JSON.parse(response.body)
+      expect(json).to eq({'starred' => true, 'stars' => 1, 'user_id' => @user.global_id})
+
+      post :star, params: {:board_id => "#{b.global_id}-#{@user.global_id}"}
+      expect(response).to be_successful
+      expect(b.reload.settings['starred_user_ids']).to eq(["en:" + @user.global_id])
+      json = JSON.parse(response.body)
+      expect(json).to eq({'starred' => true, 'stars' => 1, 'user_id' => @user.global_id})
+      Worker.process_queues
+      expect(@user.reload.settings['starred_board_ids']).to eq([b.global_id, "#{b.global_id}-#{@user.global_id}"])
+
+      @user.settings['preferences']['sync_starred_boards'] = true
+      @user.save
+      expect(@user.starred_board_refs.length).to eq(2)
+
+      b2 = Board.create(user: u, public: true)
+      @user.settings['preferences']['home_board'] = {'id' => "#{b2.global_id}-#{@user.global_id}", 'key' => "#{@user.user_name}/my:#{b2.key.sub(/\//, ':')}"}
+      @user.save
+
+      b3 = Board.create(user: u, public: true)
+      b4 = Board.create(user: u, public: true)
+      b3.process({'buttons' => [
+        {'id' => 1, 'label' => 'can', 'load_board' => {'key' => b4.key, 'id' => b4.global_id}}
+      ]}, {'user' => u})
+      b4.settings['copy_id'] = b3.global_id
+      b4.save_subtly
+      Worker.process_queues
+      expect(b3.reload.downstream_board_ids).to eq([b4.global_id])
+
+      put :update, params: {:id => "#{b4.global_id}-#{@user.global_id}", :board => {:name => "cool board 2", :buttons => [{'id' => 1, 'label' => 'cat'}]}}
+      assert_success_json
+      bb4 = Board.find_by_global_id("#{b4.global_id}-#{@user.global_id}")
+      expect(bb4.id).to_not eq(b4.id)
+      expect(bb4.reload.settings['copy_id']).to eq(b3.global_id)
+      Worker.process_queues
+      Worker.process_queues
+      ue = UserExtra.find_by(user: @user)
+      expect(ue.settings['replaced_roots']).to eq({"#{b3.global_id}" => {'id' => "#{b3.global_id}-#{@user.global_id}", 'key' => "#{@user.user_name}/my:#{b3.key.sub(/\//, ':')}"}})
+
+      put :update, params: {:id => "#{b3.global_id}-#{@user.global_id}", :board => {:name => "cool board 1", :buttons => [{'id' => 1, 'label' => 'cat', 'load_board' => {'id' => "#{b4.global_id}-#{@user.user_name}", 'key' => "#{@user.user_name}/my:#{b4.key.sub(/\//, ':')}"}}]}}
+      assert_success_json
+      Worker.process_queues
+      Worker.process_queues
+      ue = UserExtra.find_by(user: @user)
+      expect(ue.settings['replaced_roots']).to eq({"#{b3.global_id}" => {'id' => "#{b3.global_id}-#{@user.global_id}", 'key' => "#{@user.user_name}/my:#{b3.key.sub(/\//, ':')}"}})
+
+      get :index, params: {:user_id => @user.global_id}
+      json = assert_success_json
+      expect(json['board'].length).to eq(5)
+      expect(json['board'].map{|b| b['id'] }.sort).to eq([ub.global_id, "#{b.global_id}-#{@user.global_id}", "#{b2.global_id}-#{@user.global_id}", "#{b3.global_id}-#{@user.global_id}", "#{b4.global_id}-#{@user.global_id}"])
+      expect(json['board'][0]['id']).to eq(ub.global_id)
+      expect(json['board'][1]['id']).to eq("#{b3.global_id}-#{@user.global_id}")
+      expect(json['board'][2]['id']).to eq("#{b4.global_id}-#{@user.global_id}")
+      s1 = json['board'].detect{|b| b['id'] == "#{b3.global_id}-#{@user.global_id}"}
+      s2 = json['board'].detect{|b| b['id'] == "#{b4.global_id}-#{@user.global_id}"}
+      expect(s1['copy_id']).to eq(nil)
+      expect(s1['shallow_clone']).to eq(nil)
+      expect(s2['copy_id']).to eq(b3.global_id)
+      expect(s2['shallow_clone']).to eq(nil)
+    end
+
+    it "should stop including shallow clones, whether starred or edited, when removed" do
+      token_user
+      ub = Board.create(:user => @user)
+      u = User.create
+      b = Board.create(:user => u, public: true)
+      post :star, params: {:board_id => b.global_id}
+      expect(response).to be_successful
+      expect(b.reload.settings['starred_user_ids']).to eq(["en:" + @user.global_id])
+      json = JSON.parse(response.body)
+      expect(json).to eq({'starred' => true, 'stars' => 1, 'user_id' => @user.global_id})
+
+      post :star, params: {:board_id => "#{b.global_id}-#{@user.global_id}"}
+      expect(response).to be_successful
+      expect(b.reload.settings['starred_user_ids']).to eq(["en:" + @user.global_id])
+      json = JSON.parse(response.body)
+      expect(json).to eq({'starred' => true, 'stars' => 1, 'user_id' => @user.global_id})
+      Worker.process_queues
+      expect(@user.reload.settings['starred_board_ids']).to eq([b.global_id, "#{b.global_id}-#{@user.global_id}"])
+
+      @user.settings['preferences']['sync_starred_boards'] = true
+      @user.save
+      expect(@user.starred_board_refs.length).to eq(2)
+
+      b2 = Board.create(user: u, public: true)
+      @user.settings['preferences']['home_board'] = {'id' => "#{b2.global_id}-#{@user.global_id}", 'key' => "#{@user.user_name}/my:#{b2.key.sub(/\//, ':')}"}
+      @user.save
+
+      b3 = Board.create(user: u, public: true)
+      b4 = Board.create(user: u, public: true)
+      b3.process({'buttons' => [
+        {'id' => 1, 'label' => 'can', 'load_board' => {'key' => b4.key, 'id' => b4.global_id}}
+      ]}, {'user' => u})
+      b4.settings['copy_id'] = b3.global_id
+      b4.save_subtly
+      Worker.process_queues
+      expect(b3.reload.downstream_board_ids).to eq([b4.global_id])
+
+      put :update, params: {:id => "#{b4.global_id}-#{@user.global_id}", :board => {:name => "cool board 2", :buttons => [{'id' => 1, 'label' => 'cat'}]}}
+      bb4 = Board.find_by_global_id("#{b4.global_id}-#{@user.global_id}")
+      expect(bb4.id).to_not eq(b4.id)
+      expect(bb4.settings['name']).to eq('cool board 2')
+      assert_success_json
+      Worker.process_queues
+      Worker.process_queues
+      ue = UserExtra.find_by(user: @user)
+      expect(ue.settings['replaced_roots']).to eq({"#{b3.global_id}" => {'id' => "#{b3.global_id}-#{@user.global_id}", 'key' => "#{@user.user_name}/my:#{b3.key.sub(/\//, ':')}"}})
+
+      get :index, params: {:user_id => @user.global_id}
+      json = assert_success_json
+      expect(json['board'].length).to eq(5)
+      expect(json['board'].map{|b| b['id'] }.sort).to eq([ub.global_id, "#{b.global_id}-#{@user.global_id}", "#{b2.global_id}-#{@user.global_id}", "#{b3.global_id}-#{@user.global_id}", "#{b4.global_id}-#{@user.global_id}"])
+      expect(json['board'][0]['id']).to eq(ub.global_id)
+      expect(json['board'][1]['id']).to eq("#{b4.global_id}-#{@user.global_id}")
+      s1 = json['board'].detect{|b| b['id'] == "#{b3.global_id}-#{@user.global_id}"}
+      s2 = json['board'].detect{|b| b['id'] == "#{b4.global_id}-#{@user.global_id}"}
+      expect(s1['copy_id']).to eq(nil)
+      expect(s1['shallow_clone']).to eq(true)
+      expect(s2['copy_id']).to eq(b3.global_id)
+      expect(s2['shallow_clone']).to eq(nil)
+      expect(b4.reload.settings['name']).to_not eq('cool board 2')
+      expect(bb4.reload.settings['name']).to eq('cool board 2')
+      expect(s2['name']).to eq('cool board 2')
+
+      delete :unstar, params: {:board_id => "#{b.global_id}-#{@user.global_id}"}
+      json = assert_success_json
+      Worker.process_queues
+
+      get :index, params: {:user_id => @user.global_id}
+      json = assert_success_json
+      expect(json['board'].length).to eq(4)
+
+      delete :destroy, params: {:id => "#{b3.global_id}-#{@user.global_id}"}
+      json = assert_success_json
+
+      get :index, params: {:user_id => @user.global_id}
+      json = assert_success_json
+      expect(json['board'].length).to eq(3)
+      expect(json['board'].map{|b| b['id'] }.sort).to eq([ub.global_id, "#{b2.global_id}-#{@user.global_id}", "#{b4.global_id}-#{@user.global_id}"])
+      expect(json['board'][0]['id']).to eq(ub.global_id)
     end
   end
 

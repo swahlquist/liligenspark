@@ -687,7 +687,7 @@ class User < ActiveRecord::Base
     refs = []
     user = self
     brds = {}
-    Board.find_all_by_global_id(user.settings['starred_board_ids'] || []).each do |b|
+    Board.find_all_by_global_id((user.settings['starred_board_ids'] || [])[0, 25]).each do |b|
       brds[b.global_id] = b
       brds[b.global_id(true)] = b
     end
@@ -704,7 +704,7 @@ class User < ActiveRecord::Base
       end
     end
     if refs.length < 12
-      home_board_id = (user.settings['preferences']['home_boards'] || {})['id']
+      home_board_id = (user.settings['preferences']['home_board'] || {})['id']
       ::Board.find_suggested(user.settings['preferences']['locale'] || 'en', 5).each do |board|
         if home_board_id == board.global_id
         elsif !brds[board.global_id] && refs.length < 12

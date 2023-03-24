@@ -63,16 +63,20 @@ module JsonApi::Board
     json['link'] = "#{JsonApi::Json.current_host}/#{board.key}"
     json['public'] = !!board.public
     json['visibility'] = board.public ? (board.fully_listed? ? 'public' : 'unlisted') : 'private'
+    if json['shallow_clone']
+      json['public'] = false
+      json['visibility'] = 'private'
+    end
     json['full_set_revision'] = board.full_set_revision
     json['current_revision'] = board.current_revision
     json['protected'] = !!board.protected_material?
     # json['button_set_id'] = board.button_set_id (not used)
-    json['copy_id'] = board.settings['copy_id'] unless board.settings['copy_id'] == board.global_id
+    json['copy_id'] = board.settings['copy_id'] unless board.settings['copy_id'] == board.shallow_id.split(/-/)[0]
     json['brand_new'] = board.created_at > 1.hour.ago
-    json['non_author_uses'] = board.settings['non_author_uses']
+    json['non_author_uses'] = board.settings['non_author_uses'] if !json['shallow_clone']
     json['total_buttons'] = board.settings['total_buttons']
     json['unlinked_buttons'] = board.settings['unlinked_buttons']
-    json['downstream_boards'] = (board.settings['downstream_board_ids'] || []).length
+    json['downstream_boards'] = (board.downstream_board_ids || []).length
     json['immediately_upstream_boards'] = (board.settings['immediately_upstream_board_ids'] || []).length
     json['current_library'] = board.current_library(false)
     json['user_name'] = board.cached_user_name
@@ -80,7 +84,7 @@ module JsonApi::Board
       parent_board = nil
       if defined?(Octopus)
         conn = (Octopus.config[Rails.env] || {}).keys.sample
-        ref = board.using(conn).parent_board if conn
+        parent_board = board.using(conn).parent_board if conn
       else
         parent_board = board.parent_board
       end
@@ -103,10 +107,12 @@ module JsonApi::Board
           json['copy_key'] = copy.key
         end
       end
-      json['non_author_starred'] = board.non_author_starred?
-      self.trace_execution_scoped(['json/board/share_users']) do
-        shared_users = board.shared_users
-        json['shared_users'] = shared_users
+      if !json['shallow_clone']
+        json['non_author_starred'] = board.non_author_starred? 
+        self.trace_execution_scoped(['json/board/share_users']) do
+          shared_users = board.shared_users
+          json['shared_users'] = shared_users
+        end
       end
     end
     if (json['permissions'] && json['permissions']['delete']) || (args[:permissions] && args[:permissions].allows?(args[:permissions], 'admin_support_actions'))

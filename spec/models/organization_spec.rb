@@ -2102,8 +2102,11 @@ describe Organization, :type => :model do
         o.add_user(u.user_name, false)
         o.reload
         o.add_extras_to_user(u.user_name)
+        o.reload
         users << u
       end
+      Worker.process_queues
+      o.reload
       expect(o.extras_users.sort_by(&:id)).to eq(users.sort_by(&:id))
     end
   end
