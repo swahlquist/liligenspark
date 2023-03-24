@@ -90,7 +90,7 @@ export default modal.ModalController.extend({
       });
 
       var wait_for_deletes = save.then(function() {
-        return RSVP.all_wait(other_defers.map(function(d) { return d.promise; }));;
+        return RSVP.all_wait(other_defers.map(function(d) { return d.promise; }));
       });
 
       var concurrent_deletes = 5;

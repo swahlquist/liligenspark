@@ -621,7 +621,7 @@ var persistence = EmberObject.extend({
         return RSVP.resolve(JSON.parse(str))
       } catch(e) { 
         return RSVP.reject({error: "error parsing JSON without web worker"})
-      };
+      }
     }
     if(!persistence.bg_parser) {
       persistence.bg_parser = {callbacks: {}};

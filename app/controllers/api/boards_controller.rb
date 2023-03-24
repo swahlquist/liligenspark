@@ -65,7 +65,7 @@ class Api::BoardsController < ApplicationController
           else
             if !params['q'] && !params['locale'] && !params['public'] && !params['offset'] && user.allows?(@api_user, 'model')
               shallow_clone_ids = []
-              if user.settings['preferences'] && user.settings['preferences']['home_board']['id'].match(/-/)
+              if user.settings['preferences'] && user.settings['preferences']['home_board'] && user.settings['preferences']['home_board']['id'].match(/-/)
                 # Include the home board if it's a shallow clone
                 shallow_clone_ids << user.settings['preferences']['home_board']['id']
               end

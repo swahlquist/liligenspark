@@ -1017,7 +1017,7 @@ var capabilities;
           }
           return promise;
         },
-        copy_elem: function(elem) {
+        copy_elem: function(elem, text) {
           var range = document.createRange();
           range.selectNode(elem);
           window.getSelection().addRange(range);
@@ -1039,7 +1039,7 @@ var capabilities;
           }
           window.getSelection().removeAllRanges();
           elem.innerText = text;
-          return capabilities.sharing.copy_elem(elem);
+          return capabilities.sharing.copy_elem(elem, text);
         },
         share: function(type, message, url, image_url) {
           var promise = capabilities.mini_promise();

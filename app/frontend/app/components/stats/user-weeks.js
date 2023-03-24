@@ -126,7 +126,7 @@ export default Component.extend({
           });
           if(_this.get('lesson')) {
             var comp = (_this.get('lesson.completed_users') || {})[user.id];
-            user.org_status_state = comp ? i18n.t('training_complete', "Training Completed") : i18n.t('training_incomplete', "Training Not Completed");;
+            user.org_status_state = comp ? i18n.t('training_complete', "Training Completed") : i18n.t('training_incomplete', "Training Not Completed");
             user.unit_lesson_class = htmlSafe(comp ? 'lesson_state' : 'lesson_state dim');
             if(comp) {
               user.unit_lesson_complete = true;

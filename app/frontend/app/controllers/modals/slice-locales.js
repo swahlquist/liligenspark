@@ -36,7 +36,7 @@ export default modal.ModalController.extend({
       _this.set('status', {loading: true});
       var locales = [];
       _this.get('langs').forEach(function(lang) {
-        if(lang.keep) { locales.push(lang.loc)};
+        if(lang.keep) { locales.push(lang.loc) }
       });
       if(locales.length == 0) { return; }
       persistence.ajax('/api/v1/boards/' + _this.get('model.board.id') + '/slice_locales', {

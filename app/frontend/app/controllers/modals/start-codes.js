@@ -108,7 +108,7 @@ export default modal.ModalController.extend({
       var elem = document.querySelector('#qr_code img');
       if(elem) {
         elem.alt = this.get('link_code.url');
-        capabilities.sharing.copy_elem(elem);
+        capabilities.sharing.copy_elem(elem, this.get('link_code.url'));
         modal.success(i18n.t('qr_code_copied_to_clipboard', "QR Code Copied to Clipboard!"));
       } else {
         modal.error(i18n.t('copy_failed', "Failed to Copy Image, please try copying manually"));
