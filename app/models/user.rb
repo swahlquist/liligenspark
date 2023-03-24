@@ -1722,6 +1722,7 @@ class User < ActiveRecord::Base
       ids = res['new_board_ids']
       ids.instance_variable_set('@skip_keyboard', true)
       swap_library.instance_variable_set('@skip_swapped', true)
+      starting_new_board.reload
       starting_new_board.swap_images(swap_library, self, ids)
       res['swap_library'] = swap_library
     end
