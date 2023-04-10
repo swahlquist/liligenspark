@@ -29,6 +29,7 @@ class Api::BoardsController < ApplicationController
     start = Time.now.to_i
     boards = boards.includes(:board_content)
     other_boards = nil
+    other_searchable_board_ids = nil
 
     Rails.logger.warn('checking key')
     self.class.trace_execution_scoped(['boards/key_check']) do
@@ -63,7 +64,13 @@ class Api::BoardsController < ApplicationController
             Rails.logger.warn('filtering by share board ids')
             boards = boards.where(arel[:user_id].eq(user.id).or(arel[:id].in(Board.local_ids(shared_board_ids))))
           else
+            find_shallow_clones = false
             if !params['q'] && !params['locale'] && !params['public'] && !params['offset'] && user.allows?(@api_user, 'model')
+              find_shallow_clones = true
+            elsif params['q']
+              find_shallow_clones = true
+            end
+            if find_shallow_clones
               shallow_clone_ids = []
               if user.settings['preferences'] && user.settings['preferences']['home_board'] && user.settings['preferences']['home_board']['id'].match(/-/)
                 # Include the home board if it's a shallow clone
@@ -82,6 +89,10 @@ class Api::BoardsController < ApplicationController
               end
               # Include in the results shallow clone roots that aren't currently owned by the user
               other_boards = Board.order('id DESC').find_all_by_global_id(shallow_clone_ids.uniq).select{|b| b.user_id != user.id } if shallow_clone_ids.length > 0
+              if params['q'] && other_boards
+                other_searchable_board_ids = other_boards.map(&:global_id) + other_boards.map{|b| b.downstream_board_ids }.flatten.uniq
+                other_boards = nil
+              end
             end
             boards = boards.where(:user_id => user.id)
           end
@@ -260,7 +271,7 @@ class Api::BoardsController < ApplicationController
       if !params['q'].blank? && !params['public']
         limited_boards = boards
         if params['allow_job'] #&& boards.limit(26).select('id').length > 25
-          progress = Progress.schedule(Board, :long_query, params['q'], params['locale'], boards.select('id, board_content_id').map(&:global_id))
+          progress = Progress.schedule(Board, :long_query, params['q'], params['locale'], boards.select('id, board_content_id').map(&:global_id) + (other_searchable_board_ids || []))
           boards = []
         else
           # For private user searches this will limit to the user's first 25 boards
