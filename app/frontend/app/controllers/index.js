@@ -483,11 +483,9 @@ export default Controller.extend({
           user = app_state.get('currentUser');
         }
       }
-      if(user.premium || emberGet(user, 'currently_premium')) {
+      app_state.check_for_currently_premium(user, 'eval', false, true).then(function() {
         app_state.set_speak_mode_user(emberGet(user, 'id'), false, false, 'obf/eval');
-      } else {
-        modal.open('premium-required', {user_name: user.user_name, action: 'evaluation', reason: 'not_currently_premium'});
-      }
+      });
     },
     remote_model: function(user) {
       if(user.premium || emberGet(user, 'currently_premium')) {
