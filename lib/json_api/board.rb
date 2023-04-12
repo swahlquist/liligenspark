@@ -161,17 +161,26 @@ module JsonApi::Board
     if args.key?(:permissions)
       trans = BoardContent.load_content(board, 'translations')
       json['board']['translations'] = trans if trans
-      self.trace_execution_scoped(['json/board/copy_check']) do
-        copies = board.find_copies_by(args[:permissions])
-        copy = copies[0]
-        copy = nil if copy && (!args[:permissions] || copy.user_id != args[:permissions].id)
-        if copy
-          json['board']['copy'] = {
-            'id' => copy.global_id,
-            'key' => copy.key
-          }
+      if json['shallow_clone']
+        # Currently hiding this because if you click to go the original, there won't be a way back
+        # json['board']['original'] = {
+        #   'id' => board.global_id(true),
+        #   'key' => board.key(true),
+        # }
+      else
+        self.trace_execution_scoped(['json/board/copy_check']) do
+          # TODO: if the user has access to a shallow clone, include that as the first result
+          copies = board.find_copies_by(args[:permissions])
+          copy = copies[0]
+          copy = nil if copy && (!args[:permissions] || copy.user_id != args[:permissions].id)
+          if copy
+            json['board']['copy'] = {
+              'id' => copy.global_id,
+              'key' => copy.key
+            }
+          end
+          json['board']['copies'] = copies.count
         end
-        json['board']['copies'] = copies.count
       end
       self.trace_execution_scoped(['json/board/parent_board_check']) do
         parent = board.parent_board
