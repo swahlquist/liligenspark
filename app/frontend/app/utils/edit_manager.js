@@ -1486,6 +1486,7 @@ var editManager = EmberObject.extend({
     var board_level = controller.get('current_level') || stashes.get('board_level') || 10;
     board.set('display_level', board_level);
     var buttons = board.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), stashes.get('working_vocalization'), false, app_state.get('inflection_shift'));
+    var preferred_symbols = app_state.get('referenced_user.preferences.preferred_symbols') || 'none';
     var grid = board.get('grid');
     if(!grid) { return; }
     var allButtonsReady = true;
@@ -1547,6 +1548,7 @@ var editManager = EmberObject.extend({
             && board.get('fast_html.inflection_prefix') == app_state.get('inflection_prefix') 
             && board.get('fast_html.inflection_shift') == app_state.get('inflection_shift') 
             && board.get('fast_html.skin') == app_state.get('referenced_user.preferences.skin') 
+            && board.get('fast_html.symbols') == app_state.get('referenced_user.preferences.preferred_symbols') 
             && board.get('focus_id') == board.get('fast_html.focus_id')) {
         CoughDrop.log.track('already have fast render');
         resume_scanning();
@@ -1560,6 +1562,7 @@ var editManager = EmberObject.extend({
           height: controller.get('height'),
           width: controller.get('width'),
           skin: app_state.get('referenced_user.preferences.skin'),
+          symbols: app_state.get('referenced_user.preferences.preferred_symbols'),
           extra_pad: controller.get('extra_pad'),
           inner_pad: controller.get('inner_pad'),
           display_level: board_level,
@@ -1615,10 +1618,12 @@ var editManager = EmberObject.extend({
                 more_args.no_lookups = true;
               }
               if(image_urls) {
-                more_args.image_url = image_urls[buttons[kdx]['image_id']];
+                more_args.image_url = image_urls[buttons[kdx]['image_id'] + '-' + preferred_symbols] || image_urls[buttons[kdx]['image_id']];
+                more_args.unpref_image_url = image_urls[buttons[kdx]['image_id']];
               }
               if(buttons[kdx].no_skin) {
-                more_args.image_url = image_urls['ns_' + buttons[kdx]['image_id']];
+                more_args.image_url = image_urls['ns_' + buttons[kdx]['image_id'] + '-' + preferred_symbols] || image_urls['ns_' + buttons[kdx]['image_id']];
+                more_args.unpref_image_url = image_urls['ns_' + buttons[kdx]['image_id']];
               }
               if(sound_urls) {
                 more_args.sound_url = sound_urls[buttons[kdx]['sound_id']];

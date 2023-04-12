@@ -4,7 +4,8 @@ module JsonApi::Image
   TYPE_KEY = 'image'
   DEFAULT_PAGE = 25
   MAX_PAGE = 50
-  
+  PROTECTED_SOURCES = ['lessonpix', 'pcs', 'symbolstix']
+
   def self.build_json(image, args={})
     json = {}
     json['id'] = image.global_id
@@ -15,17 +16,21 @@ module JsonApi::Image
     allowed_sources = args[:allowed_sources]
     allowed_sources ||= args[:permissions] && args[:permissions].enabled_protected_sources(true)
     allowed_sources ||= []
+    used_library = 'original'
     if args[:preferred_source] && args[:preferred_source] != 'default' && args[:preferred_source] != 'original'
-      if ['lessonpix', 'pcs', 'symbolstix'].include?(args[:preferred_source]) && !allowed_sources.include?(args[:preferred_source])
+      if PROTECTED_SOURCES.include?(args[:preferred_source]) && !allowed_sources.include?(args[:preferred_source])
       else
-        lib = image.image_library
+        used_library = image.image_library
         pref = args[:preferred_source]
-        if lib == pref
+        if used_library == pref
         elsif image.settings['library_alternates'] && image.settings['library_alternates'][pref]
+          used_library = pref
           settings = image.settings['library_alternates'][pref]
         elsif pref == 'opensymbols' && image.settings['library_alternates'] && image.settings['library_alternates']['arasaac']
+          used_library = pref
           settings = image.settings['library_alternates']['arasaac']
         elsif pref == 'opensymbols' && image.settings['library_alternates'] && image.settings['library_alternates']['twemoji']
+          used_library = pref
           settings = image.settings['library_alternates']['twemoji']
         end
       end
@@ -52,22 +57,32 @@ module JsonApi::Image
     end
     if args[:permissions]
       json['permissions'] = image.permissions_for(args[:permissions])
-      if json['permissions']['edit']
-        json['alternates'] = image.settings['alternates'] || {}
-        lib = image.image_library
-        if lib && lib != 'unknown'
-          json['alternates'][lib] = {
-            'url' => json['url'],
-            'license' => json['license'],
-            'content_type' => json['content_type']
+    end
+    if args[:include_other_sources] || (json['permissions'] || {})['edit']
+      json['alternates'] = []
+      libs = {}.merge(image.settings['library_alternates'] || {})
+      if used_library != 'original'
+        libs[image.image_library] ||= {
+          'library' => image.image_library,
+          'url' => image.best_url,
+          'license' => OBF::Utils.parse_license(image.settings['license']),
+          'content_type' => image.settings['content_type']
+        }
+      end
+
+      libs.each do |lib, alternate|
+        if allowed_sources.include?(lib) || !PROTECTED_SOURCES.include?(lib)
+          json['alternates'] << {
+            'library' => lib,
+            'url' => alternate['url'],
+            'license' => alternate['license'],
+            'content_type' => alternate['content_type']
           }
         end
-        json['alternates'].each do |lib, hash|
-          hash['library'] = lib
-        end
-        json.delete('alternates') if json['alternates'] && json['alternates'].keys.length == 0
       end
+      json.delete('alternates') if json['alternates'] && json['alternates'].length == 0
     end
+
     json
   end
   

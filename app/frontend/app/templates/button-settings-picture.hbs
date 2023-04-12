@@ -138,6 +138,16 @@
           {{/if}}
           {{#if image_search.previews}}
             <button type="button" class='btn btn-default' {{action "clear_image_preview"}}>{{t "Back to List" key='back_to_list'}}</button>
+            {{#if model.image.permissions.edit}}
+              <div class="btn-group" role="group" aria-label="extra" style='width: 30px; margin-right: 5px;'>
+                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-right">
+                  <li><a href="#" {{action 'set_alternate'}}>{{t "Set as Library Default" key='set_as_library_default'}}</a></li>
+                </ul>
+              </div>
+            {{/if}}
           {{/if}}
           <button type="button" class='btn btn-default' {{action "clearImageWork"}}>{{t "Cancel" key='cancel'}}</button>
         </div>
@@ -195,7 +205,7 @@
           {{#unless webcam}}
             {{#if model.image.url}}
               <div style="text-align: center; margin-bottom: 10px; margin-top: 10px;">
-                <img src={{model.image.best_url}} class="button_image"/>
+                <img src={{model.image.best_url_without_preferred_symbols}} class="button_image"/>
               </div>
               {{pick-license license=model.image.license}}
               {{#if model.image.skinned}}
@@ -210,6 +220,17 @@
                 <button type="button" class='btn btn-default' {{action "edit_image"}}>{{t "Edit Image" key='edit_image'}}</button>
                 <button type="button" class='btn btn-default' {{action "clear_image"}}>{{t "Clear Image" key='clear_image'}}</button>
               </div>
+              {{#if model.image.alternates}}
+                <div style='margin-top: 20px;'>
+                  <em>{{t "Alternates for specific libraries:" key='alternates_for_specific_libraries_colon'}}</em><br/>
+                  {{#if model.image.alternate_error}}
+                    <em class='text-danger'>{{t "Error loading alternates" key='error_loading_alternates'}}</em>
+                  {{/if}}
+                  {{#each model.image.alternates as |alt|}}
+                    <img src={{alt.url}} alt={{alt.library}} title={{alt.library}} style='width: 30px; height: 30px; margin-right: 5px; object-fit: contain; object-position: center;' />
+                  {{/each}}
+                </div>
+              {{/if}}
             {{else}}
               <div style="text-align: center;">
                 {{t "No pic" key="no_pic"}}

@@ -324,6 +324,7 @@ module JsonApi::User
         json['modeling_only'] = args[:supervisor].modeling_only_for?(user)
         json['premium'] = user.any_premium_or_grace_period?
         json['skin'] = user.settings['preferences']['skin']
+        json['symbols'] = user.settings['preferences']['preferred_symbols']
         json['goal'] = user.settings['primary_goal']
         json['target_words'] = user.settings['target_words'].slice('generated', 'list') if user.settings['target_words']
         json['home_board_key'] = user.settings['preferences'] && user.settings['preferences']['home_board'] && user.settings['preferences']['home_board']['key']

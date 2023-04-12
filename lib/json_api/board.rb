@@ -150,6 +150,9 @@ module JsonApi::Board
       json['board']['sound_urls'] = board.settings['sound_urls'] || {}
       hash['images'].each{|i| 
         json['board']['image_urls'][i['id']] = i['url'] 
+        (i['alternates'] || []).each do |alternate|
+          json['board']['image_urls']["#{i['id']}-#{alternate['library']}"] = alternate['url'] unless alternate['library'] == 'unknown'
+        end
         json['board']['hc_image_ids'][i['id']] = true if i['hc']
         json['board']['has_fallbacks'] = true if i['fallback']
       }

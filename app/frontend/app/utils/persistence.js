@@ -2503,13 +2503,15 @@ var persistence = EmberObject.extend({
               // TODO: at this point we need to know all the syncing
               // users so we can store for all of their skin preferences
               var all_skins = ['default', user.get('preferences.skin') || 'default'];
+              var symbol_sets = [user.get('preferences.preferred_symbols') || 'original'];
               if(!user.get('preferences.skip_supervisee_sync') && user.get('supervisees')) {
                 user.get('supervisees').forEach(function(sup) {
                   all_skins.push(sup.skin || 'default');
+                  symbol_sets.push(sup.symbols || 'original');
                 })
               }
     
-              var image_map = board.map_image_urls(all_image_urls, all_skins.uniq());
+              var image_map = board.map_image_urls(all_image_urls, all_skins.uniq(), symbol_sets.uniq());
               image_map.forEach(function(image) {
                 importantIds.push("image_" + image.id);
                 var keep_big = !!(board.get('grid.rows') < 3 || board.get('grid.columns') < 6);

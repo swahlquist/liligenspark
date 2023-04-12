@@ -168,6 +168,15 @@ class ButtonImage < ActiveRecord::Base
     raise "user required as image author" unless self.user_id || non_user_params[:user] || non_user_params[:no_author]
     self.user ||= non_user_params[:user] if non_user_params[:user]
     self.settings ||= {}
+    if params['alternates']
+      alt_hash = {}
+      params['alternates'].each do |alt|
+        lib = alt['library']
+        alt.delete('library')
+        alt_hash[lib] = alt
+      end
+      self.settings['library_alternates'] = alt_hash
+    end
     if !self.url
       process_url(params['url'], non_user_params) if params['url'] && params['url'].match(/^http/)
       self.settings['content_type'] = params['content_type'] if params['content_type']
@@ -180,8 +189,6 @@ class ButtonImage < ActiveRecord::Base
       self.settings['badge'] = !!params['badge'] if params['badge'] != nil
       self.settings['authorless'] = true if non_user_params[:no_author]
 
-      self.settings['library_alternates'] = params['library_alternates'] if params['library_alternates']
-      
       # TODO: raise a stink if content_type, width or height are not provided
       process_license(params['license']) if params['license']
       self.settings['protected'] = params['protected'] if params['protected'] != nil

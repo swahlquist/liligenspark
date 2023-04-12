@@ -171,6 +171,7 @@ module Processable
   def generate_board_key(suggestion=nil)
     self.settings ||= {}
     suggestion ||= self.key || self.settings['name'] || "board"
+    suggestion = suggestion.split(/:/)[-1] if suggestion.match(/\/my:/)
     suggestion = clean_path(suggestion.downcase)
     raise "user required" unless self.user && self.user.user_name
     full_suggestion = "#{self.user.user_name}/#{suggestion}"

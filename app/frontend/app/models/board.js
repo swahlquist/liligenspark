@@ -23,6 +23,8 @@ import Utils from '../utils/misc';
 import { htmlSafe } from '@ember/string';
 import { observer } from '@ember/object';
 import { computed } from '@ember/object';
+import { set as emberSet } from '@ember/object';
+import EmberObject from '@ember/object';
 import utterance from '../utils/utterance';
 
 CoughDrop.Board = DS.Model.extend({
@@ -177,7 +179,7 @@ CoughDrop.Board = DS.Model.extend({
     }
     return res;
   },
-  map_image_urls: function(map, skins) {
+  map_image_urls: function(map, skins, symbols) {
     map = map || {};
     var res = [];
     var _this = this;
@@ -198,10 +200,25 @@ CoughDrop.Board = DS.Model.extend({
         if(button && button.image_id) {
           if(button.no_skin && local_map['ns_' + button.image_id]) {
             add_img(button.image_id, local_map['ns_' + button.image_id], skin);
+            symbols.forEach(function(sym) {
+              if(local_map['ns_' + button.image_id + '-' + sym]) {
+                add_img(button.image_id, local_map['ns_' + button.image_id + '-' + sym] || local_map['ns_' + button.image_id], skin);
+              }
+            });
           } else if(local_map[button.image_id]) {
             add_img(button.image_id, local_map[button.image_id], skin);
+            symbols.forEach(function(sym) {
+              if(local_map[button.image_id + '-' + sym]) {
+                add_img(button.image_id, local_map[button.image_id + '-' + sym] || local_map[button.image_id], skin);
+              }
+            });
           } else if(map[button.image_id]) {
             add_img(button.image_id, map[button.image_id], skin);
+            symbols.forEach(function(sym) {
+              if(map[button.image_id + '-' + sym]) {
+                add_img(button.image_id, map[button.image_id + '-' + sym] || map[button.image_id], skin);
+              }
+            });
           } else {
             var img = locals.find(function(l) { return l.get('id') == button.image_id; });
             if(img) {
@@ -235,6 +252,31 @@ CoughDrop.Board = DS.Model.extend({
             }
           }
           result.push(image);
+          var need_reload = [];
+          (image.get('alternates') || []).forEach(function(alternate) {
+            var img = CoughDrop.store.createRecord('image')
+            img.set('url', alternate.url);
+            img.set('library', alternate.library);
+            if(!alternate.license) {
+              need_reload.push(img);
+            }
+            img.set('license', alternate.license);
+            result.push(img);
+          });
+          if(need_reload.length > 0) {
+            if(!image.reloading_promise) {
+              image.reloading_promise = image.reload();
+            }
+            image.reloading_promise.then(function(image) {
+              image.reloading_promise = null;
+              image.get('alternates').forEach(function(alt) {
+                var alternate = need_reload.find(function(a) { return a.get('library') == alt.library; })
+                if(alternate) {
+                  alternate.set('license', alt.license);
+                }
+              });
+            }, function() { });
+          }
         } else {
 //          console.log('missing image ' + button.image_id);
           missing = true;
@@ -501,9 +543,10 @@ CoughDrop.Board = DS.Model.extend({
                       var urls = _this.variant_image_urls(app_state.get('referenced_user.preferences.skin')) || {};
                       // try to find cache of image
                       if(!urls[match.image_id]) {
-                        urls[match.image_id] = match.image;
+                        // urls[match.image_id] = match.image;
                         persistence.find_url(match.image, 'image').then(function(data_uri) {
-                          urls[match.image_id] = data_uri;
+                          emberSet(match, 'image', data_uri);
+                          // urls[match.image_id] = data_uri;
                         });  
                       }
                       inflection_types["btn" + button.id] = {
@@ -1309,7 +1352,7 @@ CoughDrop.Board = DS.Model.extend({
   },
   set_fast_html: function(fast) {
     if(fast) {
-      var list = ['width', 'height', 'inflection_prefix', 'inflection_shift', 'skin', 'label_locale', 'display_level', 'revision', 'html'];
+      var list = ['width', 'height', 'inflection_prefix', 'inflection_shift', 'skin', 'symbols', 'label_locale', 'display_level', 'revision', 'html'];
       var keys = Object.keys(fast)
       var missing = list.filter(function(s) { return keys.indexOf(s) < 0; });
       var extras = keys.filter(function(s) { return list.indexOf(s) < 0; });
@@ -1366,14 +1409,17 @@ CoughDrop.Board = DS.Model.extend({
     }
 
     var _this = this;
+    var preferred_symbols = app_state.get('referenced_user.preferences.preferred_symbols') || 'none';
 
     var button_html = function(button, pos) {
       var res = "";
 
-      var original_image_url = (_this.variant_image_urls(size.skin) || {})[button.image_id];
+      var vars = (_this.variant_image_urls(size.skin) || {})
+      var original_image_url = vars[button.image_id];
+      var pref_original_image_url = vars[button.image_id + '-' + preferred_symbols];
       var unvarianted_image_url = original_image_url && original_image_url.replace(/\.variant-.+\.(png|svg)$/, '');
-      var local_image_url = persistence.url_cache[original_image_url || 'none'] || persistence.url_cache[unvarianted_image_url || 'none'] || original_image_url || 'none';
-      var hc = !!(_this.get('hc_image_ids') || {})[button.image_id];
+      var local_image_url = persistence.url_cache[pref_original_image_url || 'none'] || persistence.url_cache[original_image_url || 'none'] || persistence.url_cache[unvarianted_image_url || 'none'] || pref_original_image_url || original_image_url || 'none';
+      var hc = !pref_original_image_url && !!(_this.get('hc_image_ids') || {})[button.image_id];
       var local_sound_url = persistence.url_cache[(_this.get('sound_urls') || {})[button.sound_id] || 'none'] || (_this.get('sound_urls') || {})[button.sound_id] || 'none';
       var opts = Button.button_styling(button, _this, pos);
 
@@ -1386,7 +1432,7 @@ CoughDrop.Board = DS.Model.extend({
 
       res = res + "<span style='" + opts.image_holder_style + "'>";
       if(!app_state.get('currentUser.hide_symbols') && local_image_url && local_image_url != 'none' && !_this.get('text_only') && !button.text_only) {
-        res = res + "<img src=\"" + Button.clean_url(local_image_url) + "\" rel=\"" + Button.clean_url(original_image_url) + "\" onerror='button_broken_image(this);' draggable='false' style='" + opts.image_style + "' class='symbol " + (hc ? ' hc' : '') + "' />";
+        res = res + "<img src=\"" + Button.clean_url(local_image_url) + "\" rel=\"" + Button.clean_url(pref_original_image_url || original_image_url) + "\" onerror='button_broken_image(this);' draggable='false' style='" + opts.image_style + "' class='symbol " + (hc ? ' hc' : '') + "' />";
       }
       res = res + "</span>";
       if(button.sound_id && local_sound_url && local_sound_url != 'none') {

@@ -877,6 +877,21 @@ export default modal.ModalController.extend({
     create_board: function() {
       contentGrabbers.boardGrabber.create_board({source_id: this.get('board.id')});
     },
+    set_alternate: function() {
+      var library = this.get('image_library');
+      if(library == 'original') { library = 'opensymbols'; }
+      var editor = this.get('image_preview');
+      if(editor) {
+        var alternate = {
+          library: library,
+          url: editor.url,
+          license: editor.license,
+          content_type: editor.content_type
+        }
+        contentGrabbers.pictureGrabber.set_alternate(alternate);
+        contentGrabbers.pictureGrabber.clear();  
+      }
+    },
     clearImageWork: function() {
       contentGrabbers.pictureGrabber.clear();
     },

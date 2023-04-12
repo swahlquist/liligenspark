@@ -30,6 +30,7 @@ CoughDrop.Image = DS.Model.extend({
   button_label: DS.attr('string'),
   source_url: DS.attr('string'),
   license: DS.attr('raw'),
+  alternates: DS.attr('raw'),
   permissions: DS.attr('raw'),
   file: DS.attr('boolean'),
   filename: computed('url', function() {
@@ -84,12 +85,27 @@ CoughDrop.Image = DS.Model.extend({
       this.set('license.uneditable', true);
     }
   }),
-  personalized_url: computed('url', 'app_state.currentUser.user_token', 'app_state.referenced_user.preferences.skin', function() {
+  personalizing_url: function(skip_alternates) {
     CoughDrop.Image.unskins = CoughDrop.Image.unskins || {};
-    return CoughDrop.Image.personalize_url(this.get('url'), this.get('app_state.currentUser.user_token'), this.get('app_state.referenced_user.preferences.skin'), CoughDrop.Image.unskins[this.get('id')]);
+    var preferred_symbols = this.get('app_state.referenced_user.preferences.preferred_symbols') || 'none';
+    var url = this.get('url');
+    if(this.get('alternates') && !skip_alternates) {
+      var alternate = this.get('alternates').find(function(a) { return a.library == preferred_symbols; });
+      if(alternate) { url = alternate.url; }
+    }
+    return CoughDrop.Image.personalize_url(url, this.get('app_state.currentUser.user_token'), this.get('app_state.referenced_user.preferences.skin'), CoughDrop.Image.unskins[this.get('id')]);
+  },
+  personalized_url: computed('url', 'app_state.currentUser.user_token', 'app_state.referenced_user.preferences.skin', 'app_state.referenced_user.preferences.preferred_symbols', 'app_state.edit_mode', function() {
+    return this.personalizing_url();
+  }),
+  personalized_url_without_preferred_symbols: computed('url', 'app_state.currentUser.user_token', 'app_state.referenced_user.preferences.skin', 'app_state.referenced_user.preferences.preferred_symbols', 'app_state.edit_mode', function() {
+    return this.personalizing_url(true);
   }),
   best_url: computed('personalized_url', 'data_url', function() {
     return this.get('data_url') || this.get('personalized_url') || "";
+  }),
+  best_url_without_preferred_symbols: computed('personalized_url', 'data_url', function() {
+    return this.get('data_url') || this.personalizing_url(true) || "";
   }),
   checkForDataURL: function() {
     this.set('checked_for_data_url', true);
@@ -131,7 +147,7 @@ CoughDrop.Image = DS.Model.extend({
 CoughDrop.Image.reopenClass({
   personalize_url: function(url, token, skin, unskin) {
     url = url || '';
-    var res = url
+    var res = url;
     if(url.match(/api\/v1\//) && url.match(/lessonpix/) && token) {
       res = url + "?user_token=" + token;
     }

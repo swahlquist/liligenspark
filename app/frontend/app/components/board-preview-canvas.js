@@ -33,6 +33,7 @@ export default Component.extend({
     var board = this.get('board');
     var level = this.get('current_level') || this.get('base_level') || 10;
     var show_links = this.get('show_links');
+    var preferred_symbols = this.get('preferred_symbols') || app_state.get('referenced_user.preferences.preferred_symbols') || 'none';
 
     if(board && this.get('board.id')) {
       var canvas = this.element.getElementsByTagName('canvas')[0];
@@ -156,7 +157,8 @@ export default Component.extend({
                 draw_button(button, x, y, true);
 
                 if(show_links && !button.hidden && button.image_id && board.get('image_urls') && board.get('image_urls')[button.image_id]) {
-                  var url = variant_urls[button.image_id];
+                  var orig_url = variant_urls[button.image_id];
+                  var url = variant_urls[button.image_id + "-" + preferred_symbols] || orig_url;
                   (function(button, x, y, url) {
                     var draw = function(url) {
                       var img = new Image();
@@ -182,10 +184,14 @@ export default Component.extend({
                       };
                       img.src = url;
                     };
-                    persistence.find_url(url).then(function(url) {
-                      draw(url);
+                    persistence.find_url(url).then(function(uri) {
+                      draw(uri);
                     }, function() {
-                      draw(url);
+                      persistence.find_url(orig_url).then(function(found_url) {
+                        draw(found_url);
+                      }, function() {
+                        draw(url);
+                      });
                     });
                   })(button, x, y, url);
                 }

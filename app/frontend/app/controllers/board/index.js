@@ -224,6 +224,7 @@ export default Controller.extend({
     'model.fast_html.label_locale',
     'app_state.label_locale',
     'app_state.referenced_user.preferences.skin',
+    'app_state.referenced_user.preferences.preferred_symbols',
     function() {
       var res = !!(this.get('model.fast_html') && this.get('model.fast_html.width') == this.get('width') 
             && this.get('model.fast_html.height') == this.get('height') 
@@ -233,6 +234,7 @@ export default Controller.extend({
             && app_state.get('inflection_prefix') == this.get('model.fast_html.inflection_prefix') 
             && app_state.get('inflection_shift') == this.get('model.fast_html.inflection_shift') 
             && app_state.get('referenced_user.preferences.skin') == this.get('model.fast_html.skin') 
+            && app_state.get('referenced_user.preferences.preferred_symbols') == this.get('model.fast_html.symbols') 
             && this.get('model.focus_id') == this.get('model.fast_html.focus_id'));
       return res;
     }
@@ -257,6 +259,7 @@ export default Controller.extend({
     'model.fast_html.label_locale',
     'app_state.label_locale',
     'app_state.referenced_user.preferences.skin',
+    'app_state.referenced_user.preferences.preferred_symbols',
     function() {
       var res = !!(this.get('ordered_buttons') || this.get('valid_fast_html'));
       return res;
@@ -385,6 +388,7 @@ export default Controller.extend({
             || this.get('model.fast_html.inflection_prefix') != app_state.get('inflection_prefix') 
             || this.get('model.fast_html.inflection_shift') != app_state.get('inflection_shift') 
             || this.get('model.fast_html.skin') != app_state.get('referenced_user.preferences.skin') 
+            || this.get('model.fast_html.symbols') != app_state.get('referenced_user.preferences.preferred_symbols') 
             || this.get('model.focus_id') != this.get('model.fast_html.focus_id'))) {
         app_state.set('suggestion_id', null);
         this.set('model.fast_html', null);

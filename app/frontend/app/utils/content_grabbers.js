@@ -1047,6 +1047,19 @@ var pictureGrabber = EmberObject.extend({
     });
     return save_image;
   },
+  set_alternate: function(alternate) {
+    var _this = this;
+    var img = _this.controller.get('model.image');
+    var alts = img.get('alternates') || [];
+    if(!alts.filter) { alts = []; }
+    alts = alts.filter(function(a) { return a.library != alternate.library; });
+    alts.push(alternate);
+    img.set('alternates', alts);
+    img.set('alternate_error', false);
+    img.save().then(null, function() {
+      img.set('alternate_error', true);
+    });
+  },
   select_image_preview: function(url, force_content_type) {
     var preview = this.controller && this.controller.get('image_preview');
     if(!preview || (!preview.url && !preview.word_editor)) { return; }

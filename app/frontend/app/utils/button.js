@@ -461,6 +461,15 @@ var Button = EmberObject.extend({
         })
         img.set('id', _this.image_id);
         img.set('incomplete', true);
+        var alts = null;
+        for(var key in image_urls) {
+          if(key.match(_this.image_id + '-')) {
+            var lib = key.split(/-/).pop();
+            alts = alts || [];
+            alts.push({library: lib, url: image_urls[key]});
+          }
+        }
+        if(alts) { img.set('alternates', alts); }
         _this.set('image', img);
         return check_image(img);
       }
