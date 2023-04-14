@@ -102,6 +102,14 @@
         </div>
       {{/if}}
     </div>
+    <div style='margin-left: 15px;'>
+      <div class="checkbox big_checkbox">
+        <label>
+          {{input checked=text_only type="checkbox"}}
+          {{t "Share only text, with no images or explanations, for generic shares" key='share_only_text'}}
+        </label>
+      </div>
+    </div>
     {{#if copy_result.succeeded}}
       <p class='text-success'>{{t "Text copied to the clipboard!" key='copied_to_clipboard'}}</p>
     {{else if copy_result.failed}}

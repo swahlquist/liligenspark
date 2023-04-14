@@ -8,7 +8,8 @@ import { later as runLater } from '@ember/runloop';
 import { htmlSafe } from '@ember/string';
 import { set as emberSet } from '@ember/object';
 import persistence from '../utils/persistence';
-import { computed } from '@ember/object';
+import { computed, observer } from '@ember/object';
+import stashes from '../utils/_stashes';
 
 export default modal.ModalController.extend({
   opening: function() {
@@ -23,6 +24,7 @@ export default modal.ModalController.extend({
       sentence: utterance.sentence(settings.utterance),
       user_id: app_state.get('referenced_user.id')
     });
+    this.set('text_only', !!app_state.get('text_only_shares') || !!stashes.get('text_only_shares'));
     u.assert_remote_urls();
     u.save().then(function(u) {
       controller.set('utterance_record', u);
@@ -76,6 +78,12 @@ export default modal.ModalController.extend({
       return "";
     }
   }),
+  update_text_only_shares: observer('text_only', function() {
+    app_state.set('text_only_shares', !!this.get('text_only'));
+    if(app_state.get('referenced_user.id') == app_state.get('sessionUser.id')) {
+      stashes.persist('text_only_shares', !!this.get('text_only'));
+    }
+  }),
   escaped_sentence: computed('sentence', function() {
     return encodeURIComponent(this.get('sentence'));
   }),
@@ -95,6 +103,7 @@ export default modal.ModalController.extend({
   },
   shares: computed(
     'utterance_record.link',
+    'text_only',
     'native',
     'native.generic',
     'native.facebook',
@@ -113,7 +122,7 @@ export default modal.ModalController.extend({
           res[key] = true;
         }
       }
-      if(!this.get('utterance.best_image_url')) {
+      if(!this.get('utterance.best_image_url') || this.get('text_only')) {
         res.instagram = false;
       }
       if(document.queryCommandSupported && document.queryCommandSupported('copy')) {
@@ -156,9 +165,10 @@ export default modal.ModalController.extend({
       modal.open('confirm-notify-user', {user: user, reply: user.reply, raw: this.get('utterance'), sentence: this.get('sentence'), utterance: this.get('utterance_record')});
     },
     share_via: function(medium) {
+      var image_url = this.get('text_only') ? null : this.get('utterance_record.best_image_url');
       if(this.get('native.' + medium)) {
         // TODO: download the image locally first??
-        capabilities.sharing.share(medium, this.get('sentence'), this.get('utterance_record.link'), this.get('utterance_record.best_image_url'));
+        capabilities.sharing.share(medium, this.get('sentence'), this.get('utterance_record.link'), image_url);
         modal.close();
       } else if(medium == 'facebook') {
         capabilities.window_open(this.get('facebook_url'));

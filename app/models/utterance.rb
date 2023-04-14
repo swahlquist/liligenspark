@@ -111,7 +111,7 @@ class Utterance < ActiveRecord::Base
           Worker.schedule_for(:priority, Utterance, :perform_action, {
             'id' => self.id,
             'method' => 'deliver_to',
-            'arguments' => [{'user_id' => user_id, 'sharer_id' => sharer.global_id, 'share_index' => share_index}]
+            'arguments' => [{'user_id' => user_id, 'sharer_id' => sharer.global_id, 'share_index' => share_index, 'text_only' => params['text_only']}]
           })
         elsif my_supervisee_ids.include?(user_id)
           # message from a supervisor to a communicator
@@ -215,6 +215,7 @@ class Utterance < ActiveRecord::Base
             'email' => contact['email'],
             'cell_phone' => contact['cell_phone'],
             'reply_id' => reply_id,
+            'text_only' => args['text_only'],
             'share_index' => args['share_index'],
             'utterance_id' => self.global_id,
             'reply_url' => reply_url,
@@ -271,9 +272,16 @@ class Utterance < ActiveRecord::Base
       text = args['text'] || self.data['sentence']
       if args['cell_phone'] || (recipient_user && recipient_user.settings && recipient_user.settings['cell_phone'])
         cell = args['cell_phone'] || (recipient_user && recipient_user.settings && recipient_user.settings['cell_phone'])
-        msg = "from #{from} - #{text}"
-        if args['reply_url']
-          msg += "\n\nreply at #{args['reply_url']}"
+        if args['text_only']
+          msg = text
+          if args['reply_url']
+            msg += "\n\nreply to #{from}: #{args['reply_url']}"
+          end
+        else
+          msg = "from #{from} - #{text}"
+          if args['reply_url']
+            msg += "\n\nreply: #{args['reply_url']}"
+          end
         end
         origination = nil
         if ref_user

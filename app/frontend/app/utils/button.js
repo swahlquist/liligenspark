@@ -439,7 +439,7 @@ var Button = EmberObject.extend({
     if(!_this.image_id) { return RSVP.resolve(); }
     var image = CoughDrop.store.peekRecord('image', _this.image_id);
     if(image && (!image.get('isLoaded') || !image.get('best_url'))) { image = null; }
-    if(preference == 'remote' && !image.get('permissions')) { image = null; }
+    if(preference == 'remote' && image && !image.get('permissions')) { image = null; }
     _this.set('image', image);
     if(image && image.get('hc')) { _this.set('hc_image', true); }
     var check_image = function(image) {

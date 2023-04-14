@@ -1042,15 +1042,15 @@ class LogSession < ActiveRecord::Base
                       message_uid: event['share']['message_uid'],
                       sentence: event['share']['sentence']
                     }, {:user => utterance_user})
-                    if !event['share']['recipient_id'] && event['share']['reply_id']
-                      # TODO: remove this after like June 2020
-                      reply = LogSession.find_reply(event['share']['reply_id']) rescue nil
-                      if reply && reply[:contact]
-                        contact = (utterance_user.settings['contacts'] || []).detect{|c| c['name'] == reply[:contact]['name'] }
-                        event['share']['recipient_id'] = "#{utterance_user.global_id}x#{contact['hash']}" if contact
-                      end
-                    end
-                    utterance.schedule(:share_with, {'user_id' => event['share']['recipient_id'], 'reply_id' => event['share']['reply_id']}, utterance_user.global_id)
+                    # if !event['share']['recipient_id'] && event['share']['reply_id']
+                    #   # TODO: remove this after like June 2020
+                    #   reply = LogSession.find_reply(event['share']['reply_id']) rescue nil
+                    #   if reply && reply[:contact]
+                    #     contact = (utterance_user.settings['contacts'] || []).detect{|c| c['name'] == reply[:contact]['name'] }
+                    #     event['share']['recipient_id'] = "#{utterance_user.global_id}x#{contact['hash']}" if contact
+                    #   end
+                    # end
+                    utterance.schedule(:share_with, {'user_id' => event['share']['recipient_id'], 'reply_id' => event['share']['reply_id'], 'text_only' => event['state']['text_only']}, utterance_user.global_id)
                   end
                   params = nil
                 elsif event && event['alert']

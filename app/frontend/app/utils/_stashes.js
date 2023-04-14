@@ -86,6 +86,7 @@ var stashes = EmberObject.extend({
       'remembered_vocalizations': [],
       'stashed_buttons': [],
       'ghost_utterance': false,
+      'text_only_shares': false,
       'recent_boards': [],
       'logging_paused_at': null,
       'last_stream_id': null,

@@ -54,6 +54,7 @@ export default modal.ModalController.extend({
             utterance: _this.get('model.raw'),
             message_uid: Math.random() + ":" + (new Date()).getTime(),
             private_only: _this.get('model.private_only'),
+            text_only: !!(app_state.get('text_only_shares') || stashes.get('text_only_shares')),
             sentence: _this.get('model.sentence'),
             recipient_id: _this.get('model.user.id'),
             reply_id: _this.get('model.reply_id')
@@ -76,6 +77,7 @@ export default modal.ModalController.extend({
           type: 'POST',
           data: {
             sharer_id: sharer.get('id'),
+            text_only: !!(app_state.get('text_only_shares') || stashes.get('text_only_shares')),
             user_id: _this.get('model.user.id'),
             reply_id: _this.get('model.reply_id')
           }
