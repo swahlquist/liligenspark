@@ -1551,14 +1551,14 @@ class Board < ActiveRecord::Base
     self.settings['buttons'] = buttons.map do |button|
       if add_voc_error && button['add_vocalization'] == false && !button['load_board']
         button.delete('add_vocalization')
-        button.delete('add_to_vocalization')
       end
       trans = button['translations'] || translations[button['id']] || translations[button['id'].to_s] || (BoardContent.load_content(self, 'translations') || {})[button['id'].to_s]
       button = button.slice('id', 'hidden', 'link_disabled', 'image_id', 'sound_id', 'label', 'vocalization', 
             'background_color', 'border_color', 'load_board', 'hide_label', 'url', 'apps', 'text_only', 
             'integration', 'video', 'book', 'part_of_speech', 'suggested_part_of_speech', 'external_id', 
-            'painted_part_of_speech', 'add_to_vocalization', 'home_lock', 'meta_home', 'blocking_speech', 
+            'painted_part_of_speech', 'home_lock', 'meta_home', 'blocking_speech', 
             'level_modifications', 'inflections', 'ref_id', 'rules', 'add_vocalization', 'no_skin');
+      button.delete('meta_home') if !button['meta_home']
       button.delete('level_modifications') if button['level_modifications'] && !button['level_modifications'].is_a?(Hash)
       button.delete('ref_id') if button['ref_id'].blank?
       button.delete('rules') if button['rules'].blank?
