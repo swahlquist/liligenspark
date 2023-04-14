@@ -572,7 +572,7 @@ export default Controller.extend({
         }
       } else if(preference == 'preferred_symbols') {
         if(!user.get('original_preferred_symbols')) {
-          user.set('original_preferred_symbols', user.get('preferences.preferred_symbols') || 'none')
+          user.set('original_preferred_symbols', user.get('preferences.preferred_symbols') || 'original')
         }
         user.set('preferences.' + preference, value);
         user.set('preferred_symbols_changed', user.get('preferred_symbols') != user.get('original_preferred_symbols'));

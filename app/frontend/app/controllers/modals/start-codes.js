@@ -14,6 +14,7 @@ export default modal.ModalController.extend({
     this.set('status', null);
     this.set('new_start_code', null);
     this.set('link_code', null);
+    this.set('shallow_clone', null);
     (this.get('org_or_user.start_codes') || []).forEach(function(code) {
       emberSet(code, 'to_delete', false);
       emberSet(code, 'status', null);
@@ -131,6 +132,9 @@ export default modal.ModalController.extend({
       }
       if(_this.get('locale') && _this.get('locale') != 'none') {
         ovr.locale = _this.get('locale');
+      }
+      if(_this.get('shallow_clone')) {
+        ovr.shallow_clone = true;
       }
       if(_this.get('symbol_library')) {
         ovr.symbol_library = _this.get('symbol_library');

@@ -33,7 +33,7 @@ export default Component.extend({
     var board = this.get('board');
     var level = this.get('current_level') || this.get('base_level') || 10;
     var show_links = this.get('show_links');
-    var preferred_symbols = this.get('preferred_symbols') || app_state.get('referenced_user.preferences.preferred_symbols') || 'none';
+    var preferred_symbols = this.get('preferred_symbols') || app_state.get('referenced_user.preferences.preferred_symbols') || 'original';
 
     if(board && this.get('board.id')) {
       var canvas = this.element.getElementsByTagName('canvas')[0];

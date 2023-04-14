@@ -1486,7 +1486,7 @@ var editManager = EmberObject.extend({
     var board_level = controller.get('current_level') || stashes.get('board_level') || 10;
     board.set('display_level', board_level);
     var buttons = board.contextualized_buttons(app_state.get('label_locale'), app_state.get('vocalization_locale'), stashes.get('working_vocalization'), false, app_state.get('inflection_shift'));
-    var preferred_symbols = app_state.get('referenced_user.preferences.preferred_symbols') || 'none';
+    var preferred_symbols = app_state.get('referenced_user.preferences.preferred_symbols') || 'original';
     var grid = board.get('grid');
     if(!grid) { return; }
     var allButtonsReady = true;

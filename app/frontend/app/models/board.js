@@ -1409,7 +1409,7 @@ CoughDrop.Board = DS.Model.extend({
     }
 
     var _this = this;
-    var preferred_symbols = app_state.get('referenced_user.preferences.preferred_symbols') || 'none';
+    var preferred_symbols = app_state.get('referenced_user.preferences.preferred_symbols') || 'original';
 
     var button_html = function(button, pos) {
       var res = "";

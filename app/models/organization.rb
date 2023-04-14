@@ -1159,7 +1159,7 @@ class Organization < ActiveRecord::Base
     if !org_or_user.settings['activation_settings'][settings_key]
       org_or_user.settings['activation_settings'][settings_key] = {}
       if (opts.keys.map(&:to_s) & ['home_board_key', 'locale', 'symbol_library', 'premium', 'premium_symbols', 'supervisors', 'limit', 'expires', 'code']).length > 0
-        opts = opts.slice('home_board_key', 'locale', 'symbol_library', 'premium', 'premium_symbols', 'supervisors', 'limit', 'expires', 'code')
+        opts = opts.slice('home_board_key', 'locale', 'symbol_library', 'premium', 'premium_symbols', 'supervisors', 'limit', 'expires', 'code', 'shallow_clone')
         if org_or_user.is_a?(User)
           opts.delete('premium')
           opts.delete('supervisors')
@@ -1226,6 +1226,7 @@ class Organization < ActiveRecord::Base
       hash[:v] = GoSecure.sha512(Webhook.get_record_code(org_or_user), 'start_code_verifier')[0, 5]
       hash[:premium_symbols] = opts['premium_symbols'] if opts['premium_symbols'] != nil
       hash[:supervisors] = opts['supervisors'] if opts['supervisors']
+      hash[:shallow_clone] = true if opts['shallow_clone']
       hash[:supporter_type] = true if opts['user_type'] == 'supporter'
       res << hash
     end
@@ -1297,7 +1298,7 @@ class Organization < ActiveRecord::Base
             User.link_supervisor_to_user(u, activate_for, nil, 'edit') if u
           end
           board = Board.find_by_path(home_board) if home_board
-          if board && org_or_user.home_board_keys.include?(home_board) && type == 'communicator'
+          if board && org_or_user.home_board_keys.include?(home_board) #&& type == 'communicator'
             copier = board.user 
             copy_board = {'id' => board.global_id}
           end
@@ -1320,6 +1321,9 @@ class Organization < ActiveRecord::Base
         activate_for.settings['preferences']['locale'] = locale if locale
         activate_for.settings['preferences']['preferred_symbols'] = symbol_library if symbol_library
         if !activate_for.settings['preferences']['home_board'] && copy_board
+          if overrides['shallow_clone']
+            copy_board['shallow'] = true
+          end
           progress = Progress.schedule(activate_for, :copy_to_home_board, copy_board, (copier || activate_for).global_id, symbol_library)
         end
         activate_for.settings['activations'] ||= []

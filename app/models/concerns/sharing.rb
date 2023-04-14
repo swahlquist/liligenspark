@@ -218,7 +218,7 @@ module Sharing
       org_links = all_links.select{|l| ['org_user', 'org_manager', 'org_supervisor'].include?(l['type']) }
       return [] if links.length == 0 && org_links.length == 0
       
-      # all explicitly-shared boards
+      # all explicitly-shared boards, including home boards (but not sub-boards) in org settings
       shallow_board_ids = links.select{|l| plus_editing ? (l['state'] && l['state']['allow_editing']) : true }.map{|l| l['record_code'].split(/:/)[1] }
       if !plus_editing
         keys = []

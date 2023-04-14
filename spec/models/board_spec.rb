@@ -966,8 +966,8 @@ describe Board, :type => :model do
       bs1 = ButtonSound.create(user: u, board: b)
       expect(b).to receive(:button_images).and_return([bi1, bi2])
       expect(b).to receive(:button_sounds).and_return([bs1])
-      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi1' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi2' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => false, :preferred_source => 'original').and_return({'bi1' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => false, :preferred_source => 'original').and_return({'bi2' => true})
       expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
       expect(b.images_and_sounds_for(u)).to eq({
         'images' => [
@@ -991,8 +991,8 @@ describe Board, :type => :model do
       bs1 = ButtonSound.create(user: u, board: b)
       expect(b).to receive(:button_images).and_return([bi1, bi2])
       expect(b).to receive(:button_sounds).and_return([bs1])
-      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi1' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi2' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => false, :preferred_source => 'original').and_return({'bi1' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => false, :preferred_source => 'original').and_return({'bi2' => true})
       expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
       expect(b).to receive(:set_cached).with("images_and_sounds_for/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}], "sounds"=>[{"bs1"=>true}]})
       expect(b.images_and_sounds_for(u)).to eq({
@@ -1018,8 +1018,8 @@ describe Board, :type => :model do
       bs1 = ButtonSound.create(user: u, board: b)
       expect(b).to receive(:button_images).and_return([bi1, bi2])
       expect(b).to receive(:button_sounds).and_return([bs1])
-      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi1' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi2' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => false, :preferred_source => 'original').and_return({'bi1' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => false, :preferred_source => 'original').and_return({'bi2' => true})
       expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
       expect(b).to receive(:set_cached).with("images_and_sounds_for/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}], "sounds"=>[{"bs1"=>true}]})
       expect(b.images_and_sounds_for(u)).to eq({
@@ -1053,8 +1053,8 @@ describe Board, :type => :model do
       expect(b.known_button_images).to eq([bi1, bi2])
       expect(b.button_sounds).to eq([])
       expect(b.known_button_sounds).to eq([bs1])
-      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi1' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi2' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => false, :preferred_source => 'original').and_return({'bi1' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => false, :preferred_source => 'original').and_return({'bi2' => true})
       expect(JsonApi::Sound).to receive(:as_json).with(bs1).and_return({'bs1' => true})
       expect(b).to receive(:set_cached).with("images_and_sounds_for/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}], "sounds"=>[{"bs1"=>true}]})
       expect(b.images_and_sounds_for(u)).to eq({
@@ -1081,9 +1081,9 @@ describe Board, :type => :model do
       bi2 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'abs'}, url: 'http://www.example.com')
       bi3 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'cheese'}, url: 'http://www.example.com')
       expect(b).to receive(:button_images).and_return([bi1, bi2, bi3])
-      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi1' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi2' => true})
-      expect(JsonApi::Image).to receive(:as_json).with(bi3, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix']).and_return({'bi3' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => true, :preferred_source => 'original').and_return({'bi1' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => true, :preferred_source => 'original').and_return({'bi2' => true})
+      expect(JsonApi::Image).to receive(:as_json).with(bi3, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => true, :preferred_source => 'original').and_return({'bi3' => true})
       expect(b).to receive(:set_cached).with("images_and_sounds_for/#{u.cache_key}", {"images"=>[{"bi1"=>true}, {"bi2"=>true}, {'bi3' => true}], "sounds"=>[]})
       expect(b.images_and_sounds_for(u)).to eq({
         'images' => [

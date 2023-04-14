@@ -62,12 +62,14 @@ module JsonApi::Image
       json['alternates'] = []
       libs = {}.merge(image.settings['library_alternates'] || {})
       if used_library != 'original'
-        libs[image.image_library] ||= {
+        lib = {
           'library' => image.image_library,
           'url' => image.best_url,
           'license' => OBF::Utils.parse_license(image.settings['license']),
           'content_type' => image.settings['content_type']
         }
+        libs['original'] ||= lib
+        libs[image.image_library] ||= lib
       end
 
       libs.each do |lib, alternate|

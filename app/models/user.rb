@@ -1225,6 +1225,8 @@ class User < ActiveRecord::Base
     current_home = self.settings['preferences']['home_board'] && Board.find_by_path(self.settings['preferences']['home_board']['id'])
     if current_home && current_home.parent_board == original && ((current_home.settings['swapped_library'] || 'original') == (symbol_library || 'original'))
       return true
+    elsif current_home && current_home.global_id(true) == original.global_id
+      return true
     end
     # Second, if the user already has a copy not as their home bord, then set that
     home = self.boards.where(parent_board: original).order('id DESC').first
@@ -1239,9 +1241,16 @@ class User < ActiveRecord::Base
       self.schedule_audit_protected_sources
       return true
     end
-    # Finally, create a brand new copy
-    new_home = original.copy_for(self)
-    self.copy_board_links(old_board_id: original.global_id, new_board_id: new_home.global_id, ids_to_copy: [], auth_user: updater, user_for_paper_trail: "user:#{updater.global_id}", copier_id: updater.global_id, swap_library: symbol_library)
+    # Finally, create a brand new copy (or shallow clone)
+    if home_board['shallow'] && (original.public? || original.allows?(updater, 'edit'))
+      if !original.public?
+        original.share_with(self, true)
+      end
+      new_home = Board.find_by_global_id("#{original.global_id}-#{self.global_id}")
+    else
+      new_home = original.copy_for(self)
+      self.copy_board_links(old_board_id: original.global_id, new_board_id: new_home.global_id, ids_to_copy: [], auth_user: updater, user_for_paper_trail: "user:#{updater.global_id}", copier_id: updater.global_id, swap_library: symbol_library)
+    end
     self.settings['preferences']['home_board'] = {
       'id' => new_home.global_id,
       'key' => new_home.key
