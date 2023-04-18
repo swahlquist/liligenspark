@@ -1287,11 +1287,15 @@ class Organization < ActiveRecord::Base
           if type == 'communicator'
             org_or_user.add_user(activate_for.user_name, false, !!overrides['premium'], false)
             org_or_user.reload
-            org_or_user.add_extras_to_user(activate_for.user_name) if overrides['premium'] && overrides['premium_symbols']
+            if activate_for && activate_for.settings['subscription'] && !(activate_for.settings['subscription']['extras'] || {})['enabled']
+              org_or_user.add_extras_to_user(activate_for.user_name) if overrides['premium'] && overrides['premium_symbols']
+            end
           elsif type == 'supporter'
             org_or_user.add_supervisor(activate_for.user_name, false, !!overrides['premium'])
             org_or_user.reload
-            org_or_user.add_extras_to_user(activate_for.user_name) if overrides['premium'] && overrides['premium_symbols']
+            if activate_for && activate_for.settings['subscription'] && !(activate_for.settings['subscription']['extras'] || {})['enabled']
+              org_or_user.add_extras_to_user(activate_for.user_name) if overrides['premium'] && overrides['premium_symbols']
+            end
           end
           (overrides['supervisors'] || []).each do |sup_name|
             u = User.find_by_path(sup_name)
