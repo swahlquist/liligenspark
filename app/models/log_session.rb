@@ -1050,7 +1050,7 @@ class LogSession < ActiveRecord::Base
                     #     event['share']['recipient_id'] = "#{utterance_user.global_id}x#{contact['hash']}" if contact
                     #   end
                     # end
-                    utterance.schedule(:share_with, {'user_id' => event['share']['recipient_id'], 'reply_id' => event['share']['reply_id'], 'text_only' => event['state']['text_only']}, utterance_user.global_id)
+                    utterance.schedule(:share_with, {'user_id' => event['share']['recipient_id'], 'reply_id' => event['share']['reply_id'], 'text_only' => event['share']['text_only']}, utterance_user.global_id)
                   end
                   params = nil
                 elsif event && event['alert']
