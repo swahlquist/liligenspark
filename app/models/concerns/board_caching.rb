@@ -124,11 +124,11 @@ module BoardCaching
   end
   
   def can_view?(board)
-    private_viewable_board_ids.include?(board.global_id)
+    private_viewable_board_ids.include?(board.global_id(true))
   end
   
   def can_edit?(board)
-    private_editable_board_ids.include?(board.global_id)
+    private_editable_board_ids.include?(board.global_id(true))
   end
 end
 
