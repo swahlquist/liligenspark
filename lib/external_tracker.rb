@@ -69,6 +69,12 @@ module ExternalTracker
         {property: 'hs_legal_basis', value: 'Legitimate interest – prospect/lead'}
       ]
     }
+    if @user.settings['activations'] || []).length > 0
+      json['properties'] << {
+        property: 'coughdrop_start_code', value: user.settings['activations'].map{|a| a['code'] }.compact[-1]
+      }
+    end
+  
     url = "https://api.hubapi.com/contacts/v1/contact/"
     res = Typhoeus.post(url, {body: json.to_json, headers: {
       'Content-Type' => 'application/json',
