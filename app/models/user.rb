@@ -1244,6 +1244,10 @@ class User < ActiveRecord::Base
     # Finally, create a brand new copy (or shallow clone)
     if home_board['shallow'] && (original.public? || original.allows?(updater, 'edit'))
       if !original.public?
+        if self.settings['available_private_board_ids']
+          self.settings['available_private_board_ids']['generated'] = 0
+          self.save
+        end
         original.share_with(self, true)
       end
       new_home = Board.find_by_global_id("#{original.global_id}-#{self.global_id}")

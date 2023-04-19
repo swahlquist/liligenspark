@@ -47,8 +47,8 @@ class Board < ActiveRecord::Base
   add_permissions('view', ['read_boards']) {|user| !self.public && user.can_view?(self) }
   add_permissions('view', 'edit', 'delete', 'share') {|user| user.can_edit?(self) }
   # for a shallow clone, you need read permission on the original, and model permission on the shallow user
-  add_permissions('view') {|user| @sub_id && (self.public || self.user.can_view?(self)) && @sub_global.allows?(user, 'model') }
-  add_permissions('view', 'edit') {|user| @sub_id && (self.public || self.user.can_view?(self)) && @sub_global.allows?(user, 'edit_boards') }
+  add_permissions('view') {|user| @sub_id && (self.public || @sub_global.can_view?(self)) && @sub_global.allows?(user, 'model') }
+  add_permissions('view', 'edit') {|user| @sub_id && (self.public || @sub_global.can_view?(self)) && @sub_global.allows?(user, 'edit_boards') }
   # explicitly-shared boards are viewable
 #  add_permissions('view', ['read_boards']) {|user| self.shared_with?(user) } # should be redundant due to board_caching
   # the author's supervisors can view the author's boards
