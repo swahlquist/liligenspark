@@ -823,6 +823,7 @@ var speecher = EmberObject.extend({
       speecher.speaking = false;
       speecher.next_speak();
     } else {
+      // TODO: do we need to clear anything else at this point?
       // console.log('unexpected speak_id');
     }
   },

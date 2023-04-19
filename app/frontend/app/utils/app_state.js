@@ -828,7 +828,6 @@ var app_state = EmberObject.extend({
         var load_board = function() {
           return app_state.jump_to_board({
             key: board.get('editable_source_key')
-            // TODO: home lock???
           });
         };
         if(board.get('editable_source')) {

@@ -14,6 +14,7 @@ var raw_listeners = {};
 var frame_listener = EmberObject.extend({
   handle_action: function(data) {
     data.respond = data.respond || function() { };
+    // TODO: event to set dim_header and small_header if desired
     if(data.action == 'listen') {
       this.listen(data);
     } else if(data.action == 'stop_listening') {

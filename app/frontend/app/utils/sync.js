@@ -5,6 +5,9 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 **/
 
+// TODO: Classroom mode option that allows a teacher to set focus words
+// or highlight for all users in the classroom
+
 import CoughDrop from '../app';
 import EmberObject from '@ember/object';
 import stashes from './_stashes';
@@ -453,7 +456,6 @@ var sync = EmberObject.extend({
 
   },
   send_update: function(user_id, extra) {
-    // TODO: way to send to all classroom members in classroom mode
     sync.cached_updates = sync.cached_updates || [];
     // generate an id for the update,
     var update_id = (new Date()).getTime() + "." + Math.random();
@@ -1039,7 +1041,6 @@ var sync = EmberObject.extend({
     delete sync.listeners[listen_id];
   },
   send: function(user_id, message_obj) {
-    // TODO: way to send to all members when in classroom mode
     var sub = sync.con && sync.con.subscriptions.subscriptions.find(function(s) { return s.user_id == user_id; });
     if(!sub) { return false; }
     message_obj.sender_id = sub.ws_user_id;
