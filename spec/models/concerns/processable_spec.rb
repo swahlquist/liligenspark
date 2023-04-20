@@ -174,4 +174,46 @@ describe Processable, :type => :model do
       FakeRecord.process_new({'a' => 1}, {'b' => 2})
     end
   end
+
+  describe "generate_possible_clone" do
+    it "should have specs" do
+      write_this_test
+    end
+
+    it "should not allow cloning a board with protected content that the non-clone owner isn't allowed to copy" do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(user: u1)
+      b1.settings['protected'] = {"vocabulary"=>true, "vocabulary_owner_id"=>"aaa", "sub_owner"=>true}
+      b1.save
+      b1.share_with(u2, true)
+      Worker.process_queues
+      b1.reload
+      expect(b1.allows?(u2, 'view')).to eq(false)
+      expect(b1.copyable_if_authorized?(u1)).to eq(false)
+      expect(b1.copyable_if_authorized?(u2)).to eq(false)
+      bb1 = Board.find_by_global_id("#{b1.global_id}-#{u2.global_id}")
+      expect(bb1.allows?(u2, 'view')).to eq(true)
+      expect{ bb1.generate_possible_clone }.to raise_error("not authorized to copy #{bb1.global_id} by #{u2.global_id}")
+    end
+
+    it "should allow cloning a board with protected content that the non-clone owner is allowed to copy" do
+      u1 = User.create
+      u2 = User.create
+      b1 = Board.create(user: u1)
+      b1.settings['protected'] = {"vocabulary"=>true, "vocabulary_owner_id"=>u1.global_id, "sub_owner"=>false}
+      b1.save
+      b1.share_with(u2, true)
+      Worker.process_queues
+      b1.reload
+      expect(b1.allows?(u2, 'view')).to eq(false)
+      expect(b1.copyable_if_authorized?(u1)).to eq(true)
+      expect(b1.copyable_if_authorized?(u2)).to eq(false)
+      bb1 = Board.find_by_global_id("#{b1.global_id}-#{u2.global_id}")
+      expect(bb1.allows?(u2, 'view')).to eq(true)
+      nbb1 = bb1.generate_possible_clone
+      expect(nbb1).to_not eq(nil)
+      expect(nbb1.id).to_not eq(bb1.id)
+    end
+  end
 end

@@ -115,8 +115,8 @@ class Board < ActiveRecord::Base
     res
   end
 
-  def user
-    if @sub_global
+  def user(true_user=false)
+    if @sub_global && !true_user
       @sub_global
     else
       super

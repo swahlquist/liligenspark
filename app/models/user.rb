@@ -1249,6 +1249,7 @@ class User < ActiveRecord::Base
           self.save
         end
         original.share_with(self, true)
+        self.update_available_boards
       end
       new_home = Board.find_by_global_id("#{original.global_id}-#{self.global_id}")
     else

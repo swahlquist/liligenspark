@@ -46,7 +46,7 @@ module Relinking
       self.reload
     end
     if self.settings['protected'] && self.settings['protected']['vocabulary']
-      if !self.copyable_if_authorized?(self.user)
+      if !self.copyable_if_authorized?(self.user(true))
         # If the board author isn't allowed to create a copy, then
         # don't allow it in a batch
         Progress.set_error("the board #{self.key} is not authorized for copying")
