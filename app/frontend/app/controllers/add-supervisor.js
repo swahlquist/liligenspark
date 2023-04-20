@@ -88,9 +88,9 @@ export default modal.ModalController.extend({
         return user.save().then(function(user) {
           var add_done = function() {
             controller.set('linking', false);
-            if(app_state.get('currentUser') && app_state.get('currentUser.id') != user.get('id')) {
+            // if(app_state.get('currentUser') && app_state.get('currentUser.id') != user.get('id')) {
               app_state.get('currentUser').reload();
-            }
+            // }
             modal.close();
           }
           if(user.get('start_progress')) {

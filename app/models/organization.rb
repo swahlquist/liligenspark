@@ -171,7 +171,7 @@ class Organization < ActiveRecord::Base
     user.settings['pending'] = false
     user.assert_current_record!
     user.save_with_sync('add_supervisor')
-    user.schedule(:update_available_boards)
+    user.schedule(:update_available_boards) unless @skip_user_available_boards_check
 #     self.attach_user(user, 'supervisor')
     if !pending
       if (user.grace_period? || user.modeling_only?) && !Organization.sponsored?(user)
@@ -904,9 +904,8 @@ class Organization < ActiveRecord::Base
     extras_count = self.extras_users.count
     raise "no extras available" if total_extras <= extras_count
     activated = (self.settings || {})['activated_extras'] || 0
-    new_activation = false;
-    if activated < total_extras
-      new_activation = true
+    new_activation = !((user.settings['subscription'] || {})['extras'] || {})['enabled']
+    if new_activation
       self.settings['activated_extras'] = activated + 1
       self.save
       self.schedule(:extras_users, true)
@@ -917,6 +916,7 @@ class Organization < ActiveRecord::Base
   def extras_users(force=false)
     if !self.settings['extras_user_ids'] || force
       res = self.attached_users('all').select{|u| u.extras_for_org?(self) }
+      self.reload unless self.destroyed?
       self.settings['extras_user_ids'] = res.map(&:global_id)
       self.save unless self.destroyed?
       res
@@ -941,7 +941,7 @@ class Organization < ActiveRecord::Base
       raise "no licenses available" if sponsored && ((self.settings || {})['total_licenses'] || 0) <= sponsored_user_count
     end
     user.update_subscription_organization(self, pending, sponsored, eval_account)
-    user.schedule(:update_available_boards)
+    user.schedule(:update_available_boards) unless @skip_user_available_boards_check
     user
   end
   
@@ -1282,6 +1282,7 @@ class Organization < ActiveRecord::Base
         symbol_library = overrides['symbol_library']
         if org_or_user.is_a?(Organization)
           home_board ||= org_or_user.home_board_keys[0]
+          org_or_user.instance_variable_set('@skip_user_available_boards_check', true) if home_board
           locale ||= org_or_user.settings['default_locale']
           symbol_library ||= org_or_user.settings['preferred_symbols']
           if type == 'communicator'
@@ -1299,6 +1300,7 @@ class Organization < ActiveRecord::Base
               activate_for.reload
             end
           end
+          org_or_user.instance_variable_set('@skip_user_available_boards_check', nil)
           (overrides['supervisors'] || []).each do |sup_name|
             u = User.find_by_path(sup_name)
             User.link_supervisor_to_user(u, activate_for, nil, 'edit') if u
@@ -1326,15 +1328,19 @@ class Organization < ActiveRecord::Base
         end
         activate_for.settings['preferences']['locale'] = locale if locale
         activate_for.settings['preferences']['preferred_symbols'] = symbol_library if symbol_library
+        do_copy = false
         if !activate_for.settings['preferences']['home_board'] && copy_board
           if overrides['shallow_clone']
             copy_board['shallow'] = true
           end
-          progress = Progress.schedule(activate_for, :copy_to_home_board, copy_board, (copier || activate_for).global_id, symbol_library)
+          do_copy = true
         end
         activate_for.settings['activations'] ||= []
         activate_for.settings['activations'] << {'ts' => Time.now.to_i, 'code' => orig_code}
         activate_for.save
+        if do_copy
+          progress = Progress.schedule(activate_for, :copy_to_home_board, copy_board, (copier || activate_for).global_id, symbol_library)
+        end
       end
       return {user_type: type, target: org_or_user, key: settings_key, disabled: !!overrides['disabled'], overrides: ovr, user_ids: overrides['user_ids'], progress: progress}
     else
