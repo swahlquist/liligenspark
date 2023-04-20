@@ -1107,7 +1107,7 @@ var pictureGrabber = EmberObject.extend({
     var _this = this;
     if(this.controller.get('image_preview')) {
       this.select_image_preview();
-    } else if(this.controller.get('model.image')) {
+    } else if(this.controller.get('model.image') && !this.controller.get('model.image.incomplete')) {
       var license = this.controller.get('model.image.license');
       var original = this.controller.get('original_image_license') || {};
       emberSet(license, 'type', license.type || original.type);
@@ -1116,7 +1116,7 @@ var pictureGrabber = EmberObject.extend({
         this.controller.get('model.image').save().then(function() {
           _this.controller.set('model.pending_image', false);
         }, function() {
-          alert(i18n.t('saving_failed', "Saving settings failed!"));
+          alert(i18n.t('saving_failed', "Saving image settings failed!"));
           _this.controller.set('model.pending_image', false);
         });
       }
@@ -1715,7 +1715,7 @@ var videoGrabber = EmberObject.extend({
         this.controller.get('video').save().then(function() {
           _this.controller.set('pending_video', false);
         }, function() {
-          alert(i18n.t('saving_failed', "Saving settings failed!"));
+          alert(i18n.t('saving_failed', "Saving video settings failed!"));
           _this.controller.set('pending_video', false);
         });
       }
@@ -2096,7 +2096,7 @@ var soundGrabber = EmberObject.extend({
         this.controller.get('model.sound').save().then(function() {
           _this.controller.set('model.pending_sound', false);
         }, function() {
-          alert(i18n.t('saving_failed', "Saving settings failed!"));
+          alert(i18n.t('saving_failed', "Saving sound settings failed!"));
           _this.controller.set('model.pending_sound', false);
         });
       }

@@ -1289,12 +1289,14 @@ class Organization < ActiveRecord::Base
             org_or_user.reload
             if activate_for && activate_for.settings['subscription'] && !(activate_for.settings['subscription']['extras'] || {})['enabled']
               org_or_user.add_extras_to_user(activate_for.user_name) if overrides['premium'] && overrides['premium_symbols']
+              activate_for.reload
             end
           elsif type == 'supporter'
             org_or_user.add_supervisor(activate_for.user_name, false, !!overrides['premium'])
             org_or_user.reload
             if activate_for && activate_for.settings['subscription'] && !(activate_for.settings['subscription']['extras'] || {})['enabled']
               org_or_user.add_extras_to_user(activate_for.user_name) if overrides['premium'] && overrides['premium_symbols']
+              activate_for.reload
             end
           end
           (overrides['supervisors'] || []).each do |sup_name|

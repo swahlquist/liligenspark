@@ -856,7 +856,7 @@
                 {{#unless app_state.currentUser.preferences.prevent_hide_buttons}}
                   {{#unless app_state.eval_mode}}
                     {{#if no_hidden_buttons}}
-                      <li><a href="#" {{action 'toggle_all_buttons'}} style='margin-top: -10px; font-size: 14px;'>
+                      <li><a href="#" {{action 'toggle_all_buttons'}} style={{if session.isAuthenticated 'margin-top: -10px; font-size: 14px;' 'font-size: 14px;'}>
                         <span class="glyphicon glyphicon-apple"></span>
                         {{t "No Hidden Buttons" key='no_hidden_buttons'}}
                       </a></li>
