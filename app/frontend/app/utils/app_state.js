@@ -1753,7 +1753,7 @@ var app_state = EmberObject.extend({
       return RSVP.resolve({dialog: false});
     } else {
       // prevent action if not currently_premium
-      return modal.open('premium-required', {user_name: user.get('user_name'), user: user, reason: "combo-" + allow_fully_purchased + "." + (user && user.get('fully_purchased')) + "-" + allow_premium_supporter + "." + (user && user.get('currently_premium_or_premium_supporter')), action: action}).then(function() {
+      return modal.open('premium-required', {user_name: (user && user.get('user_name')), user: user, reason: "combo-" + allow_fully_purchased + "." + (user && user.get('fully_purchased')) + "-" + allow_premium_supporter + "." + (user && user.get('currently_premium_or_premium_supporter')), action: action}).then(function() {
         return RSVP.reject({dialog: true});
       });
     }
