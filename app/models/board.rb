@@ -583,15 +583,17 @@ class Board < ActiveRecord::Base
   end
   
   def find_copies_by(user)
+    return [] unless self.id
     if user
       ids = [user.id] + self.class.local_ids(user.supervised_user_ids || [])
+      ids = ids[0, 5] # Too many users would gum this up for sure
       # TODO: sharding
       boards = Board
       if defined?(Octopus)
         conn = (Octopus.config[Rails.env] || {}).keys.sample
         boards = Board.using(conn) if conn
       end
-      boards.includes(:board_content).where(:parent_board_id => self.id, :user_id => ids).sort_by{|b| [b.user_id == user.id ? 0 : 1, 0 - b.id] }
+      boards.includes(:board_content).where(:parent_board_id => self.id, :user_id => ids).limit(15).sort_by{|b| [b.user_id == user.id ? 0 : 1, 0 - b.id] }
     else
       []
     end
