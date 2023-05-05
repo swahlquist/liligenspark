@@ -323,8 +323,11 @@ class UserLink < ApplicationRecord
       end
     end
     
-    expires = 72.hours.to_i
-    Permissions.setex(Permissable.permissions_redis, cache_key, expires, res.to_json)
+    json = res.to_json
+    if json.length < 0.5.megabyte
+      expires = 72.hours.to_i
+      Permissions.setex(Permissable.permissions_redis, cache_key, expires, res.to_json)
+    end
     res
   end
   

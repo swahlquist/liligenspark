@@ -69,7 +69,7 @@ class ButtonSound < ActiveRecord::Base
         # on success, set transcription (including confidence) and delete the wav file from S3
         if json['results'] && json['results'][0] && json['results'][0]['alternatives'] && json['results'][0]['alternatives'][0]
           alt = json['results'][0]['alternatives'][0]
-          if alt['confidence'] > 0.3
+          if alt && alt['confidence'] && alt['confidence'] > 0.3
             self.settings['transcription'] = alt['transcript']
             self.settings['transcription_confidence'] = alt['confidence']
           else

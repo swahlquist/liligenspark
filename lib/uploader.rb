@@ -575,7 +575,7 @@ module Uploader
         protected_source = 'symbolstix'
       end
       res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(str)}&search_token=#{token}", :ssl_verifypeer => false, timeout: 5)
-      results = JSON.parse(res.body)
+      results = JSON.parse(res.body) rescue []
       results.each do |result|
         if result['extension']
           type = MIME::Types.type_for(result['extension'])[0]

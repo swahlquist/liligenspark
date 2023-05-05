@@ -19,7 +19,7 @@ module RedisInit
       Resque.redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
       Resque.redis.namespace = "coughdrop#{ns_suffix}"
     end
-    redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
+    redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password, :timeout => 5)
     @default = Redis::Namespace.new("coughdrop-stash#{ns_suffix}", :redis => redis)
     @permissions = Redis::Namespace.new("coughdrop-permissions#{ns_suffix}", :redis => redis)
     self.cache_token = 'abc'

@@ -578,6 +578,8 @@ class Api::BoardsController < ApplicationController
     return unless exists?(board)
     if board.instance_variable_get('@sub_id')
       return unless allowed?(board, 'edit')
+      # Unstar and ensure it's not in replaced roots list (it shouldn't be)
+      board.star!(board.instance_variable_get('@sub_global'), false)
       ue = UserExtra.find_by(user: board.instance_variable_get('@sub_global'))
       if ue && ue.settings['replaced_roots']
         ue.settings['replaced_roots'].delete(board.global_id(true))
@@ -585,6 +587,13 @@ class Api::BoardsController < ApplicationController
       end
     else
       return unless allowed?(board, 'delete')
+      if board.shallow_source
+        ue = UserExtra.find_by(user: board.user)
+        if ue && ue.settings['replaced_roots']
+          ue.settings['replaced_roots'].delete(board.global_id(true))
+          ue.save
+        end
+      end
       board.destroy
     end
     render json: JsonApi::Board.as_json(board, :wrapper => true).to_json
