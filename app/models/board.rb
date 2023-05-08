@@ -271,6 +271,11 @@ class Board < ActiveRecord::Base
   end
 
   def self.refresh_stats(board_ids, timestamp=nil)
+    stash = nil
+    if board_ids.is_a?(Hash) && board_ids['stash']
+      stash = JobStash.find_by_global_id(board_ids['stash'])
+      board_ids = stash.data
+    end
     now = Time.now.to_i
     timestamp ||= now
     more_board_ids = []
@@ -280,7 +285,7 @@ class Board < ActiveRecord::Base
         more_board_ids << board_id
       else
         board = Board.find_by_global_id(board_id)
-        if board.updated_at.to_i < timestamp && (board.public || board.settings['unlisted'])
+        if board && board.updated_at.to_i < timestamp && (board.public || board.settings['unlisted'])
           board.generate_stats
           board.save_without_post_processing
         end
@@ -291,8 +296,13 @@ class Board < ActiveRecord::Base
         end        
       end
     end
-    more_board_ids.each_slice(50) do |ids|
-      Board.schedule_for(:slow, :refresh_stats, ids, timestamp)
+    if more_board_ids.length > 0
+      stash ||= JobStash.create
+      stash.data = more_board_ids.uniq
+      stash.save
+      Board.schedule_for(:slow, :refresh_stats, {'stash' => stash.global_id}, timestamp)
+    elsif stash
+      stash.destroy
     end
   end
 

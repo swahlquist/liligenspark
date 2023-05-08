@@ -564,16 +564,24 @@ class User < ActiveRecord::Base
   
   # frd == "For Reals, Dude" obviously. It's a thing, I guess you just didn't know about it.
   # TODO: add "frd" to urban dictionary
-  def track_boards(frd=false)
+  def track_boards(frd=false, ts=nil)
     if !@do_track_boards && !frd
       return true
     end
     @do_track_boards = false
     if frd != true
-      args = {'id' => self.id, 'method' => 'track_boards', 'arguments' => [true]}
-      self.schedule_once_for(RedisInit.any_queue_pressure? ? :whenever : :slow, :track_boards, true)
+      self.schedule_once_for(RedisInit.any_queue_pressure? ? :whenever : :slow, :track_boards, true, ts || Time.now.to_i)
       return true
     end
+    if ts && self.settings['tracked_boards_at'] && ts < self.settings['tracked_boards_at']
+      # Prevent multiple tracks for the same user
+      return false
+    end
+    if ts && frd
+      self.settings['tracked_boards_at'] = Time.now.to_i
+      self.save
+    end
+    
     # TODO: trigger background process to create user_board_connection records for all boards
     previous_connections = UserBoardConnection.where(:user_id => self.id)
     orphan_board_ids = previous_connections.map(&:board_id)
@@ -664,8 +672,11 @@ class User < ActiveRecord::Base
     end
     # to regenerates stats?
     if !RedisInit.any_queue_pressure?
-      board_ids_to_recalculate.each_slice(50) do |ids|
-        Board.schedule_for(:slow, :refresh_stats, ids, Time.now.to_i) if ids.length > 0
+      board_ids_to_recalculate.uniq.each_slice(100) do |ids|
+        if ids.length > 0
+          stash = JobStash.create(data: ids)
+          Board.schedule_for(:slow, :refresh_stats, {'stash' => stash.global_id}, Time.now.to_i) 
+        end
       end
     end
     true
