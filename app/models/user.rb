@@ -663,7 +663,11 @@ class User < ActiveRecord::Base
       self.save
     end
     # to regenerates stats?
-    Board.schedule_for(:slow, :refresh_stats, board_ids_to_recalculate, Time.now.to_i) if board_ids_to_recalculate.length > 0
+    if !RedisInit.any_queue_pressure?
+      board_ids_to_recalculate.each_slice(50) do |ids|
+        Board.schedule_for(:slow, :refresh_stats, ids, Time.now.to_i) if ids.length > 0
+      end
+    end
     true
   end
 
@@ -703,7 +707,7 @@ class User < ActiveRecord::Base
         refs << {'id' => id, 'key' => key, 'image_url' => brd.settings['image_url'], 'name' => brd.settings['name']}
       end
     end
-    if refs.length < 12
+    if refs.length < 8
       home_board_id = (user.settings['preferences']['home_board'] || {})['id']
       ::Board.find_suggested(user.settings['preferences']['locale'] || 'en', 5).each do |board|
         if home_board_id == board.global_id

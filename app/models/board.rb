@@ -273,22 +273,26 @@ class Board < ActiveRecord::Base
   def self.refresh_stats(board_ids, timestamp=nil)
     now = Time.now.to_i
     timestamp ||= now
-    if board_ids.length > 10
-      boards_ids = board_ids.slice(0, 10)
-      more_board_ids = board_ids.slice(10, board_ids.length)
-      Board.schedule_for(:slow, :refresh_stats, more_board_ids, timestamp)
+    more_board_ids = []
+    board_ids.each do |board_id|
+      # Prevent these jobs from running too long and clogging the queue
+      if Time.now.to_i > now + 3.minutes.to_i
+        more_board_ids << board_id
+      else
+        board = Board.find_by_global_id(board_id)
+        if board.updated_at.to_i < timestamp && (board.public || board.settings['unlisted'])
+          board.generate_stats
+          board.save_without_post_processing
+        end
+        upper = board.parent_board
+        if upper && upper != board && upper.updated_at.to_i < timestamp && (upper.public || upper.settings['unlisted'])
+          upper.generate_stats
+          upper.save_without_post_processing
+        end        
+      end
     end
-    Board.find_batches_by_global_id(board_ids, batch_size: 25) do |board|
-      if board.updated_at.to_i < timestamp
-        board.generate_stats
-        board.save_without_post_processing
-      end
-      upper = board.parent_board
-      # TODO: don't update the parent if it's already been updated recently
-      if upper && upper != board && upper.updated_at.to_i < timestamp
-        upper.generate_stats
-        upper.save_without_post_processing
-      end
+    more_board_ids.each_slice(50) do |ids|
+      Board.schedule_for(:slow, :refresh_stats, ids, timestamp)
     end
   end
 
@@ -441,8 +445,6 @@ class Board < ActiveRecord::Base
       pops[lang] = [pops[lang] || 0, pop_score].max
       home_pops[lang] = [home_pops[lang] || 0, home_pop_score].max
     end
-    self.settings['total_buttons'] = (self.buttons || []).length + (self.settings['total_downstream_buttons'] || 0)
-    self.settings['unlinked_buttons'] = (self.buttons || []).select{|btn| !btn['load_board'] }.length + (self.settings['unlinked_downstream_buttons'] || 0)
     if self.id
       if self.fully_listed?
         found_locales.each do |locale, nvmd|
@@ -675,7 +677,11 @@ class Board < ActiveRecord::Base
     end
     @brand_new = !self.id
     @buttons_changed = true if self.buttons && !self.id
-    @button_links_changed = true if (self.buttons || []).any?{|b| b['load_board'] } && !self.id
+    buttons = self.buttons || []
+    @button_links_changed = true if buttons.any?{|b| b['load_board'] } && !self.id
+    self.settings['total_buttons'] = buttons.length + (self.settings['total_downstream_buttons'] || 0)
+    self.settings['unlinked_buttons'] = buttons.select{|btn| !btn['load_board'] }.length + (self.settings['unlinked_downstream_buttons'] || 0)
+
     if @buttons_changed.is_a?(String)
       @edit_description ||= {
         'timestamp' => Time.now.to_f,
@@ -2015,7 +2021,7 @@ class Board < ActiveRecord::Base
         defaults = Uploader.default_images(library, words, swap_board.settings['locale'] || 'en', author, true, important_board)
         # puts " mapping buttons"
         bis = swap_board.known_button_images
-        # TODO: skip images that already have the correct library
+        # TODO: for images that have the correct library in library_alternates, don't look them up, just use that
         buttons = swap_board.buttons.map do |button|
           # skip buttons that don't currently have an image
           next button unless button['image_id']
