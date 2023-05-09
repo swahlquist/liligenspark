@@ -57,7 +57,9 @@
               {{t "Cache Memory" key='cache_memory'}}
             </div>
             <div class="panel-body">
-              {{model.site.mem_redis}} / {{model.site.max_redis}}
+              <span class={{redis_state}}>
+                {{model.site.mem_redis}} / {{model.site.max_redis}}
+              </span>
             </div>
           </div>
         </div>
@@ -67,9 +69,15 @@
               {{t "Background Queues" key='background_queues'}}
             </div>
             <div class="panel-body">
-              {{model.site.default_queue}} {{t "default" key='default'}},
-              {{model.site.priority_queue}} {{t "priority" key='priority'}},
-              {{model.site.slow_queue}} {{t "slow" key='slow'}}
+              <span class={{queue_state.default}}>
+                {{delimit model.site.default_queue}} {{t "default" key='default'}},
+              </span>
+              <span class={{queue_state.priority}}>
+                {{delimit model.site.priority_queue}} {{t "priority" key='priority'}},
+              </span>
+              <span class={{queue_state.slow}}>
+                {{delimit model.site.slow_queue}} {{t "slow" key='slow'}}
+              </span>
             </div>
           </div>
         </div>

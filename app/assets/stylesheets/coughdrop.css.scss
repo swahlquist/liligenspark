@@ -400,6 +400,16 @@ header .btn {
     }
   }
 }
+.site-emergency {
+  font-weight: bold;
+  color: #a00;
+}
+.site-danger {
+  color: rgb(204, 102, 0);
+}
+.site-warning {
+  color: rgb(201, 204, 0);
+}
 #speak {
   display: block; 
   float: left; 

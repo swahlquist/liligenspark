@@ -276,6 +276,37 @@ export default Controller.extend({
       _this.set('supervisors.data', null);
     });
   },
+  redis_state: computed('model.site.mem_redis', 'model.site.max_redis', function() {
+    var mem = parseInt(this.get('model.site.mem_redis'), 10);
+    var max = parseInt(this.get('model.site.max_redis'), 10);
+    if(mem > max * 0.95) {
+      return 'site-emergency';
+    } else if(mem > max * 0.85) {
+      return 'site-danger';
+    } else if(mem > max * 0.65) {
+      return 'site-warning';
+    }
+    return 'site-normal';
+  }),
+  queue_state: computed('model.site.default_queue', 'model.site.priority_queue', 'model.site.slow_queue', function() {
+    var res = {
+      'default-limit': 5000,
+      'slow-limit': 15000,
+      'priority-limit': 50
+    };
+    ['default', 'priority', 'slow'].forEach(function(q) {
+      if(q > res[q + '-limit'] * 0.95) {
+        res[q] = 'site-emergency';
+      } else if(q > res[q + '-limit'] * 0.80) {
+        res[q] = 'site-danger';
+      } else if(q > res[q + '-limit'] * 0.5) {
+        res[q] = 'site-warning';
+      } else {
+        res[q] = 'site-normal';
+      }
+    });
+    return res;
+  }),
   suggest_creating_manager: computed('manager_user_name', 'missing_user_name', function() {
     return this.get('missing_user_name') && this.get('missing_user_name') == this.get('manager_user_name');
   }),
