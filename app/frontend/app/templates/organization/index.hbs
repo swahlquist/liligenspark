@@ -50,6 +50,30 @@
           </div>
         </div>
       </div>
+      {{#if model.site}}
+        <div class="col-sm-3 col-xs-6">
+          <div class="panel panel-default summary smaller">
+            <div class="panel-heading">
+              {{t "Cache Memory" key='cache_memory'}}
+            </div>
+            <div class="panel-body">
+              {{model.site.mem_redis}} / {{model.site.max_redis}}
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xs-6">
+          <div class="panel panel-default summary smaller">
+            <div class="panel-heading">
+              {{t "Background Queues" key='background_queues'}}
+            </div>
+            <div class="panel-body">
+              {{model.site.default_queue}} {{t "default" key='default'}},
+              {{model.site.priority_queue}} {{t "priority" key='priority'}},
+              {{model.site.slow_queue}} {{t "slow" key='slow'}}
+            </div>
+          </div>
+        </div>
+      {{/if}}
       <div class='col-sm-12' style='margin-top: -10px; margin-bottom: 10px;'>
         {{#if model.permissions.edit}}
           <div style='float: right;'>

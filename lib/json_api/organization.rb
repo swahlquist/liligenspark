@@ -16,6 +16,18 @@ module JsonApi::Organization
       json['permissions'] = org.permissions_for(args[:permissions])
     end
 
+    if json['admin']
+      mem = RedisInit.memory
+      maxmem = ENV['REDIS_MAXSIZE'] || 250
+      json['site'] = {
+        'mem_redis' => mem['used_memory_human'],
+        'max_redis' => maxmem.to_s + 'M',
+        'default_queue' => Resque.redis.llen('queue:default'),
+        'priority_queue' => Resque.redis.llen('queue:priority'),
+        'slow_queue' => Resque.redis.llen('queue:slow'),
+      }
+    end
+
     json['status_overrides'] = org.settings['status_overrides']
     
     if json['permissions'] && json['permissions']['edit']
