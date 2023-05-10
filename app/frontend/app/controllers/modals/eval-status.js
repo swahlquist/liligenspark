@@ -10,6 +10,7 @@ import RSVP from 'rsvp';
 export default modal.ModalController.extend({
   opening: function() {
     this.set('user', this.get('model.user'));
+    this.set('status', null);
     var choice = {};
     choice[this.get('modal.action')] = true;
     this.set('choice', choice);
@@ -62,7 +63,7 @@ export default modal.ModalController.extend({
     },
     transfer: function() {
       var _this = this;
-      if(_this.get('permissions.delete') && _this.get('transfer_user_name') && _this.get('transfer_password')) {
+      if(_this.get('user.permissions.delete') && _this.get('transfer_user_name') && _this.get('transfer_password')) {
         // requires target username and password
         _this.set('status', {transferring: true});
         // api/v1/users/id/evals/transfer
@@ -93,6 +94,8 @@ export default modal.ModalController.extend({
 
           }
        });
+      } else {
+        modal.error(i18n.t('eval_transfer_not_authorized', "You do not have proper permissions to transfer this account"));
       }
     },
     reset: function() {

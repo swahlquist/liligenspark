@@ -6,6 +6,7 @@ import persistence from '../utils/persistence';
 import CoughDrop from '../app';
 import { later as runLater } from '@ember/runloop';
 import app_state from '../utils/app_state';
+import capabilities from '../utils/capabilities';
 
 export default Controller.extend({
   actions: {
@@ -17,10 +18,18 @@ export default Controller.extend({
       });
     },
     jobs: function() {
+      if(capabilities.installed_app) {
+        modal.error(i18n.t('not_allowed_in_app', "Job tracking only available on the web"));
+        return;
+      }
       persistence.ajax('/api/v1/auth/admin', {type: 'POST', data: {}}).then(function(res) {
-        location.href = '/jobby';
+        if(res && res.success) {
+          location.href = '/jobby';
+        } else {
+          modal.error(i18n.t('jobs_unauthorized', "Job tracking not authorized"));
+        }
       }, function(err) {
-        alert('Not authorized');
+        modal.error(i18n.t('unauthorized', "Not authorized"));
       })
     },
     masquerade: function() {
