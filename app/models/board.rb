@@ -1421,6 +1421,9 @@ class Board < ActiveRecord::Base
         end
       end
     end
+    if self.settings['categories']
+      self.settings['categories'] -= ['protected_vocabulary', 'unprotected_vocabulary']
+    end
 
     if !params['sharing_key'].blank?
       updater = non_user_params[:updater] || non_user_params[:author]

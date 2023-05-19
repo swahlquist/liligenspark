@@ -19,6 +19,9 @@ export default modal.ModalController.extend({
     this.set('advanced', false);
     this.set('originally_public', board.get('public'));
     this.set('protected_vocabulary', !!board.get('protected_settings.vocabulary'));
+    if((board.get('categories') || []).indexOf('unprotected_vocabulary') != -1) {
+      this.set('protected_vocabulary', false);
+    }
   },
   closing: function() {
     if(this.get('model.translations.board_name') && this.get('model.locale')) {

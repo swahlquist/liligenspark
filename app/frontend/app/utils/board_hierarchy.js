@@ -15,6 +15,7 @@ var BoardHierarchy = EmberObject.extend({
       downstreams[id] = false;
     });
     var button_set = this.get('button_set');
+    var any_meta = (button_set.get('buttons') || []).find(function(b) { return b.meta_home_id; });
     var traversed_boards = {};
     var all_boards = [];
     var traverse_board = function(board_id, board_key) {
@@ -101,6 +102,8 @@ var BoardHierarchy = EmberObject.extend({
       }
     }
     this.set('boards_missing', !!any_missing);
+    this.set('boards_meta_missing', !!any_missing && !!any_meta);
+    if(this.get('boards_missing'))
     if(any_missing && !this.get('tried_button_set_reload')) {
       this.set('tried_button_set_reload', true);
       var _this = this;

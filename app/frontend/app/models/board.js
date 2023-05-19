@@ -815,7 +815,7 @@ CoughDrop.Board = DS.Model.extend({
     }
     return false;
   }),
-  create_copy: function(user, make_public) {
+  create_copy: function(user, make_public, swap_library, new_owner, disconnect) {
     var board = CoughDrop.store.createRecord('board', {
       parent_board_id: this.get('id'),
       key: this.get('key').split(/\//)[1],
@@ -834,7 +834,8 @@ CoughDrop.Board = DS.Model.extend({
       translated_locales: this.get('locales'),
       for_user_id: (user && user.get('id')),
       translations: this.get('translations'),
-      new_owner: false
+      new_owner: new_owner,
+      disconnect: disconnect
     });
     if(this.get('default_locale') && this.get('default_locale') != this.get('locale')) {
       // If setting a new default locale, do it here

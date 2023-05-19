@@ -348,7 +348,7 @@ var editManager = EmberObject.extend({
         inflections["no"] = {type:'override', label: "don't"};
         inflections["not"] = {type:'override', label: "aren't"};
       }});
-      overrides.push({lookback: [{words: ["those"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
+      overrides.push({lookback: [{words: ["those", "these"]}, {type: 'adverb', optional: true}], callback: function(inflections) {
         inflections["is"] = {type:'override', label: "are"};
         inflections["am"] = {type:'override', label: "are"};
         inflections["was"] = {type:'override', label: "were"};

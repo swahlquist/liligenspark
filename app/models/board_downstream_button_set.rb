@@ -565,21 +565,25 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
             # check for any linked buttons
             # (unless it's a meta_home link, then it should have its own button set)
             if button['load_board'] && button['load_board']['id'] && !button['meta_home']
-              linked_board = boards_hash[button['load_board']['id']]
-              linked_board ||= Board.find_by_global_id(button['load_board']['id'])
-              # hidden or disabled links shouldn't be tracked (why not???)
-              if linked_board # && !button['hidden'] && !button['link_disabled']
-                button_data['linked_board_id'] = linked_board.shallow_id
-                button_data['linked_board_key'] = linked_board.shallow_key
-                button_data['home_lock'] = true if button['home_lock']
-              end
-              # mark the first link to each board as "preferred"
-              # TODO: is this a good idea? is there a better strategy? It honestly
-              # shouldn't happen that much, having multiple links to the same board
-              if linked_board && !linked_board_ids.include?(linked_board.global_id) # && !button['hidden'] && !button['link_disabled']
-                button_data['preferred_link'] = true
-                linked_board_ids << button['load_board']['id']
-                boards_to_visit << {:board_id => linked_board.global_id, :depth => bv[:depth] + 1, :hidden => (bv[:hidden] || button['hidden'] || button['link_disabled']), :index => idx} if !visited_board_ids.include?(linked_board.global_id)
+              if button['meta_home']
+                button_data['meta_home_id'] = button['load_board']['id']
+              else
+                linked_board = boards_hash[button['load_board']['id']]
+                linked_board ||= Board.find_by_global_id(button['load_board']['id'])
+                # hidden or disabled links shouldn't be tracked (why not???)
+                if linked_board # && !button['hidden'] && !button['link_disabled']
+                  button_data['linked_board_id'] = linked_board.shallow_id
+                  button_data['linked_board_key'] = linked_board.shallow_key
+                  button_data['home_lock'] = true if button['home_lock']
+                end
+                # mark the first link to each board as "preferred"
+                # TODO: is this a good idea? is there a better strategy? It honestly
+                # shouldn't happen that much, having multiple links to the same board
+                if linked_board && !linked_board_ids.include?(linked_board.global_id) # && !button['hidden'] && !button['link_disabled']
+                  button_data['preferred_link'] = true
+                  linked_board_ids << button['load_board']['id']
+                  boards_to_visit << {:board_id => linked_board.global_id, :depth => bv[:depth] + 1, :hidden => (bv[:hidden] || button['hidden'] || button['link_disabled']), :index => idx} if !visited_board_ids.include?(linked_board.global_id)
+                end
               end
             end
             all_buttons << button_data

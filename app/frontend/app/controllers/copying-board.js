@@ -29,7 +29,11 @@ export default modal.ModalController.extend({
   },
   start_copying: function() {
     var board_ids_to_include = null;
-    if(this.get('hierarchy') && this.get('hierarchy').selected_board_ids) {
+    var include_missing = this.get('hierarchy.include_missing');
+    if(include_missing) {
+      board_ids_to_include = null;
+      this.set('hierarchy', null);
+    } else if(this.get('hierarchy') && this.get('hierarchy').selected_board_ids) {
       board_ids_to_include = this.get('hierarchy').selected_board_ids();
       this.set('hierarchy', null);
     }
