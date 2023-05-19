@@ -2000,7 +2000,7 @@ var editManager = EmberObject.extend({
           return;
         }
       }
-      var save = old_board.create_copy(user, make_public);
+      var save = old_board.create_copy(user, make_public, swap_library, new_owner, disconnect);
       if(decision == 'remove_links') {
         save = save.then(function(res) {
           res.get('buttons').forEach(function(b) {
