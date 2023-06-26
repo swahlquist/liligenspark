@@ -31,6 +31,74 @@ class WordData < ActiveRecord::Base
   def reviewed_by?(user)
     return (self.data['reviewer_ids'] || []).include?(user && user.global_id)
   end
+
+  def self.extract(locale)
+    words = {}
+    str = "{\n"
+    str += "  \"_locale\": #{locale.to_json},\n"
+    str += "  \"_version\": \"0.1\",\n"
+    WordData.where(locale: locale).find_in_batches(batch_size: 500) do |batch|
+      batch.each do |wd|
+        hash = {}
+        hash[:pos] = wd.data['types'] || []
+        hash[:ovr] = {}.merge(wd.data['inflection_overrides'] || {})
+        hash[:ant] = wd.data['antonyms'] || []
+        if (wd.data['reviews'] || {}).keys.length > 0 && hash[:pos].length > 0
+          words[wd.word] = hash
+        end
+      end
+      # puts "..."
+    end
+    words.to_a.sort_by(&:first).each do |word, hash|
+      if hash[:pos].length > 0
+        str += "  #{word.to_json}: {\n"
+        str += "    \"types\": #{hash[:pos].to_json},\n"
+        str += "    \"inflections\": #{hash[:ovr].to_json},\n"
+        str += "    \"antonyms\": #{hash[:ant].to_json},\n" if hash[:ant].length > 0
+        str = str.sub(/,\n$/, "\n")
+        str += "  },\n"
+      end
+    end
+    str = str.sub(/,\n$/, "\n")
+    str += "}\n"
+    # puts str
+    
+    file = Tempfile.new("stash")
+    file.write(str)
+    file.close
+    remote_path = "downloads/exports/words-#{locale}-#{Time.now.to_i}.json"
+    res = Uploader.remote_upload(remote_path, file.path, 'text/json')
+    res[:url]
+  end
+
+  def ingest(url)
+    req = Typhoeus.get(url)
+    json = JSON.parse(req.body)
+    locale = json['_locale']
+    json.each do |word, hash|
+      if !word.match(/^_/)
+        wd = WordData.find_or_create_by(word: word, locale: locale)
+        wd.data['reviewer_ids'] = ((self.data['reviewer_ids'] || []) + ['ext']).uniq
+        wd.data['reviews']['ext'] = {
+          'updated' => Time.now.iso8601,
+          'primary_part_of_speech' => (hash['pos'] || [])[0],
+          'inflection_overrides' => hash['ovr'] || {},
+          'antonyms' => hash['ant'] || [],
+          'parts_of_speech' => hash['pos']
+        }
+        if (hash['pos'] || [])[0]
+          wd.data['types'] = hash['pos']
+        end
+        if (hash['ant'] || [])[0]
+          wd.data['antonyms'] = hash['ant']
+        end
+        if hash['ovr']
+          wd.data['inflection_overrides'] = hash['ovr']
+        end
+        wd.save
+      end
+    end
+  end
   
   def process_params(params, non_user_params)
     updater = non_user_params[:updater]
@@ -615,7 +683,8 @@ class WordData < ActiveRecord::Base
     if !word && !text.match(/^[\+\:]/)
       word ||= WordData.find_or_create_by(:word => text.downcase.strip, :locale => source_lang) rescue nil
       word ||= WordData.find_or_create_by(:word => text.downcase.strip, :locale => source_lang)
-      word.data = {:word => text.downcase.strip}
+      word.data ||= {}
+      word.data[:word] ||= text.downcase.strip
     end
     if word && word.data
       word.data['translations'] ||= {}
