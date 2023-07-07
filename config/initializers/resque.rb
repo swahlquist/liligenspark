@@ -47,10 +47,11 @@ module RedisInit
     ENV['STOP_CACHING'] || ENV['QUEUE_PRESSURE'] || (ENV['QUEUE_MAX'] && Resque.redis.llen('queue:slow') > ENV['QUEUE_MAX'].to_i)
   end
 
-  def self.size_check
+  def self.size_check(verbose=false)
     uri = redis_uri
     redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
     total =  0
+    prefixes = {}
     redis.keys.each do |key|
       type = redis.type(key)
       size = 0
@@ -68,10 +69,15 @@ module RedisInit
         raise "unknown type: #{type}"
       end
       total += size
+      prefix = key.split(/\//)[0]
+      prefixes[prefix] = (prefixes[prefix] || 0) + size
       if size > 500000
         puts "#{key}\t#{size}"
+      elsif verbose
+        puts key
       end
     end
+    puts JSON.pretty_generate(prefixes)
     puts "total size\t#{total}"
   end
   

@@ -709,7 +709,7 @@ describe Purchasing do
           subs.data.push(new_sub)
         }.and_return(new_sub)
         expect(Purchasing).to receive(:cancel_other_subscriptions).with(u, '3456')
-        Purchasing.purchase(u, {'id' => 'token'}, 'monthly_6')
+        Purchasing.purchase(u, {'id' => 'token'}, 'monthly_9')
       end
       
       it "should cancel other subscriptions for an existing customer record" do

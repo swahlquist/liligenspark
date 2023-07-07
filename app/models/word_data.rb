@@ -684,7 +684,7 @@ class WordData < ActiveRecord::Base
       word ||= WordData.find_or_create_by(:word => text.downcase.strip, :locale => source_lang) rescue nil
       word ||= WordData.find_or_create_by(:word => text.downcase.strip, :locale => source_lang)
       word.data ||= {}
-      word.data[:word] ||= text.downcase.strip
+      word.data['word'] ||= text.downcase.strip
     end
     if word && word.data
       word.data['translations'] ||= {}
