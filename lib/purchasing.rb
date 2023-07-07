@@ -231,7 +231,7 @@ module Purchasing
   end
 
   def self.communicator_cost
-    ENV['COMMUNICATOR_COST'] || 150
+    ENV['COMMUNICATOR_COST'] || 200
   end
 
   def self.communicator_sale_cost
@@ -240,6 +240,13 @@ module Purchasing
 
   def self.communicator_repurchase_cost
     ENV['COMMUNICATOR_REPURCHASE_COST'] || 50
+  end
+
+  def self.plan_map
+    {
+      'monthly_9' => "price_1NQzXZBoyWVHHEVPoaYXBeyy",
+      'monthly_6' => "price_1NQzXZBoyWVHHEVPoaYXBeyy"
+    }
   end
 
   def self.purchase(user, token, type, discount_code=nil)
@@ -302,7 +309,7 @@ module Purchasing
         type = 'refresh_' + type
       else
         valid_amount = false unless amount >= Purchasing.communicator_cost
-        valid_amount = true if amount == Purchasing.communicator_sale_cost && self.active_sale?
+        valid_amount = true if amount >= Purchasing.communicator_sale_cost && self.active_sale?
         description = "CoughDrop communicator license purchase"
       end
     else
@@ -395,6 +402,7 @@ module Purchasing
         end
         if customer
           user && user.log_subscription_event({:log => 'new subscription for existing customer'})
+          plan_id = Purchasing.plan_map[plan_id] || plan_id
           sub = nil
           if customer.subscriptions.count > 0
             sub = customer.subscriptions.data.detect{|s| ((s.metadata || {})['platform_source'] || 'coughdrop') == 'coughdrop' && ['active', 'past_due', 'unpaid'].include?(s.status) }

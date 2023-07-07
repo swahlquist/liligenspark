@@ -49,14 +49,8 @@
             {{#if subscription.app_pricing_override}}
               <span style='font-size: 25px; display: block; vertical-align: middle; color: #000; padding-left: 3px;'>{{subscription.monthly_app_price}}</span>
               {{subscription.app_currency}}
-            {{else if subscription.subscription_discount}}
-              <div class='sale'>
-                {{t "sale! 50% off" key='save_50_percent'}}
-              </div>
-              <span style='text-decoration: line-through; display: block; margin-bottom: -10px;'>&nbsp;$6&nbsp;</span>
-              US$<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>3</span>
             {{else}}
-              US$<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>6</span>
+              US$<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>9</span>
             {{/if}}
             <div class='middle'>{{t "- or -" key='dash_or_dash'}}</div>
             <div style='margin-top: -5px; line-height: 17px;'>{{t "per month" key='per_month_lower'}}</div>
@@ -73,7 +67,7 @@
                 {{t "sale! 50% off" key='save_50_percent'}}
               </div>
               <span style='text-decoration: line-through; display: block; margin-bottom: -10px;'>&nbsp;$200&nbsp;</span>
-              US$<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>100</span>
+              US$<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>145</span>
             {{else if subscription.cheaper_offer}}
               <div class='sale'>
                 {{t "save 25%" key='save_25_percent'}}
@@ -81,7 +75,7 @@
               <span style='text-decoration: line-through; display: block; margin-bottom: -10px;'>&nbsp;$200&nbsp;</span>
               US$<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>150</span>
             {{else}}
-              US$<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>200</span>
+              US$<span style='font-size: 40px; vertical-align: middle; color: #000; padding-left: 3px;'>295</span>
             {{/if}}
             <div style='margin-top: -5px; line-height: 17px;'>
               {{#if subscription.user.lapsed}}
@@ -203,7 +197,7 @@
                   {{#if subscription.app_pricing_override}}
                     {{subscription.monthly_app_price}} {{subscription.app_currency}}<br/>{{t "per month" key='per_month_lower'}}
                   {{else}}
-                    {{t "US$6 per month" key='6_per_month'}}
+                    {{t "US$9 per month" key='9_per_month'}}
                   {{/if}}
                 </button>
               </td>

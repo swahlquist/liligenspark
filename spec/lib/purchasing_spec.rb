@@ -701,7 +701,7 @@ describe Purchasing do
         })).at_least(1).times
         expect(subs).to receive(:create){|opts|
           expect(opts).to eq({
-            :plan => 'monthly_6',
+            :plan => 'price_1NQzXZBoyWVHHEVPoaYXBeyy',
             :metadata => {:platform_source => 'coughdrop'},
             :source => 'token',
             trial_end: (u.created_at + 60.days).to_i
@@ -733,7 +733,7 @@ describe Purchasing do
         })).at_least(1).times
         expect(subs).to receive(:create){|opts|
           expect(opts).to eq({
-            :plan => 'monthly_6',
+            :plan => 'price_1NQzXZBoyWVHHEVPoaYXBeyy',
             :metadata => {:platform_source => 'coughdrop'},
             :source => 'token',
             trial_end: (u.created_at + 60.days).to_i
@@ -773,7 +773,7 @@ describe Purchasing do
         expect(Stripe::Customer).to receive(:retrieve).and_return(cus).at_least(1).times
         expect(cus.subscriptions).to receive(:create){|opts|
           expect(opts).to eq({
-            :plan => 'monthly_6',
+            :plan => 'price_1NQzXZBoyWVHHEVPoaYXBeyy',
             :source => 'token',
             :metadata => {:platform_source => 'coughdrop'},
             trial_end: (u.created_at + 60.days).to_i
@@ -834,7 +834,7 @@ describe Purchasing do
         expect(Stripe::Customer).to receive(:retrieve).and_return(cus).at_least(1).times
         expect(cus.subscriptions).to receive(:create){|opts|
           expect(opts).to eq({
-            :plan => 'monthly_6',
+            :plan => 'price_1NQzXZBoyWVHHEVPoaYXBeyy',
             :source => 'token',
             :metadata => {:platform_source => 'coughdrop', 'purchased_supporters' => 3},
             trial_end: (u.created_at + 60.days).to_i
@@ -895,7 +895,7 @@ describe Purchasing do
         expect(Stripe::Customer).to receive(:retrieve).and_return(cus).at_least(1).times
         expect(cus.subscriptions).to receive(:create){|opts|
           expect(opts).to eq({
-            :plan => 'monthly_6',
+            :plan => 'price_1NQzXZBoyWVHHEVPoaYXBeyy',
             :source => 'token',
             :metadata => {:platform_source => 'coughdrop', 'purchased_supporters' => 2},
             trial_end: (u.created_at + 60.days).to_i
@@ -946,7 +946,7 @@ describe Purchasing do
         })).at_least(1).times
         expect(subs).to receive(:create){|opts|
           expect(opts).to eq({
-            :plan => 'monthly_6',
+            :plan => 'price_1NQzXZBoyWVHHEVPoaYXBeyy',
             metadata: {:platform_source => 'coughdrop'},
             :source => 'token',
             trial_end: (u.created_at + 60.days).to_i
@@ -960,7 +960,7 @@ describe Purchasing do
           'customer_id' => '12345',
           'token_summary' => 'Unknown Card',
           'purchase_amount' => 6,
-          'plan_id' => 'monthly_6',
+          'plan_id' => 'price_1NQzXZBoyWVHHEVPoaYXBeyy',
           'source' => 'new subscription',
           'source_id' => 'stripe',
           'cancel_others_on_update' => true
@@ -994,7 +994,7 @@ describe Purchasing do
         expect(Stripe::Customer).to receive(:retrieve).and_return(cus).at_least(1).times
         expect(cus.subscriptions).to receive(:create){|opts|
           expect(opts).to eq({
-            :plan => 'monthly_6',
+            :plan => 'price_1NQzXZBoyWVHHEVPoaYXBeyy',
             :metadata => {:platform_source => 'coughdrop'},
             :source => 'token',
             trial_end: (u.created_at + 60.days).to_i
@@ -1052,7 +1052,7 @@ describe Purchasing do
         }).and_return(cus)
         expect(s2).to receive(:save) do
           expect(s2.source).to eq('token')
-          expect(s2.plan).to eq('monthly_6')
+          expect(s2.plan).to eq('price_1NQzXZBoyWVHHEVPoaYXBeyy')
           expect(s2.prorate).to eq(true)
         end
         expect(Stripe::Customer).to receive(:retrieve).with({id: '12345', expand: ['subscriptions']}).and_return(cus)
@@ -1084,7 +1084,7 @@ describe Purchasing do
         expect(Stripe::Customer).to receive(:retrieve).with({id: '9876', expand: ['subscriptions']}).and_return(cus)
         expect(subs).to receive(:create){|opts|
           expect(opts).to eq({
-            plan: 'monthly_6',
+            plan: 'price_1NQzXZBoyWVHHEVPoaYXBeyy',
             metadata: {:platform_source => 'coughdrop'},
             source: 'token',
             trial_end: (u.created_at + 60.days).to_i
@@ -1098,7 +1098,7 @@ describe Purchasing do
           'purchase_amount' => 6,
           'customer_id' => '9876',
           'token_summary' => 'Unknown Card',
-          'plan_id' => 'monthly_6',
+          'plan_id' => 'price_1NQzXZBoyWVHHEVPoaYXBeyy',
           'source_id' => 'stripe',
           'source' => 'new subscription',
           'cancel_others_on_update' => true
@@ -1126,7 +1126,7 @@ describe Purchasing do
         expect(Purchasing).to receive(:cancel_other_subscriptions).with(u, '3456')
         Purchasing.purchase(u, {'id' => 'token'}, 'monthly_6')
         expect(sub1.prorate).to eq(true)
-        expect(sub1.plan).to eq('monthly_6')
+        expect(sub1.plan).to eq('price_1NQzXZBoyWVHHEVPoaYXBeyy')
         expect(sub1.source).to eq('token')
       end
 
@@ -2437,7 +2437,7 @@ describe Purchasing do
       expect(res[:success]).to eq(false)
       expect(res[:error]).to eq("150 not valid for type long_term_150")
 
-      res = Purchasing.purchase_gift({}, {'type' => 'long_term_175', 'extras' => true})
+      res = Purchasing.purchase_gift({}, {'type' => 'long_term_305', 'extras' => true})
       expect(res[:success]).to eq(false)
       expect(res[:error]).to eq("unexpected_error")
 
@@ -2445,7 +2445,7 @@ describe Purchasing do
       expect(res[:success]).to eq(false)
       expect(res[:error]).to eq("175 not valid for type long_term_175")
 
-      res = Purchasing.purchase_gift({}, {'type' => 'long_term_200', 'extras' => false, 'donate' => true})
+      res = Purchasing.purchase_gift({}, {'type' => 'long_term_295', 'extras' => false, 'donate' => true})
       expect(res[:success]).to eq(false)
       expect(res[:error]).to eq("unexpected_error")
 
@@ -2453,7 +2453,7 @@ describe Purchasing do
       expect(res[:success]).to eq(false)
       expect(res[:error]).to eq("200 not valid for type long_term_200")
 
-      res = Purchasing.purchase_gift({}, {'type' => 'long_term_225', 'extras' => true, 'donate' => true})
+      res = Purchasing.purchase_gift({}, {'type' => 'long_term_400', 'extras' => true, 'donate' => true})
       expect(res[:success]).to eq(false)
       expect(res[:error]).to eq("unexpected_error")
     end
@@ -3003,7 +3003,7 @@ describe Purchasing do
       :email => nil
     }).and_return(customer)
     expect(customer.subscriptions).to receive(:create).with({
-      :plan => 'monthly_6',
+      :plan => 'price_1NQzXZBoyWVHHEVPoaYXBeyy',
       :source => 'tokenasdfasdf',
       :metadata => {:platform_source => 'coughdrop'},
       trial_end: (u.created_at + 60.days).to_i
