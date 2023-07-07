@@ -54,8 +54,12 @@ export default modal.ModalController.extend({
       }
       var save = RSVP.resolve();
       if(!this.get('model.orphans')) {
-        board.deleteRecord();
-        var save = board.save();  
+        try {
+          board.deleteRecord();
+          save = board.save();
+        } catch(e) {
+          // TODO: if on the board page, it may barf when deleting the current board
+        }
       }
 
       var other_defers = [];

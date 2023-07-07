@@ -671,6 +671,20 @@ var persistence = EmberObject.extend({
             CoughDrop.track_error("error parsing JSON data URI", e);
             reject({error: "Error parsing JSON dataURI"});
           }
+        } else if(typeof(uri) == 'string' && uri.match(/^filesystem/) && capabilities.browser == 'Chrome') {
+          var filename = uri.split(/\//).pop();
+          capabilities.storage.get_file_url('json', filename, true).then(function(data_uri) {
+            try {
+              persistence.bg_parse_json(atob(data_uri.split(/,/)[1])).then(function(result) {
+                resolve(result || []);
+              });
+            } catch(e) {
+              console.error("json storage", e);
+              reject({error: "Error parsing JSON dataURI storage"});
+            }
+          }, function(err) {
+            reject(err);
+          });
         } else if(typeof(uri) == 'string') {
           var res = _this.ajax(uri + "?cr=" + Math.random(), {type: 'GET', dataType: 'text'});
           res.then(function(res) {
@@ -705,7 +719,7 @@ var persistence = EmberObject.extend({
     return _this.store_url(url, 'json', encryption_settings).then(function(storage) {
       var data_uri = storage.data_uri || storage;
       var result = undefined;
-      if(typeof(data_uri) == 'string' && data_uri.match(/^data:/)) {
+      var parse_uri = function(data_uri) {
         try {
           return persistence.bg_parse_json(atob(data_uri.split(/,/)[1])).then(function(result) {
             return result || [];
@@ -714,17 +728,34 @@ var persistence = EmberObject.extend({
           console.error("json storage", e);
           return RSVP.reject({error: "Error parsing JSON dataURI storage"});
         }
+      };
+      if(typeof(data_uri) == 'string' && data_uri.match(/^data:/)) {
+        return parse_uri(data_uri);
       } else if(!json && storage && storage.local_url) {
-        // Guaranteed to be a local URL, retrieve via AJAX
-        return persistence.ajax(storage.local_url, {type: 'GET', dataType: 'text'}).then(function(res) {
-          return persistence.bg_parse_json(res.text);
-        }, function(err) {
-          if(err && err.message == 'error' && err.fakeXHR && err.fakeXHR.status == 0) {
-            persistence.remove('dataCache', storage.local_url);
-            persistence.url_cache[storage.local_url] = null;
-          }
-          return RSVP.reject(err);
-        });
+        // Guaranteed to be a local URL, retrieve via AJAX if available
+        if(storage.local_filename && capabilities.browser == 'Chrome') {
+          return new RSVP.Promise(function(uri_resolve, uri_reject) {
+            capabilities.storage.get_file_url('json', storage.local_filename, true).then(function(data_uri) {
+              parse_uri(data_uri).then(function(res) {
+                uri_resolve(res);
+              }, function(err) {
+                uri_reject(err);
+              });
+            }, function(err) {
+              uri_reject(err);
+            })  
+          });
+        } else {
+          return persistence.ajax(storage.local_url, {type: 'GET', dataType: 'text'}).then(function(res) {
+            return persistence.bg_parse_json(res.text);
+          }, function(err) {
+            if(err && err.message == 'error' && err.fakeXHR && err.fakeXHR.status == 0) {
+              persistence.remove('dataCache', storage.local_url);
+              persistence.url_cache[storage.local_url] = null;
+            }
+            return RSVP.reject(err);
+          });  
+        }
       } else {
         if(data_uri || result !== undefined) {
           return result || json;

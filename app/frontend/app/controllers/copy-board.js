@@ -57,6 +57,10 @@ export default modal.ModalController.extend({
     res.push({name: i18n.t('unspecified', "Unspecified"), id: ''});
     return res;
   }),
+  allow_new_user: computed('model.board.copying_state.limited', 'model.board.user_name', 'app_state.sessionUser.user_name', function() {
+    return this.get('model.board.copying_state.limited') || 
+        (app_state.get('sessionUser.user_name') && app_state.get('sessionUser.user_name') == this.get('model.board.user_name'));
+  }),
   symbol_libraries: computed('current_user', function() {
     var u = this.get('current_user');
     var list = [];

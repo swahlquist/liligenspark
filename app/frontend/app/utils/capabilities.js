@@ -1403,14 +1403,14 @@ var capabilities;
           }
           return fixed_url;
         },
-        get_file_url: function(dirname, filename) {
+        get_file_url: function(dirname, filename, force_uri) {
           // uses native calls
           var promise = capabilities.mini_promise();
           capabilities.storage.assert_directory(dirname, filename).then(function(dir) {
             dir.getFile(filename, {create: false}, function(file) {
               var url = file.toURL();
               var app_option = false;
-              if(app_option && dirname == 'image' && capabilities.system == 'iOS' && capabilities.installed_app) {
+              if(force_uri == true || (app_option && dirname == 'image' && capabilities.system == 'iOS' && capabilities.installed_app)) {
                 // I think this is too slow to be useful
                 file.file(function(file) {
                   var reader = new FileReader();
