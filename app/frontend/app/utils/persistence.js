@@ -632,26 +632,38 @@ var persistence = EmberObject.extend({
           '} catch(e) { postMessage({id: message.data.id, error: true}); }\n' + 
         '};'
         ], { type: "text/javascript" });
-      var workerUrl = URL.createObjectURL(blob);
+      var workerUrl = window.URL.createObjectURL(blob);
   
-      var w = new Worker(workerUrl/*"worker.js"*/);
-      w.onmessage = function(message) {
-        var cb = persistence.bg_parser.callbacks[message.data.id];
-        if(cb) {
-          if(message.data.error) {
-            cb.reject({error: 'error parsing JSON on web worker'});
-          } else {
-            cb.resolve(message.data.data);
-          }  
-        }
-      };
-      persistence.bg_parser.worker = w;
+      try {
+        var w = new Worker(workerUrl/*"worker.js"*/);
+        w.onmessage = function(message) {
+          var cb = persistence.bg_parser.callbacks[message.data.id];
+          if(cb) {
+            if(message.data.error) {
+              cb.reject({error: 'error parsing JSON on web worker'});
+            } else {
+              cb.resolve(message.data.data);
+            }  
+          }
+        };
+        // TODO: can't create workers this way on local server (installed app)
+        persistence.bg_parser.worker = w;
+      } catch(e) { }
     }
     var defer = RSVP.defer();
     var message_id = Math.random() + "." + (new Date()).getTime();
     persistence.bg_parser.callbacks[message_id] = defer;
-    persistence.bg_parser.worker.postMessage({id: message_id, str: str});
-    return defer.promise;
+    if(persistence.bg_parser.worker && persistence.bg_parser.worker.postMessage) {
+      persistence.bg_parser.worker.postMessage({id: message_id, str: str});
+      return defer.promise;  
+    } else {
+      try {
+        var json = JSON.parse(str);
+        return RSVP.resolve(json)
+      } catch(e) {
+        return RSVP.reject(e);
+      }
+    }
   },
   find_json: function(url) {
     // TODO: replace JSON.parse with webworker if too big:
