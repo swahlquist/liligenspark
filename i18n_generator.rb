@@ -1,7 +1,12 @@
 require 'json'
-# To generate translations for a language:
+# To generate a new english strings file:
+# ruby i18n_generator.rb --generate  
+# To merge any new strings from the english file into other locales:
+# ruby i18n_generator.rb --merge
+# To generate translations for a language, open a rails console:
 # nopes = WordData.translate_locale_batch(locale, [])
 # (for repeat calls, pass nopes as 2nd arg to prevent repeating failed attempts)
+
 files = Dir.glob('app/frontend/app/**/*.js')
 strings = {}
 dups = 0

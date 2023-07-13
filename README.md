@@ -43,7 +43,14 @@ embarrass me too much -- ...I mean, hopefully you'll be able to pick up pretty q
 the basic makeup of the app. These notes are not comprehensive, Feel free to help
 me flesh them out if that's your thing.
 
-The frontend and backend communicate via the open and completely-undocumented API.
+The frontend and backend communicate via the open and completely-undocumented API (sorry).
+
+#### Development Considerations
+
+CoughDrop supports multiple locales, so when developing anythinng on the frontend, whether
+in templates or modals and alerts, you will need to use the internationalization libraries
+in order to support locales. You can find examples of these throughought the code, using
+commands such as `i18n.t('key', "string")` or `{{t "this is some test" key='key'}}`. Instructions for generating and processing string files is located in `/i18n_generator.rb`.
 
 ### Contribution Ideas
 
@@ -182,6 +189,7 @@ rake generate_log_summaries (run hourly)
 rake push_remote_logs (run hourly)
 rake transcode_errored_records (run daily)
 ```
+
 
 ### License
 
