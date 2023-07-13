@@ -48,7 +48,7 @@ gem 'silencer'
 gem 'go_secure'
 gem 'permissable-coughdrop'
 gem 'boy_band'
-gem 'ttfunk', '1.5.1'
+gem 'ttfunk', '1.7'
 gem 'ruby-saml'
 gem 'rotp'
 
