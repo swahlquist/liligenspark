@@ -930,10 +930,14 @@ document.addEventListener("deviceready", function() {
       product.finish();
     });
     store.when("product").finished(function(product) {
-      app_state.get('sessionUser').reload();
-      if(store.defer) {
-        store.defer.resolve({id: 'ios_iap'});
-        store.defer = null;
+      if(app_state.get('sessionUser')) {
+        app_state.get('sessionUser').reload();
+        if(store.defer) {
+          store.defer.resolve({id: 'ios_iap'});
+          store.defer = null;
+        }  
+      } else {
+        // TODO: wait until user is available?
       }
     });
     capabilities.bundle_id().then(function(res) {

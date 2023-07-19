@@ -20,7 +20,7 @@ export default Controller.extend({
     }
     res.set('user_type', 'communicator');
     res.set('subscription_type', 'long_term_gift');
-    res.set('subscription_amount', 'long_term_200');
+    res.set('subscription_amount', 'long_term_295');
     res.set('included_supporters', 0);
     var _this = this;
     runLater(function() {
