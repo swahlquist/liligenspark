@@ -225,13 +225,16 @@ $(document).on('mousedown touchstart', function(event) {
     if(buttonTracker.gamepadupdate) {
       event.preventDefault();
     }
-    buttonTracker.direction_event(event);
   } else if((event.keyCode == 77 || event.code == 'KeyM') && (event.altKey || event.ctrlKey)) {
     console.log("Keyboard shortcut for toggle modeling");
     app_state.toggle_modeling_if_possible();
     event.preventDefault();
   }
 }).on('keydown', function(event) {
+  if([37, 38, 39, 40].indexOf(event.keyCode) != -1 || ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].indexOf(event.code) != -1) {
+    buttonTracker.direction_event(event);
+  }
+}).on('keyup', function(event) {
   if([37, 38, 39, 40].indexOf(event.keyCode) != -1 || ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].indexOf(event.code) != -1) {
     buttonTracker.direction_event(event);
   }
@@ -1626,11 +1629,15 @@ var buttonTracker = EmberObject.extend({
     var elem_wrap = buttonTracker.find_selectable_under_event(event, true, false);
     if(elem_wrap && buttonTracker.dwell_ignore == elem_wrap.dom) {
       buttonTracker.dwell_ignore = null;
-      console.log("linger waiting because on an ignore elem");
+      console.log("linger waiting because on an ignored elem");
       return;
     }
     var arrow_or_head_cursor = buttonTracker.check('dwell_type') == 'arrow_dwell' || buttonTracker.check('dwell_type') == 'head';
     var cursor_expected = arrow_or_head_cursor || buttonTracker.check('dwell_icon');
+    $(".touched").removeClass('touched');
+    if(elem_wrap) { 
+      elem_wrap.addClass('touched'); 
+    }
     if(!buttonTracker.dwell_elem) {
       var elem = document.createElement('div');
       elem.style.pointerEvents = 'none';

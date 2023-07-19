@@ -739,11 +739,21 @@ footer .wide_links {
   &#button_list.paired {
     padding-left: 55px;
   }
+  &#button_list.touched {
+    background: #e6e6e6;
+    border-width: 2px;
+  }
+
   &.high_contrast {
     .history_button img:not(.hc) {
       filter: contrast(4.0) saturate(500);      
     }
   }
+}
+button.btn-default.touched {
+  color: #333;
+  background-color: #e6e6e6;
+  border-color: #adadad;  
 }
 .low_for_high_contrast #button_list.high_contrast .history_button img:not(.hc) {
   filter: contrast(4.0) saturate(100);      

@@ -226,7 +226,9 @@ export default Component.extend({
         if(_this.get('preferences.device.dwell_selection') == 'button') {
           var select_code = _this.get('preferences.device.scanning_select_keycode');
           if((e.keyCode && e.keyCode == select_code) || (e.code && e.code == select_code)) {
-            buttonTracker.gamepadupdate('select', e);
+            if(buttonTracker.gamepadupdate) {
+              buttonTracker.gamepadupdate('select', e);
+            }
           }
         }
       };
@@ -268,9 +270,13 @@ export default Component.extend({
           });
         }
       };
-      if(capabilities.head_tracking.available || window.weblinger) {
-        var tilt_factor = capabilities.tracking.tilt_factor(_this.get('preferences.device.dwell_tilt_sensitivity'));
-        capabilities.head_tracking.listen({tilt: tilt_factor});
+      _this.set('gp_update', buttonTracker.gamepadupdate);
+
+      if(_this.get('preferences.device.dwell_type') == 'head' || _this.get('preferences.device.dwell_selection') == 'expression') {
+        if(capabilities.head_tracking.available || window.weblinger) {
+          var tilt_factor = capabilities.tracking.tilt_factor(_this.get('preferences.device.dwell_tilt_sensitivity'));
+          capabilities.head_tracking.listen({tilt: tilt_factor});
+        }  
       }
 
       buttonTracker.gamepadupdate.speed = _this.get('preferences.device.dwell_arrow_speed');
@@ -345,6 +351,12 @@ export default Component.extend({
     if(this.get('key_listener')) {
       $(document).off('keydown', this.get('key_listener'));
       this.set('key_listener', null);
+    }
+    if(this.get('gp_update')) {
+      if(buttonTracker.gamepadupdate == this.get('gp_update')) {
+        buttonTracker.gamepadupdate = null;
+      }
+      this.set('gp_update', null);
     }
     if(this.get('gampead_listener')) {
       this.set('gamepad_listener', null);
