@@ -90,6 +90,7 @@ CoughDrop.Image = DS.Model.extend({
     var preferred_symbols = this.get('app_state.referenced_user.preferences.preferred_symbols') || 'original';
     var url = this.get('url');
     if(this.get('alternates') && !skip_alternates) {
+      if(!this.get('alternates').find) { debugger }
       var alternate = (this.get('alternates') || []).find(function(a) { return a.library == preferred_symbols; });
       if(alternate) { url = alternate.url; }
     }

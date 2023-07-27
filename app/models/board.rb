@@ -1715,7 +1715,7 @@ class Board < ActiveRecord::Base
     ButtonImage.cached_copy_urls(bis, user, nil, protected_sources)
     # JsonApi::Image.as_json(i, :original_and_fallback => true).slice('id', 'url', 'fallback_url', 'protected_source'))
     pref = user && user.settings['preferences']['preferred_symbols']
-    include_other_sources = user && user.supporter_role?
+    include_other_sources = user && (user.supporter_role? || (user.settings['preferences']['preferred_symbols'] || 'original') != 'original')
     res['images'] = bis.map{|i| JsonApi::Image.as_json(i, :preferred_source => pref, :include_other_sources => include_other_sources, :allowed_sources => protected_sources) }
     if (self.buttons || []).detect{|b| b && b['sound_id']}
       res['sounds'] = self.known_button_sounds.map{|s| JsonApi::Sound.as_json(s) }#.slice('id', 'url') }

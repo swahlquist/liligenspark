@@ -1268,7 +1268,7 @@ class User < ActiveRecord::Base
         'id' => "#{original.global_id(true)}-#{self.global_id}",
         'key' => "#{self.user_name}/my:#{original.key.sub(/\//, ':')}"
       }
-      ue.save  
+      ue.save
       new_home = Board.find_by_global_id("#{original.global_id}-#{self.global_id}")
     else
       new_home = original.copy_for(self)

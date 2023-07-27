@@ -476,16 +476,16 @@ var Button = EmberObject.extend({
       if(_this.get('no_lookups')) {
         return RSVP.reject('no image lookups');
       } else {
-        // TODO: if in Speak Mode, this shouldn't hold up the rendering
-        // process, so if it has to make a remote call then consider
-        // killing it or coming back to it somehow. Same applies for Sound records.
         if(!(_this.image_id || '').match(/^tmp/) && preference != 'remote') {
           console.error("had to revert to image record lookup");
         }
         var find = CoughDrop.store.findRecord('image', _this.image_id).then(function(image) {
-          // There was a runLater of 100ms here, I have no idea why but
-          // it seemed like a bad idea so I removed it.
           _this.set('image', image);
+          if(image.get('incomplete')) {
+            image.reload().then(function() {
+              check_image(image);
+            }, function(err) { });
+          }
           return check_image(image);
         });
         if(preference == 'local') {
