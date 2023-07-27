@@ -700,6 +700,49 @@ describe Api::BoardsController, :type => :controller do
       expect(s2['name']).to eq('cool board 2')
     end
 
+    it "should include roots that have been set as home, even if no longer home" do
+      token_user
+      ub = Board.create(:user => @user)
+      u = User.create
+      b = Board.create(:user => u, public: true)
+
+      b2 = Board.create(user: u, public: true)
+      @user.copy_to_home_board({'id' => b2.global_id, 'key' => b2.key, 'shallow' => true}, u.global_id, nil)
+      @user.reload
+      expect(@user.settings['preferences']['home_board']).to eq({
+        'id' => "#{b2.global_id}-#{@user.global_id}",
+        'key' => "#{@user.user_name}/my:#{b2.key.sub(/\//, ':')}",
+        'locale' => 'en'
+      })
+      ue = @user.user_extra
+      expect(ue).to_not eq(nil)
+      ue.reload
+      expect(ue.settings['replaced_roots']).to_not eq(nil)
+      
+      get :index, params: {:user_id => @user.global_id}
+      json = assert_success_json
+      expect(json['board'].length).to eq(2)
+      expect(json['board'].map{|b| b['id'] }.sort).to eq([ub.global_id, "#{b2.global_id}-#{@user.global_id}"])
+      expect(json['board'][0]['id']).to eq(ub.global_id)
+      expect(json['board'][1]['id']).to eq("#{b2.global_id}-#{@user.global_id}")
+      s1 = json['board'].detect{|b| b['id'] == "#{b2.global_id}-#{@user.global_id}"}
+      expect(s1['copy_id']).to eq(nil)
+      expect(s1['shallow_clone']).to eq(true)
+
+      @user.settings['preferences']['home_board'] = nil
+      @user.save
+
+      get :index, params: {:user_id => @user.global_id}
+      json = assert_success_json
+      expect(json['board'].length).to eq(2)
+      expect(json['board'].map{|b| b['id'] }.sort).to eq([ub.global_id, "#{b2.global_id}-#{@user.global_id}"])
+      expect(json['board'][0]['id']).to eq(ub.global_id)
+      expect(json['board'][1]['id']).to eq("#{b2.global_id}-#{@user.global_id}")
+      s1 = json['board'].detect{|b| b['id'] == "#{b2.global_id}-#{@user.global_id}"}
+      expect(s1['copy_id']).to eq(nil)
+      expect(s1['shallow_clone']).to eq(true)
+    end
+
     it "should include edited shallow clone roots in a way that edited shallow clone sub-boards can be matched to them" do
       token_user
       ub = Board.create(:user => @user)

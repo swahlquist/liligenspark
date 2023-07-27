@@ -1261,6 +1261,14 @@ class User < ActiveRecord::Base
         end
         self.update_available_boards
       end
+      # Shallow clone home boards should be remembered even if no longer set as home
+      ue = UserExtra.find_or_create_by(user: self)
+      ue.settings['replaced_roots'] ||= {}
+      ue.settings['replaced_roots'][original.global_id(true)] = {
+        'id' => "#{original.global_id(true)}-#{self.global_id}",
+        'key' => "#{self.user_name}/my:#{original.key.sub(/\//, ':')}"
+      }
+      ue.save  
       new_home = Board.find_by_global_id("#{original.global_id}-#{self.global_id}")
     else
       new_home = original.copy_for(self)
