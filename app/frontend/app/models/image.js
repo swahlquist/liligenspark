@@ -89,8 +89,7 @@ CoughDrop.Image = DS.Model.extend({
     CoughDrop.Image.unskins = CoughDrop.Image.unskins || {};
     var preferred_symbols = this.get('app_state.referenced_user.preferences.preferred_symbols') || 'original';
     var url = this.get('url');
-    if(this.get('alternates') && !skip_alternates) {
-      if(!this.get('alternates').find) { console.error("bad alts", this.get('alternates')) }
+    if(this.get('alternates') && this.get('alternates').find && !skip_alternates) {
       var alternate = (this.get('alternates') || []).find(function(a) { return a.library == preferred_symbols; });
       if(alternate) { url = alternate.url; }
     }
