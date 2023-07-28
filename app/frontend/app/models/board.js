@@ -1410,7 +1410,7 @@ CoughDrop.Board = DS.Model.extend({
     }
 
     var _this = this;
-    var preferred_symbols = app_state.get('referenced_user.preferences.preferred_symbols') || 'original';
+    var preferred_symbols = size.symbols || app_state.get('referenced_user.preferences.preferred_symbols') || 'original';
 
     var button_html = function(button, pos) {
       var res = "";
@@ -1551,6 +1551,7 @@ CoughDrop.Board = DS.Model.extend({
       inflection_prefix: app_state.get('inflection_prefix'),
       inflection_shift: app_state.get('inflection_shift'),
       skin: app_state.get('referenced_user.preferences.skin'),
+      symbols: preferred_symbols,
       label_locale: size.label_locale,
       display_level: size.display_level,
       revision: _this.get('current_revision'),
