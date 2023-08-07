@@ -22,8 +22,8 @@ when 'development', 'test'
   Array.new(2){YAML::load_file(File.open("config/database.yml"))[Rails.env]}
 else
   # staging, production, etc with Heroku config vars for follower DBs
-  master_url = ENV['DATABASE_URL']
-  slave_keys = ENV.keys.select{|k| k =~ /HEROKU_POSTGRESQL_.*_URL/}
+  master_url = ENV['DATABASE_URL'] || ENV['LEADER_POSTGRES_URL']
+  slave_keys = ENV.keys.select{|k| k =~ /HEROKU_POSTGRESQL_.*_URL/ || k =~ /FOLLOWER_POSTGRESQL_.*_URL/}
   slave_keys.delete_if{ |k| ENV[k] == master_url }
 
   slave_keys.map do |env_key|

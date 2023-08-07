@@ -18,6 +18,18 @@ test:
 production:
   adapter: postgresql
   encoding: unicode
-  url: <%= ENV['DATABASE_URL'] %>
+  url: <%= ENV['DATABASE_URL'] || ENV['LEADER_POSTGRES_URL'] %>
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   timeout: 5000
+  # primary:
+  #   adapter: postgresql
+  #   encoding: unicode
+  #   url: <%= ENV['LEADER_POSTGRES_URL'] %>
+  #   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  #   timeout: 5000
+  # primary_replica:
+  #   adapter: postgresql
+  #   encoding: unicode
+  #   url: <%= ENV['FOLLOWER_POSTGRESQL_URL'] %>
+  #   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  #   timeout: 5000
