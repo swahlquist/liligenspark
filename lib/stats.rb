@@ -77,7 +77,7 @@ module Stats
     res[:cached] = true
     res
   end
-  
+
   # TODO: this doesn't account for timezones at all. wah waaaaah.
   def self.daily_use(user_id, options)
     sessions = find_sessions(user_id, options)
