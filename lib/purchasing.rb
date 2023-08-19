@@ -1250,7 +1250,7 @@ module Purchasing
       
       if sub && sub['status'] != 'canceled' && sub['status'] != 'past_due'
         begin
-          sub.delete
+          sub.cancel
           user.log_subscription_event({:log => 'subscription canceling success', id: sub['id'], reason: subscription_id})
           return true
         rescue => e
@@ -1308,7 +1308,7 @@ module Purchasing
             sub['metadata'] ||= {}
             sub['metadata']['cancel_reason'] = except_subscription_id
             sub.save
-            sub.delete
+            sub.cancel
             user.log_subscription_event({:log => 'subscription canceled', id: sub['id'], reason: except_subscription_id}) if user
           rescue => e
             if e.to_s.match(/Status 404/)
