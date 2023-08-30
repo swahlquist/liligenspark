@@ -49,7 +49,9 @@ export default {
             error();
           });
         } else {
-          persistence.ajax("/" + path, {type: 'GET'}).then(function(res) {
+          var ajax_path = "/" + path;
+          if(capabilities.installed_app) { ajax_path = "." + ajax_path; }
+          persistence.ajax(ajax_path, {type: 'GET'}).then(function(res) {
             i18n.langs[lang] = res;
             success();
           }, function(err) {
