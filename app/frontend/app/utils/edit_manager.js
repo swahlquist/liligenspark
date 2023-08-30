@@ -2016,6 +2016,13 @@ var editManager = EmberObject.extend({
       save.then(function(board) {
         board.set('should_reload', true);
         var done_callback = function(result) {
+          var finalize = function(success, result) {
+            board.reload(true).then(function() {
+              success ? resolve(result) : reject(result);
+            }, function(err) {
+              success ? resolve(result) : reject(result);              
+            });
+          };
           var affected_board_ids = result && result.affected_board_ids;
           var new_board_ids = result && result.new_board_ids;
           board.set('new_board_ids', new_board_ids);
@@ -2029,9 +2036,9 @@ var editManager = EmberObject.extend({
               user.set('preferences.home_board.level', level);
             }
             user.save().then(function() {
-              resolve(board);
+              finalize(true, board);
             }, function() {
-              reject(i18n.t('user_home_failed', "Failed to update user's home board"));
+              finalize(false, i18n.t('user_home_failed', "Failed to update user's home board"));
             });
           } else if(decision && decision.match(/as_sidebar$/)) {
             var list = user.get('preferences.sidebar_boards');
@@ -2045,12 +2052,12 @@ var editManager = EmberObject.extend({
             }
             user.set('preferences.sidebar_boards', list);
             user.save().then(function() {
-              resolve(board);
+              finalize(true, board);
             }, function() {
-              reject(i18n.t('user_sidebar_failed', "Failed to update user's sidebar"));
+              finalize(false, i18n.t('user_sidebar_failed', "Failed to update user's sidebar"));
             });
           } else {
-            resolve(board);
+            finalize(true, board);
           }
           stashes.persist('last_index_browse', 'personal');
           old_board.reload_including_all_downstream(affected_board_ids);
