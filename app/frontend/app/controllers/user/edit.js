@@ -148,6 +148,10 @@ export default Controller.extend({
         modal.error(i18n.t('valet_password_required', "Valet Password must be set to enable valet login"));
         return;
       }
+      if(user.get('supporter_role') && user.get('valet_login')) {
+        user.set('valet_long_term', true);
+        user.set('valet_prevent_disable', true);
+      }
       if(this.get('allow_external_device')) {
         var str = this.get('external_device');
         var device = {device_name: this.get('external_device')};

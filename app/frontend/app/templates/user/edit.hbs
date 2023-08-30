@@ -226,15 +226,60 @@
       </div>
     {{/if}}
   {{/if}}
-  {{#unless app_state.supporter_role}}
+  {{#if model.supporter_role}}
     {{#if model.permissions.delete}}
       <div class="form-group">
-        <label for="valet_login" class="col-sm-3 control-label">{{t "Valet Login" key='valet_login'}}</label>
+        <label for="valet_login" class="col-sm-3 control-label">{{t "Classroom Login" key='classroom_login'}}</label>
         <div class="col-sm-5">
           <div class="checkbox big_checkbox">
             <label>
               {{input type="checkbox" checked=model.valet_login id="valet_login"}}
-              {{t "Enable valet login for modeling-only access" key='enabled_valed_login'}}
+              <p>{{t "Classroom login can be used in a classroom setting to allow speak-mode-only access on multiple devices at the same time in the same classroom" key='valet_as_classroom'}}</p>
+            </label>
+          </div>
+        </div>
+      </div>
+      {{#if model.valet_login}}
+        <div class='form-group'>
+          <div class='col-sm-6 col-sm-offset-3'>
+            <p class='form-control-static'><em>
+              {{t "Classroom login allows you to share an alternative username and password that allows speak-mode-only access to the account across multiple devices, such as in a classroom. When someone uses your classroom login, that device will have access to boards and user preferences only, similar to a modeling-only account." key='classroom_login_explainer'}}
+            </em></p>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="valet_user_name" class="col-sm-3 control-label">{{t "Classroom User Name" key='classroom_user_name'}}</label>
+          <div class="col-sm-5">
+            <p class="form-control-static">
+              {{valet_user_name}}
+            </p>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-3 control-label" for='valet_password'>{{t "Classroom Password" key='classroom_password'}}</label>
+          <div class="col-sm-3">
+            {{#if model.valet_password_set}}
+              {{input type="password" value=model.valet_password class="form-control" id="valet_password" placeholder="enter to change"}}
+            {{else}}
+              {{input type="password" value=model.valet_password class="form-control" id="valet_password" placeholder="required"}}
+            {{/if}}
+          </div>
+          <div class="col-sm-2">
+            <button type='button' class='btn btn-default' {{action 'generate_qr'}}>{{t "Generate QR Code" key='generate_qr_code'}}</button>
+          </div>
+        </div>
+      {{/if}}
+    {{/if}}
+  {{else}}
+    {{#if model.permissions.delete}}
+      <div class="form-group">
+        <label for="valet_login" class="col-sm-3 control-label">{{t "Valet/Classroom Login" key='valet_login'}}</label>
+        <div class="col-sm-5">
+          <div class="checkbox big_checkbox">
+            <label>
+              {{input type="checkbox" checked=model.valet_login id="valet_login"}}
+              <p>{{t "Enable valet login for modeling-only access, or for shared account access within a single classroom" key='enabled_valed_login'}}</p>
+              <p>{{t "Additionally, a valet login can be used in a classroom setting to allow speak-mode-only access on multiple devices at the same time in the same classroom" key='valet_as_classroom'}}</p>
               {{#if model.valet_disabled}}
                 <br/><em class='text-danger'>{{t "(valet login was automatically disabled after being used)" key='valet_login_disabled'}}</em>
               {{/if}}
@@ -297,7 +342,7 @@
 
       {{/if}}
     {{/if}}
-  {{/unless}}
+  {{/if}}
   <div class="form-group">
     <label for="description" class="col-sm-3 control-label">{{t "One-Liner" key='one_liner'}}</label>
     <div class="col-sm-5">
