@@ -22,7 +22,8 @@ module JsonApi::Image
       else
         used_library = image.image_library
         pref = args[:preferred_source]
-        if used_library == pref
+        pref = nil if pref == 'default' || pref == 'original'
+        if used_library == pref || !pref
         elsif image.settings['library_alternates'] && image.settings['library_alternates'][pref]
           used_library = pref
           settings = image.settings['library_alternates'][pref]
@@ -34,7 +35,6 @@ module JsonApi::Image
           settings = image.settings['library_alternates']['twemoji']
         end
       end
-      pref = nil if pref == 'default' || pref == 'original'
     end
   
     if settings && protected_source && args[:original_and_fallback]
@@ -61,15 +61,19 @@ module JsonApi::Image
     if args[:include_other_sources] || (json['permissions'] || {})['edit']
       json['alternates'] = []
       libs = {}.merge(image.settings['library_alternates'] || {})
-      if used_library != 'original'
+      best_url = image.best_url
+      libs.delete['original'] if libs['original'] && libs['original']['url'] != best_url
+      il = image.image_library
+      if used_library != 'original' || !libs['original'] || !libs[il]
+        il = image.image_library
         lib = {
-          'library' => image.image_library,
-          'url' => image.best_url,
+          'library' => il,
+          'url' => best_url,
           'license' => OBF::Utils.parse_license(image.settings['license']),
           'content_type' => image.settings['content_type']
         }
         libs['original'] ||= lib
-        libs[image.image_library] ||= lib
+        libs[il] ||= lib
       end
 
       libs.each do |lib, alternate|

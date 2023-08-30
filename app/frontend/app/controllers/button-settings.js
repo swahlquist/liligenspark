@@ -135,6 +135,14 @@ export default modal.ModalController.extend({
     });
     this.set_inflection_hashes();
   },
+  update_loaded_licenses: observer('model.image.license', 'model.sound.license', function() {
+    if(!this.get('original_image_license.type') && this.get('model.image.license.type')) {
+      this.set('original_image_license', this.get('model.image.license'))
+    }
+    if(!this.get('original_sound_license.type') && this.get('model.sound.license.type')) {
+      this.set('original_sound_license', this.get('model.sound.license'))
+    }
+  }),
   closing: function() {
     stashes.set('last_board_search_type', this.get('board_search_type'));
 //    editManager.done_editing_image();

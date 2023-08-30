@@ -172,6 +172,7 @@ class ButtonImage < ActiveRecord::Base
       alt_hash = {}
       params['alternates'].each do |alt|
         lib = alt['library']
+        next if lib == 'original'
         alt.delete('library')
         alt_hash[lib] = alt
       end

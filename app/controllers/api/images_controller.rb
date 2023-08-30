@@ -22,7 +22,19 @@ class Api::ImagesController < ApplicationController
     image = nil if params['id'].match(/^tmpimg/)
     return unless exists?(image)
     return unless allowed?(image, 'view')
-    render json: JsonApi::Image.as_json(image, :wrapper => true, :permissions => @api_user).to_json
+    args = {:wrapper => true, :permissions => @api_user}
+
+    # It's important that this match cached data, but edit mode will possibly
+    # mismatch as a result, so make sure to check for original when editing
+    pref = @api_user && @api_user.settings['preferences']['preferred_symbols']
+    args[:preferred_source] = pref if pref
+
+    if @api_user && (@api_user.supporter_role? || (@api_user.settings['preferences']['preferred_symbols'] || 'original') != 'original')
+      args[:include_other_sources] = true
+      args[:allowed_sources] = (@api_user && @api_user.enabled_protected_sources(true)) || []
+    else
+    end
+    render json: JsonApi::Image.as_json(image, args).to_json
   end
   
   def update

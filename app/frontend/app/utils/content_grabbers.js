@@ -1113,12 +1113,17 @@ var pictureGrabber = EmberObject.extend({
       emberSet(license, 'type', license.type || original.type);
       if(license.type != original.type || license.author_name != original.author_name || license.author_url != original.author_url) {
         this.controller.set('model.pending_image', false);
-        this.controller.get('model.image').save().then(function() {
+        if(this.controller.get('model.image.permissions.edit')) {
+          this.controller.get('model.image').save().then(function() {
+            _this.controller.set('model.pending_image', false);
+          }, function() {
+            alert(i18n.t('saving_failed', "Saving image settings failed!"));
+            _this.controller.set('model.pending_image', false);
+          });  
+        } else {
+          console.error("tried to save uneditable image")
           _this.controller.set('model.pending_image', false);
-        }, function() {
-          alert(i18n.t('saving_failed', "Saving image settings failed!"));
-          _this.controller.set('model.pending_image', false);
-        });
+        }
       }
     }
   },

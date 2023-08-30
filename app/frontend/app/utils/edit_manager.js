@@ -1601,6 +1601,7 @@ var editManager = EmberObject.extend({
     var sound_urls = board.get('sound_urls');
     prefetch.then(function() {
       CoughDrop.log.track('creating buttons');
+      preferred_symbols = app_state.get('referenced_user.preferences.preferred_symbols') || 'original';
       for(var idx = 0; idx < grid.rows; idx++) {
         var row = [];
         for(var jdx = 0; jdx < grid.columns; jdx++) {

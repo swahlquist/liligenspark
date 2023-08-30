@@ -89,7 +89,10 @@ CoughDrop.Image = DS.Model.extend({
     CoughDrop.Image.unskins = CoughDrop.Image.unskins || {};
     var preferred_symbols = this.get('app_state.referenced_user.preferences.preferred_symbols') || 'original';
     var url = this.get('url');
-    if(this.get('alternates') && this.get('alternates').find && !skip_alternates) {
+    if(skip_alternates) {
+      preferred_symbols = 'original';
+    }
+    if(this.get('alternates') && this.get('alternates').find) {
       var alternate = (this.get('alternates') || []).find(function(a) { return a.library == preferred_symbols; });
       if(alternate) { url = alternate.url; }
     }
@@ -101,33 +104,43 @@ CoughDrop.Image = DS.Model.extend({
   personalized_url_without_preferred_symbols: computed('url', 'app_state.currentUser.user_token', 'app_state.referenced_user.preferences.skin', 'app_state.referenced_user.preferences.preferred_symbols', 'app_state.edit_mode', function() {
     return this.personalizing_url(true);
   }),
-  best_url: computed('personalized_url', 'data_url', function() {
+  best_url: computed('personalized_url', 'app_state.referenced_user.preferences.preferred_symbols', 'data_url', function() {
     return this.get('data_url') || this.get('personalized_url') || "";
   }),
-  best_url_without_preferred_symbols: computed('personalized_url', 'data_url', function() {
-    return this.get('data_url') || this.personalizing_url(true) || "";
+  best_url_without_preferred_symbols: computed('personalized_url', 'data_url', 'data_url_no_sym', 'app_state.referenced_user.preferences.preferred_symbols', function() {
+    return this.get('data_url_no_sym') || this.personalizing_url(true) || this.get('data_url') || "";
   }),
   checkForDataURL: function() {
     this.set('checked_for_data_url', true);
     var _this = this;
+    var found_one = function(data_uri) {
+      _this.set('data_url', data_uri);
+      if(data_uri && data_uri.match(/^file/)) {
+        var img = new Image();
+        img.src = data_uri;
+      }
+      return _this;
+    };
+    if(!this.get('data_url_no_sym') && CoughDrop.remote_url(this.get('personalized_url_without_preferred_symbols'))) {
+      return persistence.find_url(this.get('personalized_url_without_preferred_symbols'), 'image').then(function(data_uri) {
+        _this.set('data_url_no_sym', data_uri);
+      });
+    }
     if(!this.get('data_url') && CoughDrop.remote_url(this.get('personalized_url'))) {
       return persistence.find_url(this.get('personalized_url'), 'image').then(function(data_uri) {
-        _this.set('data_url', data_uri);
-        if(data_uri && data_uri.match(/^file/)) {
-          var img = new Image();
-          img.src = data_uri;
-        }
-        return _this;
+        // Found as expected!
+        return found_one(data_uri);
       }, function(err) {
         var unvarianted_image_url = _this.get('personalized_url') && _this.get('personalized_url').replace(/\.variant-.+\.(png|svg)$/, '');
         if(unvarianted_image_url != _this.get('personalized_url')) {
           return persistence.find_url(unvarianted_image_url, 'image').then(function(data_uri) {
-            _this.set('data_url', data_uri);
-            if(data_uri && data_uri.match(/^file/)) {
-              var img = new Image();
-              img.src = data_uri;
-            }
-            return _this;
+            // Found, but without the correct variant
+            return found_one(data_uri);
+          }, function(err) {
+            return persistence.find_url(this.get('personalized_url_without_preferred_symbols'), 'image').then(function(data_uri) {
+              // Found but without the correct symbol preference
+              return found_one(data_uri);
+            });
           });    
         } else {
           return RSVP.reject(err);
@@ -139,7 +152,7 @@ CoughDrop.Image = DS.Model.extend({
     }
     return RSVP.reject('no image data url');
   },
-  checkForDataURLOnChange: observer('personalized_url', function() {
+  checkForDataURLOnChange: observer('personalized_url', 'personalized_url_without_preferred_symbols', function() {
     this.checkForDataURL().then(null, function() { });
   })
 });
