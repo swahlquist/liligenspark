@@ -48,7 +48,7 @@ class SubscriptionMailer < ActionMailer::Base
   def unsubscribe_reason(user_id, reason=nil)
     @user = User.find_by_global_id(user_id)
     @reason = @user.settings['subscription']['unsubscribe_reason'] || reason
-    recipient = JsonApi::Json.current_domain['settings']['admin_email'] || ENV['SYSTEM_ERROR_EMAIL']
+    recipient = JsonApi::Json.current_domain['settings']['admin_email'] || ENV['SYSTEM_UNSUBSCRIBE_EMAIL'] || ENV['SYSTEM_ERROR_EMAIL']
     mail(to: recipient, subject: "#{app_name} - User Unsubscribed")
   end
   
