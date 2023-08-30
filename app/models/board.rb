@@ -994,6 +994,7 @@ class Board < ActiveRecord::Base
         bi.id = hash[:id]
         bi.nonce = hash[:nonce]
         bi.user_id = self.user_id
+        bi.board_id = self.id
         bi.settings = {'avatar' => false, 'badge' => false, 'protected' => false, 'pending' => false}
         bi.url = url
         bi.save
