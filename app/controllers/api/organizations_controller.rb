@@ -695,6 +695,9 @@ class Api::OrganizationsController < ApplicationController
       params['organization'].delete('inactivity_timeout')
       params['organization'].delete('premium')
     end
+    if params['organization'] && !org.allows?(@api_user, 'delete')
+      params['organization'].delete('parent_org') 
+    end
     if org.process(params['organization'], {'updater' => @api_user})
       render json: JsonApi::Organization.as_json(org, :wrapper => true, :permissions => @api_user).to_json
     else

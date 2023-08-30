@@ -52,6 +52,7 @@ CoughDrop.Organization = DS.Model.extend({
   image_url: DS.attr('string'),
   created: DS.attr('date'),
   children_orgs: DS.attr('raw'),
+  parent_org: DS.attr('raw'),
   management_action: DS.attr('string'),
   assignment_action: DS.attr('string'),
   default_locale: DS.attr('string'),

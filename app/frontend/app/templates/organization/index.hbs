@@ -142,6 +142,17 @@
       </div>
     </div>
   {{/if}}
+  {{#if model.parent_org}}
+    {{#if model.parent_org.permissions.view}}
+      {{t "Parent Organization: " key='parent_org_colon'}}
+      {{#link-to 'organization' model.parent_org.id}}
+        {{model.parent_org.name}}
+      {{/link-to}}
+    {{else}}
+      {{t "Parent Organization: " key='parent_org_colon'}}
+      {{model.parent_org.name}}
+    {{/if}}
+  {{/if}}
   <ul class='nav nav-pills' style="margin-bottom: 15px; margin-top: 20px;">
     {{#if model.admin}}
       <li class={{if show_organizations 'active'}}><a href="#" {{action 'pick' 'organizations'}}>{{t "Organizations" key='organizations'}}</a></li>

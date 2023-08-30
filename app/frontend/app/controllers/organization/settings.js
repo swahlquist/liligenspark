@@ -1,8 +1,9 @@
 import Controller from '@ember/controller';
 import modal from '../../utils/modal';
-import { computed } from '@ember/object';
+import { computed, observer } from '@ember/object';
 import i18n from '../../utils/i18n';
 import { htmlSafe } from '@ember/string';
+import CoughDrop from '../../app';
 
 export default Controller.extend({
   opening: function() {
@@ -13,7 +14,36 @@ export default Controller.extend({
     }
     _this.set('allow_support_target', !!_this.get('model.support_target'));
     _this.set('support_email', _this.get('model.support_target.email'));
+    _this.set('model.parent_org_id', _this.get('model.parent_org.id'));
   },
+  lookup_parent_org: observer('model.parent_org_id', function() {
+    var _this = this;
+    var lookup_id = _this.get('model.parent_org_id');
+    if(!lookup_id || !lookup_id.match(/\d+_\d+/)) { return; }
+    if(lookup_id && _this.get('model.parent_org.id') != lookup_id) {
+      _this.set('model.parent_org', {
+        name: i18n.t('loading', "Loading..."),
+        pending: true
+      });
+      CoughDrop.store.findRecord('organization', lookup_id).then(function(res) {
+        if(lookup_id == _this.get('model.parent_org_id')) {
+          _this.set('model.parent_org', {
+            id: res.get('id'),
+            name: res.get('name'),
+            pending: true
+          });
+        }
+      }, function() {
+        if(lookup_id == _this.get('model.parent_org_id')) {
+          _this.set('model.parent_org', {
+            error: true,
+            pending: true,
+            name: i18n.t('error_loading_org', "Error Loading Organization")
+          })
+        }        
+      });
+    }
+  }),
   no_communicator_profile: computed('model.communicator_profile_id', function() {
     var id = this.get('model.communicator_profile_id');
     return !!(id == 'none' || id == '' || !id);

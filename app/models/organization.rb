@@ -1380,6 +1380,18 @@ class Organization < ActiveRecord::Base
         }, false)
       end
     end
+    if params[:parent_org]
+      if params[:parent_org]['id']
+        if params[:parent_org]['id'] != self.parent_org_id
+          org = Organization.find_by_path(params[:parent_org]['id'])
+          if org
+            self.parent_organization_id = org.id
+          end
+        end
+      else
+        self.parent_organization_id = nil
+      end
+    end
     if params[:external_auth_shortcut]
       if params[:external_auth_shortcut].length < 5
         add_processing_error("auth shortcut too short")
