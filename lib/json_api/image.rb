@@ -62,7 +62,7 @@ module JsonApi::Image
       json['alternates'] = []
       libs = {}.merge(image.settings['library_alternates'] || {})
       best_url = image.best_url
-      libs.delete['original'] if libs['original'] && libs['original']['url'] != best_url
+      libs.delete('original') if libs['original'] && libs['original']['url'] != best_url
       il = image.image_library
       if used_library != 'original' || !libs['original'] || !libs[il]
         il = image.image_library
