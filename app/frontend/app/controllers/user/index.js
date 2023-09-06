@@ -648,6 +648,8 @@ export default Controller.extend({
         this.set('subscription_settings', {action: action, type: i18n.t('enable_extras', "Enable Premium Symbols Access")});
       } else if(action == 'supporter_credit') {
         this.set('subscription_settings', {action: action, type: i18n.t('add_premium_supporter_credit', "Add 1 Premium Supporter Credit")});
+      } else if(action == 'check_remote') {
+        this.set('subscription_settings', {action: action, type: i18n.t('recheck_purchasing_status', "Re-Check Purchasing Status")});
       } else if(action == 'restore_purchase') {
         this.set('subscription_settings', {action: action, type: i18n.t('restore_purchase', "Restore an Accidentally-Disabled Purchase")});
       } else if(action == 'force_logout') {
