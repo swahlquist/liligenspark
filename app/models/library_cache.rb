@@ -207,6 +207,7 @@ class LibraryCache < ApplicationRecord
     found
   end
 
+  # TODO: save is timing out on Uploader.find_images from search#protected_symbols
   def save_if_added
     @save_counter ||= 0
     if @words_changed && (!@ease_saving || @save_counter > 25)
