@@ -29,6 +29,7 @@ end
 task "extras:clear_report_tallies" => :environment do
   RedisInit.default.del('missing_words')
   RedisInit.default.del('missing_symbols')
+  RedisInit.default.del('overridden_parts_of_speech')
 end
 
 task "extras:deploy_notification", [:system, :level, :version] => :environment do |t, args|

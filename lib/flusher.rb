@@ -135,6 +135,10 @@ module Flusher
       flush_board(board.global_id, board.key, aggressive_flush)
     end
   end
+
+  def self.flush_resque_errors
+    RedisInit.flush_resque_errors
+  end
   
   def self.flush_deleted_users
     users = User.where(['schedule_deletion_at < ?', Time.now]).limit(500).select('id, user_name')

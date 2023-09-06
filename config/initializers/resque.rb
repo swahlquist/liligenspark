@@ -30,6 +30,27 @@ module RedisInit
     @redis_inst.info(:memory)
   end
 
+  def self.flush_resque_errors
+    redis = @redis_inst
+    key = 'coughdrop:failed'
+    redis.type(key)
+    len = redis.llen(key)
+    if len > 500
+      redis.ltrim(key, -500, -1)
+    end
+    redis = @default
+    ['missing_words', 'missing_symbols', 'overridden_parts_of_speech'].each do |key|
+      if redis.hlen(key) > 1000
+        full = redis.hgetall(key)
+        cutoff = full.values.map{|v| v.to_i }.sort.reverse[0, 1000][-1]
+        full.each do |k, v|
+          redis.hdel(key, k) if v.to_i < cutoff
+        end
+        redis.ltrim(key, -1000, -1)
+      end
+    end
+  end
+
   def self.errors
     uri = RedisInit.redis_uri
     redis = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
