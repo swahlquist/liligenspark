@@ -100,6 +100,19 @@ module JsonApi::Organization
           'name' => org.settings['name']
         }
       end
+      if org.parent_organization_id
+        parent_org = Organization.find_by_path(org.parent_org_id)
+        if parent_org
+          json['parent_org'] = {
+            'id' => parent_org.global_id,
+            'name' => parent_org.settings['name'],
+          }
+          if args.key?(:permissions)
+            json['parent_org']['permissions'] = parent_org.permissions_for(args[:permissions])
+          end
+      
+        end
+      end
     end
     if json['permissions'] && json['permissions']['edit']
       json['org_subscriptions'] = org.subscriptions.map{|u| JsonApi::User.as_json(u, limited_identity: true, subscription: true) }
