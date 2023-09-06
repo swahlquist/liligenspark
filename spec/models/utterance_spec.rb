@@ -287,9 +287,9 @@ describe Utterance, :type => :model do
         Worker.process_queues
         utterance.reload
         expect(utterance.data['sms_attempts'][0].except('timestamp')).to eq(
-          {'cell' => '98765', 'pushed' => true, 'text' => "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"}
+          {'cell' => '98765', 'pushed' => true, 'text' => "from No name - whatevs\n\nreply: #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"}
         )
-        expect(Worker.scheduled_for?('priority', Pusher, :sms, '98765', "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A", nil)).to eq(true)
+        expect(Worker.scheduled_for?('priority', Pusher, :sms, '98765', "from No name - whatevs\n\nreply: #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A", nil)).to eq(true)
         expect(utterance.data['sms_attempts'][0]['timestamp']).to be > 10.seconds.ago.to_i
       end    
     end
@@ -317,9 +317,9 @@ describe Utterance, :type => :model do
         Worker.process_queues
         utterance.reload
         expect(utterance.data['sms_attempts'][0].except('timestamp')).to eq(
-          {'cell' => '5558675307', 'pushed' => true, 'text' => "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"}
+          {'cell' => '5558675307', 'pushed' => true, 'text' => "from No name - whatevs\n\nreply: #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"}
         )
-        expect(Worker.scheduled_for?('priority', Pusher, :sms, '5558675307', "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A", "+15551234567")).to eq(true)
+        expect(Worker.scheduled_for?('priority', Pusher, :sms, '5558675307', "from No name - whatevs\n\nreply: #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A", "+15551234567")).to eq(true)
         expect(utterance.data['sms_attempts'][0]['timestamp']).to be > 10.seconds.ago.to_i
       end    
     end
@@ -529,9 +529,9 @@ describe Utterance, :type => :model do
         utterance.save
         utterance.deliver_message('text', u, {'sharer' => {'name' => 'bob'}, 'share_index' => 1})
         expect(utterance.data['sms_attempts'][0].except('timestamp')).to eq(
-          {'cell' => '123456', 'pushed' => true, 'text' => "from bob - howdy\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}B"}
+          {'cell' => '123456', 'pushed' => true, 'text' => "from bob - howdy\n\nreply: #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}B"}
         )
-        expect(Worker.scheduled_for?('priority', Pusher, :sms, '123456', "from bob - howdy\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}B", nil)).to eq(true)
+        expect(Worker.scheduled_for?('priority', Pusher, :sms, '123456', "from bob - howdy\n\nreply: #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}B", nil)).to eq(true)
         expect(utterance.data['sms_attempts'][0]['timestamp']).to be > 10.seconds.ago.to_i
       end
 
@@ -554,9 +554,9 @@ describe Utterance, :type => :model do
         Worker.process_queues
         utterance.reload
         expect(utterance.data['sms_attempts'][0].except('timestamp')).to eq(
-          {'cell' => '98765', 'pushed' => true, 'text' => "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"}
+          {'cell' => '98765', 'pushed' => true, 'text' => "from No name - whatevs\n\nreply: #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A"}
         )
-        expect(Worker.scheduled_for?('priority', Pusher, :sms, '98765', "from No name - whatevs\n\nreply at #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A", nil)).to eq(true)
+        expect(Worker.scheduled_for?('priority', Pusher, :sms, '98765', "from No name - whatevs\n\nreply: #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A", nil)).to eq(true)
         expect(utterance.data['sms_attempts'][0]['timestamp']).to be > 10.seconds.ago.to_i
       end
     end
