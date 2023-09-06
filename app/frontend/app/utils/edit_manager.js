@@ -1977,12 +1977,15 @@ var editManager = EmberObject.extend({
       var level = user.get('copy_level');
       user.set('copy_level', null);
       if(decision == 'links_copy_as_home' && user && user.get('org_board_keys')) {
+        // TODO: always start with a shallow clone, even if not an org board
         if(user.get('org_board_keys').indexOf(old_board.get('key')) != -1) {
+          // use shallow-enabled cloning workflow shown here
           var org = (user.get('organizations') || []).find(function(org) { return org.home_board_keys.indexOf(old_board.get('key')) != -1; });
           user.set('preferences.home_board', {
             id: old_board.get('id'),
             key: old_board.get('key'),
             swap_library: swap_library,
+            shallow: true,
             copy: true,
             copy_from_org: org.id
           });

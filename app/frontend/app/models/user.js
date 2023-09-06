@@ -907,6 +907,8 @@ CoughDrop.User = DS.Model.extend({
     });
   },
   copy_home_board: function(board, swap_images, home_level) {
+    // TODO: change this to create a shallow clone
+    // instead of copying everything
     var user = this;
     var board_key = emberGet(board, 'key');
     var board_id = emberGet(board, 'id');

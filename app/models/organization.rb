@@ -1330,9 +1330,9 @@ class Organization < ActiveRecord::Base
         activate_for.settings['preferences']['preferred_symbols'] = symbol_library if symbol_library
         do_copy = false
         if !activate_for.settings['preferences']['home_board'] && copy_board
-          if overrides['shallow_clone']
+          # if overrides['shallow_clone']
             copy_board['shallow'] = true
-          end
+          # end
           do_copy = true
         end
         activate_for.settings['activations'] ||= []
