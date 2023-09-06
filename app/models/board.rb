@@ -112,7 +112,7 @@ class Board < ActiveRecord::Base
       end
       res = ids
     end
-    res
+    res - [self.global_id]
   end
 
   def user(true_user=false)
@@ -289,7 +289,7 @@ class Board < ActiveRecord::Base
           board.generate_stats
           board.save_without_post_processing
         end
-        upper = board.parent_board
+        upper = board && board.parent_board
         if upper && upper != board && upper.updated_at.to_i < timestamp && (upper.public || upper.settings['unlisted'])
           upper.generate_stats
           upper.save_without_post_processing

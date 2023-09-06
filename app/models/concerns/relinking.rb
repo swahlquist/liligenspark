@@ -424,6 +424,8 @@ module Relinking
         Progress.update_minutes_estimate((opts[:all_board_ids].length * 3) + (board_ids.length), "copying #{orig.key}, #{board_ids.length} left")
         if !orig.allows?(user, 'view') && !orig.allows?(auth_user, 'view')
           # TODO: make a note somewhere that a change should have happened but didn't due to permissions
+        elsif pending_replacements.detect{|r| r[0] == orig.global_id }
+          # If you already have a pending replacement, don't make a second one
         else
           copy = orig.copy_for(user, make_public: make_public, copy_id: starting_new_board.global_id, prefix: opts[:copy_prefix], new_owner: opts[:new_owner], disconnect: opts[:disconnect], copier: copier, unshallow: true, skip_user_update: true)
           copy.update_default_locale!(opts[:old_default_locale], opts[:new_default_locale])
