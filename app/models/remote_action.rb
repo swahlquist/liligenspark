@@ -39,6 +39,9 @@ class RemoteAction < ApplicationRecord
     elsif ra.action == 'track_downstream_with_visited'
       board = Board.find_by_path(ra.path)
       board.schedule_once_for(:slow, :track_downstream_with_visited) if board
+    elsif ra.action == 'save_sync_supervisors'
+      user = User.find_by_path(ra.path)
+      user.schedule(:save_sync_supervisors, true) if user
     elsif ra.action == 'audit_protected_sources'
       user = User.find_by_path(ra.path)
       user.schedule(:audit_protected_sources) if user

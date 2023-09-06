@@ -515,9 +515,20 @@ class User < ActiveRecord::Base
     self.sync_stamp = Time.now
     self.settings ||= {}
     self.settings['sync_stamp_reason'] = reason
+    self.save_sync_supervisors
     self.save
   end
 
+  def save_sync_supervisors(do_update=false)
+    if do_update
+      self.supervisors.each do |sup|
+        sup.save_with_sync('supervisee update')
+      end
+    else
+      ra_cnt = RemoteAction.where(path: "#{self.global_id}", action: 'save_sync_supervisors').count
+      RemoteAction.create(path: "#{self.global_id}", act_at: 15.minutes.from_now, action: 'save_sync_supervisors') if ra_cnt == 0
+    end
+  end
   
   def self.find_by_email(email, lookup=User)
     hash = User.generate_email_hash(email)
