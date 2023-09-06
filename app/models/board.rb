@@ -2046,6 +2046,10 @@ class Board < ActiveRecord::Base
             # puts "SAFE PIC"
           elsif library.instance_variable_get('@skip_swapped') && (old_bi.image_library == library || (['arasaac', 'twemoji', 'noun-project', 'sclera', 'mulberry', 'tawasol'].include?(old_bi.image_library) && library == 'opensybmols'))
             # puts "ALREADY SWAPPED"
+          elsif false
+            # TODO: create or find an alternate version of the button_image that
+            # uses the library_alternates version as the fault and puts the current default
+            # into library_alternates instead
           elsif (button['label'] || button['vocalization'])
             image_data = defaults[button['label'] || button['vocalization']]
             if !image_data && (!defaults['_missing'] || !defaults['_missing'].include?(button['label'] || button['vocalization']))
