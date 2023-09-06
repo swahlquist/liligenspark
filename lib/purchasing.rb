@@ -1025,11 +1025,13 @@ module Purchasing
     author_scores.to_a.select{|a, b| b > 1 }.sort_by{|a, b| b }.reverse
   end
 
-  def self.reconcile_user(user_id)
+  def self.reconcile_user(user_id, with_side_effects=false)
     user = User.find_by_path(user_id)
+    puts "NO ACTIONS WILL BE PERFORMED" unless with_side_effects
     # check if the user has transferred to another account, and only apply purchases after that timestamp
     timestamp_cutoff = user && user.settings['subscription'] && user.settings['subscription']['transfer_ts']
-
+    Stripe.api_version = '2022-08-01'
+    Stripe.api_key = ENV['STRIPE_SECRET_KEY']
     charges = Stripe::Charge.search({query: "metadata[\"user_id\"]:\"#{user_id}\""})
     charges.data.each do |chrg|
       next if timestamp_cutoff && chrg.created && chrg.created < timestamp_cutoff
@@ -1042,6 +1044,7 @@ module Purchasing
         end
 
         if do_apply
+          puts "Assure extras for user"
           User.purchase_extras({
             'user_id' => user_id,
             'purchase_id' => chrg.id,
@@ -1049,7 +1052,7 @@ module Purchasing
             'premium_supporters' => chrg['metadata'] && chrg['metadata']['purchased_supporters'].to_i,
             'customer_id' => chrg['customer'],
             'source' => 'charge.reconcile'
-          })
+          }) if with_side_effects
         end
       else
         purchase_id = chrg.id
@@ -1061,6 +1064,7 @@ module Purchasing
         end
         if !found
           time = 5.years.to_i
+          puts "Assert purchase for user"
           User.schedule(:subscription_event, {
             'purchase' => true,
             'user_id' => user_id,
@@ -1070,8 +1074,9 @@ module Purchasing
             'seconds_to_add' => time,
             'source_id' => 'stripe',
             'source' => 'charge.reconcile'
-          })
+          }) if with_side_effects
           if chrg['metadata'] && (chrg['metadata']['purchased_symbols'] == 'true' || chrg['metadata']['purchased_supporters'].to_i > 0)
+            puts "Assert extras with regular purchase for user"
             User.schedule(:purchase_extras, {
               'user_id' =>  user_id,
               'customer_id' => chrg['customer'],
@@ -1080,7 +1085,7 @@ module Purchasing
               'premium_supporters' => chrg['metadata']['purchased_supporters'].to_i,
               'source' => 'charge.reconcile',
               'notify' => false
-            })
+            }) if with_side_effects
           end
         end
       end
@@ -1092,32 +1097,32 @@ module Purchasing
       sub = customer.subscriptions.data.detect{|s| ((s.metadata || {})['platform_source'] || 'coughdrop') == 'coughdrop' && ['active', 'past_due', 'unpaid'].include?(s.status) }
       next if sub && sub.created && timestamp_cutoff && sub.created < timestamp_cutoff
       if sub
-        puts "active subscription for #{sub['id']}"
         # user has active subscription, make sure it is applied
-        # User.schedule(:subscription_event, {
-        #   'subscribe' => true,
-        #   'user_id' => customer['metadata'] && customer['metadata']['user_id'],
-        #   'purchased_supporters' => object['metadata'] && object['metadata']['purchased_supporters'],
-        #   'customer_id' => object['customer'],
-        #   'subscription_id' => object['id'],
-        #   'plan_id' => object['plan'] && object['plan']['id'],
-        #   'source_id' => 'stripe',
-        #   'cancel_others_on_update' => true,
-        #   'source' => 'customer.subscription.created'
-        # })
+        puts "Asserting active subscription for user"
+        User.schedule(:subscription_event, {
+          'subscribe' => true,
+          'user_id' => customer['metadata'] && customer['metadata']['user_id'],
+          'purchased_supporters' => sub['metadata'] && sub['metadata']['purchased_supporters'],
+          'customer_id' => customer['id'],
+          'subscription_id' => sub['id'],
+          'plan_id' => sub['plan'] && sub['plan']['id'],
+          'source_id' => 'stripe',
+          'cancel_others_on_update' => true,
+          'source' => 'customer.subscription.asserted'
+        }) if with_side_effects
       else
-        puts "no active subscriptions"
+        puts "Canceling any subscriptions for user"
         # user has no active subscription, cancel any active ones
-        # User.schedule(:subscription_event, {
-        #   'unsubscribe' => true,
-        #   'user_id' => customer['metadata'] && customer['metadata']['user_id'],
-        #   'reason' => reason,
-        #   'customer_id' => object['customer'],
-        #   'subscription_id' => object['id'],
-        #   'source_id' => 'stripe',
-        #   'cancel_others_on_update' => false,
-        #   'source' => 'customer.subscription.updated'
-        # })
+        User.schedule(:subscription_event, {
+          'unsubscribe' => true,
+          'user_id' => customer['metadata'] && customer['metadata']['user_id'],
+          'reason' => "missing subscription on reconciliation",
+          'customer_id' => customer['id'],
+          'subscription_id' => 'all',
+          'source_id' => 'stripe',
+          'cancel_others_on_update' => false,
+          'source' => 'customer.subscription.asserted'
+        }) if with_side_effects
       end
     end
 
