@@ -1254,6 +1254,7 @@ class User < ActiveRecord::Base
     # Finally, create a brand new copy (or shallow clone)
     if home_board['shallow'] && (original.public? || original.allows?(updater, 'edit'))
       if !original.public?
+        # TODO: seems like if any sub-boards aren't public then it should be shared as well
         original.share_with(self, true)
         if self.settings['available_private_board_ids']
           self.settings['available_private_board_ids']['generated'] = 0
@@ -1727,7 +1728,8 @@ class User < ActiveRecord::Base
       valid_ids = ids_to_copy.split(/,/)
       valid_ids = nil if valid_ids.length == 0
     end
-    change_hash = Board.copy_board_links_for(self, {
+    user = self
+    change_hash = Board.copy_board_links_for(user, {
       :starting_old_board => starting_old_board, 
       :starting_new_board => starting_new_board, 
       :old_default_locale => opts[:old_default_locale],

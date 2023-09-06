@@ -311,6 +311,7 @@ var sync = EmberObject.extend({
     send();
   },
   unpair: function() {
+    // TODO: auto-unpair when someone exits speak mode
     if(sync.current_pairing) {
       sync.send(sync.current_pairing.room_user_id, {type: 'unpair'});
       speecher.click('partner_end');
@@ -697,6 +698,7 @@ var sync = EmberObject.extend({
           app_state.set('unpaired', null);
           if(app_state.get('speak_mode')) {
             // Someone sent a pair request
+            // TODO: if requesting with yourself, auto-accept (driver mode)
             if(!app_state.get('sessionUser.preferences.remote_modeling')) {
               // Reject if pairing is disabled
               sync.send(app_state.get('sessionUser.id'), {
@@ -938,6 +940,7 @@ var sync = EmberObject.extend({
     });
   },
   next_action: function() {
+    // TODO: new action which is to trigger find-a-button mechanism for a specific word?
     if(sync.next_action.timer) {
       return;
     }

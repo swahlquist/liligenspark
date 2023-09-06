@@ -904,6 +904,7 @@ var app_state = EmberObject.extend({
         // If already on a board, and board level is manually set,
         // check if it's the user's home or sidebar board, and override
         // the user's preferred level
+        // TODO: save level as part of starring a board
         if(user.get('preferences.home_board.id') == state.id) {
           level.preferred = user.get('preferences.home_board.level');
           level.source = 'home';
