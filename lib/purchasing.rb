@@ -1024,6 +1024,105 @@ module Purchasing
     # - return the list of authors with scores above a threshold
     author_scores.to_a.select{|a, b| b > 1 }.sort_by{|a, b| b }.reverse
   end
+
+  def self.reconcile_user(user_id)
+    user = User.find_by_path(user_id)
+    # check if the user has transferred to another account, and only apply purchases after that timestamp
+    timestamp_cutoff = user && user.settings['subscription'] && user.settings['subscription']['transfer_ts']
+
+    charges = Stripe::Charge.search({query: "metadata[\"user_id\"]:\"#{user_id}\""})
+    charges.data.each do |chrg|
+      next if timestamp_cutoff && chrg.created && chrg.created < timestamp_cutoff
+      if chrg.metadata.type == 'extras'
+        do_apply = false
+        if user && !((user.settings['subscription'] || {})['extras'] || {})['enabled']
+          do_apply = true
+        elsif (chrg['metadata'] || {})['purchased_supporters'] && ((user.settings['subscription'] || {})['purchased_supporters'] || 0).to_i < chrg['metadata']['purchased_supporters'].to_i
+          do_apply = true
+        end
+
+        if do_apply
+          User.purchase_extras({
+            'user_id' => user_id,
+            'purchase_id' => chrg.id,
+            'premium_symbols' => chrg['metadata'] && chrg['metadata']['purchased_symbols'] == 'true',
+            'premium_supporters' => chrg['metadata'] && chrg['metadata']['purchased_supporters'].to_i,
+            'customer_id' => chrg['customer'],
+            'source' => 'charge.reconcile'
+          })
+        end
+      else
+        purchase_id = chrg.id
+        found = false
+        if user && (user.settings['subscription'] || {})['purchase_id'] == purchase_id
+          found = true
+        elsif user && ((user.settings['subscription'] || {})['prior_purchase_ids'] || []).include?(purchase_id)
+          found = true
+        end
+        if !found
+          time = 5.years.to_i
+          User.schedule(:subscription_event, {
+            'purchase' => true,
+            'user_id' => user_id,
+            'purchase_id' => chrg['id'],
+            'customer_id' => chrg['customer'],
+            'plan_id' => chrg['metadata'] && chrg['metadata']['plan_id'],
+            'seconds_to_add' => time,
+            'source_id' => 'stripe',
+            'source' => 'charge.reconcile'
+          })
+          if chrg['metadata'] && (chrg['metadata']['purchased_symbols'] == 'true' || chrg['metadata']['purchased_supporters'].to_i > 0)
+            User.schedule(:purchase_extras, {
+              'user_id' =>  user_id,
+              'customer_id' => chrg['customer'],
+              'purchase_id' => chrg['id'],
+              'premium_symbols' => chrg['metadata']['purchased_symbols'] == 'true',
+              'premium_supporters' => chrg['metadata']['purchased_supporters'].to_i,
+              'source' => 'charge.reconcile',
+              'notify' => false
+            })
+          end
+        end
+      end
+    end
+
+    customers = Stripe::Customer.search({query: "metadata[\"user_id\"]:\"#{user_id}\""})
+    customers.data.each do |cus|
+      customer = Stripe::Customer.retrieve(id: cus.id, expand: ['subscriptions'])
+      sub = customer.subscriptions.data.detect{|s| ((s.metadata || {})['platform_source'] || 'coughdrop') == 'coughdrop' && ['active', 'past_due', 'unpaid'].include?(s.status) }
+      next if sub && sub.created && timestamp_cutoff && sub.created < timestamp_cutoff
+      if sub
+        puts "active subscription for #{sub['id']}"
+        # user has active subscription, make sure it is applied
+        # User.schedule(:subscription_event, {
+        #   'subscribe' => true,
+        #   'user_id' => customer['metadata'] && customer['metadata']['user_id'],
+        #   'purchased_supporters' => object['metadata'] && object['metadata']['purchased_supporters'],
+        #   'customer_id' => object['customer'],
+        #   'subscription_id' => object['id'],
+        #   'plan_id' => object['plan'] && object['plan']['id'],
+        #   'source_id' => 'stripe',
+        #   'cancel_others_on_update' => true,
+        #   'source' => 'customer.subscription.created'
+        # })
+      else
+        puts "no active subscriptions"
+        # user has no active subscription, cancel any active ones
+        # User.schedule(:subscription_event, {
+        #   'unsubscribe' => true,
+        #   'user_id' => customer['metadata'] && customer['metadata']['user_id'],
+        #   'reason' => reason,
+        #   'customer_id' => object['customer'],
+        #   'subscription_id' => object['id'],
+        #   'source_id' => 'stripe',
+        #   'cancel_others_on_update' => false,
+        #   'source' => 'customer.subscription.updated'
+        # })
+      end
+    end
+
+    customers.data[0]
+  end
   
   def self.reconcile(with_side_effects=false)
     Stripe.api_key = ENV['STRIPE_SECRET_KEY']
