@@ -470,6 +470,9 @@ module Subscription
         'purchase' => true,
         'purchase_id' => 'restore'        
       })
+    elsif type == 'check_remote'
+      Purchasing.reconcile_user(self.global_id, false)
+      # TODO: second arg set to true for actual reconciliation
     elsif type == 'add_1' || type == 'communicator_trial' || type == 'add_5_years'
       self.log_subscription_event(:log => "subscription override: #{type}", :args => {user_id: self.global_id, author_id: user_id})
       if type == 'communicator_trial'
