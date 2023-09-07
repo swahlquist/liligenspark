@@ -1616,7 +1616,7 @@ describe Api::BoardsController, :type => :controller do
       assert_not_found('1_1')
     end
 
-    it "should star the board and return a json response" do
+    it "should unstar the board and return a json response" do
       token_user
       b = Board.create(:user => @user, :settings => {'starred_user_ids' => [@user.global_id]})
       delete :unstar, params: {:board_id => b.global_id}
@@ -1625,6 +1625,32 @@ describe Api::BoardsController, :type => :controller do
       json = JSON.parse(response.body)
       expect(json).to eq({'starred' => false, 'stars' => 0, 'user_id' => @user.global_id})
     end
+
+    it "should unstar a starred shallow clone" do
+      token_user
+      u = User.create
+      b = Board.create(:user => u, public: true)
+      delete :destroy, params: {:id => "#{b.global_id}-#{@user.global_id}"}
+
+      post :star, params: {:board_id => "#{b.global_id}-#{@user.global_id}"}
+      expect(response).to be_successful
+      expect(@user.reload.settings['starred_board_ids']).to eq(nil)
+      Worker.process_queues
+      expect(b.reload.settings['starred_user_ids']).to eq(["en:" + @user.global_id])
+      expect(@user.reload.settings['starred_board_ids']).to eq(["#{b.global_id}-#{@user.global_id}"])
+      json = JSON.parse(response.body)
+      expect(json).to eq({'starred' => true, 'stars' => 1, 'user_id' => @user.global_id})
+
+      delete :unstar, params: {:board_id => "#{b.global_id}-#{@user.global_id}"}
+      expect(response).to be_successful
+      expect(b.reload.settings['starred_user_ids']).to eq([])
+      expect(@user.reload.settings['starred_board_ids']).to eq(["#{b.global_id}-#{@user.global_id}"])
+      Worker.process_queues
+      expect(@user.reload.settings['starred_board_ids']).to eq([])
+      json = JSON.parse(response.body)
+      expect(json).to eq({'starred' => false, 'stars' => 0, 'user_id' => @user.global_id})
+    end
+
   end
   
   describe "destroy" do
@@ -1708,6 +1734,33 @@ describe Api::BoardsController, :type => :controller do
       bb2 = Board.find_by_global_id("#{b2.global_id}-#{@user.global_id}")
       bb2 = bb2.copy_for(@user, {copy_id: b1.global_id})
       expect(bb2.settings['copy_id']).to eq(b1.global_id)
+      Worker.process_queues
+      ue = UserExtra.find_by(user: @user)
+      expect(ue).to_not eq(nil)
+      expect(ue.settings['replaced_roots']).to_not eq(nil)
+      expect(ue.settings['replaced_roots'][b1.global_id]).to eq({'id' => "#{b1.global_id}-#{@user.global_id}", 'key' => "#{@user.user_name}\/my:#{b1.key.sub(/\//, ':')}"})
+      delete :destroy, params: {id: "#{b1.global_id}-#{@user.global_id}"}
+      json = assert_success_json
+      ue.reload
+      expect(ue.settings['replaced_roots']).to_not eq(nil)
+      expect(ue.settings['replaced_roots'][b1.global_id]).to eq(nil)
+    end
+    
+    it "should remove replaced_roots reference for an edited shallow clone when deleting" do
+      u = User.create
+      token_user
+      b1 = Board.create(user: u, public: true)
+      b2 = Board.create(user: u, public: true)
+      b1.process({'buttons' => [
+        {'id' => 1, 'label' => 'cat', 'load_board' => {'id' => b2.global_id, 'key' => b2.key}}
+      ]}, {'user' => u})
+      b2.process({'copy_key' => b1.global_id}, {'user' => u})
+      expect(b2.settings['copy_id']).to eq(b1.global_id)
+      expect(b2.root_board).to eq(b1)
+      Worker.process_queues
+      bb1 = Board.find_by_global_id("#{b2.global_id}-#{@user.global_id}")
+      bb1 = bb1.copy_for(@user, {copy_id: b1.global_id})
+      expect(bb1.settings['copy_id']).to eq(b1.global_id)
       Worker.process_queues
       ue = UserExtra.find_by(user: @user)
       expect(ue).to_not eq(nil)
