@@ -287,6 +287,47 @@ class ButtonImage < ActiveRecord::Base
     return which_skin
   end
 
+  def settings_for(user, allowed_sources, pref)
+    settings = {}.merge(image.settings)
+    settings['url'] = self.url
+    settings['protected_source'] ||= 'lessonpix' if settings['license'] && settings['license']['source_url'] && settings['license']['source_url'].match(/lessonpix/)
+    settings['protected'] = !!image.protected?
+    if self.settings['library_alternates']
+      pref ||= user && ((user.settings || {})['preferences'] || {})['preferred_symbols']
+      allowed_sources ||= user && user.enabled_protected_sources(true)
+      allowed_sources ||= []
+      used_library = 'original'
+      if pre && pref != 'default' && pref != 'original'
+        if PROTECTED_SOURCES.include?(pref) && !allowed_sources.include?(pref)
+        else
+          used_library = image.image_library
+          pref = nil if pref == 'default' || pref == 'original'
+          if used_library == pref || !pref
+          elsif image.settings['library_alternates'] && image.settings['library_alternates'][pref]
+            used_library = pref
+            settings = image.settings['library_alternates'][pref]
+            if JsonApi::Image.PROTECTED_SOURCES.include?(used_library)
+              settings['protected'] = true 
+              settings['protected_source'] = pref
+            end
+          elsif pref == 'opensymbols' && image.settings['library_alternates'] && image.settings['library_alternates']['arasaac']
+            used_library = pref
+            settings = image.settings['library_alternates']['arasaac']
+          elsif pref == 'opensymbols' && image.settings['library_alternates'] && image.settings['library_alternates']['twemoji']
+            used_library = pref
+            settings = image.settings['library_alternates']['twemoji']
+          end
+        end
+      end
+    end
+    settings['used_library'] = used_library
+    token = user && user.user_token
+    if token && settings['url'].match(/\/api\/v1\/users\/.+\/protected_image/)
+      settings['url'] = settings['url'] + (settings['url'].match(/\?/) ? '&' : '?') + "user_token=#{token}"
+    end
+    settings
+  end
+
   def self.skinned_url(url, which_skin)
     if url.match(/varianted-skin\.\w+$/)
       which = which_skin.call(url)

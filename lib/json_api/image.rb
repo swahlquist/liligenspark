@@ -10,32 +10,12 @@ module JsonApi::Image
     json = {}
     json['id'] = image.global_id
     json['url'] = image.best_url
-    settings = image.settings
-    settings['protected_source'] ||= 'lessonpix' if settings['license'] && settings['license']['source_url'] && settings['license']['source_url'].match(/lessonpix/)
-    protected_source = !!image.protected?
     allowed_sources = args[:allowed_sources]
     allowed_sources ||= args[:permissions] && args[:permissions].enabled_protected_sources(true)
     allowed_sources ||= []
-    used_library = 'original'
-    if args[:preferred_source] && args[:preferred_source] != 'default' && args[:preferred_source] != 'original'
-      if PROTECTED_SOURCES.include?(args[:preferred_source]) && !allowed_sources.include?(args[:preferred_source])
-      else
-        used_library = image.image_library
-        pref = args[:preferred_source]
-        pref = nil if pref == 'default' || pref == 'original'
-        if used_library == pref || !pref
-        elsif image.settings['library_alternates'] && image.settings['library_alternates'][pref]
-          used_library = pref
-          settings = image.settings['library_alternates'][pref]
-        elsif pref == 'opensymbols' && image.settings['library_alternates'] && image.settings['library_alternates']['arasaac']
-          used_library = pref
-          settings = image.settings['library_alternates']['arasaac']
-        elsif pref == 'opensymbols' && image.settings['library_alternates'] && image.settings['library_alternates']['twemoji']
-          used_library = pref
-          settings = image.settings['library_alternates']['twemoji']
-        end
-      end
-    end
+    settings = image.settings_for(args[:permissions], allowed_sources, args[:preferred_source])
+    settings['protected_source'] ||= 'lessonpix' if settings['license'] && settings['license']['source_url'] && settings['license']['source_url'].match(/lessonpix/)
+    protected_source = settings['protected']
   
     if settings && protected_source && args[:original_and_fallback]
       fb = settings['fallback'] || {}
@@ -64,7 +44,7 @@ module JsonApi::Image
       best_url = image.best_url
       libs.delete('original') if libs['original'] && libs['original']['url'] != best_url
       il = image.image_library
-      if used_library != 'original' || !libs['original'] || !libs[il]
+      if settings['used_library'] != 'original' || !libs['original'] || !libs[il]
         il = image.image_library
         lib = {
           'library' => il,

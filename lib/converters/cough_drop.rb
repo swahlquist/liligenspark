@@ -163,19 +163,20 @@ module Converters::CoughDrop
         if original_button['image_id']
           image = board.known_button_images.detect{|i| i.global_id == original_button['image_id'] }
           if image
-            image_url = image.url_for(opts['user'])
-            skinned_url = ButtonImage.skinned_url(Uploader.fronted_url(image_url), which_skinner)
+            image_settings = image.settings_for(opts['user'])
+            
+            skinned_url = ButtonImage.skinned_url(Uploader.fronted_url(image_settings['url']), which_skinner)
             image_record = image
             image = {
               'id' => image.global_id,
-              'width' => image.settings['width'],
-              'height' => image.settings['height'],
-              'protected' => image.settings['protected'],
-              'protected_source' => image.settings['protected_source'],
-              'license' => OBF::Utils.parse_license(image.settings['license']),
-              'url' => Uploader.fronted_url(image_url),
+              'width' => image_settings['width'],
+              'height' => image_settings['height'],
+              'protected' => image_settings['protected'],
+              'protected_source' => image_settings['protected_source'],
+              'license' => OBF::Utils.parse_license(image_settings['license']),
+              'url' => Uploader.fronted_url(image_settings['url']),
               'data_url' => "#{JsonApi::Json.current_host}/api/v1/images/#{image.global_id}",
-              'content_type' => image.settings['content_type']
+              'content_type' => image_settings['content_type']
             }
             if skinned_url && skinned_url != image_url
               image['ext_coughdrop_unskinned_url'] = image['url']
