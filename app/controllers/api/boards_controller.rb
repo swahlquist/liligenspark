@@ -43,7 +43,6 @@ class Api::BoardsController < ApplicationController
     end
     
     Rails.logger.warn('filtering by user')
-    # TODO: where(:public => true) as the cancellable default
     self.class.trace_execution_scoped(['boards/user_filter']) do
       if params['user_id']
         user = User.find_by_path(params['user_id'])
@@ -159,8 +158,6 @@ class Api::BoardsController < ApplicationController
           #   ActiveRecord::Base.connection.execute('set statement_timeout = 10000')
           # end          
         else
-          # TODO: Track locale of search results so you can show them with
-          # the right localized name if !params['locale'] || params['locale'] == 'any'
           Rails.logger.warn('popularity search')
           locs.search_by_text(q).limit(100).with_pg_search_rank.each do |bl|
             board_ids << bl.board_id

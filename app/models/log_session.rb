@@ -624,7 +624,6 @@ class LogSession < ActiveRecord::Base
   def generate_sensor_stats
     session = self
     if !session.data['stats']['all_volumes'].blank?
-      # TODO: remove sometime in 2019
       session.data['stats']['volume'] = {
         'total' => session.data['stats']['all_volumes'].length,
         'average' => (session.data['stats']['all_volumes'].sum.to_f / session.data['stats']['all_volumes'].length.to_f),
@@ -1042,14 +1041,6 @@ class LogSession < ActiveRecord::Base
                       message_uid: event['share']['message_uid'],
                       sentence: event['share']['sentence']
                     }, {:user => utterance_user})
-                    # if !event['share']['recipient_id'] && event['share']['reply_id']
-                    #   # TODO: remove this after like June 2020
-                    #   reply = LogSession.find_reply(event['share']['reply_id']) rescue nil
-                    #   if reply && reply[:contact]
-                    #     contact = (utterance_user.settings['contacts'] || []).detect{|c| c['name'] == reply[:contact]['name'] }
-                    #     event['share']['recipient_id'] = "#{utterance_user.global_id}x#{contact['hash']}" if contact
-                    #   end
-                    # end
                     utterance.schedule(:share_with, {'user_id' => event['share']['recipient_id'], 'reply_id' => event['share']['reply_id'], 'text_only' => event['share']['text_only']}, utterance_user.global_id)
                   end
                   params = nil
@@ -1607,8 +1598,6 @@ class LogSession < ActiveRecord::Base
     self.user = non_user_params[:user] if non_user_params[:user]
     self.author = non_user_params[:author] if non_user_params[:author]
     
-    # TODO: respect logging settings server-side in addition to client-side
-    # TODO: mark ip address as potentially inaccurate when log event is much after last event timestamp (i.e. catching up after offline)
     self.data ||= {}
     self.data['imported'] = true if non_user_params[:imported]
     self.data['request_ids'] ||= [] if non_user_params[:request_id]
@@ -1618,7 +1607,7 @@ class LogSession < ActiveRecord::Base
       self.highlighted = params['highlighted'] if params['highlighted'] != nil
       if params['events']
         self.data_will_change!
-        self.assert_extra_data # TODO: cleaner way to do this?
+        self.assert_extra_data
         if self.user && self.created_at > 24.hours.ago
           if (self.user.settings['preferences'] || {})['allow_log_reports']
             self.data['allow_research'] = true
@@ -1651,7 +1640,6 @@ class LogSession < ActiveRecord::Base
             end
             ids = new_notes.map{|n| n['id'] }.compact
             new_notes.each do |note|
-              # TODO: is this denormalization a good idea?
               note['author'] ||= {
                 'id' => non_user_params[:author].global_id,
                 'user_name' => non_user_params[:author].user_name

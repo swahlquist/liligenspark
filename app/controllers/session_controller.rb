@@ -641,7 +641,7 @@ class SessionController < ApplicationController
     d.generate_token!(long_token)
   end
 
-  def saml_settings(org=nil, code=nil) # TODO: this isn't a controller method
+  def saml_settings(org=nil, code=nil)
     settings = OneLogin::RubySaml::Settings.new
   
     if org

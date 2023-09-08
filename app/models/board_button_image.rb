@@ -21,7 +21,7 @@ class BoardButtonImage < ActiveRecord::Base
     image_refs.each do |i|
       image_id = i[:id]
       image = found_images.detect{|i| i.global_id == image_id }
-      if image # TODO: ...and allowed to connect this image
+      if image
         bbi = BoardButtonImage.find_or_create_by!(:board_id => board_id, :button_image_id => image.id) 
         if options[:user_id]
           images_to_track << {

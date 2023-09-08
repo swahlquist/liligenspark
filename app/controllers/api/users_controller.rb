@@ -617,7 +617,6 @@ class Api::UsersController < ApplicationController
   
   def password_reset
     user = User.find_by_path(params['user_id'])
-    # TODO: clear reset code after too many attempts, log data for troubleshooting
     if user && reset_token = user.reset_token_for_code(params['code'])
       render json: {valid: true, reset_token: reset_token}.to_json
     else
@@ -844,7 +843,6 @@ class Api::UsersController < ApplicationController
     nonce = ExternalNonce.find_by_global_id(params['nonce_id'])
     if params['ref_type'] == 'log_session' && params['ref_id']
       session = LogSession.find_by_global_id(params['ref_id'])
-      # TODO: user/profile preference for whether supervisors can access profile results
       return unless exists?(session, params['ref_id'])
       return unless allowed?(session.user, 'supervise')
     else

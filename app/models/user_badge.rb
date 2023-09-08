@@ -405,7 +405,6 @@ class UserBadge < ActiveRecord::Base
                   'description' => "Automatic goal assessment for #{goal.settings['summary']}"
                 },
                 'goal_id' => goal.global_id
-              # TODO: picking a device at random is bad
               }, {user: user, author: user, device: user.devices[0], automatic_assessment: true})
             end
             # session.with_lock do

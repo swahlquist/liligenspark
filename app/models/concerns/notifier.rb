@@ -4,10 +4,7 @@ module Notifier
   def record_code
     "#{self.class.to_s}:#{self.global_id}"
   end
-  
-  # TODO: after create on board, auto-register author
-  # TODO: while linked to a user, auto-register linker
-  
+    
   def notify(notification_type, additional_args=nil)
     if additional_args && additional_args['immediate']
       Webhook.notify_all_with_code(self.record_code, notification_type, additional_args)

@@ -72,7 +72,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     brd = self
     visited_sources = []
     # TODO: we have a potential problem, if the root board referenced by
-    # source_id disappears, then updates will stop because source_id disappears then since  we're
+    # source_id disappears, then updates will stop because source_id disappears then since we're
     # updating on-demand 
     while brd && brd.data['source_id'] && !visited_sources.include?(brd.global_id)
       visited_sources << brd.global_id
@@ -577,8 +577,6 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
                   button_data['home_lock'] = true if button['home_lock']
                 end
                 # mark the first link to each board as "preferred"
-                # TODO: is this a good idea? is there a better strategy? It honestly
-                # shouldn't happen that much, having multiple links to the same board
                 if linked_board && !linked_board_ids.include?(linked_board.global_id) # && !button['hidden'] && !button['link_disabled']
                   button_data['preferred_link'] = true
                   linked_board_ids << button['load_board']['id']
@@ -612,7 +610,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       Board.find_batches_by_global_id(set.data['linked_board_ids'] || [], :batch_size => 3) do |brd|
         board_ids_to_flush << brd.global_id
         bs = brd.board_downstream_button_set
-        # TODO: it was too expensive updating everyone with the wrong source,
+        # NOTE: it was too expensive updating everyone with the wrong source,
         # so I changed it to only update everyone with no source, since 
         # bs.buttons should update to the right source eventually
         if bs && bs.global_id != set.global_id && !bs.data['source_id'] # bs.data['source_id'] != set.global_id
@@ -622,7 +620,6 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           bs.save
         end
       end
-      # TODO: clear out existing caches for a button set (and maybe lost boards and source_id board on update
       board_ids_to_flush.each_slice(25) do |ids|
         BoardDownstreamButtonSet.schedule_for('slow', :flush_caches, ids, Time.now.to_i)
       end
@@ -639,7 +636,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     # This appears to be here to prevent multiple updates happening
     # independently from updating button sets when they don't have to.
     key = "traversed/button_set/#{board_id}"
-    # TODO: if the Redis value gets removed unexpectedly, we
+    # NOTE: if the Redis value gets removed unexpectedly, we
     # won't have a list of traversed ids which could result
     # in a recursive loop. This check is an emergency measure
     # to prevent that from happening and stuffing the queue.

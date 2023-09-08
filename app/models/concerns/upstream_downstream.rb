@@ -97,7 +97,6 @@ module UpstreamDownstream
     total_buttons = 0
     unlinked_buttons = 0
     revision_hashes = [top_board.current_revision]
-    # TODO: track last edit date for board and any sub-board (not the same as updated_at)
     downs.each do |id|
       if board_edit_stats[id]
         total_buttons += board_edit_stats[id]['total_buttons']
@@ -207,7 +206,6 @@ module UpstreamDownstream
     
   def complete_stream_checks(notify_upstream_with_visited_ids, trigger_stamp)
     # TODO: as-is this won't unlink from boards when a linked button is removed or modified
-    # TODO: this is way too eager
     # Step 1: reach in and add to immediately_upstream_board_ids without triggering any background processes
     downs = Board.find_all_by_global_id(self.settings['immediately_downstream_board_ids'] || [])
     downs.each do |board|
@@ -334,7 +332,7 @@ module UpstreamDownstream
     end
   
     def process_lumped_triggers(triggers=nil)
-      # TODO: this should go away eventually. Right now if somebody updated
+      # NOTE: this should go away eventually. Right now if somebody updated
       # board that's linked to, say, 300 other boards, then all those boards
       # needs to have their button_set updated, and available_boards for their
       # users. If you schedule those all out, it would be 600 jobs to 

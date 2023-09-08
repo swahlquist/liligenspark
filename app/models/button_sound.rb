@@ -252,7 +252,6 @@ class ButtonSound < ActiveRecord::Base
       process_url(params['url'], non_user_params) if params['url'] && params['url'].match(/^http/)
       self.settings['content_type'] = params['content_type'] if params['content_type']
       self.settings['duration'] = params['duration'].to_i if params['duration']
-      # TODO: raise a stink if content_type or duration are not provided
       process_license(params['license']) if params['license']
       self.settings['protected'] = params['protected'] if params['protected'] != nil
       self.settings['protected_source'] = params['protected_source'] if params['protected_source'] != nil

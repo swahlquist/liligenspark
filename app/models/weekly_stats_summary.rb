@@ -71,7 +71,6 @@ class WeeklyStatsSummary < ActiveRecord::Base
         groups << group_stats
       end
       
-      # TODO: cache this day object, maybe in advance
       day_stats.merge!(Stats.touch_stats(day_sessions))
       day_stats.merge!(Stats.device_stats(day_sessions))
       day_stats.merge!(Stats.sensor_stats(day_sessions))
@@ -169,13 +168,12 @@ class WeeklyStatsSummary < ActiveRecord::Base
     
     res
     
-    # TODO: create board-aligned stat summaries as well
   end
 
   def self.schedule_update_for(log_session)
     return if !log_session || log_session.log_type != 'session'
     return unless log_session.user_id && log_session.started_at && log_session.data && log_session.data['stats']
-    # TODO: if log_session.started_at ever gets updated in a way that changes cweek then
+    # NOTE: if log_session.started_at ever gets updated in a way that changes cweek then
     # multiple weeks need to be updated 
     start_at = log_session.started_at.utc.beginning_of_week(:sunday)
     weekyear = WeeklyStatsSummary.date_to_weekyear(start_at)
@@ -201,7 +199,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     log_session = LogSession.find_by_global_id(log_session_id)
     return if !log_session || log_session.log_type != 'session'
     return unless log_session.user_id && log_session.started_at && log_session.data && log_session.data['stats']
-    # TODO: if log_session.started_at ever gets updated in a way that changes cweek then
+    # NOTE: if log_session.started_at ever gets updated in a way that changes cweek then
     # multiple weeks need to be updated 
     start_at = log_session.started_at.utc.beginning_of_week(:sunday)
     weekyear = WeeklyStatsSummary.date_to_weekyear(start_at)
@@ -778,8 +776,6 @@ class WeeklyStatsSummary < ActiveRecord::Base
         if summary.data['word_pairs']
           stash[:word_pairs] ||= {}
           summary.data['word_pairs'].each do |k, pair|
-            # TODO: this re-hashing should be unnecessary after March 2019,
-            # it was added to prevent duplication of pairs in the trends view
             hash = Digest::MD5.hexdigest("#{pair['b'].downcase.strip}::#{pair['a'].downcase.strip}")
             stash[:word_pairs][hash] ||= {
               'a' => pair['a'],

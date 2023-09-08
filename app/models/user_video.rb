@@ -49,7 +49,6 @@ class UserVideo < ActiveRecord::Base
     process_url(params['url'], non_user_params) if params['url']
     self.settings['content_type'] = params['content_type'] if params['content_type']
     self.settings['duration'] = params['duration'].to_i if params['duration']
-    # TODO: raise a stink if content_type or duration are not provided
     process_license(params['license']) if params['license']
     self.public = params['public'] if params['public'] != nil
     true

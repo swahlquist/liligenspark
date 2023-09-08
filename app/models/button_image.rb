@@ -191,7 +191,6 @@ class ButtonImage < ActiveRecord::Base
       self.settings['badge'] = !!params['badge'] if params['badge'] != nil
       self.settings['authorless'] = true if non_user_params[:no_author]
 
-      # TODO: raise a stink if content_type, width or height are not provided
       process_license(params['license']) if params['license']
       self.settings['protected'] = params['protected'] if params['protected'] != nil
       self.settings['protected_source'] = params['protected_source'] if params['protected_source'] != nil

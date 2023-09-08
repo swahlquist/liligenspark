@@ -416,12 +416,6 @@ module Converters::CoughDrop
 
     non_user_params[:key] = (obj['ext_coughdrop_settings'] && obj['ext_coughdrop_settings']['key'] && obj['ext_coughdrop_settings']['key'].split(/\//)[-1])
     board = nil
-    # TODO: I removed this because I don't think the user expectation is ever that
-    # importing a file would overwrite existing files, but I'm open to persuasion..
-#     board = Converters::Utils.find_by_data_url(obj['data_url'])
-#     if board && board.allows?(opts['user'], 'edit')
-#       board.process(params, non_user_params)
-#     els
     if opts['boards'] && opts['boards'][obj['id']]
       board = Board.find_by_path(opts['boards'][obj['id']]['id']) || Board.find_by_path(opts['boards'][obj['id']]['key'])
       board.process(params, non_user_params)
@@ -495,12 +489,6 @@ module Converters::CoughDrop
     
     # pre-load all the boards so they already exist when we go to look for them as links
     content['boards'].each do |obj|
-    # TODO: I removed this because I don't think the user expectation is ever that
-    # importing a file would overwrite existing files, but I'm open to persuasion..
-#       board = Converters::Utils.find_by_data_url(obj['data_url'])
-#       if board && board.allows?(opts['user'], 'edit')
-#         board.process(params, non_user_params)
-#       els
       if opts['boards'] && opts['boards'][obj['id']]
         board = Board.find_by_path(opts['boards'][obj['id']]['id']) || Board.find_by_path(opts['boards'][obj['id']]['key'])
       else
@@ -523,7 +511,6 @@ module Converters::CoughDrop
     sleep 10
     
     content['boards'].each do |board|
-      # TODO: content['images'] and content['sounds'] may be helpful
       board['images'] = content['images'] || []
       board['sounds'] = content['sounds'] || []
       result << from_obf(board, opts)
@@ -535,7 +522,6 @@ module Converters::CoughDrop
     # TODO: option to select locale for printing
     json = nil
     Progress.as_percent(0, 0.5) do
-      # TODO: break 
       opts['for_pdf'] = true
       if opts['packet']
         json = to_external_nested(board, opts)

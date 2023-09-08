@@ -214,7 +214,6 @@ module Uploadable
         redirect_url = redirect_url.sub(/\?/, "%3F") if redirect_url.match(/lessonpix\.com/) && redirect_url.match(/\?.*\.png/)
         res = Typhoeus.get(Uploader.sanitize_url(URI.escape(redirect_url)))
       end
-      # TODO: regex depending on self.file_type
       re = /^audio/
       re = /^image/ if file_type == 'images'
       re = /^video/ if file_type == 'videos'

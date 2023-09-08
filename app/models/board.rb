@@ -734,7 +734,7 @@ class Board < ActiveRecord::Base
     if grid['labels'] && self.buttons.length == 0
       self.populate_buttons_from_labels(grid.delete('labels'), grid.delete('labels_order'))
     end
-    self.settings['grid'] = grid # TODO: ...only set if changed
+    self.settings['grid'] = grid
     update_immediately_downstream_board_ids
     
     translations = (BoardContent.load_content(self, 'translations') || {})
@@ -1070,7 +1070,6 @@ class Board < ActiveRecord::Base
   
   def check_image_url
     if self.settings && self.settings['image_url'] == DEFAULT_ICON && self.settings['default_image_url'] == self.settings['image_url'] && self.settings['name'] && self.settings['name'] != 'Unnamed Board'
-      # TODO: include locale in search
       locale = (self.settings['locale'] || 'en').split(/-|_/)[0].downcase
       res = Typhoeus.get("https://www.opensymbols.org/api/v1/symbols/search?q=#{CGI.escape(self.settings['name'])}&locale=#{locale}", :timeout => 5, :ssl_verifypeer => false)
       results = JSON.parse(res.body) rescue nil
@@ -1159,7 +1158,6 @@ class Board < ActiveRecord::Base
   end
   
   def require_key
-    # TODO: truncate long names
     self.key ||= generate_board_key(self.settings && self.settings['name'])
     true
   end
@@ -1649,8 +1647,6 @@ class Board < ActiveRecord::Base
       end
       button
     end
-    # TODO: for each button use tinycolor to compute a "safe" color for border and bg,
-    # also a hover color for each, and mark them as "server-side approved"
 
     if self.buttons.to_json != prior_buttons.to_json
       @edit_notes << "modified buttons"
@@ -1973,8 +1969,6 @@ class Board < ActiveRecord::Base
           res = sorted[-1][0]
           if res == 'opensymbols' && sorted[-2]
             if sorted[-2][1] > (sorted[-1][1] * 3 / 4) && ['arasaac', 'tawasol', 'twemoji', 'mulberry', 'noun-project'].include?(sorted[-2][0])
-              # TODO: way to prefer one library over others when searching opensymbols
-              #       then we can track more fine-grained here and show in search results
               res = sorted[-2][0]
             end
           end
@@ -1990,7 +1984,6 @@ class Board < ActiveRecord::Base
   end
   
   def swap_images(library, author, board_ids, user_local_id=nil, visited_board_ids=[], updated_board_ids=[])
-    # TODO: update progress
     author = User.find_by_global_id(author) if author && author.is_a?(String)
     user_local_id ||= self.user_id
     copy_id = (board_ids || []).detect{|id| id.match(/^new/)}

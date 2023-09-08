@@ -110,7 +110,6 @@ module Purchasing
             prior_user = User.find_by_global_id(previous)
             new_user = User.find_by_global_id(valid)
             if prior_user && new_user && prior_user.settings['subscription'] && prior_user.settings['subscription']['customer_id'] == object['id']
-              # TODO: move to background job..
               prior_user.transfer_subscription_to(new_user, true)
             end
           end
@@ -540,15 +539,11 @@ module Purchasing
       if user && user.settings['subscription'] && user.settings['subscription']['customer_id'] && user.settings['subscription']['customer_id'] != 'free'
         customer = Stripe::Customer.retrieve({id: user.settings['subscription']['customer_id'], expand: ['subscriptions']})  rescue nil
       end
-      # TODO: this is disabled for now, it's cleaner to just send everyone through the same purchase workflow
-      # but it would be an easier sale if customers could purchase later w/o getting out their credit card again
       if token == 'none' && customer && customer['subscriptions'].to_a.any?{|s| s['status'] == 'active' || s['status'] == 'trialing' }
         if customer['default_source']
           # charge the customer immediately if possible
           token = {'id' => customer['default_source'], 'customer_id' => customer['id']}
         end
-        # TODO: you can create an InvoiceItem to add to an existing subscription
-        # if for some reason a default_source is not defined, is this necessary?
       end
       if !charge_type && token != 'none'
         charge = Stripe::Charge.create({

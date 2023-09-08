@@ -328,7 +328,7 @@ class Utterance < ActiveRecord::Base
     raise "user required" unless self.user || non_user_params[:user]
     self.user = non_user_params[:user] if non_user_params[:user]
     self.data ||= {}
-    self.data['button_list'] = params['button_list'] if params['button_list'] # TODO: process this for real
+    self.data['button_list'] = params['button_list'] if params['button_list']
     self.data['private_only'] = !!params['private_only'] if params['private_only'] != nil
     (self.data['button_list'] || []).each do |button|
       # Don't use local URLs for saving the utterance to show to others
@@ -337,7 +337,7 @@ class Utterance < ActiveRecord::Base
         button.delete('original_image')
       end
     end
-    self.data['sentence'] = params['sentence'] if params['sentence'] # TODO: process this for real
+    self.data['sentence'] = params['sentence'] if params['sentence']
     self.nonce = GoSecure.sha512(params['message_uid'], 'utterance_message_uid') if params['message_uid']
     self.data['timestamp'] = params['timestamp'].to_i if params['timestamp']
     if params['image_url'] && params['image_url'] != self.data['image_url']

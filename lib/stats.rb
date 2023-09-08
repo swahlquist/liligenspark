@@ -90,7 +90,6 @@ module Stats
       day_stats = stats_counts(day_sessions, total_stats)
       day_stats.merge!(time_block_use_for_sessions(day_sessions))
       
-      # TODO: cache this day object, maybe in advance
       days[date.to_s] = usage_stats(day_stats, true)
     end
     res = usage_stats(total_stats)

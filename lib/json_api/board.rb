@@ -51,7 +51,6 @@ module JsonApi::Board
     end
     json['created'] = board.created_at.iso8601
     json['updated'] = board.settings['last_updated'] || board.updated_at.iso8601
-    # TODO: check for updated/newly-added launch URLs for app-launching buttons
     # This checks for updated/newly-added launch URLs for previously-defined apps
     self.trace_execution_scoped(['json/board/apps']) do
       json['buttons'].each do |button|
@@ -119,7 +118,6 @@ module JsonApi::Board
       json['downstream_board_ids'] = board.downstream_board_ids
       if args[:permissions] && args[:permissions].respond_to?(:settings)
         # TODO: sharding
-        # TODO: this is timing out sometimes, maybe cache it daily or something?
         user_ids = UserBoardConnection.where(:board_id => board.id).limit(20).map(&:user_id)
         user_names = User.where(:id => user_ids).select('id, user_name').map(&:user_name)
         valid_names = [args[:permissions].user_name] + (args[:permissions].settings['supervisees'] || []).map{|s| s['user_name'] }

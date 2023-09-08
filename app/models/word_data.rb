@@ -347,9 +347,6 @@ class WordData < ActiveRecord::Base
     existing = activities_for(user, include_supervisees)
     if existing.instance_variable_get('@fresh') && existing['words'].length >= 3
       generated = Time.parse(existing['generated'])
-      # TODO: created_at will tell us if a new goal was created, but not if it was just modified
-      # and updated_at also gets modified regularly when goals have a badges attached, even
-      # if they haven't actually been modified.
       more_recent_goals = UserGoal.where(active: true, user_id: user.id).where(['created_at > ?', generated]).count > 0
       more_recent_activities = activities_session && activities_session.updated_at > generated
       return existing unless more_recent_goals || more_recent_activities
@@ -455,7 +452,6 @@ class WordData < ActiveRecord::Base
     # add the activities to the user object for quick retrieval
     # TODO: store these somewhere other than on the user record and
     # bump the result list to 50, that's way too much data for that model
-    # TODO: don't force a re-sync when this changes
     user.settings['target_words']['activities'] = {
       'generated' => Time.now.iso8601,
       'words' => found_words,

@@ -196,12 +196,6 @@ module ExtraData
     # make a remote call to retrieve the data and set it
     # to the big-data attribute (without saving)
 
-    # TODO: start adding support to extra_data retrieval
-    # directly from the client, instead of having to hold up the server request
-
-    # TODO: does this need a pessimistic lock? I *think* only for method calls
-    # that will end up updating the record, so we can lock it there
-    # instead of here?
     url = self.extra_data_private_url
     if @cached_extra_data
       self.data[self.extra_data_attribute] = @cached_extra_data

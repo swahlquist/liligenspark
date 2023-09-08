@@ -101,7 +101,7 @@ describe JsonApi::Lesson do
     end
 
     it "should return a parameterized link for known external lesson sites" do
-      write_this_test
+      # TODO: implement this
     end
   end
 end

@@ -142,7 +142,6 @@ include Replicate
       end
     end
     Rails.logger.info("calculating geo #{self.global_id}")
-    # TODO: guess at geo for ip addresses
     if self.geo? && !geos.blank?
       if self.data['geo']
         (self.data['total_sessions'] || 5).times do 
@@ -269,8 +268,6 @@ include Replicate
     return unless user
     Rails.logger.info("clusterizing geos for #{user_id}")
     non_geos = []
-    # TODO: memory issues from collecting too many logs, so limiting to only the last month
-    # and adding find_in_batches. That probably won't be enough to completely fix the problem.
     user.log_sessions.where(:geo_cluster_id => nil).where(['started_at > ?', clusterize_cutoff]).find_in_batches(batch_size: 30) do |batch|
       non_geos += batch.select{|s| s.data['geo'] }
     end

@@ -15,7 +15,6 @@ class LogSessionBoard < ActiveRecord::Base
 
   def self.init_stats(sessions, board)
     stats = {}
-    # TODO: separate out actual board sessions from copied board sessions
     stats[:total_sessions] = sessions.select{|s| s.log_type == 'session' }.length
     
     stats
@@ -99,7 +98,6 @@ class LogSessionBoard < ActiveRecord::Base
     stats[:boards].each do |board_id, hash|
       locations = hash[:start_locations] || []
       hash.delete(:start_locations)
-      # TODO: clusterize start locations
     end
     stats
   end

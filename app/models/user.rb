@@ -77,7 +77,7 @@ class User < ActiveRecord::Base
       if res.settings['authored_organization_id'] == org_id
       else
         # try looking up org and see if the user has been added there
-        # TODO: someday if you want to scope logins to domain, this is how
+        # NOTE: someday if you want to scope logins to domain, this is how
         # res = nil
       end
     end
@@ -548,7 +548,7 @@ class User < ActiveRecord::Base
     if url == 'fallback'
       fallback
     elsif url && url != 'default'
-      # TODO: somewhere we should enforce that it's coming from a reliable location, or provide a fallback
+      # NOTE: somewhere we should enforce that it's coming from a reliable location, or provide a fallback
       url
     else
       email_md5 = Digest::MD5.hexdigest(self.settings['email'] || "none")
@@ -588,7 +588,6 @@ class User < ActiveRecord::Base
       self.save
     end
     
-    # TODO: trigger background process to create user_board_connection records for all boards
     previous_connections = UserBoardConnection.where(:user_id => self.id)
     orphan_board_ids = previous_connections.map(&:board_id)
     linked_boards = []
@@ -630,7 +629,7 @@ class User < ActiveRecord::Base
           UserBoardConnection.where(id: ubc.id).update_all(locale: hash[:locale])
         end
         board.instance_variable_set('@skip_update_available_boards', true)
-        # TODO: I *think* this is here because board permissions may change for
+        # NOTE: I *think* this is here because board permissions may change for
         # supervisors/supervisees when a user's home board changes
         board.track_downstream_boards!(nil, nil, Board.last_scheduled_stamp || Time.now.to_i)
         Rails.logger.info("checking downstream boards for #{self.global_id}, #{board.global_id}")
@@ -773,7 +772,6 @@ class User < ActiveRecord::Base
       root_board_ids += [self.settings['preferences']['home_board']['id']] 
     end
     if include_supervisees
-      # TODO: large groups of supervisees bogs down this lookup too much
       if self.supervised_user_ids.length < 5
         self.supervisees.each do |u|
           if u.settings && u.settings['preferences'] && u.settings['preferences']['home_board']
@@ -1193,8 +1191,6 @@ class User < ActiveRecord::Base
       # Since 'browser' is a single device, it's possible that the voice_uri set for one
       # computer won't match the voice_uri needed for a different computer. So this keeps
       # a list of recent voice_uris and the client just uses the most recent one.
-      # TODO: maybe this should be a browser-specific option since it'll be weird to other API consumers
-      # TODO: now that we're storing all browsers as different devices, this seems like it needs to be replaced with an alternative
       voice_uris = ((self.settings['preferences']['devices'][device_key] || {})['voice'] || {})['voice_uris'] || []
       if device['voice'] && device['voice']['voice_uri']
         voice_uris = [device['voice']['voice_uri']] + voice_uris

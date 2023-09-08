@@ -1,5 +1,4 @@
 unless ENV['SKIP_VALIDATIONS']
-  # TODO: is this really necessary? seems like paper_trail is all we really need...
   module Readline
     alias :old_readline :readline
     def readline(*args)

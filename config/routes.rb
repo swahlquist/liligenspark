@@ -66,7 +66,6 @@ Coughdrop::Application.routes.draw do
   get 'lessons/:lesson_id/:lesson_code/:user_token' => 'boards#lesson'
   
   # if Rails.env.production?
-  # TODO: need to catch the update event to post a note encouraging the user to reload
     offline = Rack::Offline.configure :cache_interval => 120 do
       cache ActionController::Base.helpers.asset_path("application.css")
       cache ActionController::Base.helpers.asset_path("application.js")

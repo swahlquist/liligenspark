@@ -263,9 +263,6 @@ class UserGoal < ActiveRecord::Base
       g, timestamp, code_goal_id, user_id, rnd, hash = code.split(/-/)
       return false unless code_goal_id == goal_id
       valid = hash == GoSecure.sha512(timestamp + "_" + goal_id + "_" + user_id, rnd)[0, 20]
-    else
-      # TODO: delete this option after June 2022
-      valid = hash == GoSecure.sha512(timestamp + "_" + user_id, rnd)[0, 20]
     end
     user = User.find_by_path(user_id)
     if user && target && valid

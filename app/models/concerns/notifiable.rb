@@ -22,17 +22,4 @@ module Notifiable
     end
   end
 
-#   # TODO: after create on board, auto-register author
-#   # TODO: while linked to a user, auto-register linker
-#   
-#   def register_listener(user, options)
-#     Webhook.register(user, self.record_code, options)
-#   end
-  
-#   
-#   module ClassMethods
-#     def notify_on(attributes, notification_type)
-#       # TODO: ...
-#     end
-#   end
 end

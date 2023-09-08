@@ -1215,7 +1215,6 @@ module Subscription
           end
           # Don't delete communicators marked as never-delete or who allow
           # anonymized reports for tracking
-          # TODO: these shouldn't apply for never-paid accounts that weren't actively used
           next if user.settings['preferences']['allow_log_reports'] && user.updated_at > 36.months.ago
           next if user.settings['preferences']['never_delete']
           user.settings['subscription'] ||= {}

@@ -11,7 +11,6 @@ module JsonApi::User
     json['id'] = user.global_id
     json['user_name'] = user.user_name
 
-    # TODO: find a better home for this
     json['avatar_url'] = user.generated_avatar_url('fallback')
     json['fallback_avatar_url'] = json['avatar_url']
     json['link'] = "#{JsonApi::Json.current_host}/#{user.user_name}"
@@ -120,8 +119,6 @@ module JsonApi::User
       else
         json['preferences']['device']['ever_synced'] = true if json['preferences']['device']['ever_synced'] == nil
       end
-      # TODO: remove this (prefer_native_keyboard not on device preference) after June 2020
-      json['preferences']['prefer_native_keyboard'] = json['preferences']['device']['prefer_native_keyboard'] == nil ? user.settings['preferences']['prefer_native_keyboard'] : json['preferences']['device']['prefer_native_keyboard']
       if user.eval_account?
         json['preferences']['eval'] = user.settings['eval_reset']
       end

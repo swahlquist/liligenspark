@@ -137,7 +137,7 @@ More information about the file formats being used is available at https://www.o
       format: 'open-board-log-0.1',
       user_id: "coughdrop:#{user_id}",
       source: "coughdrop",
-      locale: 'en', # TODO: ...
+      locale: 'en',
       sessions: []
     }
   end
@@ -305,8 +305,6 @@ More information about the file formats being used is available at https://www.o
           lookup_text(e, event['action']['text'])
         elsif (e['action'] == ':auto_home' || e['action'] == ':open_board') && event['action']['new_id']
           dest_id = event['action']['new_id']['id']
-          # TODO: record the missing board id when saving the log rather than when 
-          # generating the log file for better accuracy
           if event['action']['new_id']['key'] && !dest_id
             brd = Board.where(key: event['action']['new_id']['key']).select('id').first
             dest_id = brd.global_id if brd

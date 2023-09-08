@@ -39,8 +39,6 @@ module Converters::Utils
       end
     end
     Progress.update_current_progress(0.1, :preconverting_file)
-    # TODO: key off just the last change id for the board(s) when building the
-    # filename, return existing filename if it exists and isn't about to expire
     path = OBF::Utils.temp_path("stash")
 
     content_type = nil
@@ -66,12 +64,7 @@ module Converters::Utils
     
     Progress.as_percent(0.2, 0.9) do
       if file_type == 'obz'
-        if includes == 'all'
-          Converters::CoughDrop.to_obz(board, path, {'user' => user})
-        else
-          # TODO: these cases are the same, why do we have both??
-          Converters::CoughDrop.to_obz(board, path, {'user' => user})
-        end
+        Converters::CoughDrop.to_obz(board, path, {'user' => user})
       elsif file_type == 'obf'
         Converters::CoughDrop.to_obf(board, path)
       elsif file_type == 'pdf'
