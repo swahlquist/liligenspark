@@ -116,7 +116,7 @@ module ExtraData
       return true
     end
     # TODO: enable for all once it has been deployed everywhere for a few months
-    false
+    true
   end
 
   def encrypted_json(obj)
