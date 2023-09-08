@@ -127,12 +127,13 @@ module GlobalId
             # id_hashes << res
             users_for[res[:id]] ||= []
             users_for[res[:id]] << nil
-          else
+          elsif u
             users_for[res[:id]] << u
           end
         else
           users_for[res[:id]] << nil
         end
+        users_for.each{|id, list| list.uniq! }
         res
       end
 
@@ -174,7 +175,7 @@ module GlobalId
     end
     
     def find_batches_by_global_id(ids, opts={}, &block)
-      ids = ids.compact
+      ids = ids.compact if ids
       batch = (opts && opts[:batch_size]) || 10
       return [] if !ids || ids.length == 0
       id_hashes = (ids || []).map{|id| id_pieces(id) }
@@ -196,13 +197,14 @@ module GlobalId
             res = id_pieces(u.user_extra.settings['replaced_boards'][h[:orig]])
             users_for[res[:id]] ||= []
             users_for[res[:id]] << nil
-          else
+          elsif u
             users_for[res[:id]] << u
           end
         else
           users_for[res[:id]] ||= []
           users_for[res[:id]] << nil
         end
+        users_for.each{|id, list| list.uniq! }
         res
       end
 
@@ -226,12 +228,13 @@ module GlobalId
             else
               # If there are multiple global_ids for the same record but with different sub_ids
               # then they should each be returned individually
+              block.call(obj) if users.any?{|u| !u }
               users.each do |u|
                 if u
                   rec = obj.clone
                   rec.instance_variable_set('@sub_id', u.global_id)
                   rec.instance_variable_set('@sub_global', u)
-                  block.call(obj)
+                  block.call(rec)
                 end
               end
             end

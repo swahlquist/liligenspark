@@ -373,11 +373,66 @@ describe GlobalId, :type => :model do
         expect(bb[0].instance_variable_get('@sub_id')).to eq(u.global_id)
       end
 
-      it "should have specs" do
+      it "should return an empty list with a null or empty argument" do
+        expect(Board.find_batches_by_global_id(nil){|a| }).to eq([])
+        expect(Board.find_batches_by_global_id([]){|a| }).to eq([])
+      end
+
+      it "should retrieve all specified records" do
+        u1 = User.create
+        u2 = User.create
+        u3 = User.create
+        u4 = User.create
+        u5 = User.create
+        results = []
+        User.find_batches_by_global_id([u1.global_id, u2.global_id, u3.global_id, u4.global_id, u5.global_id], batch_size: 2) do |board|
+          results << board
+        end
+        expect(results.sort_by(&:global_id)).to eq([u1, u2, u3, u4, u5])
+
+        results = []
+        User.find_batches_by_global_id([u1.global_id, u1.global_id, "asdf", u2.global_id, u3.global_id, u4.global_id, u5.global_id, nil], batch_size: 2) do |board|
+          results << board
+        end
+        expect(results.sort_by(&:global_id)).to eq([u1, u2, u3, u4, u5])
+      end
+
+      it "should honor batches" do
+        u1 = User.create
+        u2 = User.create
+        u3 = User.create
+        u4 = User.create
+        u5 = User.create
+        results = []
+        h = OpenStruct.new
+        expect(User).to receive(:where).with(id: []).and_return(h)
+        expect(h).to receive(:preload).with(:user_extra).and_return([])
+        h = OpenStruct.new
+        expect(User).to receive(:where).with(id: [u1.id.to_s, u2.id.to_s, u3.id.to_s, u4.id.to_s, u5.id.to_s]).and_return(h)
+        expect(h).to receive(:find_in_batches).with(batch_size: 2).and_return(nil)
+        User.find_batches_by_global_id([u1.global_id, u2.global_id, u3.global_id, u4.global_id, u5.global_id], batch_size: 2) do |board|
+          results << board
+        end
+        expect(results).to eq([])
+      end
+
+      it "should include multiple shallow clones correctly" do
+        u1 = User.create
+        u2 = User.create
+        u3 = User.create
+        b1 = Board.create(user: u1)
+        b2 = Board.create(user: u1)
+        b3 = Board.create(user: u1)
+        results = []
+        Board.find_batches_by_global_id([b1.global_id, b2.global_id, "#{b1.global_id}-#{u1.global_id}", "#{b1.global_id}-#{u1.global_id}", "#{b1.global_id}-#{u2.global_id}", "#{b3.global_id}-#{u3.global_id}", "#{b3.global_id}-#{u3.global_id}9"]) do |board|
+          results << board
+        end
+        expect(results.length).to eq(5)
+        expect(results.map(&:global_id)).to eq([b1.global_id, "#{b1.global_id}-#{u1.global_id}", "#{b1.global_id}-#{u2.global_id}", b2.global_id, "#{b3.global_id}-#{u3.global_id}"])
       end
     end
   end
-  
+
   describe "Board exceptions" do
     it "should find_by_path" do
       b = Board.create(:key => "hat/man")
