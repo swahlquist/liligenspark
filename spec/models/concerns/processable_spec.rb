@@ -176,8 +176,27 @@ describe Processable, :type => :model do
   end
 
   describe "generate_possible_clone" do
-    it "should have specs" do
-      write_this_test
+    it "should not create a copy for a non-shallow clone" do
+      u1 = User.create
+      b = Board.create(user: u1)
+      expect(b).to_not receive(:copy_for)
+      expect(b.generate_possible_clone).to eq(b)
+    end
+
+    it "should call copy_for if a shallow clone" do
+      u1 = User.create
+      b = Board.create(user: u1)
+      bb = Board.find_by_path("#{b.global_id}-#{u1.global_id}")
+      expect(bb).to receive(:copy_for).with(u1, copy_id: b.global_id, skip_save: true).and_return('blah')
+      expect(bb.generate_possible_clone).to eq('blah')
+    end
+
+    it "should use the board's copy_id when copying a shallow clone" do
+      u1 = User.create
+      b = Board.create(user: u1, settings: {'copy_id' => 'bacon'})
+      bb = Board.find_by_path("#{b.global_id}-#{u1.global_id}")
+      expect(bb).to receive(:copy_for).with(u1, copy_id: 'bacon', skip_save: true).and_return('blah')
+      expect(bb.generate_possible_clone).to eq('blah')
     end
 
     it "should not allow cloning a board with protected content that the non-clone owner isn't allowed to copy" do
