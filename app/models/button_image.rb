@@ -150,6 +150,7 @@ class ButtonImage < ActiveRecord::Base
   def image_library
     bi = self
     lib = 'unknown'
+    return bi.settings['protected_source'] if bi.settings['protected_source']
     if bi.settings['license'] && bi.settings['license']['uneditable'] && bi.settings['license']['author_name'] && bi.settings['license']['author_url']
       lib = 'arasaac' if bi.settings['license']['author_url'].match(/arasaac/i)
       lib = 'twemoji' if bi.settings['license']['author_name'].match(/twitter/i)
@@ -288,41 +289,41 @@ class ButtonImage < ActiveRecord::Base
   end
 
   def settings_for(user, allowed_sources, pref)
-    settings = {}.merge(image.settings)
+    settings = {}.merge(self.settings)
     settings['url'] = self.url
     settings['protected_source'] ||= 'lessonpix' if settings['license'] && settings['license']['source_url'] && settings['license']['source_url'].match(/lessonpix/)
-    settings['protected'] = !!image.protected?
+    settings['protected'] = !!self.protected?
     if self.settings['library_alternates']
       pref ||= user && ((user.settings || {})['preferences'] || {})['preferred_symbols']
       allowed_sources ||= user && user.enabled_protected_sources(true)
       allowed_sources ||= []
       used_library = 'original'
-      if pre && pref != 'default' && pref != 'original'
-        if PROTECTED_SOURCES.include?(pref) && !allowed_sources.include?(pref)
+      if pref && pref != 'default' && pref != 'original'
+        if JsonApi::Image::PROTECTED_SOURCES.include?(pref) && !allowed_sources.include?(pref)
         else
-          used_library = image.image_library
+          used_library = self.image_library
           pref = nil if pref == 'default' || pref == 'original'
           if used_library == pref || !pref
-          elsif image.settings['library_alternates'] && image.settings['library_alternates'][pref]
+          elsif self.settings['library_alternates'] && self.settings['library_alternates'][pref]
             used_library = pref
-            settings = image.settings['library_alternates'][pref]
-            if JsonApi::Image.PROTECTED_SOURCES.include?(used_library)
+            settings = self.settings['library_alternates'][pref]
+            if JsonApi::Image::PROTECTED_SOURCES.include?(used_library)
               settings['protected'] = true 
               settings['protected_source'] = pref
             end
-          elsif pref == 'opensymbols' && image.settings['library_alternates'] && image.settings['library_alternates']['arasaac']
+          elsif pref == 'opensymbols' && self.settings['library_alternates'] && self.settings['library_alternates']['arasaac']
             used_library = pref
-            settings = image.settings['library_alternates']['arasaac']
-          elsif pref == 'opensymbols' && image.settings['library_alternates'] && image.settings['library_alternates']['twemoji']
+            settings = self.settings['library_alternates']['arasaac']
+          elsif pref == 'opensymbols' && self.settings['library_alternates'] && self.settings['library_alternates']['twemoji']
             used_library = pref
-            settings = image.settings['library_alternates']['twemoji']
+            settings = self.settings['library_alternates']['twemoji']
           end
         end
       end
     end
     settings['used_library'] = used_library
     token = user && user.user_token
-    if token && settings['url'].match(/\/api\/v1\/users\/.+\/protected_image/)
+    if token && settings['url'] && settings['url'].match(/\/api\/v1\/users\/.+\/protected_image/)
       settings['url'] = settings['url'] + (settings['url'].match(/\?/) ? '&' : '?') + "user_token=#{token}"
     end
     settings

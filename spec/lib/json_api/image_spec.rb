@@ -93,5 +93,65 @@ describe JsonApi::Image do
       expect(hash['protected_source']).to eq('asdf')
       expect(hash['fallback']).to eq(nil)
     end
+
+    it 'should include correct alternates' do
+      i = ButtonImage.new(url: 'http://www.example.com/pic.png', settings: {
+        'protected' => true, 'protected_source' => 'asdf',
+        'library_alternates' => {
+          'symbolstix' => {
+            'url' => 'http://www.example.com/symbolstix/pic.png'
+          }
+        }
+      })
+      hash = JsonApi::Image.build_json(i, :include_other_sources => true, :allowed_sources => ['asdf', 'symbolstix'], :preferred_source => 'xx')
+      expect(hash['url']).to eq('http://www.example.com/pic.png')
+      expect(hash['protected']).to eq(true)
+      expect(hash['protected_source']).to eq('asdf')
+      expect(hash['alternates']).to eq([
+        {'content_type' => nil, 'library' => 'symbolstix', 'license' => nil, 'url' => 'http://www.example.com/symbolstix/pic.png'},
+        {'content_type' => nil, 'library' => 'original', 'license' => {'type'=> 'private'}, 'url' => 'http://www.example.com/pic.png'},
+        {'content_type' => nil, 'library' => 'asdf', 'license' => {'type' => 'private'}, 'url' => 'http://www.example.com/pic.png'},
+      ])
+    end
+
+    it 'should return the preferred library as default if specified' do
+      i = ButtonImage.new(url: 'http://www.example.com/pic.png', settings: {
+        'protected' => true, 'protected_source' => 'asdf',
+        'library_alternates' => {
+          'symbolstix' => {
+            'url' => 'http://www.example.com/symbolstix/pic.png'
+          }
+        }
+      })
+      hash = JsonApi::Image.build_json(i, :include_other_sources => true, :allowed_sources => ['asdf', 'symbolstix'], :preferred_source => 'symbolstix')
+      expect(hash['url']).to eq('http://www.example.com/symbolstix/pic.png')
+      expect(hash['protected']).to eq(true)
+      expect(hash['protected_source']).to eq('symbolstix')
+      expect(hash['alternates']).to eq([
+        {'content_type' => nil, 'library' => 'symbolstix', 'license' => nil, 'url' => 'http://www.example.com/symbolstix/pic.png'},
+        {'content_type' => nil, 'library' => 'original', 'license' => {'type'=> 'private'}, 'url' => 'http://www.example.com/pic.png'},
+        {'content_type' => nil, 'library' => 'asdf', 'license' => {'type' => 'private'}, 'url' => 'http://www.example.com/pic.png'},
+      ])
+    end
+
+    it 'should include an original alternate when default is changed' do
+      i = ButtonImage.new(url: 'http://www.example.com/pic.png', settings: {
+        'protected' => true, 'protected_source' => 'asdf',
+        'library_alternates' => {
+          'symbolstix' => {
+            'url' => 'http://www.example.com/symbolstix/pic.png'
+          }
+        }
+      })
+      hash = JsonApi::Image.build_json(i, :include_other_sources => true, :allowed_sources => ['asdf', 'symbolstix'], :preferred_source => 'symbolstix')
+      expect(hash['url']).to eq('http://www.example.com/symbolstix/pic.png')
+      expect(hash['protected']).to eq(true)
+      expect(hash['protected_source']).to eq('symbolstix')
+      expect(hash['alternates']).to eq([
+        {'content_type' => nil, 'library' => 'symbolstix', 'license' => nil, 'url' => 'http://www.example.com/symbolstix/pic.png'},
+        {'content_type' => nil, 'library' => 'original', 'license' => {'type'=> 'private'}, 'url' => 'http://www.example.com/pic.png'},
+        {'content_type' => nil, 'library' => 'asdf', 'license' => {'type' => 'private'}, 'url' => 'http://www.example.com/pic.png'},
+      ])
+    end
   end
 end

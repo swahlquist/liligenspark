@@ -15,8 +15,8 @@ module JsonApi::Image
     allowed_sources ||= []
     settings = image.settings_for(args[:permissions], allowed_sources, args[:preferred_source])
     settings['protected_source'] ||= 'lessonpix' if settings['license'] && settings['license']['source_url'] && settings['license']['source_url'].match(/lessonpix/)
+    json['url'] = settings['url'] if settings['used_library'] != image.image_library
     protected_source = settings['protected']
-  
     if settings && protected_source && args[:original_and_fallback]
       fb = settings['fallback'] || {}
       json['fallback_url'] = Uploader.fronted_url(fb['url'])
@@ -45,7 +45,6 @@ module JsonApi::Image
       libs.delete('original') if libs['original'] && libs['original']['url'] != best_url
       il = image.image_library
       if settings['used_library'] != 'original' || !libs['original'] || !libs[il]
-        il = image.image_library
         lib = {
           'library' => il,
           'url' => best_url,
