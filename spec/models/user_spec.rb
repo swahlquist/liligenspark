@@ -3400,5 +3400,56 @@ describe User, :type => :model do
       end
       expect(u.copy_to_home_board({'id' => b1.global_id}, u.global_id, 'mulberry')).to eq(true)
     end
+
+    it "should create a shallow clone if specified" do
+      u = User.create
+      u2 = User.create
+      b1 = Board.create(user: u2, public: true)
+      
+      bi = ButtonImage.create
+      b1.process({'buttons' => [
+        {'id' => '1_2', 'label' => 'hat', 'image_id' => bi.global_id},
+        {'id' => '1_3', 'label' => 'cat', 'image_id' => bi.global_id},
+      ]}, {})
+      expect(u).to_not receive(:copy_board_links)
+      expect(u.copy_to_home_board({'id' => b1.global_id, 'shallow' => true}, u.global_id, nil)).to eq(true)
+      expect(u.settings['preferences']['home_board']).to eq({
+        'id' => "#{b1.global_id}-#{u.global_id}",
+        'key' => "#{u.user_name}/my:#{b1.key.sub(/\//, ':')}",
+        'locale' => 'en'
+      })
+      ue = u.user_extra
+      expect(ue).to_not eq(nil)
+      expect(ue.settings['replaced_roots']).to_not eq(nil)
+      expect(ue.settings['replaced_roots'][b1.global_id]).to_not eq(nil)
+    end
+  end
+
+  describe "save_with_sync" do
+    it "should update synce stamp" do
+      u = User.create(sync_stamp: 6.hours.ago)
+      u.save_with_sync('bacon')
+      expect(u.sync_stamp).to be > 5.minutes.ago
+    end
+    
+    it "should update sync reason" do
+      u = User.create(sync_stamp: 6.hours.ago)
+      u.save_with_sync('bacon')
+      expect(u.sync_stamp).to be > 5.minutes.ago
+      expect(u.settings['sync_stamp_reason']).to eq('bacon')
+    end
+
+    it "should also update supervisors" do
+      u = User.create(sync_stamp: 6.hours.ago)
+      u2 = User.create
+
+      u.save_with_sync('bacon')
+      expect(u.sync_stamp).to be > 5.minutes.ago
+      expect(u.settings['sync_stamp_reason']).to eq('bacon')
+
+      expect(u).to receive(:supervisors).and_return([u2])
+      expect(u2).to receive(:save_with_sync).with('supervisee update')
+      u.save_sync_supervisors(true)
+    end
   end
 end
