@@ -530,4 +530,189 @@ describe ButtonImage, :type => :model do
       expect(ButtonImage.skinned_url("https://www.example.com/libraries/twemoji/pic-var1fffUNI-var1ab4UNI.png", which)).to eq("https://www.example.com/libraries/twemoji/pic-var1fffUNI-var1ab4UNI.png")
     end
   end
+
+  describe "settings_for" do
+    it "should not error on no user" do
+      bi = ButtonImage.new
+      bi.settings = {'a' => 1}
+      bi.url = "http://www.example.com/pic.png"
+      hash = bi.settings_for(nil, nil, nil)
+      expect(hash).to eq({'a' => 1, 'url' => 'http://www.example.com/pic.png', 'protected' => false, 'used_library' => 'original'})
+    end
+    
+    it "should return default settings if no alternates defined" do
+      bi = ButtonImage.new
+      bi.settings = {'a' => 1}
+      bi.url = "http://www.example.com/pic.png"
+      hash = bi.settings_for(nil, nil, nil)
+      expect(hash).to eq({'a' => 1, 'url' => 'http://www.example.com/pic.png', 'protected' => false, 'used_library' => 'original'})
+    end
+
+    it "should not error on no preference or list of allowed sources" do
+      bi = ButtonImage.new
+      u = User.create
+      bi.settings = {'a' => 1}
+      bi.url = "http://www.example.com/pic.png"
+      hash = bi.settings_for(u, nil, nil)
+      expect(hash).to eq({'a' => 1, 'url' => 'http://www.example.com/pic.png', 'protected' => false, 'used_library' => 'original'})
+    end
+
+    it "should return default settings if no matching alternates" do
+      bi = ButtonImage.new
+      u = User.create
+      bi.settings = {'a' => 1, 'library_alternates' => {'bogus' => {'url' => 'http://www.example.com/bogus/pic.png'}}}
+      bi.url = "http://www.example.com/pic.png"
+      hash = bi.settings_for(u, [], 'bacon')
+      expect(hash).to eq({
+        'a' => 1, 
+        'url' => 'http://www.example.com/pic.png', 
+        'protected' => false, 
+        'used_library' => 'original'
+      })
+    end
+
+    it "should return default settings if preferred alternate not allowed" do
+      bi = ButtonImage.new
+      u = User.create
+      bi.settings = {'a' => 1, 'library_alternates' => {'symbolstix' => {'url' => 'http://www.example.com/bogus/pic.png'}}}
+      bi.url = "http://www.example.com/pic.png"
+      hash = bi.settings_for(u, [], 'symbolstix')
+      expect(hash).to eq({
+        'a' => 1, 
+        'url' => 'http://www.example.com/pic.png', 
+        'protected' => false, 
+        'used_library' => 'original'
+      })
+    end
+
+    it "should return default settings if it matches the preferred alternate" do
+      bi = ButtonImage.new
+      u = User.create
+      bi.settings = {
+        'a' => 1, 
+        'protected_source' => 'bacon',
+        'library_alternates' => {'bogus' => {'url' => 'http://www.example.com/bogus/pic.png'}}}
+      bi.url = "http://www.example.com/pic.png"
+      hash = bi.settings_for(u, [], 'bacon')
+      expect(hash).to eq({
+        'a' => 1, 
+        'url' => 'http://www.example.com/pic.png', 
+        'protected' => false, 
+        'protected_source' => 'bacon',
+        'used_library' => 'bacon'
+      })
+    end
+
+    it "should return the specified preference if available and allowed" do
+      bi = ButtonImage.new
+      u = User.create
+      bi.settings = {'a' => 1, 'library_alternates' => {'bogus' => {'url' => 'http://www.example.com/bogus/pic.png'}}}
+      bi.url = "http://www.example.com/pic.png"
+      hash = bi.settings_for(u, [], 'bogus')
+      expect(hash).to eq({
+        'url' => 'http://www.example.com/bogus/pic.png', 
+        'used_library' => 'bogus'
+      })
+    end
+
+    it "should return protected status on an alternate only for a protected alternate" do
+      bi = ButtonImage.new
+      u = User.create
+      bi.settings = {'a' => 1, 'library_alternates' => {'pcs' => {'url' => 'http://www.example.com/bogus/pic.png'}}}
+      bi.url = "http://www.example.com/pic.png"
+      hash = bi.settings_for(u, ['pcs'], 'pcs')
+      expect(hash).to eq({
+        'url' => 'http://www.example.com/bogus/pic.png', 
+        'used_library' => 'pcs',
+        'protected' => true,
+        'protected_source' => 'pcs'
+      })
+    end
+
+    it "should use arasaac as an acceptable alternate for opensymbols preference" do
+      bi = ButtonImage.new
+      u = User.create
+      bi.settings = {'a' => 1, 'library_alternates' => {'arasaac' => {'url' => 'http://www.example.com/bogus/pic.png'}}}
+      bi.url = "http://www.example.com/pic.png"
+      hash = bi.settings_for(u, [], 'opensymbols')
+      expect(hash).to eq({
+        'url' => 'http://www.example.com/bogus/pic.png', 
+        'used_library' => 'opensymbols',
+      })
+    end
+
+    it "should use twemoji as an aceptable alternate for opensymbols preference" do
+      bi = ButtonImage.new
+      u = User.create
+      bi.settings = {'a' => 1, 'library_alternates' => {'twemoji' => {'url' => 'http://www.example.com/bogus/pic.png'}}}
+      bi.url = "http://www.example.com/pic.png"
+      hash = bi.settings_for(u, [], 'opensymbols')
+      expect(hash).to eq({
+        'url' => 'http://www.example.com/bogus/pic.png', 
+        'used_library' => 'opensymbols',
+      })
+    end
+
+    it "should return user token if for a protected image api address" do
+      bi = ButtonImage.new
+      u = User.create
+      u.settings['preferences']['preferred_symbols'] = 'pcs'
+      expect(u).to receive(:enabled_protected_sources).with(true).and_return(['pcs'])
+      bi.settings = {'a' => 1, 'library_alternates' => {'pcs' => {'url' => '/api/v1/users/asdf/protected_image'}}}
+      bi.url = "http://www.example.com/pic.png"
+      hash = bi.settings_for(u, nil, nil)
+      expect(hash).to eq({
+        'url' => "/api/v1/users/asdf/protected_image?user_token=#{u.user_token}", 
+        'used_library' => 'pcs',
+        'protected' => true,
+        'protected_source' => 'pcs',
+      })      
+    end
+
+    it "should fall back to the user preference if none specified" do
+      bi = ButtonImage.new
+      u = User.create
+      u.settings['preferences']['preferred_symbols'] = 'bacon'
+      bi.settings = {'a' => 1, 'library_alternates' => {'bacon' => {'url' => 'http://www.example.com/bogus/pic.png'}}}
+      bi.url = "http://www.example.com/pic.png"
+      hash = bi.settings_for(u, nil, nil)
+      expect(hash).to eq({
+        'url' => 'http://www.example.com/bogus/pic.png', 
+        'used_library' => 'bacon',
+      })
+    end
+
+    it "should fall back to the user's allowed sources list if not specified" do
+      bi = ButtonImage.new
+      u = User.create
+      u.settings['preferences']['preferred_symbols'] = 'pcs'
+      expect(u).to receive(:enabled_protected_sources).with(true).and_return(['pcs'])
+      bi.settings = {'a' => 1, 'library_alternates' => {'pcs' => {'url' => 'http://www.example.com/bogus/pic.png'}}}
+      bi.url = "http://www.example.com/pic.png"
+      hash = bi.settings_for(u, nil, nil)
+      expect(hash).to eq({
+        'url' => 'http://www.example.com/bogus/pic.png', 
+        'used_library' => 'pcs',
+        'protected' => true,
+        'protected_source' => 'pcs',
+      })
+    end
+
+    
+    it "should fall back to the user's allowed sources list and preference if not specified" do
+      bi = ButtonImage.new
+      u = User.create
+      u.settings['preferences']['preferred_symbols'] = 'pcs'
+      expect(u).to receive(:enabled_protected_sources).with(true).and_return([])
+      bi.settings = {'a' => 1, 'library_alternates' => {'pcs' => {'url' => 'http://www.example.com/bogus/pic.png'}}}
+      bi.url = "http://www.example.com/pic.png"
+      hash = bi.settings_for(u, nil, nil)
+      expect(hash).to eq({
+        'a' => 1,
+        'protected' => false,
+        'url' => 'http://www.example.com/pic.png', 
+        'used_library' => 'original',
+      })
+    end
+  end
 end

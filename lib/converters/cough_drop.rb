@@ -163,7 +163,7 @@ module Converters::CoughDrop
         if original_button['image_id']
           image = board.known_button_images.detect{|i| i.global_id == original_button['image_id'] }
           if image
-            image_settings = image.settings_for(opts['user'])
+            image_settings = image.settings_for(opts['user'], nil, nil)
             
             skinned_url = ButtonImage.skinned_url(Uploader.fronted_url(image_settings['url']), which_skinner)
             image_record = image

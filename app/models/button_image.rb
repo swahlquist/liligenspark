@@ -292,17 +292,19 @@ class ButtonImage < ActiveRecord::Base
     settings['url'] = self.url
     settings['protected_source'] ||= 'lessonpix' if settings['license'] && settings['license']['source_url'] && settings['license']['source_url'].match(/lessonpix/)
     settings['protected'] = !!self.protected?
+    settings.delete('library_alternates')
+    used_library = 'original'
     if self.settings['library_alternates']
       pref ||= user && ((user.settings || {})['preferences'] || {})['preferred_symbols']
       allowed_sources ||= user && user.enabled_protected_sources(true)
       allowed_sources ||= []
-      used_library = 'original'
       if pref && pref != 'default' && pref != 'original'
         if JsonApi::Image::PROTECTED_SOURCES.include?(pref) && !allowed_sources.include?(pref)
         else
-          used_library = self.image_library
+          lib = self.image_library
           pref = nil if pref == 'default' || pref == 'original'
-          if used_library == pref || !pref
+          if lib == pref || !pref
+            used_library = lib
           elsif self.settings['library_alternates'] && self.settings['library_alternates'][pref]
             used_library = pref
             settings = self.settings['library_alternates'][pref]
