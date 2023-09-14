@@ -90,6 +90,8 @@ module RedisInit
         raise "unknown type: #{type}"
       end
       total += size
+      key = key.sub(/jobs_from_/, 'jobs_from/')
+      key = key.sub(/coughdrop:stat:/, 'coughdrop:stat/')
       prefix = key.split(/\//)[0]
       prefixes[prefix] = (prefixes[prefix] || 0) + size
       if size > 500000
@@ -98,7 +100,8 @@ module RedisInit
         puts key
       end
     end
-    puts JSON.pretty_generate(prefixes)
+    prefixes.to_a.sort{|k, v| v }.each{|k, v| puts "#{k}\t\t#{v}" }
+    # puts JSON.pretty_generate(prefixes)
     puts "total size\t#{total}"
   end
   

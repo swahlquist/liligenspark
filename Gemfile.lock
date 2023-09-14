@@ -79,7 +79,7 @@ GEM
       aws-sigv4 (~> 1.1)
     aws-sigv4 (1.2.3)
       aws-eventstream (~> 1, >= 1.0.2)
-    boy_band (0.1.14)
+    boy_band (0.1.16)
     bugsnag (6.12.2)
       concurrent-ruby (~> 1.0)
     builder (3.2.4)

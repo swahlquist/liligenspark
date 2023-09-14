@@ -283,7 +283,7 @@ module GlobalId
       user_names = []
       sub_users = {}
       if paths.any?{|p| p && p.match(/\/my:/)} 
-        sub_names = paths.map{|p| p.match(/\/my:/) && p.split(/\/my:/)[0] }.compact.uniq
+        sub_names = paths.map{|p| p && p.match(/\/my:/) && p.split(/\/my:/)[0] }.compact.uniq
         User.where(user_name: sub_names).preload(:user_extra).each do |user|
           sub_users[user.user_name] = user
         end

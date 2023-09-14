@@ -357,7 +357,6 @@ module Uploader
 
   def self.default_images(library, words, locale, user, find_missing=true, cache_forever=false)
     cache = library.instance_variable_get('@library_cache')
-    # puts " GETTING NEW CACHE default" if !cache
     cache ||= LibraryCache.find_or_create_by(library: library, locale: locale)
     library.instance_variable_set('@library_cache', cache)
     found_words = {}

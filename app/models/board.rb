@@ -1729,7 +1729,8 @@ class Board < ActiveRecord::Base
     #   img.delete('fallback_url')
     # end
     Rails.logger.warn('end images_and_sounds lookup')
-    set_cached(key, res)
+    # This fills up half the cache, so no.
+    # set_cached(key, res)
     res
   end
 

@@ -15,8 +15,26 @@ class LibraryCache < ApplicationRecord
     true
   end
 
-  def self.invalidate_all
-    LibraryCache.update_all(invalidated_at: Time.now)
+  def self.invalidate_all(locale=nil)
+    caches = locale ? LibraryCache.where(locale: locale) : LibraryCache.all
+    caches.update_all(invalidated_at: Time.now)
+  end
+
+  def self.flush_all(locale=nil)
+    count = 0
+    caches = locale ? LibraryCache.where(locale: locale) : LibraryCache.all
+    caches.find_in_batches(batch_size: 1) do |batch|
+      batch.each do |cache|
+        if !locale || locale == cache.locale
+          count += 1
+          ['defaults', 'fallbacks', 'missing'].each do |key|
+            cache.data.delete(key)
+          end
+          cache.save
+        end
+      end
+    end
+    count
   end
 
   def self.normalize(hash)
@@ -58,9 +76,10 @@ class LibraryCache < ApplicationRecord
     image_id = nil
     needs_refresh = false
     added = (self.data[category][word] || {})['added']
+    category_cutoff = [self.invalidated_at.to_i, 6.months.ago.to_i].max
     ['defaults', 'fallbacks'].each do |cat|
       self.data[cat].each do |k, h|
-        if h['added'] < 6.months.ago.to_i && self.data[cat][k] && !self.data[cat][k]['flagged']
+        if h['added'] < category_cutoff && self.data[cat][k] && !self.data[cat][k]['flagged']
           self.data[cat][k]['flagged'] = true
           needs_refresh = true
         end
@@ -72,7 +91,7 @@ class LibraryCache < ApplicationRecord
       @words_changed = true
     end
     (self.data['missing'] || {}).each do |k, h|
-      if h['added'] < 6.months.ago.to_i && !h['flagged']
+      if h['added'] < category_cutoff && !h['flagged']
         self.data['missing'][k]['flagged'] = true
         needs_refresh = true
       end
@@ -127,9 +146,10 @@ class LibraryCache < ApplicationRecord
   def find_expired_words
     words = []
     cache = self
+    category_cutoff = [self.invalidated_at.to_i, 6.months.ago.to_i].max
     ['defaults', 'fallbacks'].each do |cat|
       cache.data[cat].each do |k, h|
-        if h['added'] < 6.months.ago.to_i || (cache.data[cat][k] && cache.data[cat][k]['flagged'])
+        if h['added'] < category_cutoff || (cache.data[cat][k] && cache.data[cat][k]['flagged'])
           words << k
         end
       end
@@ -172,15 +192,17 @@ class LibraryCache < ApplicationRecord
       orig = word
       word = word.downcase
       ['defaults', 'fallbacks'].each do |cat|
-        cutoff = (cat == 'defaults') ? 18.months.ago.to_i : 9.months.ago.to_i
+        cutoff = [(cat == 'defaults') ? 18.months.ago.to_i : 9.months.ago.to_i, self.invalidated_at.to_i].max
         if !found[word] && self.data[cat][word] && self.data[cat][word]['data'] #&& self.data[cat][word]['added'] > cutoff
           self.data[cat][word]['last'] ||= Time.now.to_i
           if self.data[cat][word]['last'] < 2.weeks.ago.to_i
             self.data[cat][word]['last'] = Time.now.to_i
             did_update = true
           end
-          found[orig] = {}.merge(self.data[cat][word]['data'])
-          found[orig]['coughdrop_image_id'] = self.data[cat][word]['image_id']
+          if self.data[cat][word]['added'] > self.invalidated_at.to_i
+            found[orig] = {}.merge(self.data[cat][word]['data'])
+            found[orig]['coughdrop_image_id'] = self.data[cat][word]['image_id']
+          end
         end
       end
       if (self.data['missing'] || {})[word] && !found[orig]
