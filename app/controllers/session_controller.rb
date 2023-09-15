@@ -559,7 +559,7 @@ class SessionController < ApplicationController
         modeling_session: @api_user.valet_mode?,
         avatar_image_url: (valid ? @api_user.generated_avatar_url : nil),
         scopes: device && device.permission_scopes,
-        sale: ENV['CURRENT_SALE'],
+        sale: Purchasing.current_sale,
         ws_url: ENV['CDWEBSOCKET_URL'],
         global_integrations: UserIntegration.global_integrations.keys,
       }
@@ -576,7 +576,7 @@ class SessionController < ApplicationController
     else
       render json: {
         authenticated: false, 
-        sale: ENV['CURRENT_SALE'],
+        sale: Purchasing.current_sale,
         ws_url: ENV['CDWEBSOCKET_URL'],
         global_integrations: UserIntegration.global_integrations.keys
       }.to_json

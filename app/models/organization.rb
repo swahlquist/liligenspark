@@ -1363,6 +1363,14 @@ class Organization < ActiveRecord::Base
     self.settings['note_templates'] = params['note_templates'] if params['note_templates'] != nil
     self.settings['support_target'] = params['support_target']
     raise "updater required" unless non_user_params['updater']
+    if self.admin
+      if params[:sale_cutoff_date]
+        date = Date.parse(params[:sale_cutoff_date]) rescue nil
+        if date
+          Setting.set('sale_cutoff_date', date.to_s)
+        end
+      end
+    end
     if params[:allotted_licenses]
       total = params[:allotted_licenses].to_i
       used = self.sponsored_users(false).count

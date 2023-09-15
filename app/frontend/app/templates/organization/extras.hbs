@@ -23,6 +23,12 @@
         </div>
       </div>
       <div class='col-sm-6'>
+        <h4>{{t "Sale End Date" key='sale_date'}}</h4>
+        <div style='margin-bottom: 30px;'>
+          {{input value=sale_cutoff_date placeholder="YYYY-MM-DD" class="form-control inline inline-masquerade input-sm"}}
+          <button class="btn btn-default btn-sm" {{action "update_sale_date"}}>{{t "Update" key='update'}}</button>
+        </div>
+
         <h4>{{t "Start Code Lookup" key='start_code_lookup'}}</h4>
         <div style='margin-bottom: 30px;'>
           {{input value=start_code placeholder="start code" class="form-control inline inline-masquerade input-sm"}}

@@ -7,6 +7,7 @@ export default Route.extend({
   },
   setupController: function(controller, model) {
     controller.set('model', model);
+    controller.set('sale_cutoff_date', model.get('admin') ? model.get('sale_cutoff_date') : '');
     controller.refresh_lists();
   }
 });

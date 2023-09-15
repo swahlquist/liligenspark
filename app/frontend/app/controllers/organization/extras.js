@@ -49,6 +49,17 @@ export default Controller.extend({
     start_code_lookup: function() {
       this.transitionToRoute('start_codes', this.get('start_code'));
     },
+    update_sale_date: function() {
+      var cutoff = this.get('sale_cutoff_date') || "2000-01-01";
+      var model = this.get('model');
+      model.set('sale_cutoff_date', cutoff);
+      var _this = this;
+      model.save().then(function(org) {
+        _this.set('sale_cutoff_date', org.get('sale_cutoff_date'));
+      }, function(err) {
+        modal.error(i18n.t('error_updating_date', "Error Updating Sale Date"));
+      });
+    },
     block_email: function() {
       var email = this.get('blocked_email_address');
       var _this = this;

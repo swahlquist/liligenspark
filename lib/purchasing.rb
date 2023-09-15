@@ -524,7 +524,7 @@ module Purchasing
   end
   
   def self.active_sale?
-    !!(ENV['CURRENT_SALE'] && ENV['CURRENT_SALE'].to_i > Time.now.to_i)
+    !!(Purchasing.current_sale && Purchasing.current_sale.to_i > Time.now.to_i)
   end
 
   def self.purchase_symbol_extras(token, opts)
@@ -1436,5 +1436,15 @@ module Purchasing
   def self.resume_subscription(user)
     # API call
     return false
+  end
+
+  def self.current_sale
+    setting = Setting.get('sale_cutoff_date')
+    res = nil
+    if setting
+      res = (Time.parse(setting.to_s) + 1.day).to_i rescue nil
+    end
+    res ||= ENV['CURRENT_SALE'].to_i
+    res
   end
 end

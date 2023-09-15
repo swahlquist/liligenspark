@@ -42,6 +42,9 @@ module JsonApi::Organization
       json['saml_metadata_url'] = org.settings['saml_metadata_url']
       json['saml_sso_url'] = org.settings['saml_sso_url']
 
+      if org.admin
+        json['sale_cutoff_date'] = Setting.get('sale_cutoff_date')
+      end
       json['allotted_licenses'] = org.settings['total_licenses'] || 0
       json['image_url'] = org.settings['image_url']
       json['org_access'] = org.settings['org_access']

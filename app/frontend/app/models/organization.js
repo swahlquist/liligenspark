@@ -42,6 +42,7 @@ CoughDrop.Organization = DS.Model.extend({
   include_extras: DS.attr('boolean'),
   support_target: DS.attr('raw'),
   extra_colors: DS.attr('raw'),
+  sale_cutoff_date: DS.attr('string'),
   site: DS.attr('raw'),
   status_overrides: DS.attr('raw'),
   note_templates: DS.attr('raw'),
