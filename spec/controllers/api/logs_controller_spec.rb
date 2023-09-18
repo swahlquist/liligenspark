@@ -720,18 +720,6 @@ describe Api::LogsController, :type => :controller do
     end
   end
   
-  # def trends
-  #   extra_data = !!(@api_user && @api_user.allows?(@api_user, 'admin_support_actions'))
-  #   res = JSON.parse(Permissable.permissions_redis.get('global/stats/trends')) rescue nil
-  #   if !res #|| extra_data
-  #     progress = Progress.schedule(WeeklyStatsSummary, :trends)
-  #     res = JsonApi::Progress.as_json(progress, :wrapper => true)
-  #   end
-  #   res.delete(:admin) unless extra_data
-    
-  #   render json: res
-  # end
-
   describe "trends" do
     after(:each) do
       Permissable.permissions_redis.del('global/stats/trends')
@@ -779,6 +767,196 @@ describe Api::LogsController, :type => :controller do
       expect(response).to be_successful
       json = JSON.parse(response.body)
       expect(json).to eq({'a' => 1, 'admin' => 'asdf'})
+    end
+  end
+
+  describe "trends_slice" do
+    it "should not require an api token" do
+      get 'trends_slice'
+      assert_error('Invalid credentials')
+    end
+
+    it "should error by default" do
+      get 'trends_slice'
+      assert_error('Invalid credentials')
+    end
+
+    it "should allow access for an authorized integration" do
+      ui = UserIntegration.create
+      ui.settings['allow_trends'] = true
+      ui.save
+      dk = DeveloperKey.create
+      d = Device.create(user_integration_id: ui.id, developer_key_id: dk.id)
+      get 'trends_slice', params: {integration_id: dk.key, integration_secret: dk.secret}
+      assert_error("users must be requested in blocks of between five to ten at a time")
+    end
+
+    it "should error with too few user ids" do
+      ui = UserIntegration.create
+      ui.settings['allow_trends'] = true
+      ui.save
+      dk = DeveloperKey.create
+      d = Device.create(user_integration_id: ui.id, developer_key_id: dk.id)
+      get 'trends_slice', params: {integration_id: dk.key, integration_secret: dk.secret, user_ids: "a,b"}
+      assert_error("users must be requested in blocks of between five to ten at a time")
+    end
+
+    it "should error with too many user ids" do
+      ui = UserIntegration.create
+      ui.settings['allow_trends'] = true
+      ui.save
+      dk = DeveloperKey.create
+      d = Device.create(user_integration_id: ui.id, developer_key_id: dk.id)
+      get 'trends_slice', params: {integration_id: dk.key, integration_secret: dk.secret, user_ids: "a,b,c,d,e,f,g,h,i,j,k,l"}
+      assert_error("users must be requested in blocks of between five to ten at a time")
+    end
+
+    it "should error on invalid ids" do
+      ui = UserIntegration.create
+      ui.settings['allow_trends'] = true
+      ui.save
+      dk = DeveloperKey.create
+      d = Device.create(user_integration_id: ui.id, developer_key_id: dk.id)
+      get 'trends_slice', params: {integration_id: dk.key, integration_secret: dk.secret, user_ids: "a,b,c,d,e,f,g,h,i"}
+      assert_error("invalid user ids")
+      expect(@error_json['ids']).to eq(["a","b","c","d","e","f","g","h","i"])
+    end
+
+    it "should error with insufficient data if not enough results" do
+      ui = UserIntegration.create
+      ui.settings['allow_trends'] = true
+      ui.save
+      us = []
+      8.times do |i|
+        us << User.create
+      end
+      dk = DeveloperKey.create
+      d = Device.create(user_integration_id: ui.id, developer_key_id: dk.id)
+      get 'trends_slice', params: {integration_id: dk.key, integration_secret: dk.secret, user_ids: us.map{|u| ui.user_token(u) }.join(',')}
+      assert_error("not enough users for report, only the specified ids contained usage data")
+      expect(@error_json['ids']).to eq([])
+    end
+
+    it "should error with only one record-containing user" do
+      ui = UserIntegration.create
+      ui.settings['allow_trends'] = true
+      ui.save
+      us = []
+      8.times do |i|
+        u = User.create
+        u.settings['preferences']['allow_log_reports'] = true
+        u.save
+        us << u
+      end
+      WeeklyStatsSummary.create(weekyear: WeeklyStatsSummary.date_to_weekyear(3.weeks.ago.to_date), user_id: us[0].id)
+      dk = DeveloperKey.create
+      d = Device.create(user_integration_id: ui.id, developer_key_id: dk.id)
+      get 'trends_slice', params: {integration_id: dk.key, integration_secret: dk.secret, user_ids: us.map{|u| ui.user_token(u) }.join(',')}
+      assert_error("not enough users for report, only the specified ids contained usage data")
+      expect(@error_json['ids']).to eq([ui.user_token(us[0])])
+    end
+
+    it "should error with two record-containing users" do
+      ui = UserIntegration.create
+      ui.settings['allow_trends'] = true
+      ui.save
+      us = []
+      8.times do |i|
+        u = User.create
+        u.settings['preferences']['allow_log_reports'] = true
+        u.save
+        us << u
+      end
+      WeeklyStatsSummary.create(weekyear: WeeklyStatsSummary.date_to_weekyear(3.weeks.ago.to_date), user_id: us[0].id)
+      WeeklyStatsSummary.create(weekyear: WeeklyStatsSummary.date_to_weekyear(6.weeks.ago.to_date), user_id: us[1].id)
+      WeeklyStatsSummary.create(weekyear: WeeklyStatsSummary.date_to_weekyear(36.weeks.ago.to_date), user_id: us[2].id)
+      dk = DeveloperKey.create
+      d = Device.create(user_integration_id: ui.id, developer_key_id: dk.id)
+      get 'trends_slice', params: {integration_id: dk.key, integration_secret: dk.secret, user_ids: us.map{|u| ui.user_token(u) }.join(',')}
+      assert_error("not enough users for report, only the specified ids contained usage data")
+      expect(@error_json['ids']).to eq([ui.user_token(us[0]), ui.user_token(us[1])])
+    end
+
+    it "should return a progress result for three or more record-containing users" do
+      ui = UserIntegration.create
+      ui.settings['allow_trends'] = true
+      ui.save
+      us = []
+      8.times do |i|
+        u = User.create
+        u.settings['preferences']['allow_log_reports'] = true
+        u.save
+        us << u
+      end
+      WeeklyStatsSummary.create(weekyear: WeeklyStatsSummary.date_to_weekyear(3.weeks.ago.to_date), user_id: us[0].id)
+      WeeklyStatsSummary.create(weekyear: WeeklyStatsSummary.date_to_weekyear(6.weeks.ago.to_date), user_id: us[1].id)
+      WeeklyStatsSummary.create(weekyear: WeeklyStatsSummary.date_to_weekyear(5.weeks.ago.to_date), user_id: us[2].id)
+      dk = DeveloperKey.create
+      d = Device.create(user_integration_id: ui.id, developer_key_id: dk.id)
+      get 'trends_slice', params: {integration_id: dk.key, integration_secret: dk.secret, user_ids: us.map{|u| ui.user_token(u) }.join(',')}
+      json = assert_success_json
+      expect(json['message']).to eq('Data is generating, please check back soon...')
+      expect(json['progress']).to_not eq(nil)
+      p = Progress.find_by_global_id(json['progress']['id'])
+      expect(p).to_not eq(nil)
+      expect(p.settings['class']).to eq('WeeklyStatsSummary')
+      expect(p.settings['method']).to eq('trends_for')
+      expect(p.settings['arguments']).to eq([[us[0].global_id, us[1].global_id, us[2].global_id]])
+    end
+
+    it "should not include supervisors or users with research disabled" do
+      ui = UserIntegration.create
+      ui.settings['allow_trends'] = true
+      ui.save
+      us = []
+      8.times do |i|
+        u = User.create
+        u.settings['preferences']['allow_log_reports'] = true
+        u.save
+        us << u
+      end
+      us[3].settings['preferences']['allow_log_reports'] = false
+      us[3].save
+      us[4].settings['preferences']['role'] = 'supporter'
+      us[4].save
+      WeeklyStatsSummary.create(weekyear: WeeklyStatsSummary.date_to_weekyear(3.weeks.ago.to_date), user_id: us[0].id)
+      WeeklyStatsSummary.create(weekyear: WeeklyStatsSummary.date_to_weekyear(6.weeks.ago.to_date), user_id: us[1].id)
+      WeeklyStatsSummary.create(weekyear: WeeklyStatsSummary.date_to_weekyear(5.weeks.ago.to_date), user_id: us[2].id)
+      WeeklyStatsSummary.create(weekyear: WeeklyStatsSummary.date_to_weekyear(5.weeks.ago.to_date), user_id: us[3].id)
+      WeeklyStatsSummary.create(weekyear: WeeklyStatsSummary.date_to_weekyear(5.weeks.ago.to_date), user_id: us[4].id)
+      dk = DeveloperKey.create
+      d = Device.create(user_integration_id: ui.id, developer_key_id: dk.id)
+      get 'trends_slice', params: {integration_id: dk.key, integration_secret: dk.secret, user_ids: us.map{|u| ui.user_token(u) }.join(',')}
+      json = assert_success_json
+      expect(json['message']).to eq('Data is generating, please check back soon...')
+      expect(json['progress']).to_not eq(nil)
+      p = Progress.find_by_global_id(json['progress']['id'])
+      expect(p).to_not eq(nil)
+      expect(p.settings['class']).to eq('WeeklyStatsSummary')
+      expect(p.settings['method']).to eq('trends_for')
+      expect(p.settings['arguments']).to eq([[us[0].global_id, us[1].global_id, us[2].global_id]])
+    end
+
+    it "should not allow too many requests for the same user" do
+      ui = UserIntegration.create
+      ui.settings['allow_trends'] = true
+      ui.save
+      us = []
+      8.times do |i|
+        u = User.create
+        u.settings['preferences']['allow_log_reports'] = true
+        u.save
+        us << u
+      end
+      dk = DeveloperKey.create
+      d = Device.create(user_integration_id: ui.id, developer_key_id: dk.id)
+      d = Device.create(user_integration_id: ui.id, developer_key_id: dk.id)
+      get 'trends_slice', params: {integration_id: dk.key, integration_secret: dk.secret, user_ids: us.map{|u| ui.user_token(u) }.join(',')}
+      assert_error("not enough users for report, only the specified ids contained usage data")
+      expect(@error_json['ids']).to eq([])
+      get 'trends_slice', params: {integration_id: dk.key, integration_secret: dk.secret, user_ids: us.map{|u| ui.user_token(u) }.join(',')}
+      assert_error("exceeded quota for user ids")
+      expect(@error_json['ids']).to eq(us.map{|u| ui.user_token(u) })
     end
   end
 

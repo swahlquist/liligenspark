@@ -298,7 +298,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     end
   end
   
-  def self.track_trends(weekyear)
+  def self.track_trends(weekyear, track_user_local_ids=nil)
     # TODO: track user preferences for gaze dwell time, scanning interval,
     # etc. to get an idea of average durations
     # TODO: summaries for orientation, ambient light, system volume
@@ -307,8 +307,16 @@ class WeeklyStatsSummary < ActiveRecord::Base
     current_trends = weekyear >= nowweekyear
 
 
-    sums = WeeklyStatsSummary.where(:weekyear => weekyear).where(['user_id > ?', 0])
-    total = WeeklyStatsSummary.find_or_create_by(:weekyear => weekyear, :user_id => 0)
+    sums = []
+    total = WeeklyStatsSummary.new
+    if track_user_local_ids
+      total.weekyear = weekyear
+      total.data = {}
+      sums = WeeklyStatsSummary.where(:weekyear => weekyear).where(user_id: track_user_local_ids)
+    else
+      total = WeeklyStatsSummary.find_or_create_by(:weekyear => weekyear, :user_id => 0)
+      sums = WeeklyStatsSummary.where(:weekyear => weekyear).where(['user_id > ?', 0])
+    end
     
     total_keys = ['total_sessions', 'total_session_seconds']
     total_word_keys = ['total_utterances', 'total_utterance_words', 
@@ -613,7 +621,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
       total.data['word_matches'][pair['b']] << pair
     end
     
-    total.save
+    total.save unless track_user_local_ids
     total
   end
   
@@ -637,14 +645,180 @@ class WeeklyStatsSummary < ActiveRecord::Base
   def self.trends_duration
     3.months
   end
-  
-  def self.trends(include_admin=false)
-    res = {}
-    res['weeks'] = {}
-    stash = {}
-    start = self.trends_duration.ago.to_date
+
+  def self.trends_for(user_ids)
+    user_local_ids = User.local_ids(user_ids)
+    summaries = []
+    stash = self.init_trends
+    current = self.trends_duration.ago.to_date
     nowweekyear = WeeklyStatsSummary.date_to_weekyear(Time.now.to_date)
-    cutoffweekyear = WeeklyStatsSummary.date_to_weekyear(start)
+    current_weekyear = WeeklyStatsSummary.date_to_weekyear(current)
+    while current_weekyear <= nowweekyear
+      summary = WeeklyStatsSummary.track_trends(current_weekyear, user_local_ids)
+      self.add_to_trends(stash, summary)
+      current += 7.days
+      current_weekyear = WeeklyStatsSummary.date_to_weekyear(current)
+    end
+    stash[:min_instances] = user_ids.length / 5.0
+    res = self.process_trends(stash)
+  end
+
+  def self.add_to_trends(stash, summary)
+    stash[:total_summaries] += 1
+    date = Date.commercial(summary.weekyear / 100, summary.weekyear % 100) - 1
+    stash[:earliest] = [stash[:earliest], date].compact.min
+    stash[:latest] = [stash[:latest], date].compact.max
+    week = {
+      'modeled_percent' => 100.0 * (summary.data['totals']['total_modeled_buttons'].to_f / summary.data['totals']['total_buttons'].to_f * 10.0).round(1) / 10.0,
+      'core_percent' => 100.0 * (summary.data['totals']['total_core_words'].to_f / summary.data['totals']['total_words'].to_f * 10.0).round(1) / 10.0,
+      'words_per_minute' => (summary.data['totals']['total_words'].to_f / summary.data['totals']['total_session_seconds'].to_f * 60.0).round(1),
+      'goals_percent' => 100.0 * ((summary.data['totals']['goals_set'] || 0).to_f / summary.data['user_ids'].length.to_f).round(3),
+      'badges_percent' => 100.0 * ((summary.data['totals']['badges_earned'] || 0).to_f / summary.data['user_ids'].length.to_f).round(3)
+    }
+    stash[:weeks][summary.weekyear] = week
+
+    stash[:total_session_seconds] += summary.data['totals']['total_session_seconds']
+    stash[:modeled_buttons] += summary.data['totals']['total_modeled_buttons']
+    stash[:total_buttons] += summary.data['totals']['total_buttons']
+    stash[:core_words] += summary.data['totals']['total_core_words']
+    stash[:total_words] += summary.data['totals']['total_words']
+    stash[:modeled_word_breadths] += summary.data['modeled_word_breadths'] || []
+    stash[:word_breadths] += summary.data['word_breadths'] || []
+    stash[:word_accesses] += summary.data['word_accesses'] || []
+    stash[:admin_total_words] += (summary.data['totals']['admin_total_words'] || summary.data['totals']['total_words'])
+    stash[:user_ids] += summary.data['user_ids'] || []
+    stash[:research_user_ids] += summary.data['research_user_ids'] || []
+    stash[:publishing_user_ids] += summary.data['publishing_user_ids'] || []
+    stash[:total_sessions] += summary.data['totals']['total_sessions']
+    (summary.data['totals']['modeled_session_events'] || {}).each do |total, cnt|
+      stash[:modeled_sessions] += cnt if total >= minimum_session_modeling_events
+    end
+    stash[:home_board_user_ids] += summary.data['home_board_user_ids'] || summary.data['user_ids'] || []
+  
+    if summary.data['word_counts']
+      summary.data['word_counts'].each do |word, cnt|
+        stash[:word_counts][word] = (stash[:word_counts][word] || 0) + cnt
+      end
+    end
+    if summary.data['modeled_word_counts']
+      summary.data['modeled_word_counts'].each do |word, cnt|
+        stash[:modeled_word_counts][word] = (stash[:modeled_word_counts][word] || 0) + cnt
+      end
+    end
+
+    if summary.data['avg_utterance']
+      stash[:utterance_lengths] << summary.data['avg_utterance']
+      stash[:speech_lengths] << summary.data['avg_speech']
+    end
+    
+    if summary.data['grid_user_ids']
+      summary.data['grid_user_ids'].each do |size, user_ids|
+        stash[:grid_user_ids][size] ||= []
+        stash[:grid_user_ids][size] += user_ids
+      end
+    end
+
+    if summary.data['depth_counts']
+      summary.data['depth_counts'].each do |depth, cnt|
+        stash[:depth_counts][depth] ||= 0
+        stash[:depth_counts][depth] += cnt
+      end
+    end
+    if summary.data['word_travels']
+      summary.data['word_travels'].each do |word, full_travel|
+        stash[:word_travels][word] = (stash[:word_travels][word] || 0) + full_travel
+      end
+    end
+  
+    if summary.data['board_usages']
+      summary.data['board_usages'].each do |key, cnt|
+        stash[:board_usages][key] = (stash[:board_usages][key] || 0) + cnt
+      end
+      (summary.data['board_locales'] || {}).each do |locale, cnt|
+        stash[:board_locales][locale] = (stash[:board_locales][locale] || 0) + cnt
+      end
+    end
+  
+    if summary.data['available_words']
+      summary.data['available_words'].each do |word, user_ids|
+        stash[:available_words] ||= {}
+        stash[:available_words][word] = (stash[:available_words][word] || []) + user_ids
+      end
+    end
+  
+    if summary.data['home_boards']
+      stash[:home_boards] ||= {}
+      summary.data['home_boards'].each do |key, user_ids|
+        stash[:home_boards][key] ||= []
+        stash[:home_boards][key] += user_ids
+      end
+    end
+    if summary.data['home_board_levels']
+      stash[:home_board_levels] ||= {}
+      summary.data['home_board_levels'].each do |key, user_ids|
+        stash[:home_board_levels][key] ||= []
+        stash[:home_board_levels][key] += user_ids
+      end
+    end
+  
+    if summary.data['word_pairs']
+      stash[:word_pairs] ||= {}
+      summary.data['word_pairs'].each do |k, pair|
+        hash = Digest::MD5.hexdigest("#{pair['b'].downcase.strip}::#{pair['a'].downcase.strip}")
+        stash[:word_pairs][hash] ||= {
+          'a' => pair['a'],
+          'b' => pair['b'],
+          'count' => 0
+        }
+        stash[:word_pairs][hash]['count'] += pair['count']
+      end
+    end
+  
+    if summary.data['goals']
+      stash[:goal_user_ids] ||= []
+      stash[:goal_user_ids] += summary.data['goals']['goals_set'].map{|k, g| g['user_ids'] }.flatten
+      stash[:goals] ||= {}
+      summary.data['goals']['goals_set'].each do |goal_id, goal|
+        stash[:goals][goal_id] ||= {
+          'name' => goal['name'],
+          'template' => goal['template'],
+          'public' => goal['public'],
+          'user_ids' => []
+        }
+        stash[:goals][goal_id]['user_ids'] << goal['user_ids'] || []
+      end
+      stash[:badged_user_ids] ||= []
+      stash[:badged_user_ids] += summary.data['goals']['badges_earned'].map{|k, b| b['user_ids'] }.flatten
+      stash[:badges] ||= {}
+      summary.data['goals']['badges_earned'].each do |goal_id, badge|
+        stash[:badges][goal_id] ||= {
+          'goal_id' => badge['goal_id'],
+          'name' => badge['name'],
+          'template_goal_id' => badge['template_goal'],
+          'levels' => [],
+          'user_ids' => [],
+          'shared_user_ids' => []
+        }
+        stash[:badges][goal_id]['user_ids'] << badge['user_ids'] || []
+        stash[:badges][goal_id]['levels'] += badge['levels'] || []
+        stash[:badges][goal_id]['shared_user_ids'] << badge['shared_user_ids'] || []
+      end
+    end
+    
+    if summary.data['totals']['device']
+      Stats::DEVICE_PREFERENCES.each do |pref|
+        ((summary.data['totals']['device'] || {})["#{pref}s"] || {}).each do |key, val|
+          stash[:device]["#{pref}s"] ||= {}
+          stash[:device]["#{pref}s"][key] ||= 0
+          stash[:device]["#{pref}s"][key] += val
+        end
+      end
+    end
+  end
+
+  def self.init_trends(include_admin=false, known_summaries=nil)
+    stash = {}
+    stash[:weeks] = {}
     stash[:total_session_seconds] = 0
     stash[:modeled_buttons] = 0.0
     stash[:total_buttons] = 0
@@ -671,167 +845,17 @@ class WeeklyStatsSummary < ActiveRecord::Base
     stash[:grid_user_ids] = {}
     stash[:total_summaries] = 0
     stash[:device] = {}
-    earliest = nil
-    latest = nil
-    WeeklyStatsSummary.where(['weekyear >= ? AND weekyear <= ?', cutoffweekyear, nowweekyear]).where(:user_id => 0).find_in_batches(batch_size: 20) do |batch|
-      batch.each do |summary|
-        next unless summary.data && summary.data['totals']
-        stash[:total_summaries] += 1
-        date = Date.commercial(summary.weekyear / 100, summary.weekyear % 100) - 1
-        earliest = [earliest, date].compact.min
-        latest = [latest, date].compact.max
-        week = {
-          'modeled_percent' => 100.0 * (summary.data['totals']['total_modeled_buttons'].to_f / summary.data['totals']['total_buttons'].to_f * 10.0).round(1) / 10.0,
-          'core_percent' => 100.0 * (summary.data['totals']['total_core_words'].to_f / summary.data['totals']['total_words'].to_f * 10.0).round(1) / 10.0,
-          'words_per_minute' => (summary.data['totals']['total_words'].to_f / summary.data['totals']['total_session_seconds'].to_f * 60.0).round(1),
-          'goals_percent' => 100.0 * ((summary.data['totals']['goals_set'] || 0).to_f / summary.data['user_ids'].length.to_f).round(3),
-          'badges_percent' => 100.0 * ((summary.data['totals']['badges_earned'] || 0).to_f / summary.data['user_ids'].length.to_f).round(3)
-        }
-        res['weeks'][summary.weekyear] = week
+    stash[:earliest] = nil
+    stash[:latest] = nil
+    stash
+  end
 
-        stash[:total_session_seconds] += summary.data['totals']['total_session_seconds']
-        stash[:modeled_buttons] += summary.data['totals']['total_modeled_buttons']
-        stash[:total_buttons] += summary.data['totals']['total_buttons']
-        stash[:core_words] += summary.data['totals']['total_core_words']
-        stash[:total_words] += summary.data['totals']['total_words']
-        stash[:modeled_word_breadths] += summary.data['modeled_word_breadths'] || []
-        stash[:word_breadths] += summary.data['word_breadths'] || []
-        stash[:word_accesses] += summary.data['word_accesses'] || []
-        stash[:admin_total_words] += (summary.data['totals']['admin_total_words'] || summary.data['totals']['total_words'])
-        stash[:user_ids] += summary.data['user_ids'] || []
-        stash[:research_user_ids] += summary.data['research_user_ids'] || []
-        stash[:publishing_user_ids] += summary.data['publishing_user_ids'] || []
-        stash[:total_sessions] += summary.data['totals']['total_sessions']
-        (summary.data['totals']['modeled_session_events'] || {}).each do |total, cnt|
-          stash[:modeled_sessions] += cnt if total >= minimum_session_modeling_events
-        end
-        stash[:home_board_user_ids] += summary.data['home_board_user_ids'] || summary.data['user_ids'] || []
-      
-        if summary.data['word_counts']
-          summary.data['word_counts'].each do |word, cnt|
-            stash[:word_counts][word] = (stash[:word_counts][word] || 0) + cnt
-          end
-        end
-        if summary.data['modeled_word_counts']
-          summary.data['modeled_word_counts'].each do |word, cnt|
-            stash[:modeled_word_counts][word] = (stash[:modeled_word_counts][word] || 0) + cnt
-          end
-        end
-
-        if summary.data['avg_utterance']
-          stash[:utterance_lengths] << summary.data['avg_utterance']
-          stash[:speech_lengths] << summary.data['avg_speech']
-        end
-        
-        if summary.data['grid_user_ids']
-          summary.data['grid_user_ids'].each do |size, user_ids|
-            stash[:grid_user_ids][size] ||= []
-            stash[:grid_user_ids][size] += user_ids
-          end
-        end
-
-        if summary.data['depth_counts']
-          summary.data['depth_counts'].each do |depth, cnt|
-            stash[:depth_counts][depth] ||= 0
-            stash[:depth_counts][depth] += cnt
-          end
-        end
-        if summary.data['word_travels']
-          summary.data['word_travels'].each do |word, full_travel|
-            stash[:word_travels][word] = (stash[:word_travels][word] || 0) + full_travel
-          end
-        end
-      
-        if summary.data['board_usages']
-          summary.data['board_usages'].each do |key, cnt|
-            stash[:board_usages][key] = (stash[:board_usages][key] || 0) + cnt
-          end
-          (summary.data['board_locales'] || {}).each do |locale, cnt|
-            stash[:board_locales][locale] = (stash[:board_locales][locale] || 0) + cnt
-          end
-        end
-      
-        if summary.data['available_words']
-          summary.data['available_words'].each do |word, user_ids|
-            stash[:available_words] ||= {}
-            stash[:available_words][word] = (stash[:available_words][word] || []) + user_ids
-          end
-        end
-      
-        if summary.data['home_boards']
-          stash[:home_boards] ||= {}
-          summary.data['home_boards'].each do |key, user_ids|
-            stash[:home_boards][key] ||= []
-            stash[:home_boards][key] += user_ids
-          end
-        end
-        if summary.data['home_board_levels']
-          stash[:home_board_levels] ||= {}
-          summary.data['home_board_levels'].each do |key, user_ids|
-            stash[:home_board_levels][key] ||= []
-            stash[:home_board_levels][key] += user_ids
-          end
-        end
-      
-        if summary.data['word_pairs']
-          stash[:word_pairs] ||= {}
-          summary.data['word_pairs'].each do |k, pair|
-            hash = Digest::MD5.hexdigest("#{pair['b'].downcase.strip}::#{pair['a'].downcase.strip}")
-            stash[:word_pairs][hash] ||= {
-              'a' => pair['a'],
-              'b' => pair['b'],
-              'count' => 0
-            }
-            stash[:word_pairs][hash]['count'] += pair['count']
-          end
-        end
-      
-        if summary.data['goals']
-          stash[:goal_user_ids] ||= []
-          stash[:goal_user_ids] += summary.data['goals']['goals_set'].map{|k, g| g['user_ids'] }.flatten
-          stash[:goals] ||= {}
-          summary.data['goals']['goals_set'].each do |goal_id, goal|
-            stash[:goals][goal_id] ||= {
-              'name' => goal['name'],
-              'template' => goal['template'],
-              'public' => goal['public'],
-              'user_ids' => []
-            }
-            stash[:goals][goal_id]['user_ids'] << goal['user_ids'] || []
-          end
-          stash[:badged_user_ids] ||= []
-          stash[:badged_user_ids] += summary.data['goals']['badges_earned'].map{|k, b| b['user_ids'] }.flatten
-          stash[:badges] ||= {}
-          summary.data['goals']['badges_earned'].each do |goal_id, badge|
-            stash[:badges][goal_id] ||= {
-              'goal_id' => badge['goal_id'],
-              'name' => badge['name'],
-              'template_goal_id' => badge['template_goal'],
-              'levels' => [],
-              'user_ids' => [],
-              'shared_user_ids' => []
-            }
-            stash[:badges][goal_id]['user_ids'] << badge['user_ids'] || []
-            stash[:badges][goal_id]['levels'] += badge['levels'] || []
-            stash[:badges][goal_id]['shared_user_ids'] << badge['shared_user_ids'] || []
-          end
-        end
-        
-        if summary.data['totals']['device']
-          Stats::DEVICE_PREFERENCES.each do |pref|
-            ((summary.data['totals']['device'] || {})["#{pref}s"] || {}).each do |key, val|
-              stash[:device]["#{pref}s"] ||= {}
-              stash[:device]["#{pref}s"][key] ||= 0
-              stash[:device]["#{pref}s"][key] += val
-            end
-          end
-        end
-      end
-    end
-    
+  def self.process_trends(stash)
+    res = {}
     total_users = stash[:user_ids].uniq.length
-    res[:started_at] = earliest && earliest.iso8601
-    res[:ended_at] = latest && latest.iso8601
+    res['weeks'] = stash[:weeks]
+    res[:started_at] = stash[:earliest] && stash[:earliest].iso8601
+    res[:ended_at] = stash[:latest] && stash[:latest].iso8601
     res[:total_session_seconds] = stash[:total_session_seconds]
     res[:modeled_percent] = 100.0 * (stash[:modeled_buttons].to_f / stash[:total_buttons].to_f * 10.0).round(1) / 10.0
     res[:modeled_percent] = 0.0 if res[:modeled_percent].nan?
@@ -862,11 +886,10 @@ class WeeklyStatsSummary < ActiveRecord::Base
     res[:sessions_per_user] = 0.0 if res[:sessions_per_user].nan?
     res[:total_words] = stash[:total_words]
     res[:admin_total_words] = stash[:admin_total_words]
-    if include_admin || true
-      res[:admin][:total_users] = total_users
-      res[:admin][:total_sessions] = stash[:total_sessions]
-      res[:admin][:modeled_sessions] = stash[:modeled_sessions]
-    end
+    res[:admin][:total_users] = total_users
+    res[:admin][:total_sessions] = stash[:total_sessions]
+    res[:admin][:modeled_sessions] = stash[:modeled_sessions]
+    stash[:min_instances] ||= 10
 
 
     all_grid_user_ids = []
@@ -887,14 +910,14 @@ class WeeklyStatsSummary < ActiveRecord::Base
       res[:admin][:max_board_usage_count] = max_usage_count #if include_admin
       stash[:board_usages].each do |key, cnt|
         res[:board_usages] ||= {}
-        res[:board_usages][key] = (cnt.to_f / max_usage_count.to_f).round(2) if cnt > 10
+        res[:board_usages][key] = (cnt.to_f / max_usage_count.to_f).round(2) if cnt > stash[:min_instances]
       end
       if stash[:board_locales]
         max_locale_count = stash[:board_locales].map(&:last).max || 0.0
         res[:admin][:max_board_locales_count] = max_locale_count #if include_admin
         stash[:board_locales].each do |key, cnt|
           res[:board_locales] ||= {}
-          res[:board_locales][key] = (cnt.to_f / max_locale_count.to_f).round(3) if cnt > 5
+          res[:board_locales][key] = (cnt.to_f / max_locale_count.to_f).round(3) if cnt > (stash[:min_instances] / 2)
         end
       end
     end
@@ -928,7 +951,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
       res[:admin][:max_word_count] = max_word_count #if include_admin
       stash[:word_counts].each do |word, cnt|
         res[:word_counts] ||= {}
-        res[:word_counts][word] = ((cnt.to_f / max_word_count.to_f * 10.0).round(1) / 10.0).round(2) if cnt > 10
+        res[:word_counts][word] = ((cnt.to_f / max_word_count.to_f * 10.0).round(1) / 10.0).round(2) if cnt > stash[:min_instances]
       end
     end
     if stash[:modeled_word_counts]
@@ -936,7 +959,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
       res[:admin][:max_modeled_word_count] = max_word_count #if include_admin
       stash[:modeled_word_counts].each do |word, cnt|
         res[:modeled_word_counts] ||= {}
-        res[:modeled_word_counts][word] = ((cnt.to_f / max_word_count.to_f * 10.0).round(1) / 10.0).round(2) if cnt > 5
+        res[:modeled_word_counts][word] = ((cnt.to_f / max_word_count.to_f * 10.0).round(1) / 10.0).round(2) if cnt > (stash[:min_instances] / 2)
       end
     end
 
@@ -1016,6 +1039,22 @@ class WeeklyStatsSummary < ActiveRecord::Base
         res[:device][pref][k] = (v.to_f / max_val.to_f * 50.0).round(1) / 50.0
       end
     end
+    res
+  end
+
+  def self.trends(include_admin=false, known_summaries=nil)
+    start = self.trends_duration.ago.to_date
+    nowweekyear = WeeklyStatsSummary.date_to_weekyear(Time.now.to_date)
+    cutoffweekyear = WeeklyStatsSummary.date_to_weekyear(start)
+    stash = self.init_trends
+    WeeklyStatsSummary.where(['weekyear >= ? AND weekyear <= ?', cutoffweekyear, nowweekyear]).where(:user_id => 0).find_in_batches(batch_size: 20) do |batch|
+      batch.each do |summary|
+        next unless summary.data && summary.data['totals']
+        self.add_to_trends(stash, summary)
+      end
+    end
+    
+    res = self.process_trends(stash)
     
     # safe-ish stats row: total logged time, % modeling, % core words, average words per minute
     # unsafe stats row: total users, total sessions, sessions per user, total words

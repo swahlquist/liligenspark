@@ -1,5 +1,5 @@
 class Api::LogsController < ApplicationController
-  before_action :require_api_token, :except => [:lam, :trends, :anonymous_logs]
+  before_action :require_api_token, :except => [:lam, :trends, :trends_slice, :anonymous_logs]
   
   def logging_code_for(user)
     request.headers["HTTP_X_LOGGING_CODE_FOR_#{user.global_id}"] || request.headers["X-Logging-Code-For-#{user.global_id}"]
@@ -261,6 +261,67 @@ class Api::LogsController < ApplicationController
     end
     
     render json: res
+  end
+
+  def trends_slice
+    secret = params['integration_secret']
+    id = params['integration_id']
+    dk = DeveloperKey.find_by(key: id, secret: secret)
+    ui = dk && dk.user_integration
+    if ui && ui.settings['allow_trends']
+      obfuscated_user_ids = (params['user_ids'] || '').split(/,/).compact.map(&:strip).uniq
+      if obfuscated_user_ids.length < 5 || obfuscated_user_ids.length > 10
+        return api_error(400, {error: "users must be requested in blocks of between five to ten at a time"})
+      end
+      ids = JSON.parse(Permissable.permissions_redis.get("integration/#{ui.global_id}/checked_user_ids")) rescue nil
+      ids ||= {}
+
+      users = []
+      overused_ids = []
+      missing_ids = []
+      obfuscated_user_ids.each do |id|
+        user = ui.user_from_token(id)
+        if user
+          ids[user.global_id] ||= 0
+          if ids[user.global_id] > 5
+            overused_ids << id
+          end
+          ids[user.global_id] += 1
+          users << user
+        else
+          missing_ids << id
+        end
+      end
+      if !missing_ids.empty?
+        return api_error(400, {error: "invalid user ids", ids: missing_ids})
+      elsif !overused_ids.empty?
+        return api_error(400, {error: "exceeded quota for user ids", ids: overused_ids})
+      end
+      users = users.select{|u| u.settings['preferences']['allow_log_reports'] && u.communicator_role? }
+
+      cutoff = WeeklyStatsSummary.trends_duration.ago
+      cutoffweekyear = WeeklyStatsSummary.date_to_weekyear(cutoff)
+      # TODO: Sharding
+      summarized_user_ids = WeeklyStatsSummary.where(['weekyear > ?', cutoffweekyear]).where(user_id: users.map(&:id)).select('user_id, weekyear').map(&:user_id).uniq
+      summarized_users = users.select{|u| summarized_user_ids.include?(u.id) }
+      if summarized_user_ids.length <= 2
+        other_users = users - summarized_users
+        other_users.each{|u| ids[u.global_id] += 5 }
+        Permissions.setex(Permissable.permissions_redis, "integration/#{ui.global_id}/checked_user_ids", 72.hours.to_i, ids.to_json)
+        return api_error(400, {error: "not enough users for report, only the specified ids contained usage data", ids: summarized_users.map{|u| ui.user_token(u) }})
+      end
+      trends_user_ids = summarized_users.map(&:global_id)
+
+      Permissions.setex(Permissable.permissions_redis, "integration/#{ui.global_id}/checked_user_ids", 72.hours.to_i, ids.to_json)
+      
+      progress = Progress.schedule(WeeklyStatsSummary, :trends_for, trends_user_ids)
+      res = JsonApi::Progress.as_json(progress, :wrapper => true)
+      res[:message] = "Data is generating, please check back soon..."
+      render json: res
+    else
+      api_error(400, {error: 'Invalid credentials'})
+    end
+
   end
 
   def anonymous_logs

@@ -98,6 +98,7 @@ def assert_error(str, code=nil)
   if code
     expect(json['status']).to eq(code)
   end
+  @error_json = json
 end
 
 def assert_unauthorized

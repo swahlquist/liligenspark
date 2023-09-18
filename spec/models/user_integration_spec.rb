@@ -470,6 +470,36 @@ describe UserIntegration, :type => :model do
     end
   end
 
+  describe "user_from_token" do
+    it "should return nil without a token" do
+      ui = UserIntegration.create
+      expect(ui.user_from_token(nil)).to eq(nil)
+    end
+
+    it "should return nil with a mismatched integration id" do
+      ui = UserIntegration.create
+      expect(ui.user_from_token("asdf")).to eq(nil)
+      expect(ui.user_from_token("asdf:asdf")).to eq(nil)
+      expect(ui.user_from_token("asdf:asdf:asdf")).to eq(nil)
+    end
+
+    it "should return nil with an invalid signature" do
+    end
+
+    it "should find the correct user based on the token" do
+      ui = UserIntegration.create
+      u = User.create
+      token = ui.user_token(u)
+      expect(ui.user_from_token(token)).to eq(u)
+
+      u2 = User.create
+      token = ui.user_token(u2)
+      expect(token).to_not match(u2.global_id)
+      expect(token).to match(ui.global_id)
+      expect(ui.user_from_token(token)).to eq(u2)
+    end
+  end
+
   describe "track_focus" do
     it "should do nothing without integration defined" do
       expect(Typhoeus).to_not receive(:post)

@@ -3073,6 +3073,47 @@ describe LogSession, :type => :model do
       }.and_return(OpenStruct.new(code: 200))
       Worker.process_queues
     end
+
+    it "should notify a research listener of a new session" do
+      u = User.create
+      u.settings['preferences']['allow_log_repors'] = true
+      u.save
+
+      d = Device.create
+      ui = UserIntegration.create
+      ui.settings['allow_trends'] = true
+      ui.save
+      h = Webhook.create(record_code: 'research', user_integration_id: ui.id)
+      h.settings['notifications'] ||= {}
+      h.settings['include_content'] = true
+      h.settings['url'] = 'http://www.example.com/callback2'
+      h.settings['webhook_type'] = 'research'
+      h.settings['content_types'] = ['anonymized_summary']
+      h.settings['notifications']['new_session'] = [{
+        'callback' => 'http://www.example.com/callback',
+        'include_content' => true,
+        'content_type' => 'anonymized_summary'
+      }]
+      h.save
+      
+      s = LogSession.create(:user => u, :device => d, :author => u, :log_type => 'session')
+      s.data['allow_research'] = true
+      s.save
+      expect(s.data['allow_research']).to eq(true)
+      LogSession.where(:id => s.id).update_all(:needs_remote_push => true, :ended_at => 6.hours.ago)
+      LogSession.push_logs_remotely
+
+      expect(Typhoeus).to receive(:post){|url, args|
+        expect(url).to eq('http://www.example.com/callback')
+        expect(args[:body][:notification]).to eq('new_session')
+        expect(args[:body][:record]).to eq(s.record_code)
+        expect(args[:body][:content]).to eq({
+          uid: ui.user_token(u),
+          active_weeks: nil
+        }.to_json)
+      }.and_return(OpenStruct.new(code: 200))
+      Worker.process_queues
+    end
   end
   
   describe "generate_log_summaries" do

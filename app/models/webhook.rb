@@ -139,6 +139,7 @@ class Webhook < ActiveRecord::Base
         end
         if self.user_integration
           body[:token] = self.user_integration.settings['token']
+          additional_args[:user_integration] = self.user_integration
         end
         if callback['include_content'] && record && record.respond_to?(:webhook_content)
           body[:content] = record.webhook_content(notification_type, callback['content_type'], additional_args)

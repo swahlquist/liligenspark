@@ -179,6 +179,7 @@ describe WeeklyStatsSummary, :type => :model do
       expect(sum.data['totals']['total_words']).to eq(9)
       expect(sum.data['totals']['total_buttons']).to eq(6)
       expect(sum.data['totals']['total_core_words']).to eq(0)
+      expect(sum.data['word_counts']).to eq({'ok' => 2, 'go' => 1})
     end
     
     it 'should include word counts, travel sums and depth counts' do
@@ -880,6 +881,114 @@ describe WeeklyStatsSummary, :type => :model do
         :usage_count => 0.75,
         :weeks => weeks
       })
+    end
+  end
+
+  describe "trends_for" do
+    it "should summarize trends only for the specified users" do
+      ts = 3.weeks.ago.to_i
+      u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
+      d = Device.create
+      s1 = LogSession.process_new({'events' => [
+        {'type' => 'button', 'button' => {'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts - 1},
+        {'type' => 'button', 'modeling' => true, 'button' => {'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts - 1},
+        {'type' => 'button', 'modeling' => true, 'button' => {'spoken' => true, 'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts - 1},
+        {'type' => 'utterance', 'utterance' => {'text' => 'ok go ok', 'buttons' => []}, 'geo' => ['13', '12'], 'timestamp' => ts}
+      ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+      s2 = LogSession.process_new({'events' => [
+        {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => ts}
+      ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+          
+      u2 = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
+      d2 = Device.create
+      s3 = LogSession.process_new({'events' => [
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts - 1},
+        {'type' => 'button', 'modeling' => true, 'button' => {'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts - 1},
+        {'type' => 'button', 'modeling' => true, 'button' => {'spoken' => true, 'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts - 1},
+        {'type' => 'utterance', 'utterance' => {'text' => 'ok go ok', 'buttons' => []}, 'geo' => ['13', '12'], 'timestamp' => ts}
+      ]}, {:user => u2, :author => u2, :device => d2, :ip_address => '1.2.3.4'})
+      s4 = LogSession.process_new({'events' => [
+        {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => ts}
+      ]}, {:user => u2, :author => u2, :device => d2, :ip_address => '1.2.3.4'})
+    
+      WeeklyStatsSummary.update_for(s2.global_id)
+      WeeklyStatsSummary.update_for(s4.global_id)
+
+      summary = WeeklyStatsSummary.last
+      expect(summary.weekyear).to eq(WeeklyStatsSummary.date_to_weekyear(3.weeks.ago.to_date))
+
+      data = WeeklyStatsSummary.trends_for([u.global_id, u2.global_id])
+      expect(data[:total_session_seconds]).to eq(12.0)
+      expect(data[:modeled_percent]).to eq(67.0)
+      expect(data[:words_per_minute]).to eq(45.0)
+      expect(data[:total_words]).to eq(9)
+      expect(data[:sessions_per_user]).to eq(2.0)
+      expect(data[:admin][:total_users]).to eq(2)
+      expect(data[:admin][:total_sessions]).to eq(4)
+      expect(data[:word_counts]).to_not eq({})
+      expect(data[:word_counts]).to eq({'ok' => 1.0, 'go' => 0.5})
+
+      data = WeeklyStatsSummary.trends_for([u.global_id])
+      expect(data[:total_session_seconds]).to eq(6.0)
+      expect(data[:modeled_percent]).to eq(67.0)
+      expect(data[:words_per_minute]).to eq(30.0)
+      expect(data[:total_words]).to eq(3)
+      expect(data[:sessions_per_user]).to eq(2.0)
+      expect(data[:admin][:total_users]).to eq(1)
+      expect(data[:admin][:total_sessions]).to eq(2)
+    end
+
+    it "should not include summaries outside the date range" do
+      ts = 3.weeks.ago.to_i
+      u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
+      d = Device.create
+      s1 = LogSession.process_new({'events' => [
+        {'type' => 'button', 'button' => {'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts - 1},
+        {'type' => 'button', 'modeling' => true, 'button' => {'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts - 1},
+        {'type' => 'button', 'modeling' => true, 'button' => {'spoken' => true, 'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts - 1},
+        {'type' => 'utterance', 'utterance' => {'text' => 'ok go ok', 'buttons' => []}, 'geo' => ['13', '12'], 'timestamp' => ts}
+      ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+      s2 = LogSession.process_new({'events' => [
+        {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => ts}
+      ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
+          
+      u2 = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
+      d2 = Device.create
+      ts = 20.weeks.ago.to_i
+      s3 = LogSession.process_new({'events' => [
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts - 1},
+        {'type' => 'button', 'modeling' => true, 'button' => {'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts - 1},
+        {'type' => 'button', 'modeling' => true, 'button' => {'spoken' => true, 'label' => 'ok go ok', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts - 1},
+        {'type' => 'utterance', 'utterance' => {'text' => 'ok go ok', 'buttons' => []}, 'geo' => ['13', '12'], 'timestamp' => ts}
+      ]}, {:user => u2, :author => u2, :device => d2, :ip_address => '1.2.3.4'})
+      s4 = LogSession.process_new({'events' => [
+        {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => ts}
+      ]}, {:user => u2, :author => u2, :device => d2, :ip_address => '1.2.3.4'})
+    
+      WeeklyStatsSummary.update_for(s2.global_id)
+      WeeklyStatsSummary.update_for(s4.global_id)
+
+      summary = WeeklyStatsSummary.last
+      expect(summary.weekyear).to eq(WeeklyStatsSummary.date_to_weekyear(20.weeks.ago.to_date))
+
+      data = WeeklyStatsSummary.trends_for([u.global_id, u2.global_id])
+      expect(data[:total_session_seconds]).to eq(6.0)
+      expect(data[:modeled_percent]).to eq(67.0)
+      expect(data[:words_per_minute]).to eq(30.0)
+      expect(data[:total_words]).to eq(3)
+      expect(data[:sessions_per_user]).to eq(2.0)
+      expect(data[:admin][:total_users]).to eq(1)
+      expect(data[:admin][:total_sessions]).to eq(2)
+      expect(data[:word_counts]).to_not eq({})
+
+      data = WeeklyStatsSummary.trends_for([u.global_id])
+      expect(data[:total_session_seconds]).to eq(6.0)
+      expect(data[:modeled_percent]).to eq(67.0)
+      expect(data[:words_per_minute]).to eq(30.0)
+      expect(data[:total_words]).to eq(3)
+      expect(data[:sessions_per_user]).to eq(2.0)
+      expect(data[:admin][:total_users]).to eq(1)
+      expect(data[:admin][:total_sessions]).to eq(2)
     end
   end
 end

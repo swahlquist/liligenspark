@@ -312,6 +312,7 @@ Coughdrop::Application.routes.draw do
       post 'code_check' => 'logs#code_check', on: :collection
 
       get 'trends', on: :collection
+      get 'trends_slice', on: :collection
       get 'anonymous_logs', on: :collection
     end
     resources :webhooks do

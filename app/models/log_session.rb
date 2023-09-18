@@ -1788,7 +1788,7 @@ class LogSession < ActiveRecord::Base
   end
   
   def self.push_logs_remotely
-    remotes = LogSession.where(:needs_remote_push => true).where(['ended_at < ?', 2.hours.ago]).where(['ended_at > ?', 2.days.ago])
+    remotes = LogSession.where(:needs_remote_push => true).where(['ended_at < ?', 2.hours.ago]).where(['ended_at > ?', 7.days.ago])
     remotes.find_in_batches(batch_size: 30) do |batch|
       batch.each do |session|
         session.notify('new_session', {'slow' => true})
@@ -1804,6 +1804,9 @@ class LogSession < ActiveRecord::Base
         res << "#{self.user.record_code}::*"
         res << "#{self.user.record_code}::log_session:*"
       end
+      if self.data['allow_research'] && self.user && self.user.communicator_role?
+        res << "research"
+      end
     end
     res
   end
@@ -1812,6 +1815,14 @@ class LogSession < ActiveRecord::Base
     content_type ||= 'lam'
     if content_type == 'lam'
       Stats.lam([self])
+    elsif content_type == 'anonymized_summary' && args[:user_integration] && self.user
+      user = self.user
+      daily = LogSession.find_by(user_id: user.id, log_type: 'daily_use')
+      weeks = daily && (daily.data['days'] || {}).keys.map{|k| Date.parse(k).strftime("%U-%Y") rescue nil }.compact.uniq.count
+      {
+        'uid' => args[:user_integration].user_token(self.user),
+        'active_weeks' => weeks,
+    }.to_json
     else
       nil
     end

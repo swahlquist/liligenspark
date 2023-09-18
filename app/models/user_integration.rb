@@ -63,6 +63,16 @@ class UserIntegration < ActiveRecord::Base
     end
     "#{self.class.obfuscate_user_id(user.global_id, self.settings['obfuscation_offset'])}:#{self.global_id}:#{sig}"
   end
+
+  def user_from_token(token)
+    return nil unless token && self.settings && self.settings['obfuscation_offset']
+    obf_id, uiid, sig = token.split(/:/)
+    return nil unless uiid == self.global_id
+    uid = UserIntegration.deobfuscate_user_id(obf_id, self.settings['obfuscation_offset'])
+    sig_check = self.class.user_token(uid, self.global_id)
+    return nil unless sig == sig_check
+    User.find_by_global_id(uid)    
+  end
   
   def self.obfuscate_user_id(user_id, lookup)
     raise "bad id" unless user_id.match(/^[_0123456789]+$/)
