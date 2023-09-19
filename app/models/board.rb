@@ -1708,6 +1708,7 @@ class Board < ActiveRecord::Base
     Rails.logger.warn('start images_and_sounds lookup')
     res = {}
     bis = self.known_button_images
+    # NOTE: enabled_protected_sources is already cached
     protected_sources = (user && user.enabled_protected_sources(true)) || []
     ButtonImage.cached_copy_urls(bis, user, nil, protected_sources)
     # JsonApi::Image.as_json(i, :original_and_fallback => true).slice('id', 'url', 'fallback_url', 'protected_source'))

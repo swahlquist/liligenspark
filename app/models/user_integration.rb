@@ -82,6 +82,10 @@ class UserIntegration < ActiveRecord::Base
     user_id.each_char{|c| val = (val * 100) + lookup[c]}
     "#{shard}_#{val.to_s(16)}"
   end
+  # TODO: Then if I add a little bit of noise (or data from a second source) they
+  # can't recreate my data and back into the users
+  # within a specific demographic. Ideally if I could combine multiple
+  # sources then separating out the results would not be possible.
   
   def self.deobfuscate_user_id(str, lookup)
     shard, str = str.split(/_/)

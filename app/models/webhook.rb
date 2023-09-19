@@ -284,4 +284,32 @@ class Webhook < ActiveRecord::Base
     end
     true
   end
+
+  # EXTERNAL RESEARCH SETUP
+  # ui = UserIntegration.create
+  # ui.settings['allow_trends'] = true
+  # ui.save
+  # h = Webhook.create(record_code: 'research', user_integration_id: ui.id)
+  # h.settings['notifications'] ||= {}
+  # h.settings['include_content'] = true
+  # h.settings['url'] = 'http://www.example.com/callback2'
+  # h.settings['webhook_type'] = 'research'
+  # h.settings['content_types'] = ['anonymized_summary']
+  # h.settings['notifications']['anonymized_user_details'] = [{
+  #   'callback' => 'http://www.example.com/callback',
+  #   'include_content' => true,
+  #   'content_type' => 'anonymized_summary'
+  # }]
+  # h.settings['notifications']['new_session'] = [{
+  #   'callback' => 'http://www.example.com/callback',
+  #   'include_content' => true,
+  #   'content_type' => 'anonymized_summary'
+  # }]
+  # h.save
+  # dk = DeveloperKey.create
+  # d = Device.create(user_integration_id: ui.id, developer_key_id: dk.id)
+  # api_get '/api/v1/logs/trends_slice', params: {integration_id: dk.key, integration_secret: dk.secret, user_ids: 'a,b,c'}
+  # api_receive_post '/callback', params[:token] == ui.settings['token'] params[:notification] == 'new_session', JSON.parse(params[:data])['user_id']
+  # api_receive_post '/callback', params[:notification] == 'anonymized_user_details', JSON.parse(params[:data])['user_id'], , JSON.parse(params[:data])['details']
+
 end
