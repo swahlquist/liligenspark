@@ -139,6 +139,7 @@ class Webhook < ActiveRecord::Base
         end
         if self.user_integration
           body[:token] = self.user_integration.settings['token']
+          additional_args ||= {}
           additional_args[:user_integration] = self.user_integration
         end
         if callback['include_content'] && record && record.respond_to?(:webhook_content)
@@ -153,9 +154,9 @@ class Webhook < ActiveRecord::Base
         res = nil
         s = 10
         begin
-          Timeout::timeout(s) do
+          Timeout::timeout(s + 1) do
             url = Uploader.sanitize_url(url)
-            res = Typhoeus.post(url, body: body)
+            res = Typhoeus.post(url, body: body, timeout: s)
           end
         rescue Timeout::Error => e
           res = OpenStruct.new(:code => 0, :body => "Timeout, request took more than #{s} seconds")
@@ -171,6 +172,7 @@ class Webhook < ActiveRecord::Base
           'code' => res.code,
           'url' => url
         }
+        self.settings['callback_attempts'] = self.settings['callback_attempts'][-20..-1]
         self.save
       elsif callback['callback']
         results << {
@@ -218,6 +220,14 @@ class Webhook < ActiveRecord::Base
           # http://developer.chrome.com/apps/cloudMessagingV2
         #end
       end
+    end
+  end
+
+  def self.update_external_prefs(stash_id)
+    stash = JobStash.find_by_global_id(stash_id)
+    if stash
+      notify_all_with_code(Webhook.get_record_code(stash), 'anonymized_user_details', {})
+      stash.destroy
     end
   end
   

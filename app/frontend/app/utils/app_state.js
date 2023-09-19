@@ -1802,6 +1802,7 @@ var app_state = EmberObject.extend({
         stashes.set('geo_logging_enabled', !!(this.get('speak_mode') && this.get('currentUser.preferences.geo_logging')));
         stashes.set('speaking_user_id', this.get('currentUser.id'));
         stashes.set('session_user_id', this.get('sessionUser.id'));
+        stashes.set('session_preferred_symbols', app_state.get('referenced_user.preferences.preferred_symbols'));
 
         var voices = speecher.get('voices');
         // Android Chrome seems to have a short delay before voices get loaded

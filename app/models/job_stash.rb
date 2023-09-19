@@ -1,6 +1,7 @@
 class JobStash < ApplicationRecord
   include GlobalId
   include SecureSerialize
+  include Notifier
 
   secure_serialize :data
 
@@ -41,5 +42,27 @@ class JobStash < ApplicationRecord
         end
 #      end
     end
+  end
+
+  def additional_webhook_record_codes(notification_type, additional_args)
+    res = []
+    if notification_type == 'anonymized_user_details'
+      res << "research"
+    end
+    res
+  end
+
+
+  def webhook_content(notification_type, content_type, args)
+    if content_type == 'anonymized_summary' && args[:user_integration] && self.data['user_id']
+      user = User.find_by_path(self.data['user_id'])
+      if user
+        return {
+          'uid' => args[:user_integration].user_token(user),
+          'details' => self.data['details'] || {},
+        }.to_json
+      end
+    end
+    return nil
   end
 end

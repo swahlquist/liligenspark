@@ -820,7 +820,7 @@ class User < ActiveRecord::Base
     ]
   CONFIRMATION_PREFERENCE_PARAMS = ['logging', 'private_logging', 'geo_logging', 'allow_log_reports', 
       'allow_log_publishing', 'cookies', 'never_delete', 'logging_cutoff', 'logging_permissions', 'logging_code']
-
+  RESEARCH_PREFERENCE_PARAMS = ['research_primary_use', 'research_age', 'research_experience_level']
   PROGRESS_PARAMS = ['setup_done', 'intro_watched', 'profile_edited', 'preferences_edited', 
       'home_board_set', 'app_added', 'skipped_subscribe_modal', 'speak_mode_intro_done',
       'modeling_intro_done', 'modeling_ideas_viewed', 'modeling_ideas_target_words_reviewed',
@@ -940,6 +940,18 @@ class User < ActiveRecord::Base
       if self.settings['preferences']['clear_vocalization_history']
         self.settings['preferences']['clear_vocalization_history_minutes'] = params['preferences']['clear_vocalization_history_minutes'].to_i if params['preferences']['clear_vocalization_history_minutes']
         self.settings['preferences']['clear_vocalization_history_count'] = params['preferences']['clear_vocalization_history_count'].to_i if params['preferences']['clear_vocalization_history_count']
+      end
+
+      research_prefs = {}
+      RESEARCH_PREFERENCE_PARAMS.each do |key|
+        if !params['preferences'][key].blank?
+          research_prefs[key.sub(/^research_/, '')] = params['preferences'][key]
+          params['preferences'].delete(key)
+        end
+      end
+      if research_prefs.keys.length > 0 && self.global_id && self.settings['preferences']['allow_log_reports'] && self.communicator_role?
+        stash = JobStash.create(data: {'user_id' => self.global_id, 'details' => research_prefs})
+        Webhook.schedule(:update_external_prefs, stash.global_id)
       end
     end
 

@@ -46,7 +46,7 @@
               <button class='btn btn-default dropdown-toggle' data-toggle="dropdown" aria-expanded="false">
                 {{t "From Template" key='from_template'}} <span class="caret"></span>
               </button>
-              <ul class="dropdown-menu" role="menu">
+              <ul class="dropdown-menu pull_right" role="menu">
                 {{#each all_note_templates as |template|}}
                   <li><a href="#" {{action 'pick_template' template}}>{{ template.title }} </a></li>
                 {{/each}}

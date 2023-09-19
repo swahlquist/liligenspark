@@ -1120,6 +1120,182 @@ describe User, :type => :model do
       u.process({'external_device' => nil})
       expect(u.settings['external_device']).to eq(nil)
     end
+
+    it "should not schedule an external research update if no research data passed" do
+      u = User.create
+      expect(Webhook).to_not receive(:schedule)
+      u.process({
+        'preferences' => {
+          'bacon' => 1
+        }
+      })
+    end
+
+    it "should schedule and deliver an external research update if research data passed" do
+      u = User.create
+      u.process({
+        'preferences' => {
+          'allow_log_reports' => true,
+          'research_primary_use' => 'a',
+          'research_age' => 'b',
+          'research_experience_level' => 'c',
+        }
+      })
+      s = JobStash.last
+      expect(s).to_not eq(nil)
+      expect(s.data['user_id']).to eq(u.global_id)
+
+      ui = UserIntegration.create
+      ui.settings['allow_trends'] = true
+      ui.save
+      h = Webhook.create(record_code: 'research', user_integration_id: ui.id)
+      h.settings['notifications'] ||= {}
+      h.settings['include_content'] = true
+      h.settings['url'] = 'http://www.example.com/callback2'
+      h.settings['webhook_type'] = 'research'
+      h.settings['content_types'] = ['anonymized_summary']
+      h.settings['notifications']['anonymized_user_details'] = [{
+        'callback' => 'http://www.example.com/callback',
+        'include_content' => true,
+        'content_type' => 'anonymized_summary'
+      }]
+      h.save
+
+      expect(Worker.scheduled?(Webhook, :perform_action, {'method' => 'update_external_prefs', 'arguments' => [s.global_id]})).to be_truthy
+      expect(Typhoeus).to receive(:post) do |url, args|
+        expect(url).to eq('http://www.example.com/callback')
+        expect(args[:body]).to eq({
+          content: {
+            uid: ui.user_token(u),
+            details: {
+              primary_use: 'a',
+              age: 'b',
+              experience_level: 'c'
+            }
+          }.to_json,
+          notification: 'anonymized_user_details',
+          record: s.record_code,
+          token: ui.settings['token']
+        })
+      end.and_return(OpenStruct.new(code: 200, body: 'asdf'))
+      Worker.process_queues
+
+      expect(JobStash.find_by(id: s.id)).to eq(nil)
+    end
+
+    it "should not schedule an external update if log reporting is not enabled" do
+      u = User.create
+      expect(Webhook).to_not receive(:schedule)
+      u.process({
+        'preferences' => {
+          'research_primary_use' => 'a',
+          'research_age' => 'b',
+          'research_experience_level' => 'c',
+        }
+      })
+    end
+
+    it "should remove the stashed data once the research data is sent" do
+      u = User.create
+      u.process({
+        'preferences' => {
+          'allow_log_reports' => true,
+          'research_primary_use' => 'a',
+          'research_experience_level' => 'c',
+        }
+      })
+      s = JobStash.last
+      expect(s).to_not eq(nil)
+      expect(s.data['user_id']).to eq(u.global_id)
+
+      ui = UserIntegration.create
+      ui.settings['allow_trends'] = true
+      ui.save
+      h = Webhook.create(record_code: 'research', user_integration_id: ui.id)
+      h.settings['notifications'] ||= {}
+      h.settings['include_content'] = true
+      h.settings['url'] = 'http://www.example.com/callback2'
+      h.settings['webhook_type'] = 'research'
+      h.settings['content_types'] = ['anonymized_summary']
+      h.settings['notifications']['anonymized_user_details'] = [{
+        'callback' => 'http://www.example.com/callback',
+        'include_content' => true,
+        'content_type' => 'anonymized_summary'
+      }]
+      h.save
+
+      expect(Worker.scheduled?(Webhook, :perform_action, {'method' => 'update_external_prefs', 'arguments' => [s.global_id]})).to be_truthy
+      expect(Typhoeus).to receive(:post) do |url, args|
+        expect(url).to eq('http://www.example.com/callback')
+        expect(args[:body]).to eq({
+          content: {
+            uid: ui.user_token(u),
+            details: {
+              primary_use: 'a',
+              experience_level: 'c'
+            }
+          }.to_json,
+          notification: 'anonymized_user_details',
+          record: s.record_code,
+          token: ui.settings['token']
+        })
+      end.and_return(OpenStruct.new(code: 200, body: 'asdf'))
+      Worker.process_queues
+
+      expect(JobStash.find_by(id: s.id)).to eq(nil)
+    end
+
+    it "should remove the stashed data even if the research data send fails" do
+      u = User.create
+      u.process({
+        'preferences' => {
+          'allow_log_reports' => true,
+          'research_primary_use' => 'a',
+          'research_age' => 'b',
+          'research_experience_level' => 'c',
+        }
+      })
+      s = JobStash.last
+      expect(s).to_not eq(nil)
+      expect(s.data['user_id']).to eq(u.global_id)
+
+      ui = UserIntegration.create
+      ui.settings['allow_trends'] = true
+      ui.save
+      h = Webhook.create(record_code: 'research', user_integration_id: ui.id)
+      h.settings['notifications'] ||= {}
+      h.settings['include_content'] = true
+      h.settings['url'] = 'http://www.example.com/callback2'
+      h.settings['webhook_type'] = 'research'
+      h.settings['content_types'] = ['anonymized_summary']
+      h.settings['notifications']['anonymized_user_details'] = [{
+        'callback' => 'http://www.example.com/callback',
+        'include_content' => true,
+        'content_type' => 'anonymized_summary'
+      }]
+      h.save
+
+      expect(Worker.scheduled?(Webhook, :perform_action, {'method' => 'update_external_prefs', 'arguments' => [s.global_id]})).to be_truthy
+      expect(Typhoeus).to receive(:post) do |url, args|
+        expect(url).to eq('http://www.example.com/callback')
+        expect(args[:body]).to eq({
+          content: {
+            uid: ui.user_token(u),
+            details: {
+              primary_use: 'a',
+              age: 'b',
+              experience_level: 'c'
+            }
+          }.to_json,
+          notification: 'anonymized_user_details',
+          record: s.record_code,
+          token: ui.settings['token']
+        })
+      end.and_raise(Timeout::Error.new('whatever'))
+      Worker.process_queues
+
+      expect(JobStash.find_by(id: s.id)).to eq(nil)
+    end
   end
   
   describe "logging_cutoff_for" do
