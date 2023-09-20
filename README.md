@@ -149,6 +149,8 @@ it to compile the javascript for the first time. You should see some notes on th
 about a successful build, then you can reload your browser and see the welcome page. You
 should be able to log in and go to town.
 
+To deploy the app, you'll want to precompile all assets. The easiest way to do this is to run `bin/deploy_prep`.
+
 ##### Additional Dependencies
 
 In order to support generating utterances for sharing,  downloading pdfs, and uploading

@@ -198,7 +198,7 @@ export default Controller.extend({
       pair.pct = Math.round(pair.percent * 1000) / 10;
       res.push(pair);
     }
-    res = res.sort(function(a, b) { return b.num - a.num; })
+    res = res.sort(function(a, b) { return b.num - a.num; });
     if(!this.get('showing_private_info')) {
       res = res.slice(0, 10);
     }
@@ -207,17 +207,22 @@ export default Controller.extend({
   goals: computed('trends.goals', 'trends.total_users', 'showing_private_info', function() {
     var res = [];
     var total_users = this.get('trends.total_users') || 1.0;
-    (this.get('trends.goals') || []).forEach(function(goal) {
+    var goals = this.get('trends.goals') || {};
+    for(var id in goals) {
+      var goal = goals[id];
       goal.pct = goal.users * 100.0;
       goal.num = goal.users * total_users;
       res.push(goal);
-    })
+    }
+    res = res.sort(function(a, b) { return b.users - a.users; })
     return res;
   }),
   badges: computed('trends.badges', 'trends.total_users', 'showing_private_info', function() {
     var res = [];
     var total_users = this.get('trends.total_users') || 1.0;
-    (this.get('trends.badges') || []).forEach(function(badge) {
+    var badges = this.get('trends.badges') || {};
+    for(var id in badges) {
+      var badge = badges[id];
       badge.pct = badge.users * 100;
       badge.num = badge.users * total_users;
       if(badge.levels && Object.keys(badge.levels) > 1) {
@@ -230,7 +235,8 @@ export default Controller.extend({
         }
       }
       res.push(badge);
-    })
+    }
+    res = res.sort(function(a, b) { return b.users - a.users; })
     return res;
   }),
   common_boards: computed('trends.board_usages', 'showing_private_info', function() {
