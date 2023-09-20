@@ -178,7 +178,7 @@ module Converters::CoughDrop
               'data_url' => "#{JsonApi::Json.current_host}/api/v1/images/#{image.global_id}",
               'content_type' => image_settings['content_type']
             }
-            if skinned_url && skinned_url != image_url
+            if skinned_url && skinned_url != image['url']
               image['ext_coughdrop_unskinned_url'] = image['url']
               image['url'] = Uploader.fronted_url(skinned_url)
             end
@@ -195,7 +195,7 @@ module Converters::CoughDrop
                 alt_urls << image['url'] + '.png'
               end
             elsif opts['for_pdf'] && image_record.raster_url
-              alt_urls << Uploader.fronted_url(image_record.raster_url(skinned_url != image_url ? skinned_url : nil))
+              alt_urls << Uploader.fronted_url(image_record.raster_url(skinned_url != image['url'] ? skinned_url : nil))
             elsif opts['for_pdf'] && image_record.possible_raster
               alt_urls << Uploader.fronted_url(image_record.possible_raster)
             end

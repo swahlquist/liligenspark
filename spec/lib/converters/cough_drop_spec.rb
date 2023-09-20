@@ -228,6 +228,7 @@ describe Converters::CoughDrop do
         'url' => 'http://example.com/pic.png',
         'data_url' => "#{JsonApi::Json.current_host}/api/v1/images/#{i.global_id}",
         'content_type' => 'text/plaintext',
+        'protected' => false,
         'data' => 'data:text/plaintext;base64,YWJj'
       }
       expect(json['images']).to eq(list)
@@ -1056,6 +1057,7 @@ describe Converters::CoughDrop do
           'url' => 'http://example.com/pic.png',
           'data_url' => "#{JsonApi::Json.current_host}/api/v1/images/#{i.global_id}",
           'content_type' => 'text/plaintext',
+          'protected' => false,
           'path' => "images/image_#{i.global_id}"
         }
         expect(json['images']).to eq(list)
@@ -1464,7 +1466,7 @@ describe Converters::CoughDrop do
         'id' => i.global_id,
         'height' => 400,
         'width' => 400,
-        'protected' => nil,
+        'protected' => false,
         'protected_source' => nil,
         'license' => {'type' => 'private'},
         'url' => 'http://example.com/pic.png.raster.png',
