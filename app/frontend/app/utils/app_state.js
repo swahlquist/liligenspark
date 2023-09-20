@@ -1077,6 +1077,11 @@ var app_state = EmberObject.extend({
     editManager.clear_preview_levels();
     CoughDrop.log.track('done setting mode to ' + mode);
   },
+  assert_lang_override: observer('vocalization_locale', function() {
+    if(this.get('vocalization_locale')) {
+      i18n.load_lang_override(this.get('vocalization_locale'));
+    }
+  }), 
   sync_reconnect: observer('refresh_stamp', function() {
     if(app_state.get('sessionUser.permissions.supervise')) {
       sync.connect();

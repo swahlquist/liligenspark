@@ -158,6 +158,7 @@ Coughdrop::Application.routes.draw do
     get 'domain_settings' => 'integrations#domain_settings'
     get 'start_code' => 'organizations#start_code_lookup'
     post 'focus/usage' => 'integrations#focus_usage'
+    get 'lang/:locale' => 'words#lang'
     
     resources :boards, :constraints => {:id => board_id_regex} do
       get 'stats' => 'boards#stats'

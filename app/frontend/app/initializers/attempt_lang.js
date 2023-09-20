@@ -9,6 +9,11 @@ export default {
   initialize: function() {
     var lang = stashes.get('display_lang');
     var translated = i18n.locales_translated || [];
+    var advance = function() {
+      extras.advance('lang');
+      i18n.lang_overrides = {};
+      i18n.load_lang_override(i18n.langs.preferred || i18n.langs.fallback);
+    };
     if(!lang) {
       var nav_lang = navigator.language;
       var base_lang = nav_lang.split(/-|_/)[0];
@@ -34,7 +39,7 @@ export default {
       if(document.body.parentNode) {
         document.body.parentNode.setAttribute('lang', 'en');
       }
-      extras.advance('lang');
+      advance();
     } else {
       var try_lang = function(lang, success, error) {
         if(lang == 'en') {
@@ -69,13 +74,13 @@ export default {
           if(document.body.parentNode) {
             document.body.parentNode.setAttribute('lang', base_lang);
           }
-          extras.advance('lang');
+          advance();
         }, function() {
           if(document.body.parentNode) {
             document.body.parentNode.setAttribute('lang', 'en');
           }
           // TODO: make a note somewhere that the lang couldn't load
-          extras.advance('lang');
+          advance();
         });
       };
       // try to retrieve base lang

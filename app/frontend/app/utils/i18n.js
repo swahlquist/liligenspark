@@ -11,6 +11,7 @@ import { set as emberSet, get as emberGet } from '@ember/object';
 import { htmlSafe } from '@ember/string';
 import { assign as emberAssign } from '@ember/polyfills';
 import { computed } from '@ember/object';
+import RSVP from 'rsvp';
 
 Ember.templateHelpers = Ember.templateHelpers || {};
 Ember.templateHelpers.date = function(date, precision) {
@@ -665,6 +666,41 @@ var i18n = EmberObject.extend({
       });
     }
     return res;
+  },
+  load_lang_override: function(lang, store_result) {
+    i18n.lang_overrides = i18n.lang_overrides || {}
+    if(i18n.lang_overrides[lang] || (i18n.lang_overrides[lang] === false && !store_result)) {
+      return;
+    }
+    if(window.persistence) {
+      var path = "/api/v1/lang/" + encodeURIComponent(lang);
+      var handle_result = function(res) {
+        var loc = res._locale || lang;
+        i18n.lang_overrides[loc] = {
+          rules: res.rules,
+          default_contractions: res.default_contractions,
+          contractions: res.contractions
+        }
+      };
+      var remote_lookup = function() {
+        window.persistence.store_json(path).then(function(res) {
+          handle_result(res);
+        }, function(err) {
+          i18n.lang_overrides[lang] = false;
+        });  
+      };
+      if(store_result) {
+        remote_lookup();
+      } else {
+        window.persistence.find_json(path).then(function(res) {
+          handle_result(res);
+        }, function(err) {
+          remote_lookup();
+        })
+      }
+    } else {
+      console.error("COUGHDROP: lang override requested an ajax call too soon");
+    }
   },
   key_string: function(keyCode) {
     var codes = this.get('keys');
@@ -2119,5 +2155,5 @@ var i18n = EmberObject.extend({
     zu: "Zulu"
   }
 });
-
+window.i18n = window.i18n || i18n;
 export default i18n;

@@ -52,24 +52,6 @@ in templates or modals and alerts, you will need to use the internationalization
 in order to support locales. You can find examples of these throughought the code, using
 commands such as `i18n.t('key', "string")` or `{{t "this is some test" key='key'}}`. Instructions for generating and processing string files is located in `/i18n_generator.rb`.
 
-### Contribution Ideas
-
-CoughDrop is an actively-developed system with an API-driven Rails backend and
-a rather heavy Ember frontend. This can be intimidating, even for people
-who know these frameworks, and prevent people from contributing. If you 
-would like to contribute, you can join the (https://www.openaac.org)[OpenAAC Slack Channel]
-and ask for ideas or pointers. In addition, here are some fairly modular
-components that I haven't had time to develop, and would love a contribution
-on:
-
-- Grammar service to support auto-tenses and middle words as communicators build simplified sentences
-- Dynamic Scene Displays framework to build photo-based interfaces for activating objects on a scene (consider using (https://github.com/CoughDrop/aac_shim)[aac_shim]
-- External API Integrations (recent news, movie tickets, etc.) (consider using (https://github.com/CoughDrop/aac_shim)[aac_shim]
-- Core word service to return information on a word including most common part of speech, common variations/tenses, etc.
-- API documentation (yeah I know, I should have done it along the way)
-
-I'm happy to provide guidance for any of these projects to help get them underway :-).
-
 #### Backend Setup
 
 Dev dependencies: ruby, Postgres, Redis, Node, ember-cli
@@ -187,9 +169,37 @@ Heroku Scheduler to run them at the specified frequency:
 rake check_for_expiring_subscriptions (run daily)
 rake generate_log_summaries (run hourly)
 rake push_remote_logs (run hourly)
+rake check_for_log_mergers (run hourly)
+rake advance_goals (run hourly)
 rake transcode_errored_records (run daily)
+rake flush_users (run daily)
+rake clean_old_deleted_boards (run daily)
 ```
 
+##### Troubleshooting
+
+Redis memory too full? `RedisInit.size_check` also `rake extras:clear_report_tallies`
+
+Job queues backed up? `Worker.method_stats(queue_name)`
+
+
+### Contribution Ideas
+
+CoughDrop is an actively-developed system with an API-driven Rails backend and
+a rather heavy Ember frontend. This can be intimidating, even for people
+who know these frameworks, and prevent people from contributing. If you 
+would like to contribute, you can join the (https://www.openaac.org)[OpenAAC Slack Channel]
+and ask for ideas or pointers. In addition, here are some fairly modular
+components that I haven't had time to develop, and would love a contribution
+on:
+
+- Grammar service to support auto-tenses and middle words as communicators build simplified sentences
+- Dynamic Scene Displays framework to build photo-based interfaces for activating objects on a scene (consider using (https://github.com/CoughDrop/aac_shim)[aac_shim]
+- External API Integrations (recent news, movie tickets, etc.) (consider using (https://github.com/CoughDrop/aac_shim)[aac_shim]
+- Core word service to return information on a word including most common part of speech, common variations/tenses, etc.
+- API documentation (yeah I know, I should have done it along the way)
+
+I'm happy to provide guidance for any of these projects to help get them underway :-).
 
 ### License
 

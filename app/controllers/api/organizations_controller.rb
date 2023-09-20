@@ -661,6 +661,8 @@ class Api::OrganizationsController < ApplicationController
       if params['word'] && params['sentence']
         success = WordData.add_suggestion(params['word'], params['sentence'], params['locale'])
       end
+    elsif params['extra_action'] == 'word_data_import'
+      WordData.schedule(:ingest, params['url'])
     end
     render json: {success: success}
   end

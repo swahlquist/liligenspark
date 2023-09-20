@@ -100,8 +100,8 @@ module RedisInit
         puts key
       end
     end
-    prefixes.to_a.sort{|k, v| v }.each{|k, v| puts "#{k}\t\t#{v}" }
-    # puts JSON.pretty_generate(prefixes)
+    puts JSON.pretty_generate(prefixes)
+    prefixes.to_a.sort{|k, v| v.to_i }.each{|k, v| puts "#{k}\t\t#{v}" }
     puts "total size\t#{total}"
   end
   

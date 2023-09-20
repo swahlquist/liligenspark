@@ -1,5 +1,5 @@
 class Api::WordsController < ApplicationController
-  before_action :require_api_token, :except => [:reachable_core]
+  before_action :require_api_token, :except => [:reachable_core, :lang]
   
   def index
     return unless allowed?(@api_user, 'admin_support_actions')
@@ -10,6 +10,23 @@ class Api::WordsController < ApplicationController
       words = words.where(['updated_at < ?', 24.hours.ago]).order('reviews ASC, priority DESC, word')
     end
     render json: JsonApi::Word.paginate(params, words)
+  end
+
+  def lang
+    return api_error(400, {error: "locale required"}) unless params['locale']
+    rules = Setting.get_cached("rules/" + params['locale'])
+    if !rules && params['locale'].match(/-|_/)
+      rules = Setting.get_cached("rules/" + params['locale'].split(/-|_/)[0])
+    end
+    if rules
+      render json: {
+        rules: rules['rules'],
+        default_contractions: rules['default_contractions'],
+        contractions: rules['contractions']
+      }
+    else
+      render json: {}
+    end
   end
 
   def reachable_core

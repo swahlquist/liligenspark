@@ -71,33 +71,42 @@ class WordData < ActiveRecord::Base
     res[:url]
   end
 
-  def ingest(url)
+  def self.ingest(url)
     req = Typhoeus.get(url)
     json = JSON.parse(req.body)
     locale = json['_locale']
-    json.each do |word, hash|
-      if !word.match(/^_/)
-        wd = WordData.find_or_create_by(word: word, locale: locale)
-        wd.data['reviewer_ids'] = ((self.data['reviewer_ids'] || []) + ['ext']).uniq
-        wd.data['reviews']['ext'] = {
-          'updated' => Time.now.iso8601,
-          'primary_part_of_speech' => (hash['pos'] || [])[0],
-          'inflection_overrides' => hash['ovr'] || {},
-          'antonyms' => hash['ant'] || [],
-          'parts_of_speech' => hash['pos']
-        }
-        if (hash['pos'] || [])[0]
-          wd.data['types'] = hash['pos']
+    updates = []
+    if json['_type'] == 'words'
+      json.each do |word, hash|
+        if !word.match(/^_/)
+          updates << word
+          wd = WordData.find_or_create_by(word: word, locale: locale)
+          wd.data['reviewer_ids'] = ((wd.data['reviewer_ids'] || []) + ['ext']).uniq
+          wd.data['reviews'] ||= {}
+          wd.data['reviews']['ext'] = {
+            'updated' => Time.now.iso8601,
+            'primary_part_of_speech' => (hash['types'] || hash['pos'] || [])[0],
+            'inflection_overrides' => hash['inflections'] || hash['ovr'] || {},
+            'antonyms' => hash['antonyms'] || hash['ant'] || [],
+            'parts_of_speech' => hash['types'] || hash['pos']
+          }
+          if (hash['types'] || hash['pos'] || [])[0]
+            wd.data['types'] = hash['types'] || hash['pos']
+          end
+          if (hash['antonyms'] || hash['ant'] || [])[0]
+            wd.data['antonyms'] = hash['antonyms'] || hash['ant']
+          end
+          if hash['inflections'] || hash['ovr']
+            wd.data['inflection_overrides'] = hash['inflections'] || hash['ovr']
+          end
+          wd.save
         end
-        if (hash['ant'] || [])[0]
-          wd.data['antonyms'] = hash['ant']
-        end
-        if hash['ovr']
-          wd.data['inflection_overrides'] = hash['ovr']
-        end
-        wd.save
       end
+    elsif json['_type'] == 'rules'
+      Setting.set("rules/#{locale}", json.slice('rules', 'contractions', 'default_contractions'), true)
+      updates << "rules/#{locale}"
     end
+    updates
   end
   
   def process_params(params, non_user_params)

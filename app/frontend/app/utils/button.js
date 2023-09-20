@@ -1483,6 +1483,7 @@ Button.load_actions = function() {
       description: i18n.t('pluralize', "Make the word plural"),
       types: ['noun'],
       alter: function(text, prior_text, prior_label, altered, addition) {
+        // TODO: first check for inflection_overrides
         altered.vocalization = i18n.pluralize(prior_text);
         altered.label = i18n.pluralize(prior_label);
         altered.in_progress = false;

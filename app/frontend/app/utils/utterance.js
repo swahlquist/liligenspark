@@ -84,9 +84,12 @@ var utterance = EmberObject.extend({
 
         if(app_state.get('sessionUser.preferences.substitute_contractions')) {
           var rules = [];
-          for(var cont in i18n.substitutions.default_contractions) {
+          var lang = (app_state.get('speak_mode') && app_state.get('vocalization_locale')) || i18n.langs.preferred || i18n.langs.fallback || 'en';
+          var lang_fallback = lang.split(/-|_/)[0];
+          var contractions = (i18n.lang_overrides[lang] || i18n.lang_overrides[lang_fallback] || {}).default_contractions || i18n.substitutions.default_contractions;
+          for(var cont in contractions) {
             var rule_parts = cont.toLowerCase().split(/\s+/);
-            rule_parts.push(i18n.substitutions.default_contractions[cont]);
+            rule_parts.push(contractions[cont]);
             rules.push(rule_parts);
           }
           var rule = utterance.first_rules(rules, rawList, true)[0];
@@ -644,13 +647,16 @@ var utterance = EmberObject.extend({
     var str_2 = buttons.map(function(b) { return b.label; }).join(' ');
     var str_1 = (buttons[buttons.length - 1] || {}).label;
     var res = null;
-    for(var words in i18n.substitutions.contractions) {
+    var lang = (app_state.get('speak_mode') && app_state.get('vocalization_locale')) || i18n.langs.preferred || i18n.langs.fallback || 'en';
+    var lang_fallback = lang.split(/-|_/)[0];
+    var contractions = (i18n.lang_overrides[lang] || i18n.lang_overrides[lang_fallback] || {}).contractions || i18n.substitutions.contractions
+    for(var words in contractions) {
       if(!res) {
         var words_minus_last = words.split(/\s+/).slice(0, -1).join(' ');
         if(words.length > 0 && str_2 && str_2.toLowerCase() == words) {
-          res = {lookback: words.split(/\s+/).length, label: i18n.substitutions.contractions[words]};
+          res = {lookback: words.split(/\s+/).length, label: contractions[words]};
         } else if(words_minus_last.length > 0 && str_1 && str_1.toLowerCase() == words_minus_last) {
-          res = {lookback: words_minus_last.split(/\s+/).length, label: i18n.substitutions.contractions[words]};
+          res = {lookback: words_minus_last.split(/\s+/).length, label: contractions[words]};
         }
       }
     }

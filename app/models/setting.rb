@@ -4,11 +4,26 @@ class Setting < ActiveRecord::Base
 
   include Replicate
 
-  def self.set(key, value)
+  def self.set(key, value, set_as_data=false)
     setting = self.find_or_initialize_by(:key => key)
-    setting.value = value
+    if set_as_data
+      setting.data = value
+    else
+      setting.value = value
+    end
     setting.save
+    cache_key = "setting/#{key}"
+    RedisInit.default.del(cache_key)
     value
+  end
+
+  def self.get_cached(key)
+    cache_key = "setting/#{key}"
+    str = RedisInit.default.get(cache_key)
+    return JSON.parse(str) if str
+    res = get(key)
+    RedisInit.default.setex(cache_key, 60.minutes.to_i, res.to_json) if res
+    res
   end
   
   def self.get(key)

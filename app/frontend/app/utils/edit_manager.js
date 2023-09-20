@@ -166,8 +166,11 @@ var editManager = EmberObject.extend({
       }  
     }
     var inflections = {};
+
     // Greedy algorithm stops at the first match
-    var rules = [
+    var lang = (app_state.get('speak_mode') && app_state.get('vocalization_locale')) || i18n.langs.preferred || i18n.langs.fallback || 'en';
+    var lang_fallback = lang.split(/-|_/)[0];
+    var rules = (i18n.lang_overrides[lang] || i18n.lang_overrides[lang_fallback] || {}).rules || [
       // Verbs:
       //   pronoun (I, you, they, we): present (c)
       //     Y: * they always [look]

@@ -49,6 +49,22 @@ export default Controller.extend({
     start_code_lookup: function() {
       this.transitionToRoute('start_codes', this.get('start_code'));
     },
+    word_data_import: function() {
+      var url = this.get('word_data_url');
+      if(url) {
+        persistence.ajax('/api/v1/organizations/' + this.get('model.id') + '/extra_action', {
+          type: 'POST',
+          data: {
+            extra_action: 'import_word_data',
+            url: url
+          }
+        }).then(function(res) {
+          modal.success(i18n.t('import_scheduled', "Word Data Import scheduled! It could take a few hours to process"))
+        }, function(err) {
+          modal.error(i18n.t('error_importing_word_data', "Unexpected error importing word data"));
+        });
+      }
+    },
     update_sale_date: function() {
       var cutoff = this.get('sale_cutoff_date') || "2000-01-01";
       var model = this.get('model');
