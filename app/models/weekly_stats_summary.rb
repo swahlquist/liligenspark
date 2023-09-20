@@ -985,19 +985,27 @@ class WeeklyStatsSummary < ActiveRecord::Base
       end
     end
     
+    goal_image_urls = {}
     if stash[:goals]
+      UserGoal.find_batches_by_global_id(stash[:goals].keys) do |goal|
+        goal_image_urls[goal.global_id] = goal.settings['badge_image_url']
+      end
       stash[:goals].each do |goal_id, goal|
         next if goal_id == 'private'
         res[:goals] ||= {}
         res[:goals][goal_id] = {
           'id' => goal_id,
           'name' => goal['name'],
-          'users' => (goal['user_ids'].uniq.length.to_f / total_users.to_f * 2.0).round(3) / 2.0
+          'image_url' => goal_image_urls[goal_id],
+          'users' => (goal['user_ids'].uniq.length.to_f / total_users.to_f * 2.0).round(4) / 2.0
         }
       end
     end
     
     if stash[:badges]
+      UserGoal.find_batches_by_global_id(stash[:badges].keys) do |goal|
+        goal_image_urls[goal.global_id] = goal.settings['badge_image_url']
+      end
       stash[:badges].each do |template_goal_id, badge|
         next if template_goal_id == 'private'
         res[:badges] ||= {}
@@ -1006,6 +1014,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
         levels.each{|lvl, cnt| levels[lvl] = (levels[lvl].to_f / badge['levels'].length.to_f).round(2) }
         res[:badges][template_goal_id] = {
           'template_goal_id' => template_goal_id,
+          'image_url' => goal_image_urls[template_goal_id],
           'name' => badge['name'],
           'levels' => levels,
           'users' => (badge['user_ids'].uniq.length.to_f / total_users.to_f * 2.0).round(3) / 2.0

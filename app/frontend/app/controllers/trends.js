@@ -189,7 +189,7 @@ export default Controller.extend({
     res = res.slice(0, 200);
     return res;
   }),
-  word_pairs: computed('trends.word_pairs', 'showing_private_info', function() {
+  word_pairs: computed('trends.word_pairs', 'trends.total_users', 'showing_private_info', function() {
     var res = [];
     var pairs = this.get('trends.word_pairs') || {};
     for(var idx in pairs) {
@@ -202,6 +202,35 @@ export default Controller.extend({
     if(!this.get('showing_private_info')) {
       res = res.slice(0, 10);
     }
+    return res;
+  }),
+  goals: computed('trends.goals', 'trends.total_users', 'showing_private_info', function() {
+    var res = [];
+    var total_users = this.get('trends.total_users') || 1.0;
+    (this.get('trends.goals') || []).forEach(function(goal) {
+      goal.pct = goal.users * 100.0;
+      goal.num = goal.users * total_users;
+      res.push(goal);
+    })
+    return res;
+  }),
+  badges: computed('trends.badges', 'trends.total_users', 'showing_private_info', function() {
+    var res = [];
+    var total_users = this.get('trends.total_users') || 1.0;
+    (this.get('trends.badges') || []).forEach(function(badge) {
+      badge.pct = badge.users * 100;
+      badge.num = badge.users * total_users;
+      if(badge.levels && Object.keys(badge.levels) > 1) {
+        badge.levels_list = [];
+        for(var num in badge.levels) {
+          badge.levels_list.push({
+            level: num,
+            pct: badge.levels[num] * 100.0
+          })
+        }
+      }
+      res.push(badge);
+    })
     return res;
   }),
   common_boards: computed('trends.board_usages', 'showing_private_info', function() {

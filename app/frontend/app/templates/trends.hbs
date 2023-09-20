@@ -421,7 +421,7 @@
           {{t "None available" key='none_available'}}
         {{/if}}
       </div>
-      <div class='col-sm-6' style='margin-bottom: 50px; clear: both;'>
+      <div class='col-sm-6' style='margin-bottom: 50px;'>
         <h4>{{t "Most-Frequent Core Word Pairings" key='common_word_pairs'}}</h4>
         {{#if word_pairs}}
           <div style='height: 300px; overflow: auto;'>
@@ -443,6 +443,68 @@
         {{/if}}
       </div>
       
+      <div class='col-sm-6' style='margin-bottom: 50px; clear: both;'>
+        <h4>{{t "Popular Goals" key='popular_goals'}}</h4>
+        {{#if goals}}
+          <div style='height: 300px; overflow: auto;'>
+            <div class="list-group">
+              {{#each goals as |goal|}}
+                {{#link-to 'goal' goal.id class='list-group-item'}}
+                  {{#if goal.image_url}}
+                    <img src={{goal.image_url}} class='fit_image' style='float: left; width: 40px; height: 40px;' />
+                  {{else}}
+                    <span style='display: inline-block; float: left; width: 40px; height: 40px;'></span>
+                  {{/if}}
+                  {{goal.name}}
+                  {{#if showing_private_info}}
+                    <span class='text-muted'>({{goal.num}}, {{goal.pct}}%)</span>
+                  {{/if}}
+                {{/link-to}}
+              {{/each}}
+            </div>
+          </div>
+        {{else}}
+          {{t "None available" key='none_available'}}
+        {{/if}}
+      </div>
+
+      <div class='col-sm-6' style='margin-bottom: 50px;'>
+        <h4>{{t "Most-Earned Goal Badges" key='most_earned_goal_badges'}}</h4>
+        {{#if badges}}
+          <div style='height: 300px; overflow: auto;'>
+            <div class="list-group">
+              {{#each badges as |badge|}}
+                <span class='list-group-item'>
+                  {{#if badge.image_url}}
+                    <img src={{badge.image_url}} class='fit_image' style='float: left; width: 40px; height: 40px;' />
+                  {{else}}
+                    <span style='display: inline-block; float: left; width: 40px; height: 40px;'></span>
+                  {{/if}}
+                  {{badge.name}}
+                  <span class='text-muted'>
+                    {{#if showing_private_info}}
+                      ({{badge.num}}, {{badge.pct}}%)
+                    {{/if}}
+                  </span>
+                  {{#if badge.levels_list}}
+                    <div class='text-muted'>
+                      {{#each badge.levels_list as |level|}}
+                        <span style='padding-right: 10px'>
+                          {{t "Level %{n}" n=level.level key='level_n'}} - 
+                          {{level.pct}}%
+                        </span>
+                      {{/each}}
+                    </div>
+                  {{/if}}
+                </span>
+              {{/each}}
+            </div>
+          </div>
+        {{else}}
+          {{t "None available" key='none_available'}}
+        {{/if}}
+      </div>
+
       <div class='col-sm-6'>
         <h4>{{t "Have More Questions?" key='have_more_questions'}}</h4>
         <p>{{t "We hope this small data sample has helped you think of some of the additional questions we could  all benefit from answering with the help of anonymized AAC usage data. We have over <b>%{cnt}</b> communicators who have opted in to sharing their anonymized usage data with researchers, in a strictly private and protected manner." key='data_summary_2' cnt=trends.research_communicators}}</p>
