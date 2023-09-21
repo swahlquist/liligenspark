@@ -210,8 +210,8 @@ export default Controller.extend({
     var goals = this.get('trends.goals') || {};
     for(var id in goals) {
       var goal = goals[id];
-      goal.pct = goal.users * 100.0;
-      goal.num = goal.users * total_users;
+      goal.pct = Math.round(goal.users * 10000.0) / 100.0;
+      goal.num = Math.round(goal.users * total_users);
       res.push(goal);
     }
     res = res.sort(function(a, b) { return b.users - a.users; })
@@ -223,9 +223,9 @@ export default Controller.extend({
     var badges = this.get('trends.badges') || {};
     for(var id in badges) {
       var badge = badges[id];
-      badge.pct = badge.users * 100;
-      badge.num = badge.users * total_users;
-      if(badge.levels && Object.keys(badge.levels) > 1) {
+      badge.pct = Math.round(badge.users * 10000.0) / 100.0;
+      badge.num = Math.round(badge.users * total_users);
+      if(badge.levels && Object.keys(badge.levels).length > 1) {
         badge.levels_list = [];
         for(var num in badge.levels) {
           badge.levels_list.push({

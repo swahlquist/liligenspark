@@ -451,9 +451,9 @@
               {{#each goals as |goal|}}
                 {{#link-to 'goals.goal' goal.id class='list-group-item'}}
                   {{#if goal.image_url}}
-                    <img src={{goal.image_url}} class='fit_image' style='float: left; width: 40px; height: 40px;' />
+                    <img src={{goal.image_url}} class='fit_image' style='float: left; width: 40px; height: 40px; margin: -10px 10px -5px -10px;' />
                   {{else}}
-                    <span style='display: inline-block; float: left; width: 40px; height: 40px;'></span>
+                    <span style='display: inline-block; float: left; width: 40px; height: 40px; margin: -10px 10px -5px -10px;'></span>
                   {{/if}}
                   {{goal.name}}
                   {{#if showing_private_info}}
@@ -476,9 +476,9 @@
               {{#each badges as |badge|}}
                 <span class='list-group-item'>
                   {{#if badge.image_url}}
-                    <img src={{badge.image_url}} class='fit_image' style='float: left; width: 40px; height: 40px;' />
+                    <img src={{badge.image_url}} class='fit_image' style='float: left; width: 40px; height: 40px; margin: -10px 10px -5px -10px;' />
                   {{else}}
-                    <span style='display: inline-block; float: left; width: 40px; height: 40px;'></span>
+                    <span style='display: inline-block; float: left; width: 40px; height: 40px; margin: -10px 10px -5px -10px;'></span>
                   {{/if}}
                   {{badge.name}}
                   <span class='text-muted'>
