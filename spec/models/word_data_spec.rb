@@ -1083,6 +1083,149 @@ RSpec.describe WordData, :type => :model do
       })
     end
 
+    it "should use locale-specific settings when available" do
+      o = Organization.create(admin: true)
+      u = User.create
+      o.add_manager(u.user_name, true)
+      w = WordData.find_or_create_by(word: 'he', locale: 'zz')
+      w.process({
+        primary_part_of_speech: 'pronoun',
+        antonyms: 'xo',
+        inflection_overrides: {
+          humor: 'heh',
+          explicit: 'h***',
+          extended: 'hee-hee',
+          regulars: ['explicit']
+        },
+        parts_of_speech: ['pronoun', 'weird']
+      }, {updater: u.reload})
+      w = WordData.find_or_create_by(word: 'ugly', locale: 'zz')
+      w.process({
+        primary_part_of_speech: 'adjective',
+        antonyms: 'xox',
+        inflection_overrides: {
+          humor: 'yuck',
+          explicit: 'u****',
+          extended: 'uuuuugly',
+          plural: 'uglies'
+        }
+      }, {updater: u.reload})
+      w = WordData.find_or_create_by(word: 'sad', locale: 'zz')
+      w.process({
+        primary_part_of_speech: 'adjective',
+        antonyms: 'xox',
+        inflection_overrides: {
+          humor: 'bummed',
+          explicit: 's****',
+          extended: 'saaaaad',
+          plural: 'sads',
+          regulars: ['humor', 'plural']
+        }
+      }, {updater: u.reload})
+      w = WordData.find_or_create_by(word: 'mask', locale: 'zz')
+      w.process({
+        primary_part_of_speech: 'noun',
+        inflection_overrides: {
+          humor: 'veil',
+          explicit: 'm****',
+          theme: 'halloween',
+          regulars: ['humor', 'explicit']
+        }
+      }, {updater: u.reload})
+      w = WordData.find_or_create_by(word: 'run', locale: 'zz')
+      w.process({
+        primary_part_of_speech: 'verb',
+        antonyms: 'walk,stroll',
+        inflection_overrides: {
+          base: 'run',
+          explicit: 'r****',
+          theme: 'racing',
+        }
+      }, {updater: u.reload})
+      Setting.set('rules/zz', {
+        'rules' => [],
+        'inflection_locations' => {
+          'pronoun' => [
+            {'required' => 'humor'},
+            {'location' => 'n', 'inflection' => 'bacon'},
+            {'location' => 'e', 'inflection' => 'explicit', 'if_empty' => true},
+            {'location' => 'n', 'inflection' => 'humor'},
+            {'location' => 's', 'inflection' => 'extended'},
+            {'location' => 'nw', 'inflection' => 'antonym', 'type' => 'weird'},
+          ],
+          'adjective' => [
+            {'required' => 'humor'},
+            {'location' => 'n', 'inflection' => 'humor'},
+            {'location' => 'e', 'inflection' => 'explicit'},
+            {'location' => 's', 'inflection' => 'extended'},
+            {'location' => 'w', 'inflection' => 'plural'},
+            {'location' => 'ne', 'inflection' => 'antonym'},
+          ],
+          'noun' => [
+            {'required' => 'humor'},
+            {'required' => 'hangover'},
+            {'location' => 'n', 'inflection' => 'humor'},
+            {'location' => 'e', 'inflection' => 'explicit'},
+            {'location' => 's', 'inflection' => 'theme'},
+          ],
+          'verb' => [
+            {'required' => 'base'},
+            {'location' => 'n', 'inflection' => 'base'},
+            {'location' => 'e', 'inflection' => 'explicit'},
+            {'location' => 's', 'inflection' => 'theme'},
+            {'location' => 'c', 'inflection' => 'base'},
+            {'location' => 'se', 'inflection' => 'antonym'},
+            {'location' => 'n', 'inflection' => 'explicit', 'override_if_same' => 'c'},
+          ]
+        }
+      }, true)
+      hash = WordData.inflection_locations_for(['he', 'ugly', 'sad', 'mask', 'run', 'angrily'], 'zz-AU')
+      expect(hash['he']).to eq({
+        'e' => 'h***',
+        'n' => 'heh',
+        'src' => 'he',
+        'nw' => 'xo',
+        'c' => 'he',
+        'types' => ['pronoun', 'weird'],
+        'v' => WordData::INFLECTIONS_VERSION,
+        's' => 'hee-hee'
+      })
+      expect(hash['ugly']).to eq({
+        "c"=>"ugly", 
+        "n"=>"yuck", 
+        "ne"=>"xox", 
+        'e' => 'u****',
+        "s"=>"uuuuugly",
+        "w"=>"uglies",
+        "src"=>"ugly", 
+        "types"=>["adjective"], 
+        "v"=>WordData::INFLECTIONS_VERSION, 
+      })
+      expect(hash['sad']).to eq({
+        "c"=>"sad", 
+        "e"=>"s****", 
+        "s"=>"saaaaad", 
+        "ne"=>"xox", 
+        "src"=>"sad", 
+        "types"=>["adjective"], 
+        "v"=>WordData::INFLECTIONS_VERSION, 
+      })
+      expect(hash['flask']).to eq(nil)
+      expect(hash['mask']).to eq({
+        "types"=>["noun"], 
+      })
+      expect(hash['run']).to eq({
+        "c"=>"run", 
+        "e"=>"r****", 
+        "n"=>"r****", 
+        "se"=>"walk", 
+        "s"=>"racing", 
+        'src' => 'run',
+        'types' => ['verb'],
+        'v' => WordData::INFLECTIONS_VERSION,
+      })
+    end
+
     it "should not return inflection locations for unrecognized locales" do
       o = Organization.create(admin: true)
       u = User.create

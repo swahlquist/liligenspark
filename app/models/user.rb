@@ -1356,6 +1356,7 @@ class User < ActiveRecord::Base
     if (self.settings['preferences']['home_board'] || {}).slice('id', 'key').to_json != json
       notify('home_board_changed')
       self.schedule_audit_protected_sources
+      self.schedule(:update_home_board_inflections)
     end
   end
   

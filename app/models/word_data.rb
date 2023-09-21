@@ -103,7 +103,7 @@ class WordData < ActiveRecord::Base
         end
       end
     elsif json['_type'] == 'rules'
-      Setting.set("rules/#{locale}", json.slice('rules', 'contractions', 'default_contractions'), true)
+      Setting.set("rules/#{locale}", json.slice('rules', 'inflection_locations', 'contractions', 'default_contractions'), true)
       updates << "rules/#{locale}"
     end
     updates
@@ -727,10 +727,13 @@ class WordData < ActiveRecord::Base
     return hash if words.blank? || !locale || locale.blank?
     locales = [locale.downcase, locale.split(/-|_/)[0].downcase]
     known_types = ['adjective', 'noun', 'verb', 'adverb', 'pronoun']
+    rules = Setting.get_cached("rules/#{locale}") || Setting.get_cached("rules/#{locale.split(/-|_/)[0]}")
+    infl_rules = rules && rules['inflection_locations']
     WordData.where(locale: locales, word: words.map(&:downcase)).each do |word_data|
       data = word_data.data || {}
       types = data['types'] || []
-      overrides = data['inflection_overrides'] || {}
+      overrides = {}.merge(data['inflection_overrides'] || {})
+      overrides['antonym'] ||= (data['antonyms'] || [])[0]
       overrides.keys.each do |key|
         overrides.delete(key) if overrides[key] == 'N/A' || overrides[key] == 'na' || overrides[key] == 'NA' || overrides[key] == 'n/a'
       end
@@ -739,12 +742,6 @@ class WordData < ActiveRecord::Base
       types.each{|t| pos ||= t if known_types.include?(t) }
       pos = types[0]
       locations = {}
-      #// N - more/plural
-      #// S - for me/possessive
-      #// NW - negation
-      #// W - in the past
-      #// E - in the future
-      #// SW - opposite
       known_locations = {}
       set_location = lambda{|loc, key|
         if !overrides[key].blank? && !locations[loc] && !known_locations[loc]
@@ -752,7 +749,37 @@ class WordData < ActiveRecord::Base
           known_locations[loc] = overrides[key]
         end
       }
-      if locale.match(/^en/i)
+      if infl_rules && infl_rules.length > 0
+        if infl_rules[pos]
+          checks = infl_rules[pos].map{|r| r['required']}.compact
+          if (overrides.keys & checks).length == checks.length
+            location_rules = infl_rules[pos].select{|r| r['location'] }
+            location_rules.each do |rule|
+              if rule['type']
+                if types.include?(rule['type'])
+                  set_location.call(rule['location'], rule['inflection'])
+                end
+              elsif rule['if_empty']
+                locations[rule['location']] = overrides[rule['inflection']] if locations.keys.length == 0
+              elsif rule['override_if_same']
+                if locations[rule['location']] == locations[rule['override_if_same']] && overrides[rule['inflection']]
+                  locations[rule['location']] = nil
+                  known_locations[rule['location']] = nil
+                  set_location.call(rule['location'], rule['inflection'])
+                end
+              else
+                set_location.call(rule['location'], rule['inflection'])
+              end
+            end
+          end
+        end
+      elsif locale.match(/^en/i)
+        #// N - more/plural
+        #// S - for me/possessive
+        #// NW - negation
+        #// W - in the past
+        #// E - in the future
+        #// SW - opposite
         # If not the primary type, check for the secondmost-primary type.
         # Fill in with fallback types if the word has multiple types
         if pos == 'adjective' && overrides['superlative']
