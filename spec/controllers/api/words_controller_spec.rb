@@ -52,4 +52,56 @@ describe Api::WordsController, :type => :controller do
       expect(json).to eq({'words' => {'a' => 1}})
     end
   end
+
+  describe "lang" do
+    it "should not require an api token" do
+      get 'lang', {params: {'locale' => ''}}
+      assert_error('locale required')
+    end
+
+    it "should return a blank result by deafult" do
+      RedisInit.default.del("setting/rules/xx")
+      RedisInit.default.del("setting/rules/xx-xx")
+      get 'lang', {params: {'locale' => 'xx'}}
+      json = assert_success_json
+      expect(json).to eq({})
+    end
+
+    it "should return cached settings if available" do
+      RedisInit.default.del("setting/rules/xx")
+      RedisInit.default.del("setting/rules/xx-xx")
+      Setting.set("rules/xx-xx", {
+        rules: 'asdf3',
+        default_contractions: 'qwer3',
+        inflection_locations: 'zxcv3'
+      }, true)
+      get 'lang', {params: {'locale' => 'xx-xx'}}
+      json = assert_success_json
+      expect(json).to eq({
+        'rules' => 'asdf3',
+        'default_contractions' => 'qwer3',
+        'contractions' => nil,
+        'inflection_locations' => 'zxcv3'
+      })
+    end
+
+    it "should fall back to the base language if not for sub-language" do
+      RedisInit.default.del("setting/rules/xx")
+      RedisInit.default.del("setting/rules/xx-xx")
+      Setting.set("rules/xx", {
+        rules: 'asdf4',
+        default_contractions: 'qwer4',
+        contractions: 'yuio4',
+        inflection_locations: 'zxcv4'
+      }, true)
+      get 'lang', {params: {'locale' => 'xx-xx'}}
+      json = assert_success_json
+      expect(json).to eq({
+        'rules' => 'asdf4',
+        'default_contractions' => 'qwer4',
+        'contractions' => 'yuio4',
+        'inflection_locations' => 'zxcv4'
+      })
+    end
+  end
 end
