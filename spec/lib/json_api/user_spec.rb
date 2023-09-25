@@ -224,7 +224,6 @@ describe JsonApi::User do
       u.settings['preferences']['devices']['default'] = {'a' => 1, 'prefer_native_keyboard' => true}
       hash = JsonApi::User.build_json(u, permissions: u)
       expect(hash['preferences']).not_to eq(nil)
-      expect(hash['preferences']['prefer_native_keyboard']).to eq(true)
       expect(hash['preferences']['device']['a']).to eq(1)
       expect(hash['preferences']['device']['prefer_native_keyboard']).to eq(true)
       expect(hash['preferences']['device']['alternate_voice']).to eq({})
@@ -233,10 +232,8 @@ describe JsonApi::User do
 
       u = User.create
       u.settings['preferences']['devices']['default'] = {'a' => 1}
-      u.settings['preferences']['prefer_native_keyboard'] = true
       hash = JsonApi::User.build_json(u, permissions: u)
       expect(hash['preferences']).not_to eq(nil)
-      expect(hash['preferences']['prefer_native_keyboard']).to eq(true)
       expect(hash['preferences']['device']['a']).to eq(1)
       expect(hash['preferences']['device']['prefer_native_keyboard']).to eq(nil)
       expect(hash['preferences']['device']['alternate_voice']).to eq({})

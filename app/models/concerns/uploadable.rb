@@ -348,7 +348,6 @@ module Uploadable
       # image libraries like lessonpix) . Also stores on any 
       # records that have
       # a cached result, a reference to the cached and fallback URLs
-      
       sources = {}
       if protected_sources
         protected_sources.each{|s| sources[s.to_sym] = true}

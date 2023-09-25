@@ -112,7 +112,8 @@ describe Utterance, :type => :model do
       expect(Worker.scheduled_for?(:priority, Utterance, :perform_action, {'id' => u.id, 'method' => 'deliver_to', 'arguments' => [{
         'user_id' => u2.global_id,
         'sharer_id' => u1.global_id,
-        'share_index' => 0
+        'share_index' => 0,
+        'text_only' => nil
       }]})).to eq(true)
     end
 
@@ -144,7 +145,8 @@ describe Utterance, :type => :model do
       expect(Worker.scheduled?(Utterance, :perform_action, {'id' => u.id, 'method' => 'deliver_to', 'arguments' => [{
         'user_id' => u2.global_id,
         'sharer_id' => u1.global_id,
-        'share_index' => 0
+        'share_index' => 0,
+        'text_only' => nil
       }]})).to eq(false)
       # check that it was recorded for sharer
       expect(s2.log_type).to eq('note')
@@ -177,7 +179,8 @@ describe Utterance, :type => :model do
       expect(Worker.scheduled_for?(:priority, Utterance, :perform_action, {'id' => u.id, 'method' => 'deliver_to', 'arguments' => [{
         'user_id' => u3.global_id,
         'sharer_id' => u2.global_id,
-        'share_index' => 0
+        'share_index' => 0,
+        'text_only' => nil
       }]})).to eq(true)
     end
 
@@ -424,6 +427,7 @@ describe Utterance, :type => :model do
         'share_index' => 0,
         'reply_url' => "#{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}#{Utterance.to_alpha_code(0)}",
         'text' => 'hat cat scat',
+        'text_only' => nil
       }, u)
       res = utterance.deliver_to({'sharer_id' => u.global_id, 'user_id' => contact_id, 'share_index' => 0})
       expect(res).to eq(true)

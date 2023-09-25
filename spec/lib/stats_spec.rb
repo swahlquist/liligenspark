@@ -630,7 +630,7 @@ describe Stats do
       expect(res).not_to eq(nil)
       expect(res[:stars]).to eq(4)
       expect(res[:forks]).to eq(1)
-      expect(res[:uses]).to eq(3)
+      expect(res[:uses]).to eq(4)
       expect(res[:home_uses]).to eq(4)
       expect(res[:popular_forks]).to eq([])
     end

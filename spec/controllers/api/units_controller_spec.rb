@@ -297,13 +297,19 @@ describe Api::UnitsController, :type => :controller do
     it "should include statuses for communicators" do
       token_user
       user = User.create
+      ts = Time.now.beginning_of_week(:monday).to_date.to_time(:utc) + 6.hours
       user.settings['primary_goal'] = {
         'id' => 'asdf',
-        'last_tracked' => Time.now.iso8601
+        'last_tracked' => ts.iso8601
       }
       user.save
       d = Device.create(:user => user)
-      LogSession.create(log_type: 'note', user: user, author: user, device: d, score: 3, started_at: Time.now, goal_id: 7, data: {'note' => {'text' => 'asdf', 'timestamp' => Time.now.to_i}})
+      LogSession.create(log_type: 'note', user: user, author: user, device: d, score: 3, started_at: ts, goal_id: 7, data: {'note' => {'text' => 'asdf', 'timestamp' => ts.to_i}})
+      LogSession.process_new({'events' => [
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i + 5},
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 2}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i + 10},
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 3}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i + 15}
+      ]}, {:user => user, :author => user, :device => d, goal_id: 7})
       
       o = Organization.create
       u = OrganizationUnit.create(:organization => o)
@@ -348,14 +354,14 @@ describe Api::UnitsController, :type => :controller do
       expect(json['user_weeks'][user.global_id].keys.length).to eq(1)
       expect(json['user_weeks'][user.global_id][json['user_weeks'][user.global_id].keys[0]]).to eq({
         'count' => 1,
-        'goals' => 1,
+        'goals' => 0,
         'statuses' => [{"from_unit"=>false, "goal_id"=>"1_7", "score"=>3}]
       })
       expect(json['user_counts']).to eq({
         'goal_set' => 1,
         'goal_recently_logged' => 1,
-        'recent_session_count' => 0, 
-        'recent_session_user_count' => 0,
+        'recent_session_count' => 1, 
+        'recent_session_user_count' => 1,
         "modeled_word_counts" => [],
         "total_models" => 0,
         "total_seconds" => 0,
@@ -363,7 +369,7 @@ describe Api::UnitsController, :type => :controller do
         "total_user_weeks" => 0,
         "total_words" => 0,
         "word_counts" => [],
-        'recent_session_seconds' => 0.0,
+        'recent_session_seconds' => 10.0,
         'recent_session_hours' => 0.0, 
         'total_users' => 1
       })

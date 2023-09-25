@@ -172,7 +172,7 @@ class Webhook < ActiveRecord::Base
           'code' => res.code,
           'url' => url
         }
-        self.settings['callback_attempts'] = self.settings['callback_attempts'][-20..-1]
+        self.settings['callback_attempts'] = self.settings['callback_attempts'].last(20)
         self.save
       elsif callback['callback']
         results << {

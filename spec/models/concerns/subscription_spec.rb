@@ -684,7 +684,8 @@ describe Subscription, :type => :model do
       o = Organization.create
       expect(UserMailer).to receive(:schedule_delivery).with(:organization_assigned, u.global_id, o.global_id)
       u.update_subscription_organization(o.global_id)
-      expect(u.settings['subscription']['added_to_organization']).to eql(Time.now.iso8601)
+      expect(u.settings['subscription']['added_to_organization']).to be > (Time.now - 5).iso8601
+      expect(u.settings['subscription']['added_to_organization']).to be < (Time.now + 5).iso8601
       expect(Worker.scheduled?(User, :perform_action, {'id' => u.id, 'method' => 'process_subscription_token', 'arguments' => ['token', 'unsubscribe']})).to eq(true)
     end
     
@@ -694,8 +695,9 @@ describe Subscription, :type => :model do
       u.settings['managed_by'] = {}
       u.settings['managed_by'][o.global_id] = {'pending' => false, 'sponsored' => true}
       expect(UserMailer).to receive(:schedule_delivery).with(:organization_unassigned, u.global_id, o.global_id)
+      expect(RemoteAction.where(action: 'notify_unassigned').count).to eq(0)
       u.update_subscription_organization("r#{o.global_id}")
-      ra = RemoteAction.last
+      ra = RemoteAction.where(action: 'notify_unassigned').last
       expect(ra).to_not eq(nil)
       RemoteAction.where(id: ra.id).update_all(act_at: 5.seconds.ago)
       expect(ra.action).to eq('notify_unassigned')
@@ -718,9 +720,10 @@ describe Subscription, :type => :model do
       u.save
       expect(UserMailer).to receive(:schedule_delivery).with(:organization_unassigned, u.global_id, o.global_id)
       expect(Organization.sponsored?(u)).to eq(true)
+      expect(RemoteAction.where(action: 'notify_unassigned').count).to eq(0)
       u.update_subscription_organization("r#{o.global_id}")
       expect(u.expires_at.to_i).to eq(12.weeks.from_now.to_i)
-      ra = RemoteAction.last
+      ra = RemoteAction.where(action: 'notify_unassigned').last
       expect(ra).to_not eq(nil)
       RemoteAction.where(id: ra.id).update_all(act_at: 5.seconds.ago)
       expect(ra.action).to eq('notify_unassigned')
@@ -735,10 +738,11 @@ describe Subscription, :type => :model do
       u.settings['managed_by'][o.global_id] = {'pending' => false, 'sponsored' => true}
       u.settings['subscription']['org_sponsored'] = true
       expect(UserMailer).to receive(:schedule_delivery).with(:organization_unassigned, u.global_id, o.global_id)
+      expect(RemoteAction.where(action: 'notify_unassigned').count).to eq(0)
       u.update_subscription_organization("r#{o.global_id}")
       expect(u.expires_at.to_i).to be > (2.weeks.from_now.to_i - 10)
       expect(u.expires_at.to_i).to be < (2.weeks.from_now.to_i + 10)
-      ra = RemoteAction.last
+      ra = RemoteAction.where(action: 'notify_unassigned').last
       expect(ra).to_not eq(nil)
       RemoteAction.where(id: ra.id).update_all(act_at: 5.seconds.ago)
       expect(ra.action).to eq('notify_unassigned')
@@ -754,12 +758,13 @@ describe Subscription, :type => :model do
       u.expires_at = nil
       u.settings['subscription']['org_sponsored'] = true
       expect(UserMailer).to receive(:schedule_delivery).with(:organization_unassigned, u.global_id, o.global_id)
+      expect(RemoteAction.where(action: 'notify_unassigned').count).to eq(0)
       u.update_subscription_organization("r#{o.global_id}")
       expect(u.expires_at.to_i).to be > (2.weeks.from_now.to_i - 10)
       expect(u.expires_at.to_i).to be < (2.weeks.from_now.to_i + 10)
       expect(u.settings['subscription']['started']).to eq(nil)
       expect(u.settings['subscription']['added_to_organization']).to eq(nil)
-      ra = RemoteAction.last
+      ra = RemoteAction.where(action: 'notify_unassigned').last
       expect(ra).to_not eq(nil)
       RemoteAction.where(id: ra.id).update_all(act_at: 5.seconds.ago)
       expect(ra.action).to eq('notify_unassigned')

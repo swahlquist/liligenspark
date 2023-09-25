@@ -146,7 +146,7 @@ class Api::OrganizationsController < ApplicationController
 
   def extras
     return unless allowed?(@org, 'edit')
-    users = @org.extras_users.sort_by(&:user_name)
+    users = @org.extras_users(true).sort_by(&:user_name)
     prefix = "/organizations/#{@org.global_id}/extras"
     render json: JsonApi::User.paginate(params, users, {:limited_identity => true, :include_email => true, :organization => @org, :prefix => prefix, :per_page => 500})
   end

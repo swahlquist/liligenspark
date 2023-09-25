@@ -254,10 +254,11 @@ describe Relinking, :type => :model do
       u1 = User.create
       b = Board.create(user: u1)
       u2 = User.create
-      b.settings['protected'] = {'vocabulary' => true, 'vocabulary_owner_id' => u1.global_id}
+      u3 = User.create
+      b.settings['protected'] = {'vocabulary' => true, 'vocabulary_owner_id' => u3.global_id}
       b.save
       b = Board.find_by_path("#{b.global_id}-#{u2.global_id}")
-      expect{ b.copy_for(u2, copier: u1, new_owner: true) }.to raise_error("not authorized to copy #{b.global_id} by #{u2.global_id}")
+      expect{ b.copy_for(u2, copier: u2, new_owner: true) }.to raise_error("not authorized to copy #{b.global_id} by #{u2.global_id}")
     end
   end
 

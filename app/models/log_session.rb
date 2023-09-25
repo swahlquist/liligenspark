@@ -1804,7 +1804,7 @@ class LogSession < ActiveRecord::Base
         res << "#{self.user.record_code}::*"
         res << "#{self.user.record_code}::log_session:*"
       end
-      if self.data['allow_research'] && self.user && self.user.communicator_role?
+      if self.data && self.data['allow_research'] && self.user && self.user.communicator_role?
         res << "research"
       end
     end

@@ -710,8 +710,9 @@ describe Api::UsersController, :type => :controller do
       expect(u.settings['preferences']['home_board']['key']).to_not eq(nil)
       b2 = Board.find_by_path(u.settings['preferences']['home_board']['key'])
       expect(b2).to_not eq(nil)
-      expect(b2).to_not eq(b)
-      expect(b2.parent_board).to eq(b)
+      expect(b2).to eq(b)
+      expect(u.settings['preferences']['home_board']['key']).to_not eq(b.key)
+      expect(b2.instance_variable_get('@sub_id')).to eq(u.global_id)
     end
     
     it "should throttle or captcha or something to prevent abuse"

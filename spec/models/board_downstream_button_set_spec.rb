@@ -163,7 +163,7 @@ describe BoardDownstreamButtonSet, :type => :model do
         'visible_level' => 1,
         'hidden' => true,
         'hidden_link' => false,
-        'force_vocalize' => true,
+        # 'force_vocalize' => true,
         'link_disabled' => false,
         "linked_board_id" => b2.global_id,
         "linked_board_key" => b2.key,
@@ -715,7 +715,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       bs1.save
       bs2.data['source_id'] = bs1.global_id
       bs2.save
-      expect(BoardDownstreamButtonSet).to receive(:schedule_once_for) do |queue, method, list, ts|
+      expect(BoardDownstreamButtonSet).to receive(:schedule_for) do |queue, method, list, ts|
         expect(queue).to eq('slow')
         expect(method).to eq(:flush_caches)
         expect(list).to eq([b2.global_id])
@@ -1470,7 +1470,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(bs).to receive(:detach_extra_data).at_least(1).times
       expect(Uploader).to receive(:remote_upload) do |path, file_path, type|
         expect(type).to eq('text/json')
-        json = JSON.parse(File.read(file_path))
+        json = bs.decrypted_json(File.read(file_path))
         expect(json.is_a?(Array)).to eq(true)
         expect(json.length).to eq(2)
         expect(json[0]['label']).to eq('hat')
@@ -1504,7 +1504,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(bs).to receive(:detach_extra_data).at_least(1).times
       expect(Uploader).to receive(:remote_upload) do |path, file_path, type|
         expect(type).to eq('text/json')
-        json = JSON.parse(File.read(file_path))
+        json = bs.decrypted_json(File.read(file_path))
         expect(json.is_a?(Array)).to eq(true)
         expect(json.length).to eq(2)
         expect(json[0]['label']).to eq('hat')
@@ -1513,8 +1513,8 @@ describe BoardDownstreamButtonSet, :type => :model do
       end.and_raise("throttled upload")
       expect(RemoteAction.count).to eq(2)
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({state: 'uploaded', success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
-      expect(RemoteAction.count).to eq(3)
-      ra = RemoteAction.last
+      expect(RemoteAction.count).to eq(4)
+      ra = RemoteAction.all[-1]
       expect(ra.path).to eq("#{b.global_id}::#{u.global_id}")
       expect(ra.action).to eq("upload_extra_data")
       expect(ra.act_at).to be > 4.minutes.from_now
@@ -1546,8 +1546,8 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(RemoteAction.count).to eq(2)
       ra = RemoteAction.create(path: "#{b.global_id}::#{u.global_id}", action: "upload_extra_data", act_at: 5.minutes.from_now)
       expect(BoardDownstreamButtonSet.generate_for(b.global_id, u.global_id)).to eq({state: 'uploaded', success: true, url: "#{ENV['UPLOADS_S3_CDN']}/#{bs.data['remote_paths'][hash]['path']}"})
-      expect(RemoteAction.count).to eq(3)
-      ra = RemoteAction.last
+      expect(RemoteAction.count).to eq(4)
+      ra = RemoteAction.all[-2]
       expect(ra.path).to eq("#{b.global_id}::#{u.global_id}")
       expect(ra.action).to eq("upload_extra_data")
       expect(ra.act_at).to be > 4.minutes.from_now
@@ -1577,7 +1577,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(bs).to receive(:detach_extra_data).at_least(1).times
       expect(Uploader).to receive(:remote_upload) do |path, file_path, type|
         expect(type).to eq('text/json')
-        json = JSON.parse(File.read(file_path))
+        json = bs.decrypted_json(File.read(file_path))
         expect(json.is_a?(Array)).to eq(true)
         expect(json.length).to eq(2)
         expect(json[0]['label']).to eq('hat')
@@ -1612,7 +1612,7 @@ describe BoardDownstreamButtonSet, :type => :model do
       expect(bs).to receive(:detach_extra_data).at_least(1).times
       expect(Uploader).to receive(:remote_upload) do |path, file_path, type|
         expect(type).to eq('text/json')
-        json = JSON.parse(File.read(file_path))
+        json = bs.decrypted_json(File.read(file_path))
         expect(json.is_a?(Array)).to eq(true)
         expect(json.length).to eq(2)
         expect(json[0]['label']).to eq('hat')

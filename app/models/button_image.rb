@@ -289,7 +289,7 @@ class ButtonImage < ActiveRecord::Base
 
   def settings_for(user, allowed_sources, pref)
     settings = {}.merge(self.settings)
-    settings['url'] = self.url
+    settings['url'] = self.best_url
     settings['protected_source'] ||= 'lessonpix' if settings['license'] && settings['license']['source_url'] && settings['license']['source_url'].match(/lessonpix/)
     settings['protected'] = !!self.protected?
     settings.delete('library_alternates')

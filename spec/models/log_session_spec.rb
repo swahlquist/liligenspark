@@ -753,7 +753,7 @@ describe LogSession, :type => :model do
       expect(Utterance.count).to eq(1)
       utterance = Utterance.last
       expect(utterance.user).to eq(u)
-      expect(Worker.scheduled?(Utterance, :perform_action, {'id' => utterance.id, 'method' => 'share_with', 'arguments' => [{'user_id' => u2.global_id, 'reply_id' => nil}, u.global_id]})).to eq(true)
+      expect(Worker.scheduled?(Utterance, :perform_action, {'id' => utterance.id, 'method' => 'share_with', 'arguments' => [{'user_id' => u2.global_id, 'reply_id' => nil, 'text_only' => nil}, u.global_id]})).to eq(true)
       Worker.process_queues
       expect(LogSession.count).to eq(2)
     end
@@ -792,7 +792,7 @@ describe LogSession, :type => :model do
       expect(Utterance.count).to eq(1)
       utterance = Utterance.last
       expect(utterance.user).to eq(u2)
-      expect(Worker.scheduled?(Utterance, :perform_action, {'id' => utterance.id, 'method' => 'share_with', 'arguments' => [{'user_id' => u2.global_id, 'reply_id' => nil}, u2.global_id]})).to eq(true)
+      expect(Worker.scheduled?(Utterance, :perform_action, {'id' => utterance.id, 'method' => 'share_with', 'arguments' => [{'user_id' => u2.global_id, 'reply_id' => nil, 'text_only' => nil}, u2.global_id]})).to eq(true)
       Worker.process_queues
       expect(LogSession.count).to eq(3)
     end
@@ -874,7 +874,7 @@ describe LogSession, :type => :model do
       utterance = Utterance.last
       expect(utterance.nonce).to eq(GoSecure.sha512('asdf', 'utterance_message_uid'))
       expect(utterance.user).to eq(u)
-      expect(Worker.scheduled?(Utterance, :perform_action, {'id' => utterance.id, 'method' => 'share_with', 'arguments' => [{'user_id' => u.global_id, 'reply_id' => nil}, u.global_id]})).to eq(true)
+      expect(Worker.scheduled?(Utterance, :perform_action, {'id' => utterance.id, 'method' => 'share_with', 'arguments' => [{'user_id' => u.global_id, 'reply_id' => nil, 'text_only' => nil}, u.global_id]})).to eq(true)
 
       Worker.process_queues
       expect(LogSession.count).to eq(3)
@@ -4251,7 +4251,7 @@ describe LogSession, :type => :model do
         'notify_exclude_ids' => [1,2,3]
       })
       expect(list.length).to eq(2)
-      logs = LogSession.find_all_by_global_id(list)
+      logs = LogSession.find_all_by_global_id(list).sort{|u| u.user_id }.reverse
       expect(logs.length).to eq(2)
       expect(logs[0].user).to eq(u1);
       expect(logs[0].data['note']['text']).to eq('Howdy');

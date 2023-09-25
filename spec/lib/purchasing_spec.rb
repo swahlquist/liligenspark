@@ -2002,11 +2002,11 @@ describe Purchasing do
       c = {'id' => '4567'}
       all = [a, b, c]
       expect(a).to receive(:save)
-      expect(a).to receive(:delete)
+      expect(a).to receive(:cancel)
       expect(b).to receive(:save)
-      expect(b).to receive(:delete)
+      expect(b).to receive(:cancel)
       expect(c).to receive(:save)
-      expect(c).to receive(:delete)
+      expect(c).to receive(:cancel)
       subs1 = {}
       expect(subs1).to receive(:auto_paging_each) do |&block|
         block.call(a)
@@ -2092,10 +2092,10 @@ describe Purchasing do
       b = {'id' => '6789'}
       c = {'id' => '4567', 'status' => 'active'}
       expect(a).to receive(:save)
-      expect(a).to receive(:delete)
+      expect(a).to receive(:cancel)
       expect(b).to receive(:save)
-      expect(b).to receive(:delete)
-      expect(c).not_to receive(:delete)
+      expect(b).to receive(:cancel)
+      expect(c).not_to receive(:cancel)
       subs = {}
       expect(subs).to receive(:auto_paging_each) do |&block|
         block.call(a)
@@ -2116,11 +2116,11 @@ describe Purchasing do
       b = {'id' => '6789'}
       c = {'id' => '4567', 'status' => 'active'}
       expect(a).to receive(:save)
-      expect(a).to receive(:delete)
+      expect(a).to receive(:cancel)
       expect(b).to receive(:save)
-      expect(b).to receive(:delete)
+      expect(b).to receive(:cancel)
       expect(c).to receive(:save)
-      expect(c).to receive(:delete)
+      expect(c).to receive(:cancel)
       subs1 = {}
       expect(subs1).to receive(:auto_paging_each) do |&block|
         block.call(a)
@@ -2153,10 +2153,10 @@ describe Purchasing do
       b = {'id' => '6789'}
       c = {'id' => '4567', 'status' => 'active'}
       expect(a).to receive(:save)
-      expect(a).to receive(:delete)
+      expect(a).to receive(:cancel)
       expect(b).to receive(:save)
-      expect(b).to receive(:delete)
-      expect(c).not_to receive(:delete)
+      expect(b).to receive(:cancel)
+      expect(c).not_to receive(:cancel)
       subs1 = {}
       expect(subs1).to receive(:auto_paging_each) do |&block|
         block.call(a)
@@ -2190,10 +2190,10 @@ describe Purchasing do
       c = {'id' => '4567', 'status' => 'active'}
       all = [a, b, c]
       expect(a).to receive(:save)
-      expect(a).to receive(:delete)
+      expect(a).to receive(:cancel)
       expect(b).to receive(:save)
-      expect(b).to receive(:delete)
-      expect(c).not_to receive(:delete)
+      expect(b).to receive(:cancel)
+      expect(c).not_to receive(:cancel)
       subs1 = {}
       expect(subs1).to receive(:auto_paging_each) do |&block|
         block.call(a)
@@ -2252,7 +2252,7 @@ describe Purchasing do
         block.call(b)
       end
       expect(b).to receive(:save)
-      expect(b).to receive(:delete).and_raise('yipe')
+      expect(b).to receive(:cancel).and_raise('yipe')
       expect(Stripe::Customer).to receive(:retrieve).with({id: '3456', expand: ['subscriptions']}).and_return(OpenStruct.new({
         subscriptions: subs1
       }))
@@ -2271,9 +2271,9 @@ describe Purchasing do
       b = {'id' => '6789'}
       c = {'id' => '4567', 'status' => 'canceled'}
       all = [a, b, c]
-      expect(a).to_not receive(:delete)
-      expect(b).to_not receive(:delete)
-      expect(c).not_to receive(:delete)
+      expect(a).to_not receive(:cancel)
+      expect(b).to_not receive(:cancel)
+      expect(c).not_to receive(:cancel)
       subs1 = {}
       expect(subs1).to receive(:auto_paging_each) do |&block|
         block.call(a)
@@ -3163,9 +3163,9 @@ describe Purchasing do
         b = {'id' => '6789', 'status' => 'active'}
         c = {'id' => '4567', 'status' => 'active'}
         all = [a, b, c]
-        expect(a).not_to receive(:delete)
-        expect(b).to receive(:delete)
-        expect(c).not_to receive(:delete)
+        expect(a).not_to receive(:cancel)
+        expect(b).to receive(:cancel)
+        expect(c).not_to receive(:cancel)
         subs1 = {}
         expect(subs1).to receive(:auto_paging_each) do |&block|
           block.call(a)
@@ -3185,8 +3185,8 @@ describe Purchasing do
         a = {'id' => '3456'}
         b = {'id' => '6789', 'status' => 'canceled'}
         all = [a, b]
-        expect(a).not_to receive(:delete)
-        expect(b).not_to receive(:delete)
+        expect(a).not_to receive(:cancel)
+        expect(b).not_to receive(:cancel)
         subs1 = {}
         expect(subs1).to receive(:auto_paging_each) do |&block|
           block.call(a)
@@ -3206,9 +3206,9 @@ describe Purchasing do
         b = {'id' => '6789'}
         c = {'id' => '4567', 'status' => 'active'}
         all = [a, b, c]
-        expect(a).not_to receive(:delete)
-        expect(b).not_to receive(:delete)
-        expect(c).to receive(:delete)
+        expect(a).not_to receive(:cancel)
+        expect(b).not_to receive(:cancel)
+        expect(c).to receive(:cancel)
         subs1 = {}
         expect(subs1).to receive(:auto_paging_each) do |&block|
           block.call(a)
@@ -3260,7 +3260,7 @@ describe Purchasing do
         b = {'id' => '4567'}
         all = [a, b]
         subscr = OpenStruct.new
-        expect(a).to receive(:delete).and_raise('yipe')
+        expect(a).to receive(:cancel).and_raise('yipe')
         subs1 = {}
         expect(subs1).to receive(:auto_paging_each) do |&block|
           block.call(a)

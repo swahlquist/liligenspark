@@ -161,7 +161,8 @@ describe Api::UtterancesController, :type => :controller do
         expect(Worker.scheduled_for?(:priority, Utterance, :perform_action, {'id' => utterance.id, 'method' => 'deliver_to', 'arguments' => [{
           'user_id' => contact_code,
           'sharer_id' => @user.global_id,
-          'share_index' => 0
+          'share_index' => 0,
+          'text_only' => nil
         }]})).to eq(true)
         expect(Pusher).to receive(:sms).with("12345", "from #{@user.settings['name']} - howdy\n\nreply: #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A", nil).and_return(true)
         Worker.process_queues
@@ -194,7 +195,8 @@ describe Api::UtterancesController, :type => :controller do
         expect(Worker.scheduled_for?(:priority, Utterance, :perform_action, {'id' => utterance.id, 'method' => 'deliver_to', 'arguments' => [{
           'user_id' => contact_code,
           'sharer_id' => @user.global_id,
-          'share_index' => 0
+          'share_index' => 0,
+          'text_only' => nil
         }]})).to eq(true)
         expect(Pusher).to receive(:sms).with("12345", "from #{@user.settings['name']} - howdy\n\nreply: #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A", nil).and_return(true)
         Worker.process_queues
@@ -409,7 +411,8 @@ describe Api::UtterancesController, :type => :controller do
         expect(Worker.scheduled_for?(:priority, Utterance, :perform_action, {'id' => utterance.id, 'method' => 'deliver_to', 'arguments' => [{
           'user_id' => contact_code,
           'sharer_id' => @user.global_id,
-          'share_index' => 0
+          'share_index' => 0,
+          'text_only' => nil
         }]})).to eq(true)
         expect(Pusher).to receive(:sms).with("12345", "from #{@user.settings['name']} - howdy\n\nreply: #{JsonApi::Json.current_host}/u/#{utterance.reply_nonce}A", '+15551234567').and_return(true)
         Worker.process_queues

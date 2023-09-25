@@ -233,6 +233,7 @@ describe WeeklyStatsSummary, :type => :model do
       expect(WordData.standardized_words['good']).to eq(true)
       expect(WordData.standardized_words['with']).to eq(true)
       expect(WordData.standardized_words['when']).to eq(true)
+      ts = (Time.now.beginning_of_week(:sunday) + 4.days).to_i
       
       threes = ['me', 'me', 'that', 'that', 'baegwgaweg']
       10.times do |i|
@@ -249,7 +250,7 @@ describe WeeklyStatsSummary, :type => :model do
         u.save
         BoardDownstreamButtonSet.update_for(b.global_id)
         s1 = LogSession.process_new({'events' => [
-          {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => Time.now.to_i}
+          {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => ts.to_i}
         ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
         WeeklyStatsSummary.update_for(s1.global_id)
       end
@@ -264,12 +265,13 @@ describe WeeklyStatsSummary, :type => :model do
     end
     
     it 'should include only public user home board roots' do
+      ts = (Time.now.beginning_of_week(:sunday) + 4.days).to_i
       u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       b = Board.create(:user => u, :public => true)
       u.settings['preferences']['home_board'] = {'id' => b.global_id, 'key' => b.key}
       u.save
       s1 = LogSession.process_new({'events' => [
-        {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => Time.now.to_i}
+        {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => ts.to_i}
       ]}, {:user => u, :author => u, :device => Device.create(:user => u), :ip_address => '1.2.3.4'})
       WeeklyStatsSummary.update_for(s1.global_id)
       
@@ -278,7 +280,7 @@ describe WeeklyStatsSummary, :type => :model do
       u2.settings['preferences']['home_board'] = {'id' => b2.global_id, 'key' => b2.key}
       u2.save
       s2 = LogSession.process_new({'events' => [
-        {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => Time.now.to_i}
+        {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => ts.to_i}
       ]}, {:user => u2, :author => u2, :device => Device.create(:user => u2), :ip_address => '1.2.3.4'})
       WeeklyStatsSummary.update_for(s2.global_id)
       
@@ -288,7 +290,7 @@ describe WeeklyStatsSummary, :type => :model do
         u3.settings['preferences']['home_board'] = {'id' => b3.global_id, 'key' => b3.key}
         u3.save
         s3 = LogSession.process_new({'events' => [
-          {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => Time.now.to_i}
+          {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => ts.to_i}
         ]}, {:user => u3, :author => u3, :device => Device.create(:user => u3), :ip_address => '1.2.3.4'})
         WeeklyStatsSummary.update_for(s3.global_id)
         
@@ -297,7 +299,7 @@ describe WeeklyStatsSummary, :type => :model do
         u4.settings['preferences']['home_board'] = {'id' => b4.global_id, 'key' => b4.save}
         u4.save
         s4 = LogSession.process_new({'events' => [
-          {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => Time.now.to_i}
+          {'type' => 'utterance', 'utterance' => {'text' => 'never again', 'buttons' => []}, 'geo' => ['13.0001', '12.0001'], 'timestamp' => ts.to_i}
         ]}, {:user => u4, :author => u4, :device => Device.create(:user => u4), :ip_address => '1.2.3.4'})
         WeeklyStatsSummary.update_for(s4.global_id)
       end
@@ -310,14 +312,15 @@ describe WeeklyStatsSummary, :type => :model do
     
     it 'should include word matches' do
       user_ids = []
+      ts = (Time.now.beginning_of_week(:sunday) + 4.days).to_i
       6.times do
         u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
         user_ids << u.id
         d = Device.create
         s1 = LogSession.process_new({'events' => [
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 3},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i}
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 5},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 3},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i}
         ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
         WeeklyStatsSummary.update_for(s1.global_id)
       end
@@ -335,15 +338,16 @@ describe WeeklyStatsSummary, :type => :model do
     it 'should not include users in word stats who have not enabled log reports' do
       user_ids = []
       all_user_ids = []
+      ts = (Time.now.beginning_of_week(:sunday) + 4.days).to_i
       6.times do
         u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
         user_ids << u.id
         all_user_ids << u.global_id
         d = Device.create
         s1 = LogSession.process_new({'events' => [
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 3},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i}
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 5},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 3},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i}
         ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
         WeeklyStatsSummary.update_for(s1.global_id)
       end
@@ -354,9 +358,9 @@ describe WeeklyStatsSummary, :type => :model do
         all_user_ids << u.global_id
         d = Device.create
         s1 = LogSession.process_new({'events' => [
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'big', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'bad', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 3},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'bold', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i}
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'big', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 5},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'bad', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 3},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'bold', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i}
         ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
         WeeklyStatsSummary.update_for(s1.global_id)
       end
@@ -380,17 +384,18 @@ describe WeeklyStatsSummary, :type => :model do
     it "should update a user's target_list if for the current week" do
       u = User.create
       d = Device.create
+      ts = (Time.now.beginning_of_week(:sunday) + 4.days).to_i
       10.times do |i|
         s1 = LogSession.process_new({'events' => [
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'good', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 10 - (i * 60)},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'want', 'button_id' => 2, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 9 - (i * 60)},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'like', 'button_id' => 3, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 8 - (i * 60)},
-          {'type' => 'button', 'modeling' => true, 'button' => {'spoken' => true, 'label' => 'like', 'button_id' => 4, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 7 - (i * 60)},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 5, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 6 - (i * 60)},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'wait', 'button_id' => 6, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5 - (i * 60)},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'like', 'button_id' => 7, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 4 - (i * 60)},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'like', 'button_id' => 8, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 3 - (i * 60)},
-          {'type' => 'button', 'modeling' => true, 'button' => {'spoken' => true, 'label' => 'with', 'button_id' => 9, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i}
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'good', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 10 - (i * 60)},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'want', 'button_id' => 2, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 9 - (i * 60)},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'like', 'button_id' => 3, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 8 - (i * 60)},
+          {'type' => 'button', 'modeling' => true, 'button' => {'spoken' => true, 'label' => 'like', 'button_id' => 4, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 7 - (i * 60)},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 5, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 6 - (i * 60)},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'wait', 'button_id' => 6, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 5 - (i * 60)},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'like', 'button_id' => 7, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 4 - (i * 60)},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'like', 'button_id' => 8, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 3 - (i * 60)},
+          {'type' => 'button', 'modeling' => true, 'button' => {'spoken' => true, 'label' => 'with', 'button_id' => 9, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i}
         ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
         WeeklyStatsSummary.update_for(s1.global_id)
       end
@@ -405,19 +410,20 @@ describe WeeklyStatsSummary, :type => :model do
       
     it "should include goal data" do
       u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
+      ts = (Time.now.beginning_of_week(:sunday) + 4.days).to_i
       tg = UserGoal.create(template: true, global: true, settings: {'summary' => 'template goal'})
-      g1 = UserGoal.create(:user => u, active: true, settings: {'summary' => 'good goal', 'started_at' => 2.weeks.ago.iso8601})
-      g2 = UserGoal.create(:user => u, active: true, settings: {'template_id' => tg.global_id, 'summary' => 'temp goal', 'started_at' => 1.week.ago.iso8601})
-      g3 = UserGoal.create(:user => u, settings: {'summary' => 'old goal', 'started_at' => 6.hours.ago.iso8601, 'ended_at' => 2.hours.ago.iso8601})
-      g4 = UserGoal.create(:user => u, settings: {'summary' => 'really old goal', 'started_at' => 6.weeks.ago.iso8601, 'ended_at' => 2.weeks.ago.iso8601})
+      g1 = UserGoal.create(:user => u, active: true, settings: {'summary' => 'good goal', 'started_at' => (2.weeks.ago.beginning_of_week(:sunday) + 4.days).iso8601})
+      g2 = UserGoal.create(:user => u, active: true, settings: {'template_id' => tg.global_id, 'summary' => 'temp goal', 'started_at' => (1.week.ago.beginning_of_week(:sunday) + 4.days).iso8601})
+      g3 = UserGoal.create(:user => u, settings: {'summary' => 'old goal', 'started_at' => 6.hours.ago.iso8601, 'ended_at' => (2.hours.ago.beginning_of_week(:sunday) + 4.days).iso8601})
+      g4 = UserGoal.create(:user => u, settings: {'summary' => 'really old goal', 'started_at' => 6.weeks.ago.iso8601, 'ended_at' => (2.weeks.ago.beginning_of_week(:sunday) + 4.days).iso8601})
       b1 = UserBadge.create(user: u, user_goal: g2, level: 1, earned: true)
       b2 = UserBadge.create(user: u, user_goal: tg, level: 2, earned: true)
 
       d = Device.create
       s1 = LogSession.process_new({'events' => [
-        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
-        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 3},
-        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i}
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 5},
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 3},
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i}
       ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
       WeeklyStatsSummary.update_for(s1.global_id)
 
@@ -445,14 +451,15 @@ describe WeeklyStatsSummary, :type => :model do
     it "should include buttons used data" do
       u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       b = Board.create(user: u, public: true)
+      ts = (Time.now.beginning_of_week(:sunday) + 4.days).to_i
       6.times do
         sub_b = Board.create!(user: u, public: true, parent_board_id: b.id)
         u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
         d = Device.create
         s1 = LogSession.process_new({'events' => [
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => b.global_id}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 2, 'board' => {'id' => b.global_id}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 3},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 3, 'board' => {'id' => b.global_id}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i}
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => b.global_id}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 5},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 2, 'board' => {'id' => b.global_id}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 3},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 3, 'board' => {'id' => b.global_id}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i}
         ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
         WeeklyStatsSummary.update_for(s1.global_id)
       end
@@ -531,14 +538,15 @@ describe WeeklyStatsSummary, :type => :model do
     it 'should include board usages' do
       u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       b = Board.create(user: u, public: true)
+      ts = (Time.now.beginning_of_week(:sunday) + 4.days).to_i
       6.times do
         sub_b = Board.create!(user: u, public: true, parent_board_id: b.id)
         u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
         d = Device.create
         s1 = LogSession.process_new({'events' => [
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => b.global_id}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 2, 'board' => {'id' => b.global_id}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 3},
-          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 3, 'board' => {'id' => b.global_id}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i}
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => b.global_id}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 5},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 2, 'board' => {'id' => b.global_id}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 3},
+          {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 3, 'board' => {'id' => b.global_id}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i}
         ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
         WeeklyStatsSummary.update_for(s1.global_id)
       end
@@ -564,20 +572,21 @@ describe WeeklyStatsSummary, :type => :model do
     end
     
     it 'should include goals data' do
+      ts = (Time.now.beginning_of_week(:sunday) + 4.days).to_i
       u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       tg = UserGoal.create(template: true, global: true, settings: {'summary' => 'template goal'})
-      g1 = UserGoal.create(:user => u, active: true, settings: {'summary' => 'good goal', 'started_at' => 2.weeks.ago.iso8601})
-      g2 = UserGoal.create(:user => u, active: true, settings: {'template_id' => tg.global_id, 'summary' => 'temp goal', 'started_at' => 1.week.ago.iso8601})
-      g3 = UserGoal.create(:user => u, settings: {'summary' => 'old goal', 'started_at' => 6.hours.ago.iso8601, 'ended_at' => 2.hours.ago.iso8601})
-      g4 = UserGoal.create(:user => u, settings: {'summary' => 'really old goal', 'started_at' => 6.weeks.ago.iso8601, 'ended_at' => 2.weeks.ago.iso8601})
+      g1 = UserGoal.create(:user => u, active: true, settings: {'summary' => 'good goal', 'started_at' => (2.weeks.ago.beginning_of_week(:sunday) + 4.day).iso8601})
+      g2 = UserGoal.create(:user => u, active: true, settings: {'template_id' => tg.global_id, 'summary' => 'temp goal', 'started_at' => (1.week.ago.beginning_of_week(:sunday) + 4.days).iso8601})
+      g3 = UserGoal.create(:user => u, settings: {'summary' => 'old goal', 'started_at' => 6.hours.ago.iso8601, 'ended_at' => (2.hours.ago.beginning_of_week(:sunday) + 4.days).iso8601})
+      g4 = UserGoal.create(:user => u, settings: {'summary' => 'really old goal', 'started_at' => 6.weeks.ago.iso8601, 'ended_at' => (2.weeks.ago.beginning_of_week(:sunday) + 4.days).iso8601})
       b1 = UserBadge.create(user: u, user_goal: g2, level: 1, earned: true)
       b2 = UserBadge.create(user: u, user_goal: tg, level: 2, earned: true)
 
       d = Device.create
       s1 = LogSession.process_new({'events' => [
-        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 5},
-        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i - 3},
-        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => Time.now.to_i}
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'this', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 5},
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'that', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i - 3},
+        {'type' => 'button', 'button' => {'spoken' => true, 'label' => 'then', 'button_id' => 1, 'board' => {'id' => '1_1'}}, 'geo' => ['13', '12'], 'timestamp' => ts.to_i}
       ]}, {:user => u, :author => u, :device => d, :ip_address => '1.2.3.4'})
       WeeklyStatsSummary.update_for(s1.global_id)
 
@@ -603,9 +612,9 @@ describe WeeklyStatsSummary, :type => :model do
       
       res = WeeklyStatsSummary.trends
       hash = {}
-      hash[tg.global_id] = {'id' => tg.global_id, 'name' => 'template goal', 'users' => 1.0}
+      hash[tg.global_id] = {'id' => tg.global_id, 'name' => 'template goal', 'users' => 1.0, 'image_url' => nil}
       expect(res[:goals]).to eq(hash)
-      hash[tg.global_id] = {'template_goal_id' => tg.global_id, 'name' => 'Unnamed Badge', 'levels' => {'1' => 0.5, '2' => 0.5}, 'users' => 1.0}
+      hash[tg.global_id] = {'template_goal_id' => tg.global_id, 'name' => 'Unnamed Badge', 'levels' => {'1' => 0.5, '2' => 0.5}, 'users' => 1.0, 'image_url' => nil}
       expect(res[:badges]).to eq(hash)
     end
 
@@ -886,7 +895,7 @@ describe WeeklyStatsSummary, :type => :model do
 
   describe "trends_for" do
     it "should summarize trends only for the specified users" do
-      ts = 3.weeks.ago.to_i
+      ts = (3.weeks.ago.beginning_of_week(:sunday) + 4.days).to_i
       u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       d = Device.create
       s1 = LogSession.process_new({'events' => [
@@ -939,7 +948,7 @@ describe WeeklyStatsSummary, :type => :model do
     end
 
     it "should not include summaries outside the date range" do
-      ts = 3.weeks.ago.to_i
+      ts = (3.weeks.ago.beginning_of_week(:sunday) + 4.days).to_i
       u = User.create(:settings => {'preferences' => {'allow_log_reports' => true}})
       d = Device.create
       s1 = LogSession.process_new({'events' => [

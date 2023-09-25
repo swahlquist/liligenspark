@@ -370,8 +370,8 @@ describe User, :type => :model do
     it "should schedule a background job by default" do
       u = User.create
       u.instance_variable_set('@do_track_boards', true)
-      expect(u.track_boards).to eq(true)
-      expect(Worker.scheduled_for?(:slow, User, :perform_action, {'id' => u.id, 'method' => 'track_boards', 'arguments' => [true]})).to eq(true)
+      expect(u.track_boards(nil, 123)).to eq(true)
+      expect(Worker.scheduled_for?(:slow, User, :perform_action, {'id' => u.id, 'method' => 'track_boards', 'arguments' => [true, 123]})).to eq(true)
     end
     
     it "should delete orphan connections" do
@@ -390,7 +390,9 @@ describe User, :type => :model do
       expect(Board).to receive(:where).with(:id => [b.id]).and_return(o)
       expect(o).to receive(:select).with('id').and_return([b])
       u.track_boards(true)
-      expect(Worker.scheduled_for?(:slow, Board, :perform_action, {'method' => 'refresh_stats', 'arguments' => [[b.global_id], Time.now.to_i]})).to eq(true)
+      s = JobStash.last
+      expect(Worker.scheduled_for?(:slow, Board, :perform_action, {'method' => 'refresh_stats', 'arguments' => [{'stash' => s.global_id}, Time.now.to_i]})).to eq(true)
+      expect(s.data).to eq([b.global_id])
     end
 
     it "should trigger board updates for updated home_board" do
@@ -415,7 +417,9 @@ describe User, :type => :model do
       u.generate_defaults
       expect(u.settings['home_board_changed']).to eq(true)
       u.track_boards(true)
-      expect(Worker.scheduled_for?(:slow, Board, :perform_action, {'method' => 'refresh_stats', 'arguments' => [[b2.global_id], Time.now.to_i]})).to eq(true)
+      s = JobStash.last
+      expect(Worker.scheduled_for?(:slow, Board, :perform_action, {'method' => 'refresh_stats', 'arguments' => [{'stash' => s.global_id}, Time.now.to_i]})).to eq(true)
+      expect(s.data).to eq([b2.global_id])
     end
 
     it "should create missing connections" do
@@ -3345,7 +3349,10 @@ describe User, :type => :model do
       expect(Worker.scheduled?(User, :perform_action, {id: u.id, method: 'track_protected_source', arguments: ['bacon']})).to eq(true)
 
       u2.process({'preferences' => {'home_board' => {'id' => b.global_id, 'key' => b.key}}})
-      expect(Worker.scheduled?(User, :perform_action, {id: u2.id, method: 'audit_protected_sources', arguments: []})).to eq(true)
+      ra = RemoteAction.where(action: 'audit_protected_sources').last
+      expect(ra).to_not eq(nil)
+      expect(ra.path).to eq(u2.global_id)
+      # expect(Worker.scheduled?(User, :perform_action, {id: u2.id, method: 'audit_protected_sources', arguments: []})).to eq(true)
 
       expect(u2).to receive(:track_protected_source).with('bacon')
       u2.audit_protected_sources
@@ -3413,7 +3420,10 @@ describe User, :type => :model do
       expect(u).to receive(:notify).with('home_board_changed')
       u.process_home_board({'id' => 'bacon'}, {})
       expect(u.settings['preferences']['home_board']).to eq(nil)
-      expect(Worker.scheduled?(User, :perform_action, {'id' => u.id, 'method' => 'audit_protected_sources', 'arguments' => []})).to eq(true)
+      ra = RemoteAction.where(action: 'audit_protected_sources').last
+      expect(ra).to_not eq(nil)
+      expect(ra.path).to eq(u.global_id)
+      # expect(Worker.scheduled?(User, :perform_action, {'id' => u.id, 'method' => 'audit_protected_sources', 'arguments' => []})).to eq(true)
     end
 
     it "should set as the home board if not specified as a copy" do

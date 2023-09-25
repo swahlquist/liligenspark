@@ -185,6 +185,7 @@ describe JsonApi::Board do
         {'id' => 5, 'image_id' => bbi5.global_id, 'label' => 'e'},
       ]
       b.save
+      # settings_for
       
       hash = JsonApi::Board.as_json(b.reload, :permissions => u, :wrapper => true)
       expect(hash['images'].length).to eq(5)

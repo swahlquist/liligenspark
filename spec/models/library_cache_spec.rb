@@ -18,16 +18,14 @@ describe LibraryCache, :type => :model do
       expect(cache.data['fallbacks']['bacon']['data']).to_not eq(nil)
     end
 
-    it "should use invalidated caches" do
+    it "should not use invalidated caches" do
       cache = LibraryCache.create
-      cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 24.months.ago.to_i, 'data' => {'a' => 1}}
+      cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 24.hours.ago.to_i, 'data' => {'a' => 1}}
       cache.data['fallbacks']['bacon'] = {'url' => 'http://www.example.com/bacon2.png', 'image_id' => 'bbb', 'added' => 12.days.ago.to_i, 'data' => {'b' => 1}}
       cache.invalidated_at = Time.now
       res = cache.find_words(['bacon'], nil)
       expect(res).to_not eq(nil)
-      expect(res['bacon']).to_not eq(nil)
-      expect(res['bacon']['a']).to eq(1)
-      expect(res['bacon']['coughdrop_image_id']).to eq('aaa')
+      expect(res['bacon']).to eq(nil)
     end
   end
 
@@ -258,23 +256,20 @@ describe LibraryCache, :type => :model do
       expect(res['bacon']['coughdrop_image_id']).to eq('aaa')
     end
 
-    it "should use invalidated results" do
+    it "should not use invalidated results" do
       cache = LibraryCache.create
       cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 24.months.ago.to_i, 'data' => {'a' => 1}}
       cache.data['fallbacks']['bacon'] = {'url' => 'http://www.example.com/bacon2.png', 'image_id' => 'bbb', 'added' => 12.days.ago.to_i, 'data' => {'b' => 1}}
       cache.invalidated_at = Time.now
       res = cache.find_words(['bacon'], nil)
       expect(res).to_not eq(nil)
-      expect(res['bacon']).to_not eq(nil)
-      expect(res['bacon']['a']).to eq(1)
-      expect(res['bacon']['coughdrop_image_id']).to eq('aaa')
+      expect(res['bacon']).to eq(nil)
     end
 
     it "should not allow unauthorized access to premium symbols" do
       cache = LibraryCache.create(library: 'pcs')
       cache.data['defaults']['bacon'] = {'url' => 'http://www.example.com/bacon.png', 'image_id' => 'aaa', 'added' => 24.months.ago.to_i, 'data' => {'a' => 1}}
       cache.data['fallbacks']['bacon'] = {'url' => 'http://www.example.com/bacon2.png', 'image_id' => 'bbb', 'added' => 12.days.ago.to_i, 'data' => {'b' => 1}}
-      cache.invalidated_at = Time.now
       res = cache.find_words(['bacon'], nil)
       expect(res).to_not eq(nil)
       expect(res['bacon']).to eq(nil)

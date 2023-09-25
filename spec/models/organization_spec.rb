@@ -2036,7 +2036,7 @@ describe Organization, :type => :model do
     it "should not trigger new activation if already activated" do
       o = Organization.create(settings: {'total_licenses' => 1, 'total_extras' => 5, 'activated_extras' => 5})
       u = User.create
-      User.purchase_extras({'user_id' => u.global_id, 'source' => 'magic'})
+      User.purchase_extras({'user_id' => u.global_id, 'source' => 'magic', 'premium_symbols' => true})
       o.add_user(u.user_name, false)
       expect(User).to receive(:purchase_extras).with({
         'user_id' => u.global_id,
@@ -3333,8 +3333,9 @@ describe Organization, :type => :model do
         expect(u.settings['preferences']['home_board']).to_not eq(nil)
         brd = Board.find_by_path(u.settings['preferences']['home_board']['key'])
         expect(brd).to_not eq(b)
-        expect(brd).to_not eq(b2)
-        expect(brd.parent_board).to eq(b2)
+        expect(u.settings['preferences']['home_board']['key']).to_not eq(b.key)
+        expect(brd.instance_variable_get('@sub_id')).to eq(u.global_id)
+        expect(brd).to eq(b2)
       end
 
       it "should copy the default home board for the user if no home board set on the start code" do
@@ -3354,8 +3355,9 @@ describe Organization, :type => :model do
         u.reload
         expect(u.settings['preferences']['home_board']).to_not eq(nil)
         brd = Board.find_by_path(u.settings['preferences']['home_board']['key'])
-        expect(brd).to_not eq(b)
-        expect(brd.parent_board).to eq(b)
+        expect(u.settings['preferences']['home_board']['key']).to_not eq(b.key)
+        expect(brd).to eq(b)
+        expect(brd.instance_variable_get('@sub_id')).to eq(u.global_id)
       end
 
       it "should not copy a home board if the user already has a home board set" do
@@ -3440,8 +3442,9 @@ describe Organization, :type => :model do
         expect(u.supervisor_user_ids).to eq([s.global_id])
         expect(u.settings['preferences']['home_board']).to_not eq(nil)
         brd = Board.find_by_path(u.settings['preferences']['home_board']['key'])
-        expect(brd).to_not eq(b)
-        expect(brd.parent_board).to eq(b)
+        expect(u.settings['preferences']['home_board']['key']).to_not eq(b.key)
+        expect(brd).to eq(b)
+        expect(brd.instance_variable_get('@sub_id')).to eq(u.global_id)
       end
 
       it "should record the activation for the user" do
