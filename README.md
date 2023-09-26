@@ -178,6 +178,23 @@ rake flush_users (run daily)
 rake clean_old_deleted_boards (run daily)
 ```
 
+##### Translations
+
+See `i18n_generator.rb' for scripts to manage translation files. In controller code,
+use the `i18n` library for any user-facing strings, and in templates use the 
+`{{t }}` template helper for translations. The convention throughout the codebase
+should ALWAYS remain double-quotes for user-face strings, single-quotes for everything 
+else. The generator libraries depend on this consistency, and it helps significantly
+when searching the codebase.
+
+Additionally, the admin organization has a special importing tool, "Word Data Import" 
+that can be used to import data from multiple locales. This data is used when buttons
+are created or modified, to automatically colorize by parts of speech, and to 
+generate inflections for buttons, contractions, and for auto-inflection preferences
+(i.e. when a user hits "I want" and then "eat" automatically changes to "to eat").
+There are two separate file types, rules.json and words.json, which both have templates
+available at [https://tools.openaac.org/inflections/inflections.html](OpenAAC).
+
 ##### Troubleshooting
 
 Redis memory too full? `RedisInit.size_check` also `rake extras:clear_report_tallies`
