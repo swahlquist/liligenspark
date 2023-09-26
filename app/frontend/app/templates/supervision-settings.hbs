@@ -97,7 +97,7 @@
                       </div>
                       <button type='submit' disabled={{org.alias_state.updating}} class='btn btn-default'>
                         {{#if org.alias_state.updating}}
-                          {{t "updating..." key='updating'}}
+                          {{t "updating..." key='updating_ellipsis'}}
                         {{else if org.alias_state.error}}
                           {{t "error updating" key='error_updating'}}
                         {{else if org.alias_state.updated}}
@@ -169,7 +169,7 @@
     {{/if}}
     {{#if model.supporter_role}}
       {{#if model.permissions.edit}}
-        <button class='btn btn-default' {{action 'start_codes'}}>{{t "Manage Start Codes" key='start_codes'}}</button>
+        <button class='btn btn-default' {{action 'start_codes'}}>{{t "Manage Start Codes" key='manage_start_codes'}}</button>
       {{/if}}
     {{/if}}    
   </div>

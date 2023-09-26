@@ -31,7 +31,7 @@ export default modal.ModalController.extend({
       res.push({id: key, name: i18n.t('copy_of_board_key', "Copy of %{k}", {k: key})});
     })
     if(res.length == 0) { return null; }
-    res.push({id: 'none', name: i18n.t('none_set', "[ Don't Set a Home Board ]")});
+    res.push({id: 'none', name: i18n.t('dont_set', "[ Don't Set a Home Board ]")});
     return res;
   }),
   org_board_set: computed('home_board_key', function() {

@@ -312,8 +312,13 @@ var utterance = EmberObject.extend({
         };
       }
       rule.type = rule.type || 'custom';
-      if(!found_types[rule.type]) {
-        if(utterance.matches_rule(rule, history, prevent_expansion)) {
+      if(!found_types[rule.type] || rule.type == 'override') {
+        var matches = utterance.matches_rule(rule, history, prevent_expansion);
+        if(matches) {
+          if(matches.condense_items) {
+            rule = Object.assign({}, rule);
+            rule.condense_items = matches.condense_items;
+          }
           res.push(rule);
           found_types[rule.type] = true;
         }
@@ -334,6 +339,7 @@ var utterance = EmberObject.extend({
     });
     var history_idx = buttons.length - 1;
     var valid = true;
+    var condenses = [];
     for(var idx = rule.lookback.length - 1; idx >= 0 && valid; idx--) {
       var item = buttons[history_idx]
       var check = rule.lookback[idx];
@@ -342,6 +348,8 @@ var utterance = EmberObject.extend({
           check = {type: check.replace(/\(|\)/g, '')};
         } else if(check.match(/^\[/)) {
           check = {words: check.replace(/^\[/, '').replace(/\[$/, '').split(/|/).map(function(w) { return w.replace(/^\s+/, '').replace(/\s+$/, ''); })};
+        } else if(check.match(/^&/)) {
+          check = {words: check.replace(/^&/, ''), condense: true};
         } else {
           check = {words: [check]};
         }
@@ -364,22 +372,36 @@ var utterance = EmberObject.extend({
         }
         if(matching) {
           if(check.match) {
-            if(!label.match(check.match)) {
+            var mm = check.match;
+            if(typeof mm == 'string') {
+              mm = new RegExp(mm);
+            }
+            if(!label.match(mm)) {
               matching = false;
             }
           }
           if(check.non_match) {
-            if(label.match(check.non_match)) {
+            var nm = check.non_match;
+            if(typeof nm == 'string') {
+              nm = new RegExp(nm);
+            }
+            if(label.match(nm)) {
               matching = false;
             }
           }  
         }
         if(matching) {
+          if(check.condense) {
+            condenses.push(history_idx);
+          }
           history_idx--;
         } else if(!check.optional) {
           valid = false;
         }
       }
+    }
+    if(valid && condenses.length > 0) {
+      return {condense_items: condenses};
     }
     return !!valid;
   },

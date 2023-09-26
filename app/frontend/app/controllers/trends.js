@@ -230,7 +230,7 @@ export default Controller.extend({
         for(var num in badge.levels) {
           badge.levels_list.push({
             level: num,
-            pct: badge.levels[num] * 100.0
+            pct: Math.round(badge.levels[num] * 100.0)
           })
         }
       }

@@ -32,7 +32,7 @@
       <div class="col-sm-3 col-xs-6">
         <div class="panel panel-default summary smaller">
           <div class="panel-heading">
-            {{t "Recently-logged Usage" key='recently_logged_users'}}
+            {{t "Recently-logged Usage" key='recently_logged_usage'}}
           </div>
           <div class="panel-body">
             {{t "hr" key='n_hours_abbrev' count=model.user_counts.recent_session_hours}},
@@ -50,7 +50,7 @@
               {{t "Avg. Usage" key='words_per_day'}}
             </div>
             <div class="panel-body">
-              {{t "word" count=log_stats.avg_words_per_day key='n_words'}}/{{t "day" key='day'}}, 
+              {{t "word" count=log_stats.avg_words_per_day key='n_words'}}/{{t "day" key='day_lower'}}, 
               {{t "session" count=log_stats.avg_sessions_per_user_week key='n_sessions'}}/{{t "wk" key='wk'}}
             </div>
           </div>
@@ -186,7 +186,7 @@
               {{/if}}
               {{#if model.permissions.edit}}
                 <div style='text-align: right; margin-top: 10px;'>
-                  <a href="#" {{action 'update_curriculum'}}>{{t "update curriculum" key='update_curriculum'}}</a>
+                  <a href="#" {{action 'update_curriculum'}}>{{t "update curriculum" key='update_curriculum_lower'}}</a>
                 </div>
               {{/if}}
             </div>

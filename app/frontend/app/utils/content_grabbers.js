@@ -1117,7 +1117,7 @@ var pictureGrabber = EmberObject.extend({
           this.controller.get('model.image').save().then(function() {
             _this.controller.set('model.pending_image', false);
           }, function() {
-            alert(i18n.t('saving_failed', "Saving image settings failed!"));
+            alert(i18n.t('saving_image_failed', "Saving image settings failed!"));
             _this.controller.set('model.pending_image', false);
           });  
         } else {
@@ -1720,7 +1720,7 @@ var videoGrabber = EmberObject.extend({
         this.controller.get('video').save().then(function() {
           _this.controller.set('pending_video', false);
         }, function() {
-          alert(i18n.t('saving_failed', "Saving video settings failed!"));
+          alert(i18n.t('saving_video_failed', "Saving video settings failed!"));
           _this.controller.set('pending_video', false);
         });
       }
@@ -2101,7 +2101,7 @@ var soundGrabber = EmberObject.extend({
         this.controller.get('model.sound').save().then(function() {
           _this.controller.set('model.pending_sound', false);
         }, function() {
-          alert(i18n.t('saving_failed', "Saving sound settings failed!"));
+          alert(i18n.t('saving_sound_failed', "Saving sound settings failed!"));
           _this.controller.set('model.pending_sound', false);
         });
       }

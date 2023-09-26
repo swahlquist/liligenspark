@@ -40,7 +40,7 @@ export default modal.ModalController.extend({
   locales: computed(function() {
     var list = i18n.get('locales');
     var res = [];
-    res.push({name: i18n.t('dont_set', "Don't Set a Language"), id: 'none'});
+    res.push({name: i18n.t('dont_set_language', "Don't Set a Language"), id: 'none'});
     for(var key in list) {
       res.push({name: list[key], id: key});
     }
@@ -103,7 +103,7 @@ export default modal.ModalController.extend({
     },
     copy_link: function() {
       capabilities.sharing.copy_text(this.get('link_code.url'));
-      modal.success(i18n.t('link_copied_to_clipboard', "Link Copied to Clipboard!"));
+      modal.success(i18n.t('link_copied_to_clipboard', "Link Copied to the Clipboard!"));
     },
     copy_code: function() {
       var elem = document.querySelector('#qr_code img');
@@ -112,7 +112,7 @@ export default modal.ModalController.extend({
         capabilities.sharing.copy_elem(elem, this.get('link_code.url'));
         modal.success(i18n.t('qr_code_copied_to_clipboard', "QR Code Copied to Clipboard!"));
       } else {
-        modal.error(i18n.t('copy_failed', "Failed to Copy Image, please try copying manually"));
+        modal.error(i18n.t('copy_failed_try_manual', "Failed to Copy Image, please try copying manually"));
       }
     },
     code_link: function(code) {

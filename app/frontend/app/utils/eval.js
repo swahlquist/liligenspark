@@ -461,7 +461,7 @@ var evaluation = {
     res.access_settings.push({key: i18n.t('non-mastery', "non-mastery"), val: assessment.non_mastery_cutoff * 100, percent: true});
     res.access_settings.push({key: i18n.t('library_lower', "library"), val: assessment.default_library});
     res.access_settings.push({key: i18n.t('access_lower', "access"), val: res.access_method.toLowerCase().replace(/\s+/g, '-')});
-    res.access_settings.push({key: i18n.t('background', "background"), val: assessment.board_background});
+    res.access_settings.push({key: i18n.t('background_lower', "background"), val: assessment.board_background});
     res.access_settings.push({key: i18n.t('button-spacing', "button-spacing"), val: assessment.button_spacing});
     res.access_settings.push({key: i18n.t('button-border', "button-border"), val: assessment.button_border});
     res.access_settings.push({key: i18n.t('button-text', "button-text"), val: assessment.button_text});

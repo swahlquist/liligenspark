@@ -2,7 +2,7 @@
   <div class="modal-header">
     <button type="button" class="close" {{action 'close'}}>&times;</button>
     {{#if set_home_board}}
-      <h3>{{t "Set Home Board?" key='set_home_board'}}</h3>
+      <h3>{{t "Set Home Board?" key='set_home_board_question'}}</h3>
     {{else}}
       <h3>{{t "Confirm Remove" key='confirm_remove'}}</h3>
     {{/if}}
@@ -54,12 +54,12 @@
           {{#if premium_symbol_library}}
             {{#if model.org.extras_available}}
               <div class="form-group">
-                <label for="extras" class="col-sm-4 control-label">{{t "Premium Symbols" key='symbols'}}</label>
+                <label for="extras" class="col-sm-4 control-label">{{t "Premium Symbols" key='premium_symbols'}}</label>
                 <div class="col-sm-6">
                   <div class="checkbox big_checkbox">
                     <label>
                       {{input type="checkbox" id='extras' checked=add_symbols}}
-                      {{t "Grant premium symbol access if not already granted" key='grand_premium_symbols'}}
+                      {{t "Grant premium symbol access if not already granted" key='grand_premium_symbols_if_needed'}}
                       ({{model.org.extras_available_count}} {{t "left" key='left'}})
                     </label>
                   </div>

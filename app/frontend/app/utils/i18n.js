@@ -1687,6 +1687,7 @@ var i18n = EmberObject.extend({
     'uk*',
     'zh*',
     'ru*',
+    'fr*',
     'backwards',
   ],
   locales_localized: {

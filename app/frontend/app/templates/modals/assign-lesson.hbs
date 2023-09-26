@@ -71,7 +71,7 @@
             {{input type='date' value=lesson.due_at class="form-control"}}
             <div class='text-muted' style='margin-left: 10px; font-size: 14px; font-style: italic;'>{{t "leave blank for no due date" key='blank_for_no_due'}}</div>
           </div>
-          <div class='col-sm-2'><button class='btn btn-default'>{{t "clear" key='clear'}}</button></div>
+          <div class='col-sm-2'><button class='btn btn-default'>{{t "clear" key='clear_lower'}}</button></div>
         </div>
       {{/if}}
       <div class='form-group'>
@@ -89,7 +89,7 @@
           <div class='col-sm-2'>
             {{input type='text' value=lesson.past_cutoff class="form-control" placeholder='##'}}
           </div>
-          <div class='col-sm-2'><p class='form-control-static'>{{t "months" key='months'}}</p></div>
+          <div class='col-sm-2'><p class='form-control-static'>{{t "months" key='months_lower'}}</p></div>
         {{/if}}
       </div>
     </form>

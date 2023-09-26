@@ -77,6 +77,9 @@ var speecher = EmberObject.extend({
             var lang = pieces[0];
             var id = pieces[1];
             var name = "System Voice for " + lang;
+            if(pieces[2]) {
+              name = "System Voice (" + pieces[2] + ")";
+            }
             if(id) {
               var browser_voice = browser_voices.find(function(v) { return v.voiceURI == id; });
               if(browser_voice) {

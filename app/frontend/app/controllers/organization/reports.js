@@ -12,7 +12,7 @@ export default Controller.extend({
   available_reports: computed('model.permissions.edit', 'model.admin', function() {
     if(this.get('model.permissions.edit')) {
       var list = [{id: 'select', name: i18n.t('select_report_prompt', "[ Select a Report ]")}];
-      list.push({id: 'all_users', name: i18n.t('all_users', "All organization communicators") });
+      list.push({id: 'all_users', name: i18n.t('all_org_communicators', "All organization communicators") });
       list.push({id: 'all_supervisors', name: i18n.t('all_supervisors', "All organization supervisors") });
       if(this.get('model.permissions.manage')) {
         list.push({id: 'recent_sessions', name: i18n.t('recent_user_sessions', "Recent user sessions") });
@@ -24,7 +24,7 @@ export default Controller.extend({
         list.push({id: 'active_free_supervisor_without_supervisees_or_org', name: i18n.t('active_free_supervisor_without_supervisees_or_org', "Active free supervisors without any supervisees or org")});
 //        list.push({id: 'free_supervisor_with_supervisors', name: i18n.t('free_supervisor_with_supervisors', "Free supervisors with their own supervisors")});
 //        list.push({id: 'multiple_emails', name: i18n.t('multiple_emails', "Emails with multiple signups")});
-        list.push({id: 'home_boards', name: i18n.t('home_boards', "Most common home boards")});
+        list.push({id: 'home_boards', name: i18n.t('most_common_home_boards', "Most common home boards")});
         list.push({id: 'recent_home_boards', name: i18n.t('recent_home_boards', "Most common home boards in the last 3 months")});
         list.push({id: 'current_but_expired', name: i18n.t('current_but_expired', "Used currently but now expired")});
         list.push({id: 'subscriptions', name: i18n.t('subscriptions', "Subscriptions over time") });

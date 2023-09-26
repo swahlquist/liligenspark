@@ -192,9 +192,9 @@ obf.register("stars", function(key) {
     }
   }
   var res = obf.shell(rows, cols);
-  res.name = i18n.t('starred_boards', "Starred Boards");
+  res.name = i18n.t('starred_boards', "Liked Boards");
   if(user) {
-    res.name = i18n.t('starred_boards_for_user', "Starred Boards for %{un}", {un: user.get('user_name')});
+    res.name = i18n.t('starred_boards_for_user', "Liked Boards for %{un}", {un: user.get('user_name')});
     if(user.get('preferences.home_board') && !board_id) {
       var ref = refs.find(function(r) { return r.id == user.get('preferences.home_board.id'); });
       var btn = {
@@ -225,7 +225,7 @@ obf.register("stars", function(key) {
       idx++;
     });
     if(total == 0) {
-      res.background = {text: i18n.t('no_starred_boards', "User Has No Starred Boards")};
+      res.background = {text: i18n.t('no_starred_boards', "User Has No Liked Boards")};
       // TODO: include fallback list of boards somehow
     }
   } else {

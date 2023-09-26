@@ -182,7 +182,7 @@ export default Component.extend({
                   }
                 }
               });
-              user.profile_state = user.profile_state || n_recent || i18n.t('none_recent', "none recent");
+              user.profile_state = user.profile_state || n_recent || i18n.t('none_recent_lower', "none recent");
             } else {
               user.profile_class = 'btn btn-default weeks_profile overdue';
               user.profile_state = i18n.t('overdue', "overdue");

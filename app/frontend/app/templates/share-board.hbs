@@ -18,7 +18,7 @@
           </p>
           {{share-bar url=board.link user=app_state.currentUser element_id='board_link' board=board copy_event='copy_event'}}
           {{#if copy_result.succeeded}}
-            <p class='text-success'>{{t "Link copied to the clipboard!" key='link_copied_to_clipboard'}}</p>
+            <p class='text-success'>{{t "Link Copied to the Clipboard!" key='link_copied_to_clipboard'}}</p>
           {{else if copy_result.failed}}
             <p class='text-danger'>{{t "Copying to the clipboard failed." key='copy_failed'}}</p>
           {{else}}

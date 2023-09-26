@@ -20,7 +20,7 @@ export default modal.ModalController.extend({
     return [
       {name: i18n.t('touch', "Touch"), id: 'touch'},
       {name: i18n.t('partner_assisted_scanning', "Partner-Assisted Scanning"), id: 'partner_scanning'},
-      {name: i18n.t('scanning', "Auditory/Visual Scanning"), id: 'scanning'},
+      {name: i18n.t('auditory_or_visual_scanning', "Auditory/Visual Scanning"), id: 'scanning'},
       {name: i18n.t('head_tracking', "Head Tracking"), id: 'head'},
       {name: i18n.t('eye_gaze_tracking', "Eye Gaze Tracking"), id: 'gaze'},
       {name: i18n.t('other', "Other"), id: 'other'},

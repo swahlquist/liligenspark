@@ -490,7 +490,7 @@
                     <div class='text-muted' style='font-size: 12px;'>
                       {{#each badge.levels_list as |level|}}
                         <span style='padding-right: 10px'>
-                          {{t "Level %{n}" n=level.level key='level_n'}} - 
+                          {{t "Level %{level}" level=level.level key='level_n'}} - 
                           {{level.pct}}%
                         </span>
                       {{/each}}

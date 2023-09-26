@@ -70,13 +70,13 @@
             </div>
             <div class="panel-body">
               <span class={{queue_state.default}}>
-                {{delimit model.site.default_queue}} {{t "default" key='default'}},
+                {{delimit model.site.default_queue}} {{t "Default" key='default'}},
               </span>
               <span class={{queue_state.priority}}>
-                {{delimit model.site.priority_queue}} {{t "priority" key='priority'}},
+                {{delimit model.site.priority_queue}} {{t "Priority" key='priority'}},
               </span>
               <span class={{queue_state.slow}}>
-                {{delimit model.site.slow_queue}} {{t "slow" key='slow'}}
+                {{delimit model.site.slow_queue}} {{t "Slow" key='slow'}}
               </span>
             </div>
           </div>
@@ -325,7 +325,7 @@
         </p>
       {{/if}}
     {{else if users.loading}}
-      <p style="margin-bottom: 30px;">{{t "Loading users..." key='loading_users'}}</p>
+      <p style="margin-bottom: 30px;">{{t "Loading Users..." key='loading_users'}}</p>
     {{else}}
       <p style="margin-bottom: 30px;">{{t "None found" key='none_found'}}</p>
     {{/if}}
@@ -378,7 +378,7 @@
         </p>
       {{/if}}
     {{else if evals.loading}}
-      <p style="margin-bottom: 30px;">{{t "Loading users..." key='loading_users'}}</p>
+      <p style="margin-bottom: 30px;">{{t "Loading Users..." key='loading_users'}}</p>
     {{else}}
       <p style="margin-bottom: 30px;">{{t "None found" key='none_found'}}</p>
     {{/if}}
@@ -422,7 +422,7 @@
         </tbody>
       </table>
     {{else if extras.loading}}
-      <p style="margin-bottom: 30px;">{{t "Loading users..." key='loading_users'}}</p>
+      <p style="margin-bottom: 30px;">{{t "Loading Users..." key='loading_users'}}</p>
     {{else}}
       <p style="margin-bottom: 30px;">{{t "None found" key='none_found'}}</p>
     {{/if}}

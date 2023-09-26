@@ -416,7 +416,7 @@ export default Controller.extend({
           modal.notice(i18n.t('already_temporary_home', "This board was set as the home board temporarily. To cancel hit the icon in the top right corner and select 'Release Home Lock'."), true);
         } else {
           if(state.meta_home) {
-            modal.notice(i18n.t('already_home', "You are already on the home board. To return to the home board list, hit the icon in the top right corner."), true);
+            modal.notice(i18n.t('already_home2', "You are already on the home board. To return to the home board list, hit the icon in the top right corner."), true);
           } else {
             modal.notice(i18n.t('already_home', "You are already on the home board. To exit Speak Mode hit the icon in the top right corner."), true);
           }

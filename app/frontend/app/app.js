@@ -283,7 +283,7 @@ CoughDrop.registrationTypes = [
   {name: i18n.t('registration_type_other', "An aide, caregiver or other supporter"), id: 'other'}
 ];
 CoughDrop.user_statuses = [
-  {id: 'unchecked', label: i18n.t('unknown', "Unknown/Nothing"), on: true},
+  {id: 'unchecked', label: i18n.t('unknown_nothing', "Unknown/Nothing"), on: true},
   {id: 'hourglass', label: i18n.t('waiting_for_evaluation', "Waiting for Evaluation"), on: true},
   {id: 'equalizer', label: i18n.t('waiting_for_results', "Waiting for Recommendation from Eval"), on: true},
   {id: 'piggy-bank', label: i18n.t('temporary_solution_while_waiting', "Temporary Solution, Waiting for Funding"), on: true},

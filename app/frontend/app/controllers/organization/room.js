@@ -68,9 +68,9 @@ export default Controller.extend({
   lesson_targets: computed('model.lesson.types', function() {
     var types = (this.get('model.lesson.types') || []).sort().join(',');
     if(types == 'supervisor') {
-      return i18n.t('supervisors', "supervisors");
+      return i18n.t('supervisors_lower', "supervisors");
     } else {
-      return i18n.t('all_users', "all users");
+      return i18n.t('all_users_lower', "all users");
     }
   }),
   actions: {

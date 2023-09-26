@@ -234,7 +234,7 @@
           <div class="checkbox big_checkbox">
             <label>
               {{input type="checkbox" checked=model.valet_login id="valet_login"}}
-              <p>{{t "Classroom login can be used in a classroom setting to allow speak-mode-only access on multiple devices at the same time in the same classroom" key='valet_as_classroom'}}</p>
+              <p>{{t "Classroom login can be used in a classroom setting to allow speak-mode-only access on multiple devices at the same time in the same classroom" key='valet_as_classroom2'}}</p>
             </label>
           </div>
         </div>
@@ -374,7 +374,7 @@
       <label for='2fa' class='col-sm-3 control-label'>{{t "2-Factor Authentication" key='2fa'}}</label>
       <div class='col-sm-8'>
         {{#if status_2fa.loading}}
-          <p>{{t "updating..." key='updating'}}</p>
+          <p>{{t "updating..." key='updating_ellipsis'}}</p>
         {{else if status_2fa.uri}}
           <p style='max-width: 300px;'>{{t "To complete two-factor authentication setup, scan the code into your authentication app and enter the generated code to confirm:" key='confirm_2fa_code'}}</p>
           <div style='width: 300px'>

@@ -56,6 +56,7 @@
           {{#if model.permissions.manage}}
             <a class="btn btn-default" {{action 'jobs'}}>
               {{t "Background Jobs" key='background_jobs'}}
+              <span style='display: none;'>{{t "jobs" key='jobs'}}</span>
             </a>
             {{#if model.permissions.edit}}
               {{#link-to 'organization.settings' model.id class='btn btn-default'}}{{t "Settings" key='settings'}}{{/link-to}}

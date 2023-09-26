@@ -160,7 +160,7 @@ export default modal.ModalController.extend({
   current_option: computed('settings.label', 'symbol_options', function() {
     var option_id = this.get('settings.label');
     var res = (this.get('symbol_options') || []).find(function(o) { return o.id == option_id});
-    res = res || (this.get('symbol_options') || [])[0] || {label: i18n.t('choose', "[Choose]")};
+    res = res || (this.get('symbol_options') || [])[0] || {label: i18n.t('choose_blank', "[Choose]")};
     return res;
   }),
   actions: {
