@@ -61,7 +61,6 @@ var utterance = EmberObject.extend({
       if(!rawList) { app_state.set('button_list', []); return; }
       var last_append = null;
       
-      
       // check user.preferences.substitutions
       if(rawList.length > 0 && rawList[rawList.length - 1].auto_substitute !== false) {
         var rule = utterance.first_rules((app_state.get('sessionUser.preferences.substitutions') || []), rawList, true)[0];
@@ -206,6 +205,15 @@ var utterance = EmberObject.extend({
         }
         if(!added) {
           buttonList.push(rawList[idx]);
+          if(button.condense_items) {
+            var new_list = [];
+            buttonList.forEach(function(b, idx) {
+              if(button.condense_items.indexOf(idx) == -1) {
+                new_list.push(b);
+              }
+            });
+            buttonList = new_list;
+          }
         }
       }
       var visualButtonList = [];
@@ -284,6 +292,9 @@ var utterance = EmberObject.extend({
         runLater(function() {
           utterance.suggestion_refresh_scheduled = false;
           app_state.refresh_suggestions();
+          if(window.editManager) {
+            window.editManager.process_for_displaying();
+          }
         }, 100);  
       }
 
@@ -583,6 +594,9 @@ var utterance = EmberObject.extend({
           emberSet(b, 'sound_license', sound.get('license'));
         }
       });
+    }
+    if(original_button.condense_items) {
+      emberSet(b, 'condense_items', original_button.condense_items);
     }
     // add button to the raw button list
     var list = this.get('rawButtonList');

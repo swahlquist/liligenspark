@@ -566,6 +566,7 @@ CoughDrop.Board = DS.Model.extend({
                     type.label = rule.label.substring(1);
                     type.image = false;
                   }
+                  if(rule.condense_items) { type.condense_items = rule.condense_items; }
                   inflection_types["btn" + button.id] = type;
                 }
                 already_replaced = true;

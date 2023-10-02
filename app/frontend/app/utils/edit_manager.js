@@ -1170,6 +1170,10 @@ var editManager = EmberObject.extend({
         res.set('vocalization', trans_button.vocalization);
         res.set('tweaked', true);
       }
+      if(trans_button.condense_items) {
+        res.set('condense_items', trans_button.condense_items);
+        res.set('tweaked', true);
+      }
       return res;
     }
     if(board.get('fast_html')) {
