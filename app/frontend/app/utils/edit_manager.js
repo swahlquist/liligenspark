@@ -1170,7 +1170,7 @@ var editManager = EmberObject.extend({
         res.set('vocalization', trans_button.vocalization);
         res.set('tweaked', true);
       }
-      if(trans_button.condense_items) {
+      if(trans_button && trans_button.condense_items) {
         res.set('condense_items', trans_button.condense_items);
         res.set('tweaked', true);
       }
@@ -1503,6 +1503,7 @@ var editManager = EmberObject.extend({
   process_for_displaying: function(ignore_fast_html) {
     CoughDrop.log.track('processing for displaying');
     var controller = this.controller;
+    if(!controller) { return; }
     if(app_state.get('edit_mode') && controller.get('ordered_buttons')) {
       CoughDrop.log.track('will not redraw while in edit mode');
       // return;

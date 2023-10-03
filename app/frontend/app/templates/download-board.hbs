@@ -14,10 +14,10 @@
       {{#if finished}}
         <div class='alert alert-success'>{{status_message}}</div>
         <b>
-        {{#if download_type}}
-          <a href={{progress.result.download_url}}>{{t "Download board(s) to your computer" key='board_download_available'}}</a>
-        {{else}}
+        {{#if pdf_download}}
           <a target="_blank" href={{progress.result.download_url}}>{{t "Open board(s) for printing" key='open_board_for_printing'}}</a>
+        {{else}}
+          <a href={{progress.result.download_url}}>{{t "Download board(s) to your computer" key='board_download_available'}}</a>
         {{/if}}
         </b>
       {{else}}
