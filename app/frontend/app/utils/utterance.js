@@ -293,7 +293,7 @@ var utterance = EmberObject.extend({
           utterance.suggestion_refresh_scheduled = false;
           app_state.refresh_suggestions();
           if(window.editManager) {
-            // window.editManager.process_for_displaying();
+            window.editManager.process_for_displaying();
           }
         }, 100);  
       }
