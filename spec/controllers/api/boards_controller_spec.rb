@@ -1522,6 +1522,7 @@ describe Api::BoardsController, :type => :controller do
       expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
       expect(json['board']['shallow_clone']).to eq(true)
       expect(json['board']['permissions']).to eq({'user_id' => @user.global_id, 'view' => true, 'edit' => true})
+      expect(json['board']['buttons'].map{|b| b['label']}).to eq(['fred', 'drop dead'])
 
       put :update, params: {
         id: "#{b.global_id}-#{@user.global_id}", board: {
@@ -1535,6 +1536,7 @@ describe Api::BoardsController, :type => :controller do
       expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
       expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
       expect(json['board']['name']).to eq("best board")
+      expect(json['board']['buttons'].map{|b| b['label']}).to eq(['fred', 'fred'])
       b.reload
       expect(b.settings['name']).to_not eq('best board')
       expect(json['board']['shallow_clone']).to eq(nil)
@@ -1571,13 +1573,67 @@ describe Api::BoardsController, :type => :controller do
       assert_unauthorized
 
       put :update, params: {
-        id: "#{b.global_id}-#{author.global_id}", params: {board: {
+        id: "#{b.global_id}-#{author.global_id}", board: {
           buttons: [
             {'id' => '2', 'label' => 'fred'}
           ]
-        }}
+        }
       }
       assert_unauthorized
+    end
+
+    it "should copy instead of trying to edit a shallow clone" do
+      token_user
+      author = User.create
+      b = Board.new(user: author, public: true)
+      b.settings = {}
+      b.settings['buttons'] = [
+        {'id' => '1', 'label' => 'fred'}, {'id' => '2', 'label' => 'drop dead'}
+      ]
+      b.save
+      put :update, params: {
+        id: "#{b.global_id}-#{@user.global_id}", board: {
+          buttons: [
+            {'id' => '2', 'label' => 'fred'}
+          ]
+        }
+      }
+      json = assert_success_json
+      expect(json['board']['id']).to eq("#{b.global_id}-#{@user.global_id}")
+      expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b.key.sub(/\//, ':')}")
+      expect(json['board']['buttons'].map{|b| b['label']}).to eq(['fred', 'fred'])
+    end
+    
+    it "should copy boards with existing edited board_content instead of trying to edit a shallow clone" do
+      token_user
+      author = User.create
+      author2 = User.create
+      b = Board.new(user: author, public: true)
+      b.settings = {}
+      b.settings['buttons'] = [
+        {'id' => '1', 'label' => 'fred'}, {'id' => '2', 'label' => 'drop dead'}
+      ]
+      b.save
+      b2 = b.copy_for(author2, make_public: true)
+      Worker.process_queues
+      b2.reload
+      expect(b2.board_content).to_not eq(nil)
+      b2.settings['content_overrides']['a'] = 'asdf'
+      b2.save
+
+      put :update, params: {
+        id: "#{b2.global_id}-#{@user.global_id}", board: {
+          name: 'best board',
+          buttons: [
+            {'id' => '2', 'label' => 'fred'}
+          ]
+        }
+      }
+      json = assert_success_json
+      expect(json['board']['id']).to eq("#{b2.global_id}-#{@user.global_id}")
+      expect(json['board']['key']).to eq("#{@user.user_name}/my:#{b2.key.sub(/\//, ':')}")
+      expect(json['board']['name']).to eq("best board")
+      expect(json['board']['buttons'].map{|b| b['label']}).to eq(['fred', 'fred'])
     end
   end
   

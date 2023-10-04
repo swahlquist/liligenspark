@@ -27,6 +27,7 @@ module Relinking
   end
   
   def copy_for(user, opts=nil)
+    original = self
     @@cnt ||= 0
     @@cnt += 1
     # puts "copy #{self.key} #{@@cnt}"
@@ -40,86 +41,88 @@ module Relinking
     copier = opts[:copier]
 
     raise "missing user" unless user
-    if !self.board_content_id || self.board_content_id == 0
+    if !original.board_content_id || original.board_content_id == 0
       orig = Board.find_by(id: self.id)
       BoardContent.generate_from(orig)
-      self.reload
+      original.reload
     end
-    if self.settings['protected'] && self.settings['protected']['vocabulary']
-      if !self.copyable_if_authorized?(self.user(true))
+    if original.settings['protected'] && original.settings['protected']['vocabulary']
+      if !original.copyable_if_authorized?(original.user(true))
         # If the board author isn't allowed to create a copy, then
         # don't allow it in a batch
-        Progress.set_error("the board #{self.key} is not authorized for copying")
-        raise "not authorized to copy #{self.global_id} by #{self.user.global_id}"
+        Progress.set_error("the board #{original.key} is not authorized for copying")
+        raise "not authorized to copy #{original.global_id} by #{original.user.global_id}"
       end
     end
-    board = Board.new(:user_id => user.id, :parent_board_id => self.id, settings: {})
-    orig_key = self.key
+    board = Board.new(:user_id => user.id, :parent_board_id => original.id, settings: {})
+    orig_key = original.key
+    unshallowed = original
     if @sub_id
+      unshallowed = Board.find_by_path(original.global_id(true))
       orig_key = orig_key.split(/my:/)[1].sub(/:/, '/')
       if !opts[:unshallow]
         board.settings['shallow_source'] = {
-          'key' => self.key,
-          'id' => self.global_id
+          'key' => original.key,
+          'id' => original.global_id
         }
-        # board.settings['immediately_upstream_board_ids'] = self.settings['immediately_upstream_board_ids']
+        # board.settings['immediately_upstream_board_ids'] = original.settings['immediately_upstream_board_ids']
         board.instance_variable_set('@shallow_source_changed', true)
       end
     end
     board.key = board.generate_board_key(orig_key.split(/\//)[1])
     disconnected = false
-    if disconnect && copier && self.allows?(copier, 'edit')
-      board.settings['copy_parent_board_id'] = self.global_id
+    if disconnect && copier && original.allows?(copier, 'edit')
+      board.settings['copy_parent_board_id'] = original.global_id
       board.parent_board_id = nil
       disconnected = true
     end
     board.settings['copy_id'] = copy_id
-    board.settings['source_board_id'] = self.source_board.global_id
-    board.settings['name'] = self.settings['name']
+    board.settings['source_board_id'] = original.source_board.global_id
+    board.settings['name'] = original.settings['name']
     if !prefix.blank? && board.settings['name']
-      if self.settings['prefix'] && board.settings['name'].index(self.settings['prefix']) == 0
-        board.settings['name'] = board.settings['name'].sub(/#{self.settings['prefix']}\s+/, '')
+      if original.settings['prefix'] && board.settings['name'].index(original.settings['prefix']) == 0
+        board.settings['name'] = board.settings['name'].sub(/#{original.settings['prefix']}\s+/, '')
       end
       if !board.settings['name'].index(prefix) != 0
         board.settings['name'] = "#{prefix} #{board.settings['name']}"
       end
       board.settings['prefix'] = prefix
     end
-    board.settings['description'] = self.settings['description']
-    board.settings['protected'] = {}.merge(self.settings['protected']) if self.settings['protected']
+    board.settings['description'] = original.settings['description']
+    board.settings['protected'] = {}.merge(original.settings['protected']) if original.settings['protected']
     if board.settings['protected'] && board.settings['protected']['vocabulary']
-      if new_owner && self.allows?(copier, 'edit') && !self.settings['protected']['sub_owner']
+      if new_owner && original.allows?(copier, 'edit') && !original.settings['protected']['sub_owner']
         # copyable_if_authorized is already checked above
         # also ensure that new_owners can't create more new_owners
         board.settings['protected']['vocabulary_owner_id'] = user.global_id
-        board.settings['protected']['sub_owner'] = self.settings['protected']['sub_owner'] || self.user.global_id != user.global_id
+        board.settings['protected']['sub_owner'] = original.settings['protected']['sub_owner'] || original.user.global_id != user.global_id
         board.settings['protected']['sub_owner'] = false if disconnected
       else
-        board.settings['protected']['vocabulary_owner_id'] = self.settings['protected']['vocabulary_owner_id'] || self.user.global_id
-        board.settings['protected']['sub_owner'] = self.settings['protected']['sub_owner'] || self.user.global_id != user.global_id
+        board.settings['protected']['vocabulary_owner_id'] = original.settings['protected']['vocabulary_owner_id'] || original.user.global_id
+        board.settings['protected']['sub_owner'] = original.settings['protected']['sub_owner'] || original.user.global_id != user.global_id
       end
     end
-    board.settings['image_url'] = self.settings['image_url']
-    board.settings['locale'] = self.settings['locale']
-    board.settings['locales'] = self.settings['locales']
-    board.settings['translations'] = BoardContent.load_content(self, 'translations')
-    board.settings['background'] = BoardContent.load_content(self, 'background')
-    board.settings['buttons'] = BoardContent.load_content(self, 'buttons')
-    board.settings['grid'] = BoardContent.load_content(self, 'grid')
-    board.settings['intro'] = BoardContent.load_content(self, 'intro')
-    board.settings['downstream_board_ids'] = self.settings['downstream_board_ids']
-    self.current_library if !self.settings['common_library'] && !self.settings['swapped_library']
-    board.settings['common_library'] = self.settings['common_library'] if self.settings['common_library']
-    board.settings['swapped_library'] = self.settings['swapped_library'] if self.settings['swapped_library']
-    board.settings['word_suggestions'] = self.settings['word_suggestions']
-    board.settings['categories'] = self.settings['categories']
-    board.settings['license'] = self.settings['license']
+    board.settings['image_url'] = original.settings['image_url']
+    board.settings['locale'] = original.settings['locale']
+    board.settings['locales'] = original.settings['locales']
+    board.settings['translations'] = BoardContent.load_content(original, 'translations')
+    board.settings['background'] = BoardContent.load_content(original, 'background')
+    board.settings['buttons'] = BoardContent.load_content(original, 'buttons')
+    board.settings['grid'] = BoardContent.load_content(original, 'grid')
+    board.settings['intro'] = BoardContent.load_content(original, 'intro')
+    board.settings['downstream_board_ids'] = original.settings['downstream_board_ids']
+    original.current_library if !original.settings['common_library'] && !original.settings['swapped_library']
+    board.settings['common_library'] = original.settings['common_library'] if original.settings['common_library']
+    board.settings['swapped_library'] = original.settings['swapped_library'] if original.settings['swapped_library']
+    board.settings['word_suggestions'] = original.settings['word_suggestions']
+    board.settings['categories'] = original.settings['categories']
+    board.settings['license'] = original.settings['license']
     board.settings['intro']['unapproved'] = true if board.settings['intro']
     board.settings['never_edited'] = true
     board.public = true if make_public
     board.settings.delete('unlisted') if make_public
     board.instance_variable_set('@skip_board_post_checks', true) if opts[:skip_user_update]
-    BoardContent.apply_clone(self, board) if self.board_content_id && self.board_content_id != 0
+    BoardContent.apply_clone(unshallowed, board) if original.board_content_id && original.board_content_id != 0
     # board.map_images has to create a record for each image in the
     # board, and while that is useful for tracking, it's actually redundant
     # so we can postpone it and save some time for batch copies
