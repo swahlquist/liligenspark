@@ -1420,6 +1420,12 @@ Button.load_actions = function() {
       }
     },
     {
+      action: ':click',
+      description: i18n.t('toggle_shift', "Make a Click Sound"),
+      trigger: function() {
+      }
+    },
+    {
       action: ':shift',
       description: i18n.t('toggle_shift', "Toggle Shift State (capitalization)"),
       trigger: function() {
