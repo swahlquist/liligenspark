@@ -584,6 +584,13 @@ CoughDrop.Board = DS.Model.extend({
     this.set('last_cb', {state: state, results: res});
     return res;
   },
+  /*
+    pre words=button replacement
+    pre words=:button with pointer id
+    pre words=_text only
+    pre &words=ampersanded will be removed as part of replacement
+    :inflection_shift_id=inflection-specific result
+  */
   different_locale: computed('shortened_locale', function() {
     var current = (navigator.language || 'en').split(/[-_]/)[0];
     return current != this.get('shortened_locale');
