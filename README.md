@@ -28,7 +28,13 @@ past users would have to hand over their device so therapists or parents could m
 changes or review usage logs, but with CoughDrop supervisors can do their thing on their
 own devices. And permission controls always stay in the hands of the user.
 
-Anyway, that's CoughDrop in a nutshell. The code is open source so you're free to
+Anyway, that's CoughDrop in a nutshell. There's a lot of extra fun added in, with
+built-in assessment and profiling tools, real-time following and remote modeling,
+embedded books and videos, two way SMS messaging, modeling ideas and trend reporting,
+focus words mode, goal setting and automated tracking, team coordination, 
+organizational branding and management tools, classroom-level targets and 
+goal tracking, continuing education linking and tracking, etc.
+The code is open source so you're free to
 run it yourself. We require a code contributor agreement before accepting changes into
 our repo. Boards created in CoughDrop use the Open Board Format (http://www.openboardformat.org)
 so they should export/import across instances of CoughDrop and a few other systems
@@ -44,17 +50,23 @@ the basic makeup of the app. These notes are not comprehensive, Feel free to hel
 me flesh them out if that's your thing.
 
 The frontend and backend communicate via the open and completely-undocumented API (sorry).
+By only using the open API, the mobile apps can easily maintain feature parity 
+(and shared codebase) with the web version.
 
 #### Development Considerations
 
-CoughDrop supports multiple locales, so when developing anythinng on the frontend, whether
+CoughDrop supports multiple locales, so when developing anything on the frontend, whether
 in templates or modals and alerts, you will need to use the internationalization libraries
-in order to support locales. You can find examples of these throughought the code, using
+in order to support locales. Do net ever add raw text strings to any user-facing 
+resources, always use the i18n helpers. You can find examples of the helpers 
+throughout the code, using
 commands such as `i18n.t('key', "string")` or `{{t "this is some test" key='key'}}`. Instructions for generating and processing string files is located in `/i18n_generator.rb`.
+NOTE: as a standardized convention for the codebase, all user-facing strings should use
+double-quotes and all other strings should use single quotes.
 
 #### Backend Setup
 
-Dev dependencies: ruby, Postgres, Redis, Node, ember-cli
+Dev dependencies: ruby, Postgres, Redis, Node, ember-cli, AWS, Google API, (optionally) ZenDesk
 
 The backend relies on Redis and Postgres both being installed. Both are required in 
 development and production. If 
@@ -149,7 +161,9 @@ it to compile the javascript for the first time. You should see some notes on th
 about a successful build, then you can reload your browser and see the welcome page. You
 should be able to log in and go to town.
 
-To deploy the app, you'll want to precompile all assets. The easiest way to do this is to run `bin/deploy_prep`.
+To deploy the app, you'll want to precompile all assets. The easiest way to do this is to run `bin/deploy_prep`. To prep mobile and desktop app releases you can run `rake extras:mobile`
+and `rake extras:desktop` to push the latest code to those directories, assuming they
+are available on your dev system.
 
 ##### Additional Dependencies
 
@@ -177,6 +191,29 @@ rake transcode_errored_records (run daily)
 rake flush_users (run daily)
 rake clean_old_deleted_boards (run daily)
 ```
+
+CoughDrop also utilizes a separate site that it uses for web sockets to track
+online status and support real-time interactions. Additionally, CoughDrop relies on access
+to an opensymbols.org-type endpoint for image search. Also there are multiple AWS and Google
+API endpoints that can and probably should be enabled. Google API is straightforward, just
+needs an access token for Places, Translate, Maps, & TTS. AWS is a little more complicated,
+you can implement access keys for SES (emails), SNS (notifications, potentially two-way so see api/callbacks_controller), S3 storage (probably required
+at this point), Elastic Transcoder (need pipelines for converting audio & video to standardized formats, also need to configure pipeline callbacks -- see api/callbacks_controller). Additional less-vital integrations are listed in .env.example
+
+When developing code for CoughDrop, make sure to take into consideration that the
+codebase is deployed both as a web app, and as a packaged app on mobile and desktop apps.
+All platform-specific code should be extracted from the codebase or encapsulated within
+the `capabilities` library when necessary. Capabilities checks may be used to 
+enable features only when their associated capabilities are available.
+
+On a related front, new features should be added first behind a Feature Flag (`lib/feature_flags.rb`), especially if it will affect any interactions for the end-user.
+Some AAC users can find it difficult when things change unexpectedly (even something
+as innocuous as an icon or color change can be disruptive), so new features and interfaces
+should be held behind a Feature Flag, and released once a change management strategy 
+is sufficiently implemented. We also use Feature Flags to hold back beta features and
+interfaces until they have had time to be fully tested. Keep in mind that some users 
+are opted in to access to all beta features, to allow organizations proper time to
+test on their own as well.
 
 ##### Translations
 
@@ -212,11 +249,21 @@ and ask for ideas or pointers. In addition, here are some fairly modular
 components that I haven't had time to develop, and would love a contribution
 on:
 
-- Grammar service to support auto-tenses and middle words as communicators build simplified sentences
 - Dynamic Scene Displays framework to build photo-based interfaces for activating objects on a scene (consider using (https://github.com/CoughDrop/aac_shim)[aac_shim]
 - External API Integrations (recent news, movie tickets, etc.) (consider using (https://github.com/CoughDrop/aac_shim)[aac_shim]
 - Core word service to return information on a word including most common part of speech, common variations/tenses, etc.
+- Make mobile/desktop apps able to download the latest version of the javascript code, so 
+the apps can be updated dynamically when all that's changed is the scripts
 - API documentation (yeah I know, I should have done it along the way)
+- Maintenance Work:
+- Upgrade Rails & Ruby (and ensure everything still works, then bump to latest Heroku stack)
+  - For CoughDrop, CoughDrop-Websocket, presenters.aacconference.com
+- Upgrade Cordova (and ensure everything still works)
+- Upgrade Electron (and re-build dependencies for new version)
+  - Generate a new signing cert or move to Microsoft app store for updates
+- Upgrade Ember (avoided this for a long time because it kept having breaking changes)
+- Remove cache manifests and update offline support for mobile
+- Add support for iOS Personalized Voices (should be easy)
 
 I'm happy to provide guidance for any of these projects to help get them underway :-).
 
