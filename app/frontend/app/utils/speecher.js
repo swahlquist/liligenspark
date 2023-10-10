@@ -756,6 +756,23 @@ var speecher = EmberObject.extend({
           opts.locale = (voice && voice.lang);
           opts.id = (voice && voice.ident);
         }
+        // TODO: opts.target = 'call' to send through active call
+        // #import <CoreTelephony/CTCallCenter.h>
+        // #import <CoreTelephony/CTCall.h>
+        
+        // -(bool)isOnPhoneCall {
+        //     /*
+        //      Returns YES if the user is currently on a phone call
+        //      */
+        
+        //     CTCallCenter *callCenter = [[[CTCallCenter alloc] init] autorelease];
+        //     for (CTCall *call in callCenter.currentCalls)  {
+        //         if (call.callState == CTCallStateConnected) {
+        //             return YES;
+        //         }
+        //     }
+        //     return NO;
+        // }        
         window.TTS.speak(opts).then(function() {
           callback();
         }, function(err) {
