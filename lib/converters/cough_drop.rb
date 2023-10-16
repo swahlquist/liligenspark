@@ -85,6 +85,7 @@ module Converters::CoughDrop
           'background_color' => original_button['background_color'] || "#fff",
           'hidden' => original_button['hidden'],
         }
+        button['ext_coughdrop_rules'] = original_button['rules'] if original_button['rules']
         if !opts || !opts['simple']
           inflection_defaults = nil
           trans = {}
@@ -101,6 +102,7 @@ module Converters::CoughDrop
             button['translations'][loc] ||= {}
             button['translations'][loc]['label'] = hash['label']
             button['translations'][loc]['vocalization'] = hash['vocalization'] if !hash['vocalization'].to_s.match(/^(\:|=+)/) || !hash['vocalization'].to_s.match(/&&/)
+            button['translations'][loc]['ext_coughdrop_rules'] = hash['rules'] if hash['rules']
             (hash['inflections'] || []).each_with_index do |str, idx| 
               next unless str
               button['translations'][loc]['inflections'] ||= {}
@@ -371,6 +373,7 @@ module Converters::CoughDrop
           end
           ref['label'] ||= hash['label'] if hash['label']
           ref['vocalization'] ||= hash['vocalization'] if hash['vocalization']
+          ref['rules'] ||= hash['ext_coughdrop_rules'] if hash['ext_coughdrop_rules']
           (hash['inflections'] || {}).each do |key, str|
             if str == 'ext_coughdrop_defaults'
             elsif loc_hash[key] && !(hash['inflections']['ext_coughdrop_defaults'] || []).include?(key)
