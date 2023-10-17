@@ -106,31 +106,62 @@ are relatively large, just because of all the available functionality.
 
 #### Gotchas
 
-`editManager.process_for_displaying` - 
+`editManager.process_for_displaying` - This code takes the data
+given from the server and converts it into a renderable format, so 
+if boards ever stop rendering this is where to start.
 
-`Board.contextualized_buttons` - 
+`Board.contextualized_buttons` - If boards start showing the wrong
+languages or symbols in Speak Mode, or don't update to show the
+correct inflections, this is a good place to start looking.
 
-`persistence.getJSON` - 
+`persistence.getJSON` - This code may have issues processing
+the encrypted results sent as URLs by extra_data objects.
 
-`persistence.sync` - 
+`persistence.sync` - If users cannot sync or their syncs do not
+actually save data correctly for offline use, this is where to start.
 
-`CoughDrop.Board.skinned_url` - 
+`CoughDrop.Board.skinned_url` - If boards show the original symbols
+instead of the user-preferred symbol library or skin tone, there may
+be an issue here.
 
-`initializes/attempt_lang.js` - 
+`initializes/attempt_lang.js` - When the app first starts up, this
+code will try to load the correct language files, so if the interface
+isn't showing in the correct language, there may be something wrong here.
 
-`app_state.activate_button` - 
+`app_state.activate_button` - This is the main section of code that 
+handles button selection. When a user hits or selects a button by
+any means, this code decides what to do with it, including how to
+add it to the sentence box, how to speak it, how to perform extra
+actions, etc.
 
-`controllers/board/index.js:computeHeight` - 
+`controllers/board/index.js:computeHeight` - If boards aren't rendering
+with the correct size of buttons or filling the space correctly, check
+here.
 
-`CoughDrop.Buttonset.load_button_set` - 
+`CoughDrop.Buttonset.load_button_set` - This code occasionally has problems.
+There may be a caching issue somewhere. When users want to load a button set
+the logic is executed here to try to load the button set if the user is online,
+or use the cached version if the user is offline. If the user is online and they
+have a cached version, it can still try to download over an outdated version.
 
-`ButtonSet.find_buttons` - 
+`ButtonSet.find_buttons` - Find-a-button feature runs from here.
 
-`User.currently_premium` - 
+`User.currently_premium` - The logic here is not as straightforward as I 
+would like, but this check is used to decide whether users can see
+*all* features of CoughDrop, or only a limited set. When users pay a
+one-time fee or when they cancel their subscription, they can still use the
+app, but they won't have access to all of the "cloud extras" features.
 
-`User.copy_home_board` - 
+`User.copy_home_board` - Used by the setup wizard and other places to
+set the user's new home board. This should run and return relatively
+quickly even for large board sets, or else users will get bothered by
+the slowness of setting up their initial account settings.
 
-`editManager.copy_board` - 
+`editManager.copy_board` - If users are having issues copying a whole
+board set, for example if they say not all the boards got updated to their
+new copy, or some still point to the old copy, you may need to make changes
+here. Especially if they say that after a few hours it seems to fix
+itself, then it's possible the issue is a UI issue only, not a server problem.
 
 ### Backend
 
@@ -254,17 +285,40 @@ a few troubleshooting methods for in case queues get too huge.
 
 #### Gotchas
 
-`boards_contoller#index` - 
+`boards_contoller#index` - Lots of code needed here for searching across all
+available boards. Can be a performance bottleneck, because it requires
+indexes on the boards table as well as board_locales, and needs to be able
+to search through private boards which aren't search indexed.
 
-`BoardDownstreamButtonSet.update_for` - 
+`BoardDownstreamButtonSet.update_for` - Updates a button set. Button sets
+are used by find-a-button, copying boards, or showing the board hierarchy
+in the UI. Button sets contain all buttons on the linked board and all of its
+sub-boards, so the list can get quite large, and potentially needs to be
+updated very often when a user is working on multiple boards in their 
+account.
 
-`models/concerns/relinking.rb` - 
+`models/concerns/relinking.rb` - If users start complaining that when they
+copy a board set only the top board gets copied, or not all of the sub-boards
+get copies, then this is the place to look.
 
-`models/concerns/extra_data.rb` - 
+`models/concerns/extra_data.rb` - This code is used to store large
+data in S3 instead of in the database to keep the db size down, but
+if users start reporting that they can't load button sets, it may
+have to do with the caching set up here.
 
-`BoardContent` - 
+`BoardContent` - When users make copies of boards, we copy by reference
+wherever possible to keep size down. If users make copies and then
+can't edit the copies or have mismatched data, this is a good
+place to look.
 
-`Board.process_buttons` - 
+`Board.process_buttons` - This is most of the backend processing for
+updating a board.
 
-`models/concerns/upstream_downstream.rb#track_downstream_boards!` - 
+`models/concerns/upstream_downstream.rb#track_downstream_boards!` - The
+code here will get run often, so if it ever gets slow you will definitely
+see the background queues get backed up. There can be other reasons
+for queue jams, but this is a likely culprit.
 
+`Purchasing.purchase` - If Stripe purchases stop working or users
+report issues activating their subscriptions, this is the place to start
+looking.
