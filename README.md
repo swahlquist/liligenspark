@@ -238,6 +238,8 @@ Redis memory too full? `RedisInit.size_check` also `rake extras:clear_report_tal
 
 Job queues backed up? `Worker.method_stats(queue_name)`
 
+Want to remove all instances of a method from the background? `Worker.prune_jobs(queue_name, method_name)`
+
 
 ### Contribution Ideas
 
