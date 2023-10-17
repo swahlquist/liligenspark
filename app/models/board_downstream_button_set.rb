@@ -24,13 +24,14 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     @buttons = nil
     @cached_extra_data = nil
     if !skip_extra_data_processing? || force
-      self.data['board_ids'] = self.buttons.map{|b| b['board_id'] }.compact.uniq
+      buttons = self.buttons(false)
+      self.data['board_ids'] = buttons.map{|b| b['board_id'] }.compact.uniq
       # find_by_global_id is required to retrieve shallow clones instead of originals
       self.data['public_board_ids'] = Board.where(public: true).select('id').find_all_by_global_id(self.data['board_ids']).map(&:global_id)
       # Board.where(:id => Board.local_ids(self.data['board_ids']), :public => true).select('id').map(&:global_id)
-      self.data['linked_board_ids'] = self.buttons.map{|b| b['linked_board_id'] }.compact.uniq
-      self.data['button_count'] = self.buttons.length
-      self.data['board_count'] = self.buttons.map{|b| b['board_id'] }.uniq.length
+      self.data['linked_board_ids'] = buttons.map{|b| b['linked_board_id'] }.compact.uniq
+      self.data['button_count'] = buttons.length
+      self.data['board_count'] = buttons.map{|b| b['board_id'] }.uniq.length
       if (self.data['buttons'] || []).length > 200
         @cached_extra_data = self.data['buttons']
         self.data.delete('buttons')
@@ -66,7 +67,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     button_sets
   end
   
-  def buttons
+  def buttons(allow_schedule=true)
     self.touch if self.updated_at && self.updated_at < 1.week.ago
     return @buttons if @buttons
     brd = self
@@ -90,7 +91,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         else
           # Source no longer references this board, so this button set is 
           # source information is out of date
-          self.class.schedule_once(:update_for, self.related_global_id(self.board_id))
+          self.class.schedule_once(:update_for, self.related_global_id(self.board_id)) if allow_schedule
           self.data['source_id'] = nil
           self.data['full_set_revision'] = 'outdated'
           self.save
