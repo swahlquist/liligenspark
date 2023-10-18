@@ -38,7 +38,8 @@ class RemoteAction < ApplicationRecord
       board.schedule_once_for(:slow, :schedule_update_available_boards, ra.extra || 'all', true) if board
     elsif ra.action == 'track_downstream_with_visited'
       board = Board.find_by_path(ra.path)
-      board.schedule_once_for(:slow, :track_downstream_with_visited) if board
+      ts = ((board && (board.settings || {})['last_tracked']) || 0) - 1
+      board.schedule_once_for(:slow, :track_downstream_with_visited) if board && ts < ra.updated_at.to_i
     elsif ra.action == 'save_sync_supervisors'
       user = User.find_by_path(ra.path)
       user.schedule(:save_sync_supervisors, true) if user

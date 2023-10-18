@@ -622,7 +622,7 @@ class UserGoal < ActiveRecord::Base
     extra = UserExtra.find_or_create_by(user_id: self.user_id)
     extra.settings['queued_goals'] = ((extra.settings['queued_goals'] || []) + [self.global_id]).uniq
     extra.save
-    ra_cnt = RemoteAction.where(path: "#{user.global_id}", action: 'queued_goals').update_all(act_at: 5.minutes.from_now)
+    ra_cnt = RemoteAction.where(path: "#{user.global_id}", action: 'queued_goals').update_all(act_at: 15.minutes.from_now)
     RemoteAction.create(path: "#{user.global_id}", act_at: 5.minutes.from_now, action: 'queued_goals') if ra_cnt == 0
   end
 

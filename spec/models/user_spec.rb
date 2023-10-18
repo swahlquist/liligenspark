@@ -2971,7 +2971,10 @@ describe User, :type => :model do
       res = u.update_setting('asdf', 'bacon')
       expect(u.settings['asdf']).to eq('bacon')
       expect(res).to eq('pending')
-      expect(Worker.scheduled?(User, :perform_action, {'id' => u.id, 'method' => 'update_setting', 'arguments' => ['asdf', 'bacon', nil]})).to eq(true)
+      puts Worker.scheduled_actions
+      s = JobStash.last
+      expect(s).to_not eq(nil)
+      expect(Worker.scheduled?(User, :perform_action, {'id' => u.id, 'method' => 'update_setting', 'arguments' => ['job_stash', s.global_id]})).to eq(true)
       expect(u.reload.settings['asdf']).to eq(nil)
       Worker.process_queues
       expect(u.reload.settings['asdf']).to eq('bacon')

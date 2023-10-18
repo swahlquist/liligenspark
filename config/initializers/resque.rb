@@ -60,12 +60,32 @@ module RedisInit
     puts JSON.pretty_generate(redis.lrange(key, 0, len))
   end
 
+  def self.queue_size(queue)
+    key = "#{queue}_queue_size"
+    size = Resque.redis.get(key)
+    if !size
+      size = Resque.redis.llen("queue:#{queue}") rescue 0
+      Resque.redis.setex(key, size > 30000 ? 1.minute.to_i : 5.minutes.to_i, size.to_s)
+    end
+    size.to_i
+  end
+
   def self.any_queue_pressure?
-    (Resque.redis.llen('queue:slow') > (ENV['QUEUE_SLOW_BOG'] || 20000)) || (Resque.redis.llen('queue:default') > (ENV['QUEUE_DEFAULT_BOG'] || 10000))
+    (queue_size('slow') > (ENV['QUEUE_SLOW_BOG'] || 20000)) || (queue_size('default') > (ENV['QUEUE_DEFAULT_BOG'] || 10000)) || queue_pressure?
   end
 
   def self.queue_pressure?
-    ENV['STOP_CACHING'] || ENV['QUEUE_PRESSURE'] || (ENV['QUEUE_MAX'] && Resque.redis.llen('queue:slow') > ENV['QUEUE_MAX'].to_i)
+    # also true if queue has been half of queue_max for more than 24 hours
+    slow_size = queue_size('slow')
+    if ENV['QUEUE_MAX'] && slow_size > (ENV['QUEUE_MAX'].to_i / 2)
+      slow_ts = ((Resque.redis.get('slow_bog_started') rescue 0) || 0).to_i
+      if slow_ts == 0
+        Resque.redis.setex('slow_bog_started', 48.hours.to_i, Time.now.to_i)
+      elsif slow_ts < 24.hours.ago.to_i
+        return true
+      end
+    end
+    ENV['STOP_CACHING'] || ENV['QUEUE_PRESSURE'] || (ENV['QUEUE_MAX'] && slow_size > ENV['QUEUE_MAX'].to_i)
   end
 
   def self.size_check(verbose=false)

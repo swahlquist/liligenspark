@@ -801,6 +801,7 @@ describe Board, :type => :model do
       b2.settings['buttons'] = [{'id' => 1, 'label' => 'feet'}]
       b2.instance_variable_set('@buttons_changed', true)
       b2.save
+      RemoteAction.process_all
       Worker.process_queues
       Worker.process_queues
       expect(b1.reload.settings['full_set_revision']).to_not eq(hash)

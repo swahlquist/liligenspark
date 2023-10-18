@@ -13,7 +13,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     return if RedisInit.queue_pressure?
     return if !self.user_id || self.user_id <= 0
     path = "#{self.related_global_id(self.user_id)}::#{self.global_id}"
-    ra_cnt = RemoteAction.where(path: path, action: 'badge_check').update_all(act_at: 1.hour.from_now)
+    ra_cnt = RemoteAction.where(path: path, action: 'badge_check').update_all(act_at: 2.hours.from_now)
     RemoteAction.create(path: path, act_at: 30.minutes.from_now, action: 'badge_check') if ra_cnt == 0
     true
   end
@@ -179,7 +179,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     weekyear = WeeklyStatsSummary.date_to_weekyear(start_at)
     user_id = log_session.user_id
 
-    ra_cnt = RemoteAction.where(path: "#{user_id}::#{weekyear}", action: 'weekly_stats_update').update_all(act_at: 2.hours.from_now)
+    ra_cnt = RemoteAction.where(path: "#{user_id}::#{weekyear}", action: 'weekly_stats_update').update_all(act_at: 3.hours.from_now)
     RemoteAction.create(path: "#{user_id}::#{weekyear}", act_at: 2.hours.from_now, action: 'weekly_stats_update') if ra_cnt == 0
     if !RedisInit.queue_pressure?
       Worker.schedule_for(:slow, self, :perform_action, {

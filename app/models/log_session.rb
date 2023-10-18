@@ -913,7 +913,7 @@ class LogSession < ActiveRecord::Base
           LogSessionBoard.find_or_create_by(:board_id => board.id, :log_session_id => self.id)
         end
       else
-        schedule_once_for('slow', :update_board_connections, true)
+        schedule_once_for((RedisInit.queue_pressure? ? 'whenever' : 'slow'), :update_board_connections, true)
         return true
       end
     end

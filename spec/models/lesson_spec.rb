@@ -379,7 +379,11 @@ describe Lesson, :type => :model do
       o.add_supervisor(u3.user_name, true)
       o.add_manager(u4.user_name)
 
-      expect(UserMailer).to receive(:schedule_delivery).with(:lesson_assigned, l.global_id, [u1.global_id, u2.global_id, u3.global_id])
+      expect(UserMailer).to receive(:schedule_delivery) do |a, b, c|
+        expect(a).to eq(:lesson_assigned)
+        expect(b).to eq(l.global_id)
+        expect(c.sort).to eq([u1.global_id, u2.global_id, u3.global_id])
+      end
       expect(Lesson.assign(l, o, ['supervisor'], u)).to eq(true)
 
       expect(UserMailer).to receive(:schedule_delivery).with(:lesson_assigned, l.global_id, [u4.global_id])

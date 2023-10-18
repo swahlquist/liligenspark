@@ -106,7 +106,7 @@ module GlobalId
     end
     
     def find_all_by_global_id(ids)
-      ids = ids.compact
+      ids = ids.compact if ids
       return [] if !ids || ids.length == 0
       id_hashes = (ids || []).map{|id| id_pieces(id) }
       sub_ids = id_hashes.map{|h| h[:sub_id] && h[:sub_id][:id] }.compact.uniq

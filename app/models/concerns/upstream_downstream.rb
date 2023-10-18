@@ -30,6 +30,10 @@ module UpstreamDownstream
     trigger_stamp ||= Board.last_scheduled_stamp || Time.now.to_i
 
     top_board = self
+    if @sub_id
+      b = Board.find_by_path(self.global_id(true))
+      return b.track_downstream_boards(already_visited_ids, buttons_changed, trigger_stamp)
+    end
     # step 1: travel downstream, for every board id get its immediate children
     Rails.logger.info('getting all children')
     boards_with_children = {}
@@ -93,7 +97,7 @@ module UpstreamDownstream
       downs += children
     end
     downs = downs.uniq.sort - [top_board.global_id]
-    changed = (downs != (top_board.settings['downstream_board_ids'] || []).uniq.sort)
+    downstream_ids_changed = (downs != (top_board.settings['downstream_board_ids'] || []).uniq.sort)
     total_buttons = 0
     unlinked_buttons = 0
     revision_hashes = [top_board.current_revision]
@@ -113,26 +117,26 @@ module UpstreamDownstream
       downstream_boards_changed = true
       self.schedule_update_button_set
     end
-    downstream_buttons_changed = false
+    downstream_buttons_count_changed = false
     if self.settings['total_downstream_buttons'] != total_buttons
       changes['total_downstream_buttons'] = [self.settings['total_downstream_buttons'], total_buttons]
       #self.settings['total_downstream_buttons'] = total_buttons
-      downstream_buttons_changed = true
+      downstream_buttons_count_changed = true
     end
     if self.settings['unlinked_downstream_buttons'] != unlinked_buttons
       changes['unlinked_downstream_buttons'] = [self.settings['unlinked_downstream_buttons'], unlinked_buttons]
       #self.settings['unlinked_downstream_buttons'] = unlinked_buttons
-      downstream_buttons_changed = true
+      downstream_buttons_count_changed = true
     end
     changes['downstream_board_ids'] = [self.settings['downstream_board_ids'], downs]
     #self.settings['downstream_board_ids'] = downs
 
     # step 3: notify upstream if there was a change
     Rails.logger.info('saving if changed')
-    if changed || downstream_buttons_changed || downstream_boards_changed
-      Rails.logger.info('saving because changed') if changed
+    if downstream_ids_changed || downstream_buttons_count_changed || downstream_boards_changed
+      Rails.logger.info('saving because changed') if downstream_ids_changed
       Rails.logger.info('saving because buttons changed') if buttons_changed
-      Rails.logger.info('saving because downstream buttons changed') if downstream_buttons_changed
+      Rails.logger.info('saving because downstream buttons changed') if downstream_buttons_count_changed
       Rails.logger.info('saving because downstream boards changed') if downstream_boards_changed
       @track_downstream_boards = false
       board = nil
@@ -153,7 +157,14 @@ module UpstreamDownstream
       updates['last_tracked'] = Time.now.to_i
       board.generate_stats
       board.update_setting(updates, nil, :save_without_post_processing)
-      board.complete_stream_checks(already_visited_ids, trigger_stamp)
+      if (downstream_boards_changed || downstream_buttons_count_changed) && !downstream_ids_changed && !buttons_changed && RedisInit.queue_pressure?
+        # If queues are backed up, and all that's changed is the revision hash then 
+        # instead of scheduling heavy tracks for all upstream boards, just change 
+        # sthe revision hash for all upstreams
+        board.touch_upstream_revisions if downstream_boards_changed
+      else
+        board.complete_stream_checks(already_visited_ids + (top_board.settings['tracked_visited_ids'] || []), trigger_stamp)
+      end
     end
     
     # step 4: update any authors whose list of visible/editable private boards may have changed
@@ -165,6 +176,26 @@ module UpstreamDownstream
     
     Rails.logger.info('done tracking!')
     true
+  end
+
+  def touch_upstream_revisions
+    upstreams = [self]
+    visited_ids = []
+    while upstreams.length > 0
+      board = upstreams.shift
+      visited_ids << board.global_id
+      if board != self
+        rev = (board.settings['full_set_revision'] || 'na').split(/s/)[0]
+        board.settings['full_set_revision'] = rev + 's' + (self.settings['full_set_revision'] || self.id.to_s)
+        board.save_subtly
+      end
+      ups = Board.find_all_by_global_id(board.settings['immediately_upstream_board_ids'] || [])
+      ups.each do |up|
+        if !visited_ids.include?(up.global_id)
+          upstreams.push(up)
+        end
+      end
+    end
   end
   
   def schedule_update_button_set
@@ -180,12 +211,12 @@ module UpstreamDownstream
       if ra
         if ra.extra == breadth
           # don't need to change same breadth
-          RemoteAction.where(id: ra.id).update_all(act_at: 120.minutes.from_now)
+          RemoteAction.where(id: ra.id).update_all(act_at: 240.minutes.from_now)
         else
-          RemoteAction.where(id: ra.id).update_all(act_at: 120.minutes.from_now, extra: 'all')
+          RemoteAction.where(id: ra.id).update_all(act_at: 240.minutes.from_now, extra: 'all')
         end
       else
-        RemoteAction.create(path: self.global_id, action: 'schedule_update_available_boards', act_at: 60.minutes.from_now, extra: breadth || 'all')
+        RemoteAction.create(path: self.global_id, action: 'schedule_update_available_boards', act_at: 30.minutes.from_now, extra: breadth || 'all')
       end
 #      self.schedule_once_for(:slow, :schedule_update_available_boards, breadth, true)
       return true
@@ -199,7 +230,7 @@ module UpstreamDownstream
       ids = self.author_ids
     end
     User.find_all_by_global_id(ids).each do |user|
-      ra_cnt = RemoteAction.where(path: "#{user.global_id}", action: 'update_available_boards').update_all(act_at: 30.minutes.from_now)
+      ra_cnt = RemoteAction.where(path: "#{user.global_id}", action: 'update_available_boards').update_all(act_at: 60.minutes.from_now)
       RemoteAction.create(path: "#{user.global_id}", act_at: 30.minutes.from_now, action: 'update_available_boards') if ra_cnt == 0
     end
   end
@@ -246,7 +277,7 @@ module UpstreamDownstream
       self.settings['tracked_visited_ids'].uniq!
       self.save_subtly
     end
-    ra_cnt = RemoteAction.where(path: self.global_id, action: 'track_downstream_with_visited').update_all(act_at: 60.minutes.from_now)
+    ra_cnt = RemoteAction.where(path: self.global_id, action: 'track_downstream_with_visited').update_all(act_at: 120.minutes.from_now, updated_at: Time.now)
     RemoteAction.create(path: self.global_id, act_at: 30.minutes.from_now, action: 'track_downstream_with_visited') if !ra_cnt || ra_cnt == 0
   end
 
