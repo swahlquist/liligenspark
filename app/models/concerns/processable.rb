@@ -49,6 +49,14 @@ module Processable
   end
   
   def update_setting(key, value=nil, save_method=nil)
+    if key == 'job_stash'
+      stash = JobStash.find_by_global_id(value)
+      raise "stash not found: #{value}" unless stash
+      key = stash.data['key']
+      value = stash.data['value']
+      save_method = stash.data['save_method']
+      stash.destroy
+    end
     begin
       if key.is_a?(Hash)
         key.each do |k, v|
@@ -72,7 +80,10 @@ module Processable
         self.save
       end
     rescue ActiveRecord::StaleObjectError
-      schedule(:update_setting, key, value, save_method)
+      stash = JobStash.create
+      stash.data = {'key' => key, 'value' => value, 'save_method' => save_method}
+      stash.save
+      schedule(:update_setting, 'job_stash', stash.global_id)
       'pending'
     end
   end

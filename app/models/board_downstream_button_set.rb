@@ -369,15 +369,17 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       board = Board.find_by_global_id(board_id)
       bs = board && board.board_downstream_button_set
       if bs && bs.data['remote_paths']
+        changed = false
         bs.data['remote_paths'].each do |hash, obj|
           if obj['generated'] < timestamp && obj['path']
+            changed = true
             path = obj['path']
             # Uploader.invalidate_cdn(path)            
             Uploader.remote_remove(path)
             bs.data['remote_paths'].delete(hash)
           end
         end
-        bs.save
+        bs.save if changed
       end
     end
   end
@@ -610,11 +612,13 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
 
       # Retrieve all linked boards and set them to this source
       Board.find_batches_by_global_id(set.data['linked_board_ids'] || [], :batch_size => 3) do |brd|
-        board_ids_to_flush << brd.global_id
         bs = brd.board_downstream_button_set
         # NOTE: it was too expensive updating everyone with the wrong source,
         # so I changed it to only update everyone with no source, since 
         # bs.buttons should update to the right source eventually
+        if bs && bs.data['source_id'] != set.global_id
+          board_ids_to_flush << brd.global_id
+        end
         if bs && bs.global_id != set.global_id && !bs.data['source_id'] # bs.data['source_id'] != set.global_id
           bs.data['full_set_revision'] = brd.full_set_revision
           bs.data['source_id'] = set.global_id
