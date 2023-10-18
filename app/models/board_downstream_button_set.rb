@@ -110,7 +110,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       # If brd.data['source_id'] is defined, that means we got
       # to a dead end, so we should probably schedule .update_for
       if brd.data['source_id'] && self.data['dead_end_source_id'] != brd.data['source_id']
-        self.class.schedule_once(:update_for, self.related_global_id(self.board_id))
+        # Don't need eager generation, and this may cause infinite recursion
+        # self.class.schedule_once(:update_for, self.related_global_id(self.board_id))
         self.data['dead_end_source_id'] = brd.data['source_id']
         self.save
       end
@@ -422,12 +423,12 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         bs = brd.board_downstream_button_set
         set.data['found_upstream_set'] = true if bs
         source_board_id = nil
-        linked_board_ids = bs && (bs.data['linked_board_ids'] || bs.buttons.map{|b| b['linked_board_id'] }.compact.uniq)
+        linked_board_ids = bs && (bs.data['linked_board_ids'] || bs.buttons(false).map{|b| b['linked_board_id'] }.compact.uniq)
         do_update = false
         # If the parent board is the correct source, use that
         if bs && bs.has_buttons_defined? && linked_board_ids.include?(board.global_id)
           # legacy lists don't correctly filter linked board ids
-          valid_button = bs.buttons.detect{|b| b['linked_board_id'] == board.global_id } # && !b['hidden'] && !b['link_disabled'] }
+          valid_button = bs.buttons(false).detect{|b| b['linked_board_id'] == board.global_id } # && !b['hidden'] && !b['link_disabled'] }
           if valid_button && bs != set
             do_update = true if bs.updated_at <= set.updated_at
             set.data['source_id'] = bs.global_id
@@ -438,7 +439,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         # Otherwise if the parent board has a source_id, use that
         elsif bs && bs.data['source_id'] && linked_board_ids.include?(board.global_id)
           # legacy lists don't correctly filter linked board ids
-          buttons = bs.buttons
+          buttons = bs.buttons(false)
           valid_button = (buttons || []).detect{|b| b['linked_board_id'] == board.global_id } # && !b['hidden'] && !b['link_disabled'] }
           if valid_button && bs.data['source_id'] != set.global_id
             source = BoardDownstreamButtonSet.find_by_global_id(bs.data['source_id'])
@@ -720,7 +721,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
     
     # TODO: include images with attribution
     
-    button_set.buttons.each do |button|
+    button_set.buttons(false).each do |button|
       if spoken_button?(button, user)
         res['words'] << button['label'].downcase
         locale = button['locale'] || 'en'
