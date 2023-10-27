@@ -1481,7 +1481,7 @@ class User < ActiveRecord::Base
   end
   
   def admin?
-    self.settings['admin'] == true
+    self.settings['admin'] == true || Organization.admin_manager?(self)
   end
   
   def self.default_sidebar_boards

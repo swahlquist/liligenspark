@@ -98,7 +98,7 @@ module UpstreamDownstream
     # keep the closer downstream ids at the top of the list
     first_downs = []
     later_downs = []
-    im_downs = (board.settings || {})['immediately_downstream_board_ids'] || []
+    im_downs = (top_board.settings || {})['immediately_downstream_board_ids'] || []
     boards_with_children.each do |id, children|
       if id == 'self' || im_downs.include?(id)
         first_downs += children
