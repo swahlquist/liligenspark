@@ -576,7 +576,7 @@ class User < ActiveRecord::Base
     end
     @do_track_boards = false
     if frd != true
-      if self.settings && self.settings['home_board_changed'] || self.settings['sidebar_changed']
+      if self.settings && (self.settings['home_board_changed'] || self.settings['sidebar_changed'])
         self.schedule_once_for(RedisInit.any_queue_pressure? ? :whenever : :slow, :track_boards, true, ts || Time.now.to_i)
       end
       return true

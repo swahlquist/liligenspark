@@ -98,7 +98,7 @@ module UpstreamDownstream
     # keep the closer downstream ids at the top of the list
     first_downs = []
     later_downs = []
-    im_downs = board.settings['immediately_downstream_board_ids']
+    im_downs = (board.settings || {})['immediately_downstream_board_ids'] || []
     boards_with_children.each do |id, children|
       if id == 'self' || im_downs.include?(id)
         first_downs += children
@@ -137,7 +137,7 @@ module UpstreamDownstream
       changes['unlinked_downstream_buttons'] = [self.settings['unlinked_downstream_buttons'], unlinked_buttons]
       downstream_buttons_count_changed = true
     end
-    if self.settings['downstream_board_ids'].sort != downs.sort
+    if (self.settings['downstream_board_ids'] || []).sort != downs.sort
       changes['downstream_board_ids'] = [self.settings['downstream_board_ids'], downs]
     end
 
@@ -190,7 +190,8 @@ module UpstreamDownstream
   end
 
   def possible_home_board?
-    !self.any_upstream || (self.parent_board_id && !(self.settings || {})['copy_id']) || (self.settings || {})['copy_id'] == self.global_id || !!UserBoardConnection.find_by(board_id: self.id, home: true)
+    return @possible_home_board if @possible_home_board != nil
+    @possible_home_board = !self.any_upstream || (self.parent_board_id && !(self.settings || {})['copy_id']) || (self.settings || {})['copy_id'] == self.global_id || !!UserBoardConnection.find_by(board_id: self.id, home: true)
   end
 
   def touch_upstream_revisions
@@ -261,6 +262,8 @@ module UpstreamDownstream
     end
     # Step 2: trigger background heavy update for all immediately-upstream boards
     if notify_upstream_with_visited_ids
+      depth = notify_upstream_with_visited_ids.select{|id| id.match(/depth:/) }.map{|id| id.split(/:/)[1].to_i rescue 0 }.max || 0
+      strict_upstream_edits = (depth >= 5)
       ups = Board.find_all_by_global_id(self.settings['immediately_upstream_board_ids'] || [])
       ups.each do |board|
         if board && !notify_upstream_with_visited_ids.include?(board.global_id)
@@ -268,8 +271,15 @@ module UpstreamDownstream
             # if the board has been updated more recently than the current tracking sequence started, then
             # it is already up-to-date as far as this sequence is concerned, and doesn't need
             # to be re-scheduled
+          elsif strict_upstream_edits && !board.possible_home_board?
+            # if we've recursed many times already, and this board isn't a known
+            # home board, then instead of doing all the boards, only bother
+            # continuing on home boards
+            if depth < 10
+              board.reload.complete_stream_checks(notify_upstream_with_visited_ids + ["depth:#{depth + 1}"], trigger_stamp)
+            end
           else
-            board.reload.schedule_track(notify_upstream_with_visited_ids)
+            board.reload.schedule_track(notify_upstream_with_visited_ids + ["depth:#{depth + 1}"])
             # board.schedule_once(:track_downstream_boards!, notify_upstream_with_visited_ids, nil, trigger_stamp)
           end
         end
