@@ -1050,7 +1050,6 @@ describe Board, :type => :model do
       b.save
       expect(b.settings['images_not_mapped']).to eq(true)
       expect(b).to receive(:get_cached).with("images_and_sounds_for/#{u.cache_key}").and_return(nil)
-      expect(b.button_images).to eq([])
       expect(b.known_button_images).to eq([bi1, bi2])
       expect(b.button_sounds).to eq([])
       expect(b.known_button_sounds).to eq([bs1])

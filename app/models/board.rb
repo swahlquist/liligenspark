@@ -738,7 +738,7 @@ class Board < ActiveRecord::Base
     self.settings['grid'] = grid
     update_immediately_downstream_board_ids
     # Clip huge downstream lists
-    self.settings['downstream_board_ids'] = self.settings['downstream_board_ids'][0, 1000] if self.settings['downstream_board_ids']
+    self.settings['downstream_board_ids'] = self.settings['downstream_board_ids'][0, 500] if self.settings['downstream_board_ids']
     
     translations = (BoardContent.load_content(self, 'translations') || {})
     data_hash = Digest::MD5.hexdigest(self.global_id.to_s + "_" + grid.to_json + "_" + self.buttons.to_json + "_" + self.public.to_s + "_" + self.settings['unlisted'].to_s + "_" + translations.to_json)

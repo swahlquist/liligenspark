@@ -386,6 +386,10 @@ module Relinking
       auth_user = opts[:authorized_user]
       starting_old_board = opts[:starting_old_board] || raise("starting_old_board required")
       starting_new_board = opts[:starting_new_board] || raise("starting_new_board required")
+      if !starting_new_board.settings['copy_id']
+        starting_new_board.settings['copy_id'] = starting_new_board.global_id
+        starting_new_board.save_subtly
+      end
       make_public = opts[:make_public] || false
       board_ids = starting_old_board.downstream_board_ids || []
       if opts[:valid_ids]

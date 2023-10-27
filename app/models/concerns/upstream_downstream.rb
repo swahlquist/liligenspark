@@ -51,8 +51,10 @@ module UpstreamDownstream
     end; 0
     unfound_boards += boards_with_children.map(&:last).flatten - boards_with_children.keys
     
-    while !unfound_boards.empty?
+    visited_count = 0
+    while !unfound_boards.empty? && visited_count < 700
       id = unfound_boards.shift
+      visited_count += 1
       board = top_board 
       if id != "self"
         Octopus.using(:master) do
@@ -93,10 +95,20 @@ module UpstreamDownstream
     
     # step 2: the complete downstream list is a collection of all these ids
     Rails.logger.info('generating stats and revision keys')
-    downs = []
+    # keep the closer downstream ids at the top of the list
+    first_downs = []
+    later_downs = []
+    im_downs = board.settings['immediately_downstream_board_ids']
     boards_with_children.each do |id, children|
-      downs += children
+      if id == 'self' || im_downs.include?(id)
+        first_downs += children
+      else
+        later_downs += children
+      end
     end
+    downs = first_downs
+    # if there are too many downstreams, limit to two levels deep for damage control
+    downs += later_downs unless later_downs.length > 350
     downs = downs.uniq.sort - [top_board.global_id]
     downstream_ids_changed = (downs != (top_board.settings['downstream_board_ids'] || []).uniq.sort)
     total_buttons = 0
@@ -114,27 +126,25 @@ module UpstreamDownstream
     full_set_revision = Digest::MD5.hexdigest(revision_hashes.join('_'))[0, 10] + "-#{revision_hashes.length}"
     if self.settings['full_set_revision'] != full_set_revision
       changes['full_set_revision'] = [self.settings['full_set_revision'], full_set_revision]
-      #self.settings['full_set_revision'] = full_set_revision
       downstream_boards_changed = true
-      self.schedule_update_button_set
     end
     downstream_buttons_count_changed = false
     if self.settings['total_downstream_buttons'] != total_buttons
       changes['total_downstream_buttons'] = [self.settings['total_downstream_buttons'], total_buttons]
-      #self.settings['total_downstream_buttons'] = total_buttons
       downstream_buttons_count_changed = true
     end
     if self.settings['unlinked_downstream_buttons'] != unlinked_buttons
       changes['unlinked_downstream_buttons'] = [self.settings['unlinked_downstream_buttons'], unlinked_buttons]
-      #self.settings['unlinked_downstream_buttons'] = unlinked_buttons
       downstream_buttons_count_changed = true
     end
-    changes['downstream_board_ids'] = [self.settings['downstream_board_ids'], downs]
-    #self.settings['downstream_board_ids'] = downs
+    if self.settings['downstream_board_ids'].sort != downs.sort
+      changes['downstream_board_ids'] = [self.settings['downstream_board_ids'], downs]
+    end
 
     # step 3: notify upstream if there was a change
     Rails.logger.info('saving if changed')
-    if downstream_ids_changed || downstream_buttons_count_changed || downstream_boards_changed
+    home_or_few_downs = self.possible_home_board? || downs.length < 100
+    if downstream_ids_changed || (home_or_few_downs && downstream_buttons_count_changed) || downstream_boards_changed
       Rails.logger.info('saving because changed') if downstream_ids_changed
       Rails.logger.info('saving because buttons changed') if buttons_changed
       Rails.logger.info('saving because downstream buttons changed') if downstream_buttons_count_changed
@@ -177,6 +187,10 @@ module UpstreamDownstream
     
     Rails.logger.info('done tracking!')
     true
+  end
+
+  def possible_home_board?
+    !self.any_upstream || (self.parent_board_id && !(self.settings || {})['copy_id']) || (self.settings || {})['copy_id'] == self.global_id || !!UserBoardConnection.find_by(board_id: self.id, home: true)
   end
 
   def touch_upstream_revisions
