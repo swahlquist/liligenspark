@@ -16,9 +16,10 @@ module UpstreamDownstream
   end
   
   def edit_stats
+    gbs = self.grid_buttons
     {
-      'total_buttons' => self.buttons.length,
-      'unlinked_buttons' => self.buttons.select{|btn| !btn['load_board'] }.length,
+      'total_buttons' => gbs.length,
+      'unlinked_buttons' => gbs.select{|btn| !btn['load_board'] }.length,
       'current_revision' => self.current_revision
     }
   end
@@ -42,7 +43,7 @@ module UpstreamDownstream
 
     # short-circuit individual lookups, since the board most likely already knows about most of
     # its downstreams, and only one or a few will be new or updated    
-    Board.find_all_by_global_id(top_board.settings['downstream_board_ids'] || []).each do |board|
+    Board.find_batches_by_global_id(top_board.settings['downstream_board_ids'] || [], batch_size: 50) do |board|
       id = board.global_id
       # also track button counts, used for board stats
       board_edit_stats[id] = board.edit_stats
@@ -277,8 +278,11 @@ module UpstreamDownstream
       self.settings['tracked_visited_ids'].uniq!
       self.save_subtly
     end
-    ra_cnt = RemoteAction.where(path: self.global_id, action: 'track_downstream_with_visited').update_all(act_at: 120.minutes.from_now, updated_at: Time.now)
-    RemoteAction.create(path: self.global_id, act_at: 30.minutes.from_now, action: 'track_downstream_with_visited') if !ra_cnt || ra_cnt == 0
+    long_wait = self.settings['last_tracked'] > 24.hours.ago.to_i
+    existing = RemoteAction.find_by(path: self.global_id, action: 'track_downstream_with_visited')
+    long_wait_cutoff = [(existing && existing.act_at) || Time.now, long_wait ? 72.hours.from_now : 120.minutes.from_now].max
+    ra_cnt = RemoteAction.where(path: self.global_id, action: 'track_downstream_with_visited').update_all(act_at: long_wait_cutoff, updated_at: Time.now)
+    RemoteAction.create(path: self.global_id, act_at: long_wait ? 24.hours.from_now : 30.minutes.from_now, action: 'track_downstream_with_visited') if !ra_cnt || ra_cnt == 0
   end
 
   def track_downstream_with_visited
@@ -343,7 +347,9 @@ module UpstreamDownstream
     downs = []
     (self.grid_buttons || []).each do |button|
       if button['load_board'] && button['load_board']['id'] && button['id']
-        downs << button['load_board']['id']
+        if !['home', 'top board'].include?((button['label'] || 'none').downcase)
+          downs << button['load_board']['id']
+        end
       end
     end
     downs = downs.uniq.sort

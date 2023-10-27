@@ -13,6 +13,31 @@ module Worker
     methods
   end
 
+  def self.record_ids(queue='default', method_name)
+    list = Worker.scheduled_actions(queue); list.length
+    classes = {}
+    list.each do |job|
+      method = (job['args'][2]['method'] || 'unknown') rescue 'error'
+      if method == method_name
+        id = job['args'][2]['id'] rescue nil
+        class_name = job['args'][0]
+        if id && class_name
+          classes[class_name] ||= []
+          classes[class_name] << id
+        end
+      end
+    end; list.length
+    classes.each do |class_name, ids|
+      puts class_name
+      puts ids.join(',')
+    end
+    classes
+  end
+
+  # sql = ["SELECT COUNT(user_id) FROM boards GROUP BY"]
+  # res = ActiveRecord::Base.connection.execute(ActiveRecord::Base.send(:sanitize_sql_array, sql))
+  # Board.where(id: classes['Board']).having("COUNT(user_id) > 50").group('user_id').count('user_id')
+
   def self.process_queues
     RemoteAction.process_all
     super

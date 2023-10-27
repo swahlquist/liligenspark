@@ -909,9 +909,9 @@ class LogSession < ActiveRecord::Base
         @skip_extra_data_update = true
         self.save
         @skip_extra_data_update = false
-        Board.find_all_by_global_id(board_ids.uniq).each do |board|
-          LogSessionBoard.find_or_create_by(:board_id => board.id, :log_session_id => self.id)
-        end
+        # Board.find_all_by_global_id(board_ids.uniq).each do |board|
+        #   LogSessionBoard.find_or_create_by(:board_id => board.id, :log_session_id => self.id)
+        # end
       else
         schedule_once_for((RedisInit.queue_pressure? ? 'whenever' : 'slow'), :update_board_connections, true)
         return true
@@ -1434,6 +1434,11 @@ class LogSession < ActiveRecord::Base
     end
     activities.to_a.map(&:last).sort_by{|a| a['timestamp'] }
   end
+
+  # sql = ["SELECT user_id, COUNT(user_id) FROM boards GROUP BY user_id HAVING COUNT(user_id) > 10000"]
+  # sql = ["SELECT id FROM boards WHERE LENGTH(settings) > 100000 ORDER BY LENGTH(settings) DESC LIMIT 50"]
+  # Board.where(['updated_at > ?', cutoff]).where("LENGTH(settings) > 100000").map{|b| [b.key, b.settings.to_s.length] }
+  # sql = ["SELECT r.id as row_id, PG_SIZE_PRETTY(sum(PG_COLUMN_SIZE(r.*))) as row_size FROM boards as r GROUP BY r.id ORDER BY sum(pg_column_size(r.*)) DESC LIMIT 10"]
 
   def self.check_possible_mergers
     sql = ["SELECT a.id as log_id, b.id as ref_id from log_sessions as a, log_sessions as b WHERE a.id != b.id AND a.user_id = b.user_id AND a.author_id = b.author_id AND a.device_id = b.device_id AND a.started_at = b.started_at AND a.ended_at = b.ended_at AND a.started_at > ? AND a.created_at < ? LIMIT 100", 6.hours.ago, 15.minutes.ago]

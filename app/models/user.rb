@@ -185,7 +185,7 @@ class User < ActiveRecord::Base
         board_ids << b.global_id
         board_ids += b.settings['downstream_board_ids'] || []
         Board.find_batches_by_global_id(board_ids) do |brd|
-          brd.button_images.each do |bi|
+          brd.known_button_images.each do |bi|
             if bi.settings && bi.settings['protected_source']
               if !(self.settings['activated_sources'] || []).include?(bi.settings['protected_source'])
                 found_sources << bi.settings['protected_source']
@@ -198,7 +198,7 @@ class User < ActiveRecord::Base
     end
     self.boards.find_in_batches(batch_size: 25) do |batch|
       batch.each do |brd|
-        brd.button_images.each do |bi|
+        brd.known_button_images.each do |bi|
           if bi.settings && bi.settings['protected_source']
             if !(self.settings['activated_sources'] || []).include?(bi.settings['protected_source'])
               found_sources << bi.settings['protected_source']
@@ -576,7 +576,9 @@ class User < ActiveRecord::Base
     end
     @do_track_boards = false
     if frd != true
-      self.schedule_once_for(RedisInit.any_queue_pressure? ? :whenever : :slow, :track_boards, true, ts || Time.now.to_i)
+      if self.settings['home_board_changed'] || self.settings['sidebar_changed']
+        self.schedule_once_for(RedisInit.any_queue_pressure? ? :whenever : :slow, :track_boards, true, ts || Time.now.to_i)
+      end
       return true
     end
     if ts && self.settings['tracked_boards_at'] && ts < self.settings['tracked_boards_at']
@@ -634,7 +636,7 @@ class User < ActiveRecord::Base
         board.track_downstream_boards!(nil, nil, Board.last_scheduled_stamp || Time.now.to_i)
         Rails.logger.info("checking downstream boards for #{self.global_id}, #{board.global_id}")
         
-        Board.select('id').find_all_by_global_id(board.settings['downstream_board_ids']).each do |downstream_board|
+        Board.select('id').find_batches_by_global_id(board.settings['downstream_board_ids'] || [], batch_size: 50) do |downstream_board|
           if downstream_board
             orphan_board_ids -= [downstream_board.id]
             downstream_board_added = false
@@ -1817,13 +1819,13 @@ class User < ActiveRecord::Base
   end
 
   def self.flush_old_versions
-    if PaperTrail::Version.where({item_type: 'LogSession'}).where(['created_at < ?', 1.months.ago]).count > 1000
-      PaperTrail::Version.where({item_type: 'LogSession'}).where(['created_at < ?', 1.months.ago]).delete_all
+    if PaperTrail::Version.where({item_type: 'LogSession'}).where(['created_at < ?', 1.week.ago]).count > 300
+      PaperTrail::Version.where({item_type: 'LogSession'}).where(['created_at < ?', 1.week.ago]).delete_all
     end
-    if PaperTrail::Version.where({item_type: 'User'}).where(['created_at < ?', 3.months.ago]).count > 1000
-      PaperTrail::Version.where({item_type: 'User'}).where(['created_at < ?', 3.months.ago]).delete_all
+    if PaperTrail::Version.where({item_type: 'User'}).where(['created_at < ?', 1.months.ago]).count > 300
+      PaperTrail::Version.where({item_type: 'User'}).where(['created_at < ?', 1.months.ago]).delete_all
     end
-    if PaperTrail::Version.where({item_type: 'Board'}).where(['created_at < ?', 6.months.ago]).count > 1000
+    if PaperTrail::Version.where({item_type: 'Board'}).where(['created_at < ?', 6.months.ago]).count > 300
       PaperTrail::Version.where({item_type: 'Board'}).where(['created_at < ?', 6.months.ago]).delete_all
     end
 

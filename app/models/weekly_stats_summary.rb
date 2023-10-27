@@ -239,6 +239,7 @@ class WeeklyStatsSummary < ActiveRecord::Base
     # NOTE: whenever you enable this, you need to rethink the scheduling
     # because unless this is very performant it's going to stuff the
     # worker queues
+    # NOTE: need to uncomment LogSessionBoard.find_or_create_by in log_session.rb to make this work
     return # for now, maybe start allowing quick core boards and copies through
     # TODO: stats should have some data on downstream boards, since one of the questions we
     # want to answer is, are there buttons on sub-boards that are used more often than

@@ -1001,7 +1001,7 @@ module Purchasing
           author = src.cached_user_name
           # - tally the author based on the board's depth (sidebar * 0.3)
           scores[author] = (scores[author] || 0) + key[:score]
-          Board.find_batches_by_global_id(root_board.settings['downstream_board_ids'], {block_size: 10}) do |brd|
+          Board.find_batches_by_global_id(root_board.downstream_board_ids, {block_size: 10}) do |brd|
             src = brd.source_board || brd.parent_board || brd
             author = src.cached_user_name
             scores[author] = (scores[author] || 0) + (key[:score] * 0.1)

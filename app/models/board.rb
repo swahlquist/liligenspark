@@ -679,6 +679,7 @@ class Board < ActiveRecord::Base
     self.settings ||= {}
     self.settings['name'] ||= "Unnamed Board"
     self.settings['edit_key'] = Time.now.to_f.to_s + "-" + rand(9999).to_s
+    self.settings['image_url'] = nil if self.settings['image_url'] && self.settings['image_url'].match(/^data/)
     if !self.settings['image_url']
       self.settings['image_url'] = DEFAULT_ICON
       self.settings['default_image_url'] = DEFAULT_ICON
@@ -736,6 +737,8 @@ class Board < ActiveRecord::Base
     end
     self.settings['grid'] = grid
     update_immediately_downstream_board_ids
+    # Clip huge downstream lists
+    self.settings['downstream_board_ids'] = self.settings['downstream_board_ids'][0, 1000]
     
     translations = (BoardContent.load_content(self, 'translations') || {})
     data_hash = Digest::MD5.hexdigest(self.global_id.to_s + "_" + grid.to_json + "_" + self.buttons.to_json + "_" + self.public.to_s + "_" + self.settings['unlisted'].to_s + "_" + translations.to_json)
@@ -1276,6 +1279,7 @@ class Board < ActiveRecord::Base
     if params['copy_key'] && !@sub_id
       b = Board.find_by_path(params['copy_key'])
       if b && b.user_id == self.user_id && b.global_id != self.settings['copy_id'] && b.global_id != self.global_id
+        # Set copy_id to the same value for all downstream boards that had this board as the copy_id
         self.settings['copy_id'] = b.global_id
         @shallow_source_changed = true
         subs = Board.find_all_by_global_id(self.settings['downstream_board_ids'] || [])
