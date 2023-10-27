@@ -278,7 +278,7 @@ module UpstreamDownstream
       self.settings['tracked_visited_ids'].uniq!
       self.save_subtly
     end
-    long_wait = self.settings['last_tracked'] > 24.hours.ago.to_i
+    long_wait = self.settings['last_tracked'] && self.settings['last_tracked'] > 24.hours.ago.to_i
     existing = RemoteAction.find_by(path: self.global_id, action: 'track_downstream_with_visited')
     long_wait_cutoff = [(existing && existing.act_at) || Time.now, long_wait ? 72.hours.from_now : 120.minutes.from_now].max
     ra_cnt = RemoteAction.where(path: self.global_id, action: 'track_downstream_with_visited').update_all(act_at: long_wait_cutoff, updated_at: Time.now)

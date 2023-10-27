@@ -738,7 +738,7 @@ class Board < ActiveRecord::Base
     self.settings['grid'] = grid
     update_immediately_downstream_board_ids
     # Clip huge downstream lists
-    self.settings['downstream_board_ids'] = self.settings['downstream_board_ids'][0, 1000]
+    self.settings['downstream_board_ids'] = self.settings['downstream_board_ids'][0, 1000] if self.settings['downstream_board_ids']
     
     translations = (BoardContent.load_content(self, 'translations') || {})
     data_hash = Digest::MD5.hexdigest(self.global_id.to_s + "_" + grid.to_json + "_" + self.buttons.to_json + "_" + self.public.to_s + "_" + self.settings['unlisted'].to_s + "_" + translations.to_json)
@@ -1102,18 +1102,20 @@ class Board < ActiveRecord::Base
 
     images = []
     sounds = []
-    (self.buttons || []).each do |button|
+    (self.grid_buttons || []).each do |button|
       images << {:id => button['image_id'], :label => button['label']} if button['image_id']
       sounds << {:id => button['sound_id']} if button['sound_id']
     end
-    found_images = BoardButtonImage.images_for_board(self.id)
-    existing_image_ids = found_images.map(&:global_id)
-    existing_images = existing_image_ids.map{|id| {:id => id} }
     image_ids = images.map{|i| i[:id] }
-    new_images = images.select{|i| !existing_image_ids.include?(i[:id]) }
-    orphan_images = existing_images.select{|i| !image_ids.include?(i[:id]) }
-    BoardButtonImage.connect(self.id, new_images, :user_id => self.user.global_id)
-    BoardButtonImage.disconnect(self.id, orphan_images)
+    image_ids_hash = Digest::MD5.hexdigest(image_ids.length.to_s + image_ids.join(','))[0, 8]
+
+    # found_images = BoardButtonImage.images_for_board(self.id)
+    # existing_image_ids = found_images.map(&:global_id)
+    # existing_images = existing_image_ids.map{|id| {:id => id} }
+    # new_images = images.select{|i| !existing_image_ids.include?(i[:id]) }
+    # orphan_images = existing_images.select{|i| !image_ids.include?(i[:id]) }
+    # BoardButtonImage.connect(self.id, new_images, :user_id => self.user.global_id)
+    # BoardButtonImage.disconnect(self.id, orphan_images)
 
     found_sounds = BoardButtonSound.sounds_for_board(self.id)
     existing_sound_ids = found_sounds.map(&:global_id)
@@ -1124,7 +1126,10 @@ class Board < ActiveRecord::Base
     BoardButtonSound.connect(self.id, new_sounds, :user_id => self.user.global_id)
     BoardButtonSound.disconnect(self.id, orphan_sounds)
     
-    if new_images.length > 0 || new_sounds.length > 0 || orphan_images.length > 0 || orphan_sounds.length > 0
+    if image_ids_hash != self.settings['image_ids_hash'] || new_sounds.length > 0 || orphan_sounds.length > 0
+      if image_ids_hash != self.settings['image_ids_hash']
+        self.update_setting({'image_ids_hash' => image_ids_hash}, nil, :save_without_post_processing)
+      end
       protected_images = ButtonImage.find_all_by_global_id(image_ids).select(&:protected?)
 #      protected_images = BoardButtonImage.images_for_board(self.id).select(&:protected?)
       protected_sounds = ButtonSound.find_all_by_global_id(sound_ids).select(&:protected?)
@@ -1153,9 +1158,6 @@ class Board < ActiveRecord::Base
           }, nil, :save_without_post_processing)
         end
       end
-    end
-    if self.settings['images_not_mapped']
-      self.update_setting({'images_not_mapped' => false}, nil, :save_without_post_processing)
     end
     @images_mapped_at = Time.now.to_i
   end
@@ -1201,7 +1203,7 @@ class Board < ActiveRecord::Base
     if ids != nil
       res = res.select{|b| ids[b['id'].to_s] }
     end
-    res
+    res || []
   end
 
   def self.vocab_name(board)
@@ -1740,13 +1742,13 @@ class Board < ActiveRecord::Base
   end
 
   def known_button_images
-    if self.settings && self.settings['images_not_mapped']
+    # if self.settings && self.settings['images_not_mapped']
       return @button_images if @button_images
-      image_ids = self.buttons.map{|b| b['image_id'] }.compact.uniq
+      image_ids = self.grid_buttons.map{|b| b['image_id'] }.compact.uniq
       @button_images = ButtonImage.find_all_by_global_id(image_ids)
-    else
-      self.button_images
-    end
+    # else
+    #   self.button_images
+    # end
   end
 
   def known_button_sounds

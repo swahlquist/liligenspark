@@ -109,7 +109,7 @@ describe JsonApi::Board do
       ]
       b.instance_variable_set('@buttons_changed', true)
       b.save
-      expect(b.button_images.count).to eq(1)
+      expect(b.known_button_images.count).to eq(1)
       
       hash = JsonApi::Board.as_json(b.reload, :wrapper => true)
       expect(hash['images'].length).to eq(1)
@@ -134,7 +134,7 @@ describe JsonApi::Board do
       ]
       b.instance_variable_set('@buttons_changed', true)
       b.save
-      expect(b.button_images.count).to eq(1)
+      expect(b.known_button_images.count).to eq(1)
       
       hash = JsonApi::Board.as_json(b.reload, :wrapper => true)
       img = {}

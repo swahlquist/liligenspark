@@ -965,7 +965,7 @@ describe Board, :type => :model do
       bi1 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'pcs'}, url: 'http://www.example.com')
       bi2 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'abs'}, url: 'http://www.example.com')
       bs1 = ButtonSound.create(user: u, board: b)
-      expect(b).to receive(:button_images).and_return([bi1, bi2])
+      expect(b).to receive(:known_button_images).and_return([bi1, bi2])
       expect(b).to receive(:button_sounds).and_return([bs1])
       expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => false, :preferred_source => 'original').and_return({'bi1' => true})
       expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => false, :preferred_source => 'original').and_return({'bi2' => true})
@@ -990,7 +990,7 @@ describe Board, :type => :model do
       bi1 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'pcs'}, url: 'http://www.example.com')
       bi2 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'abs'}, url: 'http://www.example.com')
       bs1 = ButtonSound.create(user: u, board: b)
-      expect(b).to receive(:button_images).and_return([bi1, bi2])
+      expect(b).to receive(:known_button_images).and_return([bi1, bi2])
       expect(b).to receive(:button_sounds).and_return([bs1])
       expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => false, :preferred_source => 'original').and_return({'bi1' => true})
       expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => false, :preferred_source => 'original').and_return({'bi2' => true})
@@ -1017,7 +1017,7 @@ describe Board, :type => :model do
       bi1 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'pcs'}, url: 'http://www.example.com')
       bi2 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'abs'}, url: 'http://www.example.com')
       bs1 = ButtonSound.create(user: u, board: b)
-      expect(b).to receive(:button_images).and_return([bi1, bi2])
+      expect(b).to receive(:known_button_images).and_return([bi1, bi2])
       expect(b).to receive(:button_sounds).and_return([bs1])
       expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => false, :preferred_source => 'original').and_return({'bi1' => true})
       expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => false, :preferred_source => 'original').and_return({'bi2' => true})
@@ -1081,7 +1081,7 @@ describe Board, :type => :model do
       bi1 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'pcs'}, url: 'http://www.example.com')
       bi2 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'abs'}, url: 'http://www.example.com')
       bi3 = ButtonImage.create(user: u, board: b, settings: {'protected' => true, 'protected_source' => 'cheese'}, url: 'http://www.example.com')
-      expect(b).to receive(:button_images).and_return([bi1, bi2, bi3])
+      expect(b).to receive(:known_button_images).and_return([bi1, bi2, bi3])
       expect(JsonApi::Image).to receive(:as_json).with(bi1, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => true, :preferred_source => 'original').and_return({'bi1' => true})
       expect(JsonApi::Image).to receive(:as_json).with(bi2, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => true, :preferred_source => 'original').and_return({'bi2' => true})
       expect(JsonApi::Image).to receive(:as_json).with(bi3, :allowed_sources => ['lessonpix', 'pcs', 'symbolstix'], :include_other_sources => true, :preferred_source => 'original').and_return({'bi3' => true})
@@ -3478,7 +3478,7 @@ describe Board, :type => :model do
         {'id' => 1, 'label' => 'hat', 'image_id' => bi1.global_id},
         {'id' => 2, 'label' => 'cat', 'image_id' => bi2.global_id}
       ], 'public' => true, 'visibility' => 'public'}, {'user' => u})
-      expect(b.button_images.count).to eq(2)
+      expect(b.known_button_images.count).to eq(2)
       Worker.process_queues
       Worker.process_queues
       versions = b.reload.versions.count
@@ -3782,7 +3782,7 @@ describe Board, :type => :model do
       b.instance_variable_set('@map_later', nil)
       b.save
       img = ButtonImage.last
-      expect(b.reload.button_images.to_a).to eq([img])
+      expect(b.reload.known_button_images.to_a).to eq([img])
       expect(b.settings['buttons']).to eq([
         {'id' => 1, 'label' => 'hats', 'image_id' => 'whatever'},
         {'id' => 2, 'label' => 'cats', 'image_id' => img.global_id}
@@ -3915,13 +3915,13 @@ describe Board, :type => :model do
       expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true, false)
       res = b.swap_images('bacon', u, [b.global_id, b2.global_id])
       Worker.process_queues
-      bis = b.reload.button_images
+      bis = b.reload.known_button_images
       expect(bis.count).to eq(1)
       bi = bis[0]
-      bis2 = b2.reload.button_images
+      bis2 = b2.reload.known_button_images
       expect(bis2.count).to eq(1)
       bi2 = bis2[0]
-      bis3 = b3.reload.button_images
+      bis3 = b3.reload.known_button_images
       expect(bis3.count).to eq(0)
       expect(res).to eq({done: true, library: 'bacon', id: b.global_id, board_ids: [b.global_id, b2.global_id], updated: [b.global_id, b2.global_id], visited: [b.global_id, b2.global_id, b3.global_id]})
       expect(b.reload.settings['buttons']).to eq([
@@ -3964,13 +3964,13 @@ describe Board, :type => :model do
       expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true, false)
       res = b.swap_images('bacon', u, [b.global_id, "new:#{b.global_id}"])
       Worker.process_queues
-      bis = b.reload.button_images
+      bis = b.reload.known_button_images
       expect(bis.count).to eq(1)
       bi = bis[0]
-      bis2 = b2.reload.button_images
+      bis2 = b2.reload.known_button_images
       expect(bis2.count).to eq(1)
       bi2 = bis2[0]
-      bis3 = b3.reload.button_images
+      bis3 = b3.reload.known_button_images
       expect(bis3.count).to eq(0)
       expect(res).to eq({done: true, id: b.global_id, library: 'bacon', board_ids: [b.global_id, "new:#{b.global_id}"], updated: [b.global_id, b2.global_id], visited: [b.global_id, b2.global_id, b3.global_id]})
       expect(b.reload.settings['buttons']).to eq([
@@ -4013,12 +4013,12 @@ describe Board, :type => :model do
       b.instance_variable_set('@map_later', nil)
       b.save
       expect(b.reload.known_button_images.length).to eq(1)
-      bis = b.reload.button_images
+      bis = b.reload.known_button_images
       expect(bis.count).to eq(1)
       bi = bis[0]
-      bis2 = b2.reload.button_images
+      bis2 = b2.reload.known_button_images
       expect(bis2.count).to eq(0)
-      bis3 = b3.reload.button_images
+      bis3 = b3.reload.known_button_images
       expect(bis3.count).to eq(0)
       expect(res).to eq({done: true, id: b.global_id, library: 'bacon', board_ids: [b.global_id, b2.global_id, b3.global_id], updated: [b.global_id], visited: [b.global_id, b2.global_id]})
       expect(b.reload.settings['buttons']).to eq([
@@ -4059,12 +4059,12 @@ describe Board, :type => :model do
       b.reload
       b.instance_variable_set('@map_later', nil)
       b.save
-      bis = b.reload.button_images
+      bis = b.reload.known_button_images
       expect(bis.count).to eq(1)
       bi = bis[0]
-      bis2 = b2.reload.button_images
+      bis2 = b2.reload.known_button_images
       expect(bis2.count).to eq(0)
-      bis3 = b3.reload.button_images
+      bis3 = b3.reload.known_button_images
       expect(bis3.count).to eq(0)
       expect(res).to eq({done: true, id: b.global_id, library: 'bacon', board_ids: [b.global_id, b3.global_id], updated: [b.global_id], visited: [b.global_id, b2.global_id]})
       expect(b.reload.settings['buttons']).to eq([
@@ -4100,7 +4100,7 @@ describe Board, :type => :model do
       Worker.process_queues
       expect(b.versions.count).to eq(versions + 1)
       img = ButtonImage.last
-      expect(b.reload.button_images.to_a).to eq([img])
+      expect(b.reload.known_button_images.to_a).to eq([img])
       expect(b.settings['buttons']).to eq([
         {'id' => 1, 'label' => 'hats', 'image_id' => 'whatever'},
         {'id' => 2, 'label' => 'cats', 'image_id' => img.global_id}
@@ -4137,13 +4137,13 @@ describe Board, :type => :model do
       expect(Uploader).to_not receive(:find_images).with('flats', 'bacon', 'en', u, nil, true, false)
       res = b.swap_images('bacon', u, [b.global_id, b2.global_id])
       Worker.process_queues
-      bis = b.reload.button_images
+      bis = b.reload.known_button_images
       expect(bis.count).to eq(1)
       bi = bis[0]
-      bis2 = b2.reload.button_images
+      bis2 = b2.reload.known_button_images
       expect(bis2.count).to eq(1)
       bi2 = bis2[0]
-      bis3 = b3.reload.button_images
+      bis3 = b3.reload.known_button_images
       expect(bis3.count).to eq(0)
       expect(res).to eq({done: true, id: b.global_id, library: 'bacon', board_ids: [b.global_id, b2.global_id], updated: [b.global_id, b2.global_id], visited: [b.global_id, b2.global_id, b3.global_id]})
       expect(b.reload.buttons).to eq([
@@ -4223,13 +4223,13 @@ describe Board, :type => :model do
       expect(bb2.id).to eq(b2.id)
       res = bb.swap_images('bacon', u, [bb.global_id, bb2.global_id])
       Worker.process_queues
-      bis = b.reload.button_images
+      bis = b.reload.known_button_images
       expect(bis.count).to eq(0)
       bi = bis[0]
-      bis2 = b2.reload.button_images
+      bis2 = b2.reload.known_button_images
       expect(bis2.count).to eq(0)
       bi2 = bis2[0]
-      bis3 = b3.reload.button_images
+      bis3 = b3.reload.known_button_images
       expect(bis3.count).to eq(0)
 
       bb = Board.find_by_path("#{b.global_id}-#{u2.global_id}")
@@ -4245,13 +4245,13 @@ describe Board, :type => :model do
         updated: ["#{b.global_id}-#{u2.global_id}", "#{b2.global_id}-#{u2.global_id}"], 
         visited: [bb.global_id, bb2.global_id, "#{b3.global_id}-#{u2.global_id}"]
       })
-      bis = bb.reload.button_images
+      bis = bb.reload.known_button_images
       expect(bis.count).to eq(1)
       bi = bis[0]
-      bis2 = bb2.reload.button_images
+      bis2 = bb2.reload.known_button_images
       expect(bis2.count).to eq(1)
       bi2 = bis2[0]
-      bis3 = bb3.reload.button_images
+      bis3 = bb3.reload.known_button_images
       expect(bis3.count).to eq(0)
 
       expect(bb.reload.buttons).to eq([
@@ -4295,13 +4295,13 @@ describe Board, :type => :model do
       expect(bb2.id).to eq(b2.id)
       res = bb.swap_images('bacon', u, [bb.global_id, bb2.global_id])
       Worker.process_queues
-      bis = b.reload.button_images
+      bis = b.reload.known_button_images
       expect(bis.count).to eq(0)
       bi = bis[0]
-      bis2 = b2.reload.button_images
+      bis2 = b2.reload.known_button_images
       expect(bis2.count).to eq(0)
       bi2 = bis2[0]
-      bis3 = b3.reload.button_images
+      bis3 = b3.reload.known_button_images
       expect(bis3.count).to eq(0)
 
       bb = Board.find_by_path("#{b.global_id}-#{u2.global_id}")
@@ -4317,12 +4317,12 @@ describe Board, :type => :model do
         updated: ["#{b.global_id}-#{u2.global_id}",], 
         visited: [bb.global_id, bb2.global_id]
       })
-      bis = bb.reload.button_images
+      bis = bb.reload.known_button_images
       expect(bis.count).to eq(1)
       bi = bis[0]
-      bis2 = bb2.reload.button_images
+      bis2 = bb2.reload.known_button_images
       expect(bis2.count).to eq(0)
-      bis3 = bb3.reload.button_images
+      bis3 = bb3.reload.known_button_images
       expect(bis3.count).to eq(0)
 
       expect(bb.reload.buttons).to eq([
@@ -4368,13 +4368,13 @@ describe Board, :type => :model do
       expect(bb2.id).to eq(b2.id)
       res = bb.swap_images('bacon', u, [bb.global_id, bb2.global_id])
       Worker.process_queues
-      bis = b.reload.button_images
+      bis = b.reload.known_button_images
       expect(bis.count).to eq(0)
       bi = bis[0]
-      bis2 = b2.reload.button_images
+      bis2 = b2.reload.known_button_images
       expect(bis2.count).to eq(0)
       bi2 = bis2[0]
-      bis3 = b3.reload.button_images
+      bis3 = b3.reload.known_button_images
       expect(bis3.count).to eq(0)
 
       bb = Board.find_by_path("#{b.global_id}-#{u2.global_id}")
@@ -4390,13 +4390,13 @@ describe Board, :type => :model do
         updated: ["#{b.global_id}-#{u2.global_id}"], 
         visited: [bb.global_id, "#{b2.global_id}-#{u2.global_id}"]
       })
-      bis = bb.reload.button_images
+      bis = bb.reload.known_button_images
       expect(bis.count).to eq(1)
       bi = bis[0]
-      bis2 = bb2.reload.button_images
+      bis2 = bb2.reload.known_button_images
       expect(bis2.count).to eq(0)
       bi2 = bis2[0]
-      bis3 = bb3.reload.button_images
+      bis3 = bb3.reload.known_button_images
       expect(bis3.count).to eq(0)
 
       expect(bb.reload.buttons).to eq([
@@ -4824,7 +4824,7 @@ describe Board, :type => :model do
         bi = ButtonImage.create(settings: {'license' => {'author_name' => 'tobii', 'uneditable' => true, 'author_url' => ''}})
         list << bi
       end
-      expect(b).to receive(:button_images).and_return(list)
+      expect(b).to receive(:button_known_button_imagesimages).and_return(list)
       expect(b.current_library(true)).to eq('pcs')
       expect(b.settings['common_library']).to eq('pcs')
     end
@@ -4845,7 +4845,7 @@ describe Board, :type => :model do
         bi = ButtonImage.create(settings: {'license' => {'author_name' => 'paxtoncrafts', 'uneditable' => true, 'author_url' => ''}})
         list << bi
       end
-      expect(b).to receive(:button_images).and_return(list)
+      expect(b).to receive(:known_button_images).and_return(list)
       expect(b.current_library(true)).to eq('opensymbols')
       expect(b.settings['common_library']).to eq('opensymbols')
     end
@@ -4866,7 +4866,7 @@ describe Board, :type => :model do
         bi = ButtonImage.create(settings: {'license' => {'author_name' => 'paxtoncrafts', 'uneditable' => true, 'author_url' => ''}})
         list << bi
       end
-      expect(b).to receive(:button_images).and_return(list)
+      expect(b).to receive(:known_button_images).and_return(list)
       expect(b.current_library(true)).to eq('twemoji')
       expect(b.settings['common_library']).to eq('twemoji')
     end

@@ -211,7 +211,7 @@ describe Converters::CoughDrop do
       b.settings['image_url'] = 'http://example.com/pic.png'
       b.instance_variable_set('@buttons_changed', true)
       b.save
-      expect(b.button_images.count).to eq(1)
+      expect(b.known_button_images.count).to eq(1)
       expect(b.button_sounds.count).to eq(1)
       file = Tempfile.new("stash")
       Converters::CoughDrop.to_obf(b.reload, file.path)
@@ -1036,7 +1036,7 @@ describe Converters::CoughDrop do
       b.settings['image_url'] = 'http://example.com/pic.png'
       b.instance_variable_set('@buttons_changed', true)
       b.save
-      expect(b.button_images.count).to eq(1)
+      expect(b.known_button_images.count).to eq(1)
       expect(b.button_sounds.count).to eq(1)
 
       path = OBF::Utils.temp_path("stash")
@@ -1421,7 +1421,7 @@ describe Converters::CoughDrop do
       ]
       b.instance_variable_set('@buttons_changed', true)
       b.save
-      expect(b.button_images.count).to eq(1)
+      expect(b.known_button_images.count).to eq(1)
       hash = Converters::CoughDrop.to_external(b, {'user' => u})
       expect(hash['id']).to eq(b.global_id)
       expect(hash['buttons'].length).to eq(1)
@@ -1453,7 +1453,7 @@ describe Converters::CoughDrop do
       b.settings['image_url'] = 'http://example.com/pic.png'
       b.instance_variable_set('@buttons_changed', true)
       b.save
-      expect(b.button_images.count).to eq(1)
+      expect(b.known_button_images.count).to eq(1)
       expect(b.button_sounds.count).to eq(1)
       file = Tempfile.new("stash")
       json = Converters::CoughDrop.to_external(b.reload, {'for_pdf' => true})

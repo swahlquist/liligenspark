@@ -3322,7 +3322,7 @@ describe User, :type => :model do
       b.save
 
       b.reload
-      expect(b.button_images.to_a).to eq([i])
+      expect(b.known_button_images.to_a).to eq([i])
       expect(Worker.scheduled?(User, :perform_action, {id: u.id, method: 'track_protected_source', arguments: ['bacon']})).to eq(true)
 
       expect(u).to receive(:track_protected_source).with('bacon')
@@ -3348,7 +3348,7 @@ describe User, :type => :model do
       b.save
 
       b.reload
-      expect(b.button_images.to_a).to eq([i])
+      expect(b.known_button_images.to_a).to eq([i])
       expect(Worker.scheduled?(User, :perform_action, {id: u.id, method: 'track_protected_source', arguments: ['bacon']})).to eq(true)
 
       u2.process({'preferences' => {'home_board' => {'id' => b.global_id, 'key' => b.key}}})
