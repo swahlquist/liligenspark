@@ -372,7 +372,9 @@ module UpstreamDownstream
     (self.grid_buttons || []).each do |button|
       if button['load_board'] && button['load_board']['id'] && button['id']
         if !['home', 'top board'].include?((button['label'] || 'none').downcase)
-          downs << button['load_board']['id']
+          if self.settings['copy_id'] && button['load_board']['id'] != self.settings['copy_id']
+            downs << button['load_board']['id']
+          end
         end
       end
     end

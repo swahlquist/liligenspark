@@ -34,6 +34,12 @@ module Worker
     classes
   end
 
+  def self.user_board_counts(queue, method_name, cutoff=25)
+    hash = record_ids(queue, method_name)
+    puts "found #{(hash['Board'] || []).length}"
+    Board.where(id: hash['Board']).having("COUNT(user_id) > #{cutoff}").group('user_id').count('user_id')
+  end
+
   # sql = ["SELECT COUNT(user_id) FROM boards GROUP BY"]
   # res = ActiveRecord::Base.connection.execute(ActiveRecord::Base.send(:sanitize_sql_array, sql))
   # Board.where(id: classes['Board']).having("COUNT(user_id) > 50").group('user_id').count('user_id')

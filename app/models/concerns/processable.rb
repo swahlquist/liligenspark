@@ -73,7 +73,7 @@ module Processable
         self.settings[key] = value
       end
       self.settings = {}.merge(self.settings)
-      self.assert_current_record!
+      self.assert_current_record!(key == 'job_stash')
       if save_method
         self.send(save_method)
       else
@@ -88,9 +88,10 @@ module Processable
     end
   end
   
-  def assert_current_record!
+  def assert_current_record!(flexible=false)
 #    Octopus.using(:master) do
-      raise ActiveRecord::StaleObjectError if self && self.updated_at.to_f < self.class.where(:id => self.id).select('updated_at')[0].updated_at.to_f - 10
+      diff = flextible ? 10 : 0
+      raise ActiveRecord::StaleObjectError if self && self.updated_at.to_f < self.class.where(:id => self.id).select('updated_at')[0].updated_at.to_f - diff
 #    end
   end
   

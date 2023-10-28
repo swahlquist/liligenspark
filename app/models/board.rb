@@ -13,7 +13,7 @@ class Board < ActiveRecord::Base
   include Renaming
 
   has_many :board_button_images
-  has_many :button_images, :through => :board_button_images
+  # has_many :button_images, :through => :board_button_images
   has_many :board_button_sounds
   has_many :button_sounds, :through => :board_button_sounds
   has_many :log_session_boards
