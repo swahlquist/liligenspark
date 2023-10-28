@@ -100,7 +100,7 @@ module UpstreamDownstream
     later_downs = []
     im_downs = (top_board.settings || {})['immediately_downstream_board_ids'] || []
     boards_with_children.each do |id, children|
-      if id == 'self' || im_downs.include?(id)
+      if id == 'self' || id == top_board.global_id || im_downs.include?(id)
         first_downs += children
       else
         later_downs += children

@@ -636,7 +636,7 @@ class User < ActiveRecord::Base
         board.track_downstream_boards!(nil, nil, Board.last_scheduled_stamp || Time.now.to_i)
         Rails.logger.info("checking downstream boards for #{self.global_id}, #{board.global_id}")
         
-        Board.select('id').find_batches_by_global_id(board.settings['downstream_board_ids'] || [], batch_size: 50) do |downstream_board|
+        Board.select('id, parent_board_id').find_batches_by_global_id(board.settings['downstream_board_ids'] || [], batch_size: 50) do |downstream_board|
           if downstream_board
             orphan_board_ids -= [downstream_board.id]
             downstream_board_added = false
