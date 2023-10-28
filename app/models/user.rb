@@ -502,7 +502,10 @@ class User < ActiveRecord::Base
       self.possibly_full_premium = true if self.full_premium?
       self.possibly_full_premium ||= rand(20) == 1
     end
-    @do_track_boards = true if !self.id
+    if !self.id
+      self.settings['home_board_changed'] = true
+      @do_track_boards = true 
+    end
     UserLink.invalidate_cache_for(self)
     true
   end

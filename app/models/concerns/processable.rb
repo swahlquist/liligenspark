@@ -90,7 +90,7 @@ module Processable
   
   def assert_current_record!(flexible=false)
 #    Octopus.using(:master) do
-      diff = flextible ? 10 : 0
+      diff = flexible ? 10 : 0
       raise ActiveRecord::StaleObjectError if self && self.updated_at.to_f < self.class.where(:id => self.id).select('updated_at')[0].updated_at.to_f - diff
 #    end
   end

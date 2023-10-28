@@ -226,6 +226,7 @@ class Board < ActiveRecord::Base
       return self
     elsif self.settings['copy_id']
       copy_id = self.settings['copy_id']
+      return self if copy_id == self.global_id
       # Make sure to factor in @sub_id information
       if self.shallow_source
         return Board.find_by_global_id("#{copy_id}-#{self.related_global_id(self.user_id)}")
@@ -309,7 +310,7 @@ class Board < ActiveRecord::Base
   def generate_stats(frd=false)
     self.settings['stars'] = (self.settings['starred_user_ids'] || []).length
     self.settings['locale_stars'] = {}
-
+    @button_images = nil
     pops = {}
     home_pops = {}
     locales = []
@@ -1128,7 +1129,7 @@ class Board < ActiveRecord::Base
     
     if image_ids_hash != self.settings['image_ids_hash'] || new_sounds.length > 0 || orphan_sounds.length > 0
       if image_ids_hash != self.settings['image_ids_hash']
-        self.update_setting({'image_ids_hash' => image_ids_hash}, nil, :save_without_post_processing)
+        self.schedule(:update_setting, {'image_ids_hash' => image_ids_hash}, nil, :save_without_post_processing)
       end
       protected_images = ButtonImage.find_all_by_global_id(image_ids).select(&:protected?)
 #      protected_images = BoardButtonImage.images_for_board(self.id).select(&:protected?)
@@ -1739,6 +1740,11 @@ class Board < ActiveRecord::Base
     # This fills up half the cache, so no.
     # set_cached(key, res)
     res
+  end
+
+  def reload
+    @button_images = nil
+    super
   end
 
   def known_button_images

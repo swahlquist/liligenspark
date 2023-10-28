@@ -1,5 +1,6 @@
 module UpstreamDownstream
   extend ActiveSupport::Concern
+  LARGE_BOARD_LIST_LIMIT = 350
   
   def track_downstream_boards!(already_visited_ids=[], buttons_changed=false, trigger_stamp=nil)
     already_visited_ids ||= []
@@ -43,7 +44,8 @@ module UpstreamDownstream
 
     # short-circuit individual lookups, since the board most likely already knows about most of
     # its downstreams, and only one or a few will be new or updated    
-    Board.find_batches_by_global_id(top_board.settings['downstream_board_ids'] || [], batch_size: 50) do |board|
+    board_limit = self.possible_home_board? ? LARGE_BOARD_LIST_LIMIT : LARGE_BOARD_LIST_LIMIT / 2
+    Board.find_batches_by_global_id((top_board.settings['downstream_board_ids'] || [])[0, board_limit], batch_size: 50) do |board|
       id = board.global_id
       # also track button counts, used for board stats
       board_edit_stats[id] = board.edit_stats
@@ -52,7 +54,7 @@ module UpstreamDownstream
     unfound_boards += boards_with_children.map(&:last).flatten - boards_with_children.keys
     
     visited_count = 0
-    while !unfound_boards.empty? && visited_count < 700
+    while !unfound_boards.empty? && visited_count < board_limit * 1.5
       id = unfound_boards.shift
       visited_count += 1
       board = top_board 
@@ -108,7 +110,7 @@ module UpstreamDownstream
     end
     downs = first_downs
     # if there are too many downstreams, limit to two levels deep for damage control
-    downs += later_downs unless later_downs.length > 350
+    downs += later_downs unless later_downs.length > board_limit
     downs = downs.uniq.sort - [top_board.global_id]
     downstream_ids_changed = (downs != (top_board.settings['downstream_board_ids'] || []).uniq.sort)
     total_buttons = 0
@@ -191,7 +193,7 @@ module UpstreamDownstream
 
   def possible_home_board?
     return @possible_home_board if @possible_home_board != nil
-    @possible_home_board = !self.any_upstream || (self.parent_board_id && !(self.settings || {})['copy_id']) || (self.settings || {})['copy_id'] == self.global_id || !!UserBoardConnection.find_by(board_id: self.id, home: true)
+    @possible_home_board = !self.any_upstream || (self.settings || {})['home_board'] || (self.parent_board_id && !(self.settings || {})['copy_id']) || (self.settings || {})['copy_id'] == self.global_id || !!UserBoardConnection.find_by(board_id: self.id, home: true)
   end
 
   def touch_upstream_revisions
@@ -276,7 +278,7 @@ module UpstreamDownstream
             # home board, then instead of doing all the boards, only bother
             # continuing on home boards
             if depth < 10
-              board.reload.complete_stream_checks(notify_upstream_with_visited_ids + ["depth:#{depth + 1}"], trigger_stamp)
+              board.schedule(:complete_stream_checks, notify_upstream_with_visited_ids + ["depth:#{depth + 1}"], trigger_stamp)
             end
           else
             board.reload.schedule_track(notify_upstream_with_visited_ids + ["depth:#{depth + 1}"])
@@ -370,9 +372,10 @@ module UpstreamDownstream
   def get_immediately_downstream_board_ids
     downs = []
     (self.grid_buttons || []).each do |button|
-      if button['load_board'] && button['load_board']['id'] && button['id']
+      if button['load_board'] && button['load_board']['id'] && button['id'] && button['load_board']['id'] != self.global_id
         if !['home', 'top board'].include?((button['label'] || 'none').downcase)
-          if self.settings['copy_id'] && button['load_board']['id'] != self.settings['copy_id']
+          if self.settings['copy_id'] && button['load_board']['id'] == self.settings['copy_id']
+          else
             downs << button['load_board']['id']
           end
         end
