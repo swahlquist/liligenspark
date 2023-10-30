@@ -43,6 +43,7 @@ class ButtonImage < ActiveRecord::Base
   def track_image_use_later
     self.settings ||= {}
     # Only public boards call back to opensymbols, to prevent private user information leakage
+    return if RedisInit.any_queue_pressure?
     if !self.settings['suggestion'] && (self.settings['label'] || self.settings['search_term']) && !self.settings['skip_tracking']
       # TODO: don't track image uses for board copies, only for user edits
       Worker.schedule_for(:slow, ButtonImage, :perform_action, {

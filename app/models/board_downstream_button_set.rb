@@ -626,6 +626,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           bs.save
         end
       end
+      # Limit to only those sets that actually exist
+      board_ids_to_flush = BoardDownstreamButtonSet.where(board_id: Board.local_ids(board_ids_to_flush)).select('id, board_id').map{|bs| bs.related_global_id(bs.board_id) }
       board_ids_to_flush.each_slice(25) do |ids|
         BoardDownstreamButtonSet.schedule_for('slow', :flush_caches, ids, Time.now.to_i)
       end

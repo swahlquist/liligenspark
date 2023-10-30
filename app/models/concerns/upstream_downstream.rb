@@ -52,6 +52,7 @@ module UpstreamDownstream
       boards_with_children[id] = (board.settings['immediately_downstream_board_ids'] || [])
     end; 0
     unfound_boards += boards_with_children.map(&:last).flatten - boards_with_children.keys
+    Rails.logger.info('getting all non-pre-found')
     
     visited_count = 0
     while !unfound_boards.empty? && visited_count < board_limit * 1.5
@@ -59,9 +60,11 @@ module UpstreamDownstream
       visited_count += 1
       board = top_board 
       if id != "self"
-        Octopus.using(:master) do
-          board = Board.find_by_path(id)
-          board.reload if board
+        if !RedisInit.any_queue_pressure?
+          Octopus.using(:master) do
+            board = Board.find_by_path(id)
+            board.reload if board
+          end
         end
       end
       if board
@@ -269,7 +272,7 @@ module UpstreamDownstream
     # Step 2: trigger background heavy update for all immediately-upstream boards
     if notify_upstream_with_visited_ids
       depth = notify_upstream_with_visited_ids.select{|id| id.match(/depth:/) }.map{|id| id.split(/:/)[1].to_i rescue 0 }.max || 0
-      strict_upstream_edits = (depth >= 5) || (depth > 2 && RedisInit.any_queue_pressure?)
+      strict_upstream_edits = (depth >= 5) || (depth > 1 && RedisInit.any_queue_pressure?)
       ups = Board.find_all_by_global_id(self.settings['immediately_upstream_board_ids'] || [])
       ups.each do |board|
         if board && !notify_upstream_with_visited_ids.include?(board.global_id)
