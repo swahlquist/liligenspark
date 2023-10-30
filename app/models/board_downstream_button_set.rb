@@ -480,118 +480,121 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       all_buttons = []
       # set.data['tmp_buttons'] = []
       while boards_to_visit.length > 0
-        bv = boards_to_visit.shift
-        board_to_visit = Board.find_by_global_id(bv[:board_id])
-        if board_to_visit
-          images = board_to_visit.known_button_images
-          visited_board_ids << board_to_visit.global_id
-          # add all buttons
-          trans = BoardContent.load_content(board_to_visit, 'translations') || {}
+        boards_to_visit.sort_by!{|bv| [bv[:depth], bv[:index]] }
+        batch = boards_to_visit[0, 20]
+        boards_to_visit = boards_to_visit - batch
+        Board.find_all_by_global_id(batch.map{|bv| bv[:board_id] }).each do |board_to_visit|
+          bv = batch.detect{|v| v[:board_id] == board_to_visit.global_id}
+          if bv && board_to_visit
+            images = board_to_visit.known_button_images
+            visited_board_ids << board_to_visit.global_id
+            # add all buttons
+            trans = BoardContent.load_content(board_to_visit, 'translations') || {}
 
-          inflections = {}
-          (board_to_visit.settings['locales'] || []).each do |loc|
-            words_to_check = board_to_visit.grid_buttons.map{|b|
-              btn = (trans[b['id'].to_s] || {})[loc] || b
-              btn['vocalization'] || btn['label']
-            }.compact
-            inflections[loc] = WordData.inflection_locations_for(words_to_check, loc)
-          end
-
-          board_to_visit.grid_buttons.each_with_index do |button, idx|
-            image = images.detect{|i| button['image_id'] == i.global_id }
-            visible_level = 1
-            linked_level = 1
-            if button['level_modifications'] && button['level_modifications']['pre'] && button['level_modifications']['pre']['hidden']
-              visible_level = button['level_modifications'].select{|l, mod| mod['hidden'] == false }.map(&:first).sort.first.to_i || 10
-              if button['level_modifications']['override'] && button['level_modifications']['override']['hidden'] == false
-                visible_level = 1
-              end
-            end
-            if button['level_modifications'] && button['level_modifications']['pre'] && button['level_modifications']['pre']['link_disabled']
-              linked_level = button['level_modifications'].select{|l, mod| mod['link_disabled'] == false }.map(&:first).sort.first.to_i || 1
-              if button['level_modifications']['override'] && button['level_modifications']['override']['link_disabled'] == false
-                linked_level = 1
-              end
-            end
-            # set.data['tmp_buttons'] << {'id'=>button['id'],'board_id' => board_to_visit.global_id}
-            button_data = {
-              'id' => button['id'],
-              'locale' => board_to_visit.settings['locale'] || 'en',
-              'board_id' => board_to_visit.shallow_id,
-              'board_key' => board_to_visit.shallow_key,
-              'hidden' => !!button['hidden'],
-              'hidden_link' => !!bv[:hidden],
-              'visible_level' => visible_level,
-              'linked_level' => linked_level,
-              'image' => image && image.url,
-              'hc' => image && image.settings['hc'],
-              'image_id' => button['image_id'],
-              'sound_id' => button['sound_id'],
-              'label' => button['label'],
-              'ref_id' => button['ref_id'],
-              'force_vocalize' => button['add_vocalization'] == nil ? button['add_to_vocalization'] : button['add_vocalization'],
-              'vocalization' => button['vocalization'],
-              'link_disabled' => !!button['link_disabled'],
-              'border_color' => button['border_color'],
-              'background_color' => button['background_color'],
-              'depth' => bv[:depth] || 0
-            }
-            # Include translated strings in button_set data
-            (trans[button['id'].to_s] || {}).each do |loc, hash|
-              if hash['label'] || hash['vocalization']
-                button_data['tr'] ||= {}
-                button_data['tr'][loc] = [hash['label'] || '', hash['vocalization']].compact
-              end
+            inflections = {}
+            (board_to_visit.settings['locales'] || []).each do |loc|
+              words_to_check = board_to_visit.grid_buttons.map{|b|
+                btn = (trans[b['id'].to_s] || {})[loc] || b
+                btn['vocalization'] || btn['label']
+              }.compact
+              inflections[loc] = WordData.inflection_locations_for(words_to_check, loc)
             end
 
-            # Include localized inflections in button_set data
-            inflections.each do |loc, hash|
-              btn = (trans[button['id'].to_s] || {})[loc] || button
-              word = btn && (hash[btn['vocalization']] || hash[btn['label']])
-              if btn || word
-                lookup = btn['inflection_defaults'] || (board_to_visit.settings['locale'] == loc && button['inflection_defaults']) || {}
-                arr = btn['inflections'] || (board_to_visit.settings['locale'] == loc && button['inflections']) || []
-                loc_hash = {'nw' => 0, 'n' => 1, 'ne' => 2, 'w' => 3, 'e' => 4, 'sw' => 5, 's' => 6, 'se' => 7};
-                lookup.each do |pt, str|
-                  arr[loc_hash[pt]] ||= str if loc_hash[pt]
-                end
-                (word || {}).each do |pt, str|
-                  arr[loc_hash[pt]] ||= str if loc_hash[pt]
-                end
-                if arr.compact.length > 0
-                  button_data['infl'] ||= {}
-                  button_data['infl'][loc] = arr.compact
+            board_to_visit.grid_buttons.each_with_index do |button, idx|
+              image = images.detect{|i| button['image_id'] == i.global_id }
+              visible_level = 1
+              linked_level = 1
+              if button['level_modifications'] && button['level_modifications']['pre'] && button['level_modifications']['pre']['hidden']
+                visible_level = button['level_modifications'].select{|l, mod| mod['hidden'] == false }.map(&:first).sort.first.to_i || 10
+                if button['level_modifications']['override'] && button['level_modifications']['override']['hidden'] == false
+                  visible_level = 1
                 end
               end
-            end
+              if button['level_modifications'] && button['level_modifications']['pre'] && button['level_modifications']['pre']['link_disabled']
+                linked_level = button['level_modifications'].select{|l, mod| mod['link_disabled'] == false }.map(&:first).sort.first.to_i || 1
+                if button['level_modifications']['override'] && button['level_modifications']['override']['link_disabled'] == false
+                  linked_level = 1
+                end
+              end
+              # set.data['tmp_buttons'] << {'id'=>button['id'],'board_id' => board_to_visit.global_id}
+              button_data = {
+                'id' => button['id'],
+                'locale' => board_to_visit.settings['locale'] || 'en',
+                'board_id' => board_to_visit.shallow_id,
+                'board_key' => board_to_visit.shallow_key,
+                'hidden' => !!button['hidden'],
+                'hidden_link' => !!bv[:hidden],
+                'visible_level' => visible_level,
+                'linked_level' => linked_level,
+                'image' => image && image.url,
+                'hc' => image && image.settings['hc'],
+                'image_id' => button['image_id'],
+                'sound_id' => button['sound_id'],
+                'label' => button['label'],
+                'ref_id' => button['ref_id'],
+                'force_vocalize' => button['add_vocalization'] == nil ? button['add_to_vocalization'] : button['add_vocalization'],
+                'vocalization' => button['vocalization'],
+                'link_disabled' => !!button['link_disabled'],
+                'border_color' => button['border_color'],
+                'background_color' => button['background_color'],
+                'depth' => bv[:depth] || 0
+              }
+              # Include translated strings in button_set data
+              (trans[button['id'].to_s] || {}).each do |loc, hash|
+                if hash['label'] || hash['vocalization']
+                  button_data['tr'] ||= {}
+                  button_data['tr'][loc] = [hash['label'] || '', hash['vocalization']].compact
+                end
+              end
 
-            button_data.keys.each{|k| button_data.delete(k) if button_data[k] == nil }
-            # check for any linked buttons
-            # (unless it's a meta_home link, then it should have its own button set)
-            if button['load_board'] && button['load_board']['id'] && !button['meta_home']
-              if button['meta_home']
-                button_data['meta_home_id'] = button['load_board']['id']
-              else
-                linked_board = boards_hash[button['load_board']['id']]
-                linked_board ||= Board.find_by_global_id(button['load_board']['id'])
-                # hidden or disabled links shouldn't be tracked (why not???)
-                if linked_board # && !button['hidden'] && !button['link_disabled']
-                  button_data['linked_board_id'] = linked_board.shallow_id
-                  button_data['linked_board_key'] = linked_board.shallow_key
-                  button_data['home_lock'] = true if button['home_lock']
-                end
-                # mark the first link to each board as "preferred"
-                if linked_board && !linked_board_ids.include?(linked_board.global_id) # && !button['hidden'] && !button['link_disabled']
-                  button_data['preferred_link'] = true
-                  linked_board_ids << button['load_board']['id']
-                  boards_to_visit << {:board_id => linked_board.global_id, :depth => bv[:depth] + 1, :hidden => (bv[:hidden] || button['hidden'] || button['link_disabled']), :index => idx} if !visited_board_ids.include?(linked_board.global_id)
+              # Include localized inflections in button_set data
+              inflections.each do |loc, hash|
+                btn = (trans[button['id'].to_s] || {})[loc] || button
+                word = btn && (hash[btn['vocalization']] || hash[btn['label']])
+                if btn || word
+                  lookup = btn['inflection_defaults'] || (board_to_visit.settings['locale'] == loc && button['inflection_defaults']) || {}
+                  arr = btn['inflections'] || (board_to_visit.settings['locale'] == loc && button['inflections']) || []
+                  loc_hash = {'nw' => 0, 'n' => 1, 'ne' => 2, 'w' => 3, 'e' => 4, 'sw' => 5, 's' => 6, 'se' => 7};
+                  lookup.each do |pt, str|
+                    arr[loc_hash[pt]] ||= str if loc_hash[pt]
+                  end
+                  (word || {}).each do |pt, str|
+                    arr[loc_hash[pt]] ||= str if loc_hash[pt]
+                  end
+                  if arr.compact.length > 0
+                    button_data['infl'] ||= {}
+                    button_data['infl'][loc] = arr.compact
+                  end
                 end
               end
+
+              button_data.keys.each{|k| button_data.delete(k) if button_data[k] == nil }
+              # check for any linked buttons
+              # (unless it's a meta_home link, then it should have its own button set)
+              if button['load_board'] && button['load_board']['id'] && !button['meta_home']
+                if button['meta_home']
+                  button_data['meta_home_id'] = button['load_board']['id']
+                else
+                  linked_board = boards_hash[button['load_board']['id']]
+                  linked_board ||= Board.find_by_global_id(button['load_board']['id'])
+                  # hidden or disabled links shouldn't be tracked (why not???)
+                  if linked_board # && !button['hidden'] && !button['link_disabled']
+                    button_data['linked_board_id'] = linked_board.shallow_id
+                    button_data['linked_board_key'] = linked_board.shallow_key
+                    button_data['home_lock'] = true if button['home_lock']
+                  end
+                  # mark the first link to each board as "preferred"
+                  if linked_board && !linked_board_ids.include?(linked_board.global_id) # && !button['hidden'] && !button['link_disabled']
+                    button_data['preferred_link'] = true
+                    linked_board_ids << button['load_board']['id']
+                    boards_to_visit << {:board_id => linked_board.global_id, :depth => bv[:depth] + 1, :hidden => (bv[:hidden] || button['hidden'] || button['link_disabled']), :index => idx} if !visited_board_ids.include?(linked_board.global_id)
+                  end
+                end
+              end
+              all_buttons << button_data
             end
-            all_buttons << button_data
           end
         end
-        boards_to_visit.sort_by!{|bv| [bv[:depth], bv[:index]] }
       end
       set.data['included_board_ids'] = visited_board_ids
       set.data['buttons'] = all_buttons
