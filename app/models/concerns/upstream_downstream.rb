@@ -45,6 +45,11 @@ module UpstreamDownstream
     # short-circuit individual lookups, since the board most likely already knows about most of
     # its downstreams, and only one or a few will be new or updated    
     board_limit = self.possible_home_board? ? LARGE_BOARD_LIST_LIMIT : LARGE_BOARD_LIST_LIMIT / 2
+    if !self.possible_home_board? && RedisInit.any_queue_pressure?
+      self.schedule_track(already_visited_ids)
+      Rails.logger.info('too busy and this is not a home board, try later')
+      return 'delayed'
+    end
     Board.find_batches_by_global_id((top_board.settings['downstream_board_ids'] || [])[0, board_limit], batch_size: 50) do |board|
       id = board.global_id
       # also track button counts, used for board stats
@@ -54,33 +59,36 @@ module UpstreamDownstream
     unfound_boards += boards_with_children.map(&:last).flatten - boards_with_children.keys
     Rails.logger.info('getting all non-pre-found')
     
+    
     visited_count = 0
     while !unfound_boards.empty? && visited_count < board_limit * 1.5
-      id = unfound_boards.shift
-      visited_count += 1
-      board = top_board 
-      if id != "self"
-        if !RedisInit.any_queue_pressure?
-          Octopus.using(:master) do
-            board = Board.find_by_path(id)
-            board.reload if board
-          end
-        end
+      batch = unfound_boards.slice(0, 50)
+      unfound_boards = unfound_boards - batch
+      list = []
+      Octopus.using(:master) do
+        list = Board.find_all_by_global_id(batch)
       end
-      if board
-        children_ids = []
-        # also track button counts, used for board stats
-        board_edit_stats[id] = board.edit_stats
-        downs = (board.settings['immediately_downstream_board_ids'] || [])
-        downs.each do |child_id|
-          children_ids << child_id
-          if !boards_with_children[child_id]
-            unfound_boards << child_id
+      list = [top_board] + list if batch.include?('self')
+      list.each do |board|
+        visited_count += 1
+        if board
+          id = board.global_id
+          children_ids = []
+          # also track button counts, used for board stats
+          board_edit_stats[id] = board.edit_stats
+          downs = (board.settings['immediately_downstream_board_ids'] || [])
+          downs.each do |child_id|
+            children_ids << child_id
+            if !boards_with_children[child_id]
+              unfound_boards << child_id
+            end
           end
+          boards_with_children[id] = children_ids
         end
-        boards_with_children[id] = children_ids
       end
     end
+
+    Rails.logger.info('checking for downstream availability')
 
     # Now that we have all possible boards loaded, gather only those accessible from the root
     relevant_boards = {}
