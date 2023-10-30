@@ -193,7 +193,11 @@ module UpstreamDownstream
 
   def possible_home_board?
     return @possible_home_board if @possible_home_board != nil
-    @possible_home_board = !self.any_upstream || (self.settings || {})['home_board'] || (self.parent_board_id && !(self.settings || {})['copy_id']) || (self.settings || {})['copy_id'] == self.global_id || !!UserBoardConnection.find_by(board_id: self.id, home: true)
+    @possible_home_board = !self.any_upstream || 
+          (self.settings || {})['home_board'] || 
+          (self.parent_board_id && !(self.settings || {})['copy_id']) || 
+          (self.settings || {})['copy_id'] == self.global_id || 
+          !!UserBoardConnection.find_by(board_id: self.id, home: true)
   end
 
   def touch_upstream_revisions
@@ -265,7 +269,7 @@ module UpstreamDownstream
     # Step 2: trigger background heavy update for all immediately-upstream boards
     if notify_upstream_with_visited_ids
       depth = notify_upstream_with_visited_ids.select{|id| id.match(/depth:/) }.map{|id| id.split(/:/)[1].to_i rescue 0 }.max || 0
-      strict_upstream_edits = (depth >= 5)
+      strict_upstream_edits = (depth >= 5) || (depth > 2 && RedisInit.any_queue_pressure?)
       ups = Board.find_all_by_global_id(self.settings['immediately_upstream_board_ids'] || [])
       ups.each do |board|
         if board && !notify_upstream_with_visited_ids.include?(board.global_id)
@@ -349,9 +353,8 @@ module UpstreamDownstream
   def schedule_downstream_checks(trigger_stamp)
     if @track_downstream_boards || @buttons_affecting_upstream_changed
       if trigger_stamp && self.settings['last_tracked'] && self.settings['last_tracked'] > trigger_stamp
-      else
+      elsif self.possible_home_board? || !RedisInit.any_queue_pressure?
         self.schedule_track([])
-        # self.schedule(:track_downstream_boards!, [], @buttons_affecting_upstream_changed, trigger_stamp || Time.now.to_i)
       end
       @buttons_affecting_upstream_changed = nil
       @track_downstream_boards = nil

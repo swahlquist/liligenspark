@@ -2950,6 +2950,7 @@ describe Board, :type => :model do
       b.instance_variable_set('@buttons_changed', true)
       b.save
       expect(u2.reload.updated_at).to be < 2.weeks.ago
+      RemoteAction.process_all
       Worker.process_queues
       u.reload
       expect(u2.reload.updated_at).to be > 2.weeks.ago

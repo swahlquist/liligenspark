@@ -136,7 +136,11 @@ module Uploadable
       end
     end
     if self.url && self.settings && self.settings['content_type'] && self.settings['content_type'].match(/image\/svg/) && !self.settings['rasterized']
-      self.schedule(:assert_raster)
+      if self.settings['raster_attempted_at'] && self.settings['raster_attempted_at'] > 24.hours.ago.iso8601
+        # prevent scheduling loop
+      else
+        self.schedule(:assert_raster)
+      end
     end
     true
   end
@@ -154,6 +158,8 @@ module Uploadable
         self.settings['rasterized'] = 'from_url'
         self.save
       else
+        self.settings['raster_attempted_at'] = Time.now.iso8601
+        self.save
         self.schedule(:upload_to_remote, self.url, true)
       end
     end

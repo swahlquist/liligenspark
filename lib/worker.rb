@@ -40,10 +40,6 @@ module Worker
     Board.where(id: hash['Board']).having("COUNT(user_id) > #{cutoff}").group('user_id').count('user_id')
   end
 
-  # sql = ["SELECT COUNT(user_id) FROM boards GROUP BY"]
-  # res = ActiveRecord::Base.connection.execute(ActiveRecord::Base.send(:sanitize_sql_array, sql))
-  # Board.where(id: classes['Board']).having("COUNT(user_id) > 50").group('user_id').count('user_id')
-
   def self.process_queues
     RemoteAction.process_all
     super
