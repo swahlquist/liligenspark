@@ -184,7 +184,7 @@ module UpstreamDownstream
       if (downstream_boards_changed || downstream_buttons_count_changed) && !downstream_ids_changed && !buttons_changed && RedisInit.queue_pressure?
         # If queues are backed up, and all that's changed is the revision hash then 
         # instead of scheduling heavy tracks for all upstream boards, just change 
-        # sthe revision hash for all upstreams
+        # the revision hash for all upstreams
         board.touch_upstream_revisions if downstream_boards_changed
       else
         board.complete_stream_checks(already_visited_ids + (top_board.settings['tracked_visited_ids'] || []), trigger_stamp)
@@ -281,8 +281,13 @@ module UpstreamDownstream
     if notify_upstream_with_visited_ids
       depth = notify_upstream_with_visited_ids.select{|id| id.match(/depth:/) }.map{|id| id.split(/:/)[1].to_i rescue 0 }.max || 0
       strict_upstream_edits = (depth >= 5) || (depth > 1 && RedisInit.any_queue_pressure?)
-      ups = Board.find_all_by_global_id(self.settings['immediately_upstream_board_ids'] || [])
-      ups.each do |board|
+      up_ids = self.settings['immediately_upstream_board_ids'] || []
+      # If you have a lot of boards points to you, you're probably a home board
+      # of some sort, so it's not as important that everything above you be updated
+      if RedisInit.any_queue_pressure?
+        up_ids = up_ids[0, 3]
+      end
+      Board.find_batches_by_global_id(up_ids, batch_size: 3) do |board|
         if board && !notify_upstream_with_visited_ids.include?(board.global_id)
           if trigger_stamp && board.settings['last_tracked'] && board.settings['last_tracked'] > trigger_stamp
             # if the board has been updated more recently than the current tracking sequence started, then
@@ -292,8 +297,11 @@ module UpstreamDownstream
             # if we've recursed many times already, and this board isn't a known
             # home board, then instead of doing all the boards, only bother
             # continuing on home boards
-            if depth < 10
-              board.schedule(:complete_stream_checks, notify_upstream_with_visited_ids + ["depth:#{depth + 1}"], trigger_stamp)
+            new_visited_ids = (notify_upstream_with_visited_ids + [self.global_id] + ["depth:#{depth + 1}"]).uniq
+            if depth < 8
+              board.complete_stream_checks(new_visited_ids, trigger_stamp)
+            elsif depth < 10
+              board.schedule_for(:slow, :complete_stream_checks, new_visited_ids, trigger_stamp)
             end
           else
             board.reload.schedule_track(notify_upstream_with_visited_ids + ["depth:#{depth + 1}"])

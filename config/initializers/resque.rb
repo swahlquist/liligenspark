@@ -73,9 +73,12 @@ module RedisInit
   def self.any_queue_pressure?
     return @any_queue_pressure['res'] if @any_queue_pressure != nil && @any_queue_pressure['ts'] > 1.minute.ago.to_i
     @any_queue_pressure = {
-      'res' => (queue_size('slow') > (ENV['QUEUE_SLOW_BOG'] || 20000)) || (queue_size('default') > (ENV['QUEUE_DEFAULT_BOG'] || 10000)) || queue_pressure?,
+      'res' => (queue_size('slow') > (ENV['QUEUE_SLOW_BOG'] || 20000)) || 
+            (queue_size('default') > (ENV['QUEUE_DEFAULT_BOG'] || 10000)) || 
+            queue_pressure?,
       'ts' => Time.now.to_i
     }
+    !!@any_queue_pressure['res']
   end
 
   def self.queue_pressure?
@@ -89,7 +92,9 @@ module RedisInit
         return true
       end
     end
-    ENV['STOP_CACHING'] || ENV['QUEUE_PRESSURE'] || (ENV['QUEUE_MAX'] && slow_size > ENV['QUEUE_MAX'].to_i)
+    !!(ENV['STOP_CACHING'] || 
+        ENV['QUEUE_PRESSURE'] || 
+        (ENV['QUEUE_MAX'] && slow_size > ENV['QUEUE_MAX'].to_i))
   end
 
   def self.size_check(verbose=false)
