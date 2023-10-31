@@ -214,7 +214,8 @@ module UpstreamDownstream
   def touch_upstream_revisions
     upstreams = [self]
     visited_ids = []
-    while upstreams.length > 0
+    visited_cutoff = RedisInit.any_queue_pressure? ? LARGE_BOARD_LIST_LIMIT / 4 : LARGE_BOARD_LIST_LIMIT / 2
+    while upstreams.length > 0 && visited_ids.length < visited_cutoff
       board = upstreams.shift
       visited_ids << board.global_id
       if board != self
