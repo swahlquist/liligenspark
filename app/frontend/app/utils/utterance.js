@@ -595,7 +595,7 @@ var utterance = EmberObject.extend({
         }
       });
     }
-    if(original_button.condense_items) {
+    if(original_button && original_button.condense_items) {
       emberSet(b, 'condense_items', original_button.condense_items);
     }
     // add button to the raw button list
