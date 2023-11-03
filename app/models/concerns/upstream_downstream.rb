@@ -212,21 +212,24 @@ module UpstreamDownstream
   end
 
   def touch_upstream_revisions
-    upstreams = [self]
+    upstreams = [self.global_id]
     visited_ids = []
     visited_cutoff = RedisInit.any_queue_pressure? ? LARGE_BOARD_LIST_LIMIT / 4 : LARGE_BOARD_LIST_LIMIT / 2
     while upstreams.length > 0 && visited_ids.length < visited_cutoff
-      board = upstreams.shift
-      visited_ids << board.global_id
-      if board != self
-        rev = (board.settings['full_set_revision'] || 'na').split(/s/)[0]
-        board.settings['full_set_revision'] = rev + 's' + (self.settings['full_set_revision'] || self.id.to_s)
-        board.save_subtly
-      end
-      ups = Board.find_all_by_global_id(board.settings['immediately_upstream_board_ids'] || [])
-      ups.each do |up|
-        if !visited_ids.include?(up.global_id)
-          upstreams.push(up)
+      batch = upstreams[0, 20]
+      upstreams = upstreams - batch
+      Board.find_all_by_global_id(batch).each do |board|
+        visited_ids << board.global_id
+        if board != self.global_id
+          rev = (board.settings['full_set_revision'] || 'na').split(/s/)[0]
+          board.settings['full_set_revision'] = rev + 's' + (self.settings['full_set_revision'] || self.id.to_s)
+          board.save_subtly
+        end
+        up_ids = board.settings['immediately_upstream_board_ids'] || []
+        up_ids.each do |up_id|
+          if !visited_ids.include?(up_id)
+            upstreams.push(up_id)
+          end
         end
       end
     end

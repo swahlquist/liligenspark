@@ -406,13 +406,19 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       
       set.data['full_set_revision'] = board.full_set_revision
       existing_board_ids = (set.data || {})['linked_board_ids'] || []
-      up_ids = board.settings['immediately_upstream_board_ids'] || []
+
+      # Step 1: Check for an already-generated upstream board and use that if available
+      # If more than a few upstream boards, this will take too long and isn't explicitly necessary
+      up_ids = (board.settings['immediately_upstream_board_ids'] || [])[0, 10]
       # Shallow clones shouldn't travel upstream beyond the root board in the set
       if board.instance_variable_get('@sub_id')
         up_ids = []
         if board.root_board && board.root_board != board
           up_ids = [board.root_board.global_id]
         end
+      end
+      if board.settings['copy_id'] && board.settings['copy_id'] != board.global_id
+        up_ids = [board.settings['copy_id']] + up_ids
       end
       Board.find_batches_by_global_id(up_ids, :batch_size => 3) do |brd|
         set.data['found_upstream_board'] = true
@@ -474,6 +480,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
 #        boards_hash[brd.global_id] = brd
 #      end
       
+      # Step 2: Traverse all downstream boards and add in buttons from all these boards
+      # TODO: Should we limit the depth?
       boards_to_visit = [{:board_id => board.global_id, :depth => 0, :index => 0}]
       visited_board_ids = []
       linked_board_ids = []
@@ -596,6 +604,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           end
         end
       end
+
+      # Step 3: Update the resulting data
       set.data['included_board_ids'] = visited_board_ids
       set.data['buttons'] = all_buttons
       set.data['source_id'] = nil
@@ -604,6 +614,10 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
       set.detach_extra_data(true)
       set.save
 
+      # Step 4: Any boards that used to potentially use this board as their
+      # source but who can no longer do that due to a link removal
+      # need to have their caches flushed. Also flush the cache for this
+      # board since we just changed it.
       board_ids_to_flush = [board.global_id]
       lost_board_ids = existing_board_ids - set.data['linked_board_ids']
       # Any boards that we no longer referenced are going to need their
@@ -613,8 +627,8 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
         board_ids_to_flush << id
       end
 
-      # Retrieve all linked boards and set them to this source
-      Board.find_batches_by_global_id(set.data['linked_board_ids'] || [], :batch_size => 3) do |brd|
+      # Retrieve all linked boards and set them to this source or mark them as needing a cache flush
+      Board.find_batches_by_global_id(set.data['linked_board_ids'] || [], :batch_size => 10) do |brd|
         bs = brd.board_downstream_button_set
         # NOTE: it was too expensive updating everyone with the wrong source,
         # so I changed it to only update everyone with no source, since 
@@ -629,7 +643,7 @@ class BoardDownstreamButtonSet < ActiveRecord::Base
           bs.save
         end
       end
-      # Limit to only those sets that actually exist
+      # Limit to only those sets that actually exist for performance
       board_ids_to_flush = BoardDownstreamButtonSet.where(board_id: Board.local_ids(board_ids_to_flush)).select('id, board_id').map{|bs| bs.related_global_id(bs.board_id) }
       board_ids_to_flush.each_slice(25) do |ids|
         BoardDownstreamButtonSet.schedule_for('slow', :flush_caches, ids, Time.now.to_i)

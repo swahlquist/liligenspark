@@ -56,6 +56,7 @@ class AssertBoardIndexes < ActiveRecord::Migration[5.0]
   # ALTER TABLE boards ALTER COLUMN id SET DEFAULT nextval('boards_id_seq'::regclass);
   # ALTER SEQUENCE boards_id_seq OWNED BY NONE;
   # ALTER SEQUENCE boards_id_seq OWNED BY boards.id;
+  # DROP TABLE boards_old;
 
 
 
