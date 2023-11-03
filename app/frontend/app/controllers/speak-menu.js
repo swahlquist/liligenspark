@@ -180,11 +180,25 @@ export default modal.ModalController.extend({
             utterance.apply_contraction(contraction);
           }
         } else if(button == 'menu_quote_button') {
-          utterance.add_button({label: "\"", vocalization: "+\""});
-          click();
+          app_state.activate_button({vocalization: '+"'}, {
+            label: ',',
+            vocalization: '+"',
+            prevent_return: true,
+            button_id: null,
+            source: 'speak_menu',
+            board: {id: 'speak_menu', key: 'core/speak_menu'},
+            type: 'speak'
+          });
         } else if(button == 'menu_colon_button') {
-          utterance.add_button({label: ":", vocalization: "+: "});
-          click();
+          app_state.activate_button({vocalization: '+:'}, {
+            label: ',',
+            vocalization: '+:',
+            prevent_return: true,
+            button_id: null,
+            source: 'speak_menu',
+            board: {id: 'speak_menu', key: 'core/speak_menu'},
+            type: 'speak'
+          });
         } else if(button == 'menu_exclamation_button') {
           app_state.activate_button({vocalization: '+!'}, {
             label: '!',
@@ -196,8 +210,15 @@ export default modal.ModalController.extend({
             type: 'speak'
           });
         } else if(button == 'menu_comma_button') {
-          utterance.add_button({label: ",", vocalization: "+,"});
-          click();
+          app_state.activate_button({vocalization: '+,'}, {
+            label: ',',
+            vocalization: '+,',
+            prevent_return: true,
+            button_id: null,
+            source: 'speak_menu',
+            board: {id: 'speak_menu', key: 'core/speak_menu'},
+            type: 'speak'
+          });
         } else if(button == 'menu_question_button') {
           app_state.activate_button({vocalization: '+?'}, {
             label: '?',
@@ -220,7 +241,15 @@ export default modal.ModalController.extend({
               type: 'speak'
             });
           } else if(full_event.swipe_direction == 'w') {
-            utterance.add_button({label: ",", vocalization: "+,"});
+            app_state.activate_button({vocalization: '+,'}, {
+              label: ',',
+              vocalization: '+,',
+              prevent_return: true,
+              button_id: null,
+              source: 'speak_menu',
+              board: {id: 'speak_menu', key: 'core/speak_menu'},
+              type: 'speak'
+            });
           } else if(full_event.swipe_direction == 'n') {
             app_state.activate_button({vocalization: '+?'}, {
               label: '?',
