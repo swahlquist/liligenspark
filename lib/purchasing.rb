@@ -304,6 +304,7 @@ module Purchasing
     elsif type.match(/^long_term/)
       if user.communicator_role? && user.fully_purchased? && !user.eval_account?
         valid_amount = false unless amount >= Purchasing.communicator_repurchase_cost
+        amount = [145, amount].min
         description = "CoughDrop cloud extras re-purchase"
         type = 'refresh_' + type
       else
