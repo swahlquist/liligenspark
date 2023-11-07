@@ -249,6 +249,8 @@ var speecher = EmberObject.extend({
       res.push({
         id: v.voiceURI || (v.name + " " + v.lang),
         name: name,
+        system_voice: v.system_voice,
+        addon_voice: v.addon_voice,
         locale: locale,
         lang: lang,
         index: idx
