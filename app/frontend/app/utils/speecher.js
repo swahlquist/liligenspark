@@ -90,6 +90,7 @@ var speecher = EmberObject.extend({
               lang: lang,
               ident: id,
               name: name,
+              system_voice: true,
               voiceURI: 'tts:' + lang + ":" + id
             });
           });
@@ -127,6 +128,7 @@ var speecher = EmberObject.extend({
           more_voices.push({
             lang: voice.locale,
             name: voice.name,
+            addon_voice: true,
             voiceURI: "extra:" + voice.voice_id
           });
         }
@@ -263,6 +265,14 @@ var speecher = EmberObject.extend({
       } else if(a.lang == current_lang && b.lang != current_lang) {
         a_first = true;
       } else if(b.lang == current_lang && a.lang != current_lang) {
+        b_first = true;
+      } else if(a.addon_voice && !b.addon_voice) {
+        a_first = true;
+      } else if(b.addon_voice && !a.addon_voice) {
+        b_first = true;
+      } else if(a.system_voice && !b.system_voice) {
+        a_first = true;
+      } else if(b.system_voice && !a.system_voice) {
         b_first = true;
       }
       if(a_first) {
