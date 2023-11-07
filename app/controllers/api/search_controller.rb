@@ -179,7 +179,6 @@ class Api::SearchController < ApplicationController
         # src = Nokogiri(req.body).css('audio source')[0]['src']
         # req = Typhoeus.get("https://abair.ie#{src}")
       else
-        raise req.body.to_json
         return api_error 400, {error: 'endpoint failed to respond'}
         req = nil
       end
