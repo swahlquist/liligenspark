@@ -90,7 +90,7 @@ var speecher = EmberObject.extend({
               lang: lang,
               ident: id,
               name: name,
-              system_voice: true,
+              system_voice: (name.match(/^System/) || (id && id.match(/ttsbundle\.siri/)) || (id && id.match(/voice\.compact/))),
               voiceURI: 'tts:' + lang + ":" + id
             });
           });
