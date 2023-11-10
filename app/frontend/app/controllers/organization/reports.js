@@ -125,10 +125,10 @@ export default Controller.extend({
             var two_weeks_ago = window.moment().add(-14, 'day').toISOString();
             list.forEach(function(u) {
               if(u && u.goal && u.goal.last_tracked) {
-                u.goal.recently_tracked = u.goal.last_tracked > two_weeks_ago;
+                emberSet(u.goal, 'recently_tracked', u.goal.last_tracked > two_weeks_ago);
               }
               if(u.org_status) {
-                u.org_status_class = 'glyphicon glyphicon-' + u.org_status.state;
+                emberSet(u, 'org_status_class', 'glyphicon glyphicon-' + u.org_status.state);
               }
             });
             _this.set('results.list', list);
