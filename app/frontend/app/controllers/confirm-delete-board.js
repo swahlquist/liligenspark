@@ -39,7 +39,7 @@ export default modal.ModalController.extend({
     deleteBoard: function(decision) {
       var _this = this;
       var board = this.get('model.board');
-      _this.set('model.deleting', true);
+      _this.set('model.deleting', {deleting: true});
       var load_promises = [];
       var other_board_ids = [];
       if(this.get('delete_downstream')) {
@@ -89,6 +89,10 @@ export default modal.ModalController.extend({
           find.then(function(b) {
             if(board.orphan || b.get('user_name') == board.get('user_name')) {
               runLater(function() {
+                if(_this.get('model.deleting')) {
+                  _this.set('model.deleting', {deleting: true, board_key: b.get('key')});
+                }
+
                 b.deleteRecord();
                 deleted_ids.push(b.get('id'));
                 b.save().then(function() {
