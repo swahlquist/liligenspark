@@ -924,6 +924,35 @@ class Board < ActiveRecord::Base
     self.save
     @skip_post_process = false
   end
+
+  def route_to(board_id)
+    root = self
+    visited = []
+    to_check = [root.global_id]
+    ups = {}
+    while to_check.length > 0
+      ref = Board.find_by_path(to_check.shift)
+      puts ref.key
+      visited << ref.global_id
+      if (ref.settings['downstream_board_ids'] || []).include?(board_id)
+        puts "maybe... #{ref.key}"
+        if (ref.settings['immediately_downstream_board_ids'] || []).include?(board_id)
+          puts "found it!"
+          puts ref.key
+          ref_id = ref.global_id
+          while ups[ref_id]
+            ref_id = ups[ref_id][1]
+            puts ups[ref_id][0]
+          end
+        end
+        ref.settings['immediately_downstream_board_ids'].each do |id|
+          ups[id] ||= [ref.key, ref.global_id]
+        end
+        to_check += (ref.settings['immediately_downstream_board_ids']) - visited
+      end
+    end
+    puts "done"
+  end
   
   def post_process
     if @skip_post_process
