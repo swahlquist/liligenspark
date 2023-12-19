@@ -932,23 +932,29 @@ class Board < ActiveRecord::Base
     ups = {}
     while to_check.length > 0
       ref = Board.find_by_path(to_check.shift)
-      puts ref.key
-      visited << ref.global_id
-      if (ref.settings['downstream_board_ids'] || []).include?(board_id)
-        puts "maybe... #{ref.key}"
-        if (ref.settings['immediately_downstream_board_ids'] || []).include?(board_id)
-          puts "found it!"
-          puts ref.key
-          ref_id = ref.global_id
-          while ups[ref_id]
-            ref_id = ups[ref_id][1]
-            puts ups[ref_id][0]
+      if ref
+        puts "#{ref.key} #{to_check.length} #{visited.length}"
+        visited << ref.global_id
+        if (ref.settings['downstream_board_ids'] || []).include?(board_id)
+          puts "maybe... #{ref.key}"
+          if (ref.settings['immediately_downstream_board_ids'] || []).include?(board_id)
+            puts "found it!"
+            puts ref.key
+            ref_id = ref.global_id
+            done_ups = {}
+            while ups[ref_id] && !done_ups[ref_id]
+              ref_id = ups[ref_id][1]
+              done_ups[ref_id] = true
+              puts ups[ref_id][0]
+            end
+            to_check = []
+          else
+            to_check += (ref.settings['downstream_board_ids']) - visited
+          end
+          ref.settings['immediately_downstream_board_ids'].each do |id|
+            ups[id] ||= [ref.key, ref.global_id]
           end
         end
-        ref.settings['immediately_downstream_board_ids'].each do |id|
-          ups[id] ||= [ref.key, ref.global_id]
-        end
-        to_check += (ref.settings['immediately_downstream_board_ids']) - visited
       end
     end
     puts "done"
