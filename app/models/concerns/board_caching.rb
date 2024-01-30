@@ -16,7 +16,6 @@ module BoardCaching
   # the user should have view access if the board is shared with any of their supervisees
 
   def update_available_boards
-    # find all private boards authored by this user
     # TODO: sharding
 
     if self.settings && self.settings['available_private_board_ids'] && (self.settings['available_private_board_ids']['generated'] || 0) > 60.minutes.ago.to_i
@@ -35,6 +34,7 @@ module BoardCaching
     self.settings['available_private_board_ids']['generated'] = Time.now.to_i
     self.save(touch: false)
     authored = []
+    # find all private boards authored by this user
     Board.where(:public => false, :user_id => self.id).select('id').find_in_batches(batch_size: 200) do |batch|
       batch.each do |brd|
         authored << brd.global_id
