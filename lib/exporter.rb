@@ -1,18 +1,57 @@
 module Exporter
-  def self.export_logs(user_id, anonymized=false, zipper=nil)
+  def self.export_logs(user_id, anonymized=false, zipper=nil, cutoff=nil)
     user = User.find_by_global_id(user_id)
-    hash = log_json(user, LogSession.where(user_id: user.id), anonymized)
     ext = anonymized ? '.obla' : '.obl'
-    fn = (anonymized ? "aac-logs-#{user.anonymized_identifier[0, 10]}" : "aac-logs-#{user.user_name}") + ext
-    if zipper
-      zipper.add("logs/#{fn}", JSON.pretty_generate(hash))
-    else
-      file = Tempfile.new(['log', ext])
-      file.write(JSON.pretty_generate(hash))
-      file.close
-      ts = Time.now.iso8601[0, 16].sub(/:/, '-')
-      Uploader.remote_upload("downloads/logs/user/#{ts}/#{user.anonymized_identifier}/#{fn}", file.path, 'application/obl')
+    fn = anonymized ? "aac-logs-#{user.anonymized_identifier[0, 10]}" : "aac-logs-#{user.user_name}"
+    sessions = LogSession.where(user_id: user.id)
+    if cutoff.is_a?(Array)
+      sessions = sessions.where(['started_at > ? AND started_at < ?', cutoff[0], cutoff[1]])
+    elsif cutoff
+      sessions = sessions.where(['started_at > ?', cutoff])
     end
+    chunks = [sessions]
+    if sessions.count > 2000
+      chunks = []
+      quarters = sessions.group("CONCAT(date_part('quarter', started_at), '-', date_part('year', started_at))").count("CONCAT(date_part('quarter', started_at), '-', date_part('year', started_at))")
+      quarters.each do |quarter, cnt|
+        q, yr = quarter.split(/-/).map(&:to_i)
+        if cnt > 0 && q && yr && yr > 2000 && yr <= Time.now.year
+          chunks << sessions.where(["date_part('year', started_at) = ? AND date_part('quarter', started_at) = ?", yr, q])
+        end
+      end
+    end
+    
+    # If chunking is required, the result will need to be a zip file, not a single obl/obla
+    if chunks.length > 1 && !zipper && !cutoff
+      file = Tempfile.new(['log-data', '.zip'])
+      file.close
+      OBF::Utils.build_zip(file.path) do |zipper|
+        export_logs(user_id, anonymized, zipper, cutoff)
+      end
+      export_fn = fn + ".zip"
+      ts = Time.now.iso8601[0, 16].sub(/:/, '-')
+      return Uploader.remote_upload("downloads/logs/user/#{ts}/#{user.anonymized_identifier}/#{export_fn}", file.path, 'application/zip')
+    end
+
+    upload_res = nil
+
+    chunks.each_with_index do |sub_sessions, idx|
+      puts "chunk #{idx}/#{chunks.length} for #{user.user_name}" if chunks.length > 1
+      hash = log_json(user, sub_sessions, anonymized)
+      chunk_fn = fn
+      chunk_fn += "-#{idx}" if chunks.length > 1
+      chunk_fn += ext
+      if zipper
+        zipper.add("logs/#{chunk_fn}", JSON.pretty_generate(hash))
+      else
+        file = Tempfile.new(['log', ext])
+        file.write(JSON.pretty_generate(hash))
+        file.close
+        ts = Time.now.iso8601[0, 16].sub(/:/, '-')
+        upload_res = Uploader.remote_upload("downloads/logs/user/#{ts}/#{user.anonymized_identifier}/#{chunk_fn}", file.path, 'application/obl')
+      end
+    end
+    upload_res
   end
   
   def self.export_user(user_id)
@@ -115,9 +154,9 @@ More information about the file formats being used is available at https://www.o
     
     header = log_json_header(user, anonymized)
     if sessions.respond_to?(:find_in_batches)
-      sessions.find_in_batches(batch_size: 5) do |batch|
+      sessions.find_in_batches(batch_size: 10) do |batch|
         batch.each do |session|
-          if session.data && session.started_at && session.ended_at && ['session', 'assessment', 'note'].include?(session.log_type)
+          if session && session.data && session.started_at && session.ended_at && ['session', 'assessment', 'note'].include?(session.log_type)
             log_json_session(session, header, anonymized) 
           end
         end
@@ -145,7 +184,10 @@ More information about the file formats being used is available at https://www.o
   def self.log_json_session(log_session, header, anonymized=false)
     header ||= log_json_header(log_session, anonymized)
     session_id = anonymized ? log_session.anonymized_identifier : log_session.global_id
-    device_id = anonymized ? log_session.device.anonymized_identifier : log_session.device.global_id
+    device_id = nil
+    if log_session.device
+      device_id = anonymized ? log_session.device.anonymized_identifier : log_session.device.global_id
+    end
     session_type = log_session.log_type || 'log'
     session_type = 'log' if session_type == 'session'
     session = {
@@ -281,11 +323,14 @@ More information about the file formats being used is available at https://www.o
         end
         if next_events.length > 0
           next_events.each do |next_event|
+            next_event ||= {}
+            next_event['action'] ||= {}
             action = {action: ":#{next_event['action']['action']}"}
             if next_event['action']['new_id']
               dest_id = next_event['action']['new_id']['id']
-              dest_id ||= Board.where(key: next_event['action']['new_id']['key']).select('id').first.global_id if next_event['action']['new_id']['key']
-              action[:destination_board_id] = anon(next_event['action']['new_id']['id'])
+              brd = Board.where(key: next_event['action']['new_id']['key']).select('id').first
+              dest_id ||= brd.global_id if brd && next_event['action']['new_id']['key']
+              action[:destination_board_id] = anon(dest_id) if dest_id
             end
             e['actions'] << action
           end
@@ -313,10 +358,10 @@ More information about the file formats being used is available at https://www.o
         end
       elsif event['type'] == 'utterance'
         e['type'] = 'utterance'
-        e['text'] = event['utterance']['text']
+        e['text'] = (event['utterance'] || {})['text']
         sentence = []
         e['buttons'] = ((event['utterance'] || {})['buttons'] || []).map do |button|
-          if anonymized && !WordData.core_for?(button['label'] || '', nil) && (button['modified'] || !core_buttons["#{button['button_id']}:#{button['board']['id']}"])
+          if anonymized && !WordData.core_for?(button['label'] || '', nil) && (button['modified'] || !core_buttons["#{button['button_id']}:#{(button['board'] || {})['id']}"])
             sentence << '????'
             {redacted: true}
           elsif button['modified'] # inflection, spelling with space, word completion, word prediction

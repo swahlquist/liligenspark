@@ -329,8 +329,8 @@ class Api::LogsController < ApplicationController
     if !res
       progress = Progress.schedule(LogSession, :anonymous_logs)
       res = JsonApi::Progress.as_json(progress, :wrapper => true)
-      res[:message] = "Data is generating, please check back soon..."
-      Permissions.setex(Permissable.permissions_redis, 'global/anonymous/logs/url', 1.hour.to_i, res.to_json)
+      res[:message] = "Data is generating and could take a few days, please check back soon..."
+      Permissions.setex(Permissable.permissions_redis, 'global/anonymous/logs/url', 3.days.to_i, res.to_json)
     end
     
     render json: res

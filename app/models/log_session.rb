@@ -1964,36 +1964,77 @@ class LogSession < ActiveRecord::Base
     res
   end
 
-  def self.anonymous_logs
+  FILE_USER_LIMIT = 250
+  # alightspeechtherapy
+  def self.anonymous_logs(user_ids=nil, urls=nil, do_cache=true)
     # Collect all the user_ids who have a weekly_stats_summary from
     # summary.data['publishing_user_ids'], check the users to see if they
     # still have user.settings['preferences']['allow_log_reports'] and
     # user.settings['preferences']['allow_log_publishing'].
     # For all those users, Exporter.export_logs(user_id, true, zipper)
     # to package them into a zip file.
-    user_ids = []
-    WeeklyStatsSummary.where(false).find_in_batches(batch_size: 50) do |batch|
-      batch.each do |sum|
-        user_ids += sum.data['publishing_user_ids'] || []
+    date_start = (Date.today << 1).beginning_of_month
+    date_end = date_start.end_of_month
+    if !user_ids
+      puts "retrieving users..."
+      user_ids = []
+      cutoffweekyear = WeeklyStatsSummary.date_to_weekyear(date_start)
+      cutoffweekyear2 = WeeklyStatsSummary.date_to_weekyear(date_end)
+      WeeklyStatsSummary.where(['weekyear >= ? AND weekyear <= ? AND user_id = ?', cutoffweekyear, cutoffweekyear2, 0]).find_in_batches(batch_size: 10) do |batch|
+        batch.each do |sum|
+          user_ids += sum.data['publishing_user_ids'] || []
+        end
       end
+      puts "done! #{user_ids.uniq.length}"
+    elsif user_ids.is_a?(String)
+      stash = JobStash.find_by_global_id(user_ids)
+      user_ids = stash.data
     end
+    user_ids.uniq!
 
     file = Tempfile.new(['user-data', '.zip'])
     file.close
+
+    more_user_ids = nil
+    if user_ids.length > FILE_USER_LIMIT
+      more_user_ids = user_ids.drop(FILE_USER_LIMIT)
+      user_ids = user_ids.take(FILE_USER_LIMIT)
+    end
+    slices = []
     OBF::Utils.build_zip(file.path) do |zipper|
       zipper.add('README.txt', %{Generated #{Time.now.iso8601}
 
 More information about the file formats being used is available at https://www.openboardformat.org
 })
 
-      User.find_batches_by_global_id(user_ids.uniq) do |user|
+      cnt = 0
+      User.find_batches_by_global_id(user_ids) do |user|
+        cnt += 1
+        puts "exporting #{user.user_name} - #{user.global_id} #{cnt}/#{user_ids.length}..."
         if user.settings['preferences']['allow_log_reports'] && user.settings['preferences']['allow_log_publishing']
-          Exporter.export_logs(user.global_id, true, zipper)
+          Exporter.export_logs(user.global_id, true, zipper, [date_start, date_end])
         end
       end
     end
-    url = Uploader.remote_upload("downloads/users/#{CGI.escape(Time.now.iso8601[0, 16].sub(/:/, '-'))}/global/coughdrop-obla-export.zip", file.path, "application/zip")
-    Permissions.setex(Permissable.permissions_redis, 'global/anonymous/logs/url', 14.days.to_i, url.to_json)
-    {url: url}
+    hash = Digest::MD5.hexdigest(user_ids.join(','))
+    res = Uploader.remote_upload("downloads/users/#{CGI.escape(Time.now.iso8601[0, 16].sub(/:/, '-'))}/global/coughdrop-obla-#{hash}-#{date_start.iso8601}-export.zip", file.path, "application/zip")
+    urls ||= []
+    urls << res[:url]
+    response = {urls: urls}
+    if more_user_ids
+      puts "scheduling next batch"
+      stash = JobStash.create(data: more_user_ids)
+      progress = Progress.schedule(LogSession, :anonymous_logs, stash.global_id, urls, do_cache)
+      Progress.chain(progress)
+
+      pres = JsonApi::Progress.as_json(progress, :wrapper => true)
+      pres[:message] = "Data is generating and could take a few more days, please check back soon..."
+      Permissions.setex(Permissable.permissions_redis, 'global/anonymous/logs/url', 12.hours.to_i, pres.to_json)
+      response[:still_working] = true
+    elsif do_cache
+      puts "done!"
+      Permissions.setex(Permissable.permissions_redis, 'global/anonymous/logs/url', 14.days.to_i, urls.to_json)
+    end
+    response
   end
 end
