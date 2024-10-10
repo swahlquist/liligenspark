@@ -162,7 +162,9 @@ module Sharing
   end
   
   def shared_users
-    links = UserLink.links_for(self).select{|l| l['type'] == 'board_share' }
+    # TODO: will this get crazy overloaded if a board is shared with too many people?
+    obj = self
+    links = UserLink.links_for(obj).select{|l| l['type'] == 'board_share' }
     user_ids = links.map{|l| l['user_id'] }.uniq
     users = User.find_all_by_global_id(user_ids)
     result = []
