@@ -46,7 +46,7 @@ module RedisInit
         full.each do |k, v|
           redis.hdel(key, k) if v.to_i < cutoff
         end
-        redis.ltrim(key, -1000, -1)
+        # redis.ltrim(key, -1000, -1)
       end
     end
   end
