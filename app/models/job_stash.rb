@@ -59,6 +59,7 @@ class JobStash < ApplicationRecord
       if user
         return {
           'uid' => args[:user_integration].user_token(user),
+          'anon_id' => user.anonymized_identifier,
           'details' => self.data['details'] || {},
         }.to_json
       end

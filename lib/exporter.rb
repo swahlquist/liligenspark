@@ -10,7 +10,7 @@ module Exporter
       sessions = sessions.where(['started_at > ?', cutoff])
     end
     chunks = [sessions]
-    if sessions.count > 2000
+    if sessions.count > 500
       chunks = []
       quarters = sessions.group("CONCAT(date_part('quarter', started_at), '-', date_part('year', started_at))").count("CONCAT(date_part('quarter', started_at), '-', date_part('year', started_at))")
       quarters.each do |quarter, cnt|
