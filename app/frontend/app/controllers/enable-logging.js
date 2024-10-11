@@ -23,7 +23,7 @@ export default modal.ModalController.extend({
       if(this.get('research_use') || this.get('research_age') || this.get('research_experience')) {
         this.set('model.user.preferences.research_primary_use', this.get('research_use'));
         this.set('model.user.preferences.research_age', this.get('research_age'));
-        this.set('model.user.preferences.research_experience_level', this.get('research_use'));
+        this.set('model.user.preferences.research_experience_level', this.get('research_experience'));
       }  
     }
     if(this.get('model.save')) {
