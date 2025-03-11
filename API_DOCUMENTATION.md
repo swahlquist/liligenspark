@@ -1,4 +1,46 @@
 # LingoLinq API Documentation
+## Table of Contents
+- [Authentication](#authentication)
+  - [POST /oauth2/token (OAuth Token Exchange)](#post-oauth2token-oauth-token-exchange)
+- [Boards API](#boards-api)
+  - [GET /utterances/r/:reply_code (Utterance Redirect)](#get-utterancesr-reply_code-utterance-redirect)
+  - [GET /goals/status/:goal_id (Log Goal Status)](#get-goalsstatus-goal_id-log-goal-status)
+  - [GET /utterances/:id (Utterance)](#get-utterances-id-utterance)
+- [API Framework Information](#api-framework-information)
+- [Button API](#button-api)
+  - [GET /api/v1/buttons (Get Buttons)](#get-apiv1buttons-get-buttons)
+  - [POST /api/v1/buttons (Create Button)](#post-apiv1buttons-create-button)
+  - [GET /api/v1/buttons/:id (Get Button)](#get-apiv1buttons-id-get-button)
+  - [PATCH /api/v1/buttons/:id (Update Button)](#patch-apiv1buttons-id-update-button)
+  - [DELETE /api/v1/buttons/:id (Delete Button)](#delete-apiv1buttons-id-delete-button)
+- [Device API](#device-api)
+  - [GET /api/v1/devices (Get Devices)](#get-apiv1devices-get-devices)
+  - [GET /api/v1/devices/:id (Get Device)](#get-apiv1devices-id-get-device)
+  - [PATCH /api/v1/devices/:id (Update Device)](#patch-apiv1devices-id-update-device)
+  - [DELETE /api/v1/devices/:id (Delete Device)](#delete-apiv1devices-id-delete-device)
+  - [POST /api/v1/devices (Create Device)](#post-apiv1devices-create-device)
+
+## Table of Contents
+- [Authentication](#authentication)
+  - [POST /oauth2/token (OAuth Token Exchange)](#post-oauth2token-oauth-token-exchange)
+- [Boards API](#boards-api)
+  - [GET /utterances/r/:reply_code (Utterance Redirect)](#get-utterancesr-reply_code-utterance-redirect)
+  - [GET /goals/status/:goal_id (Log Goal Status)](#get-goalsstatus-goal_id-log-goal-status)
+  - [GET /utterances/:id (Utterance)](#get-utterances-id-utterance)
+- [API Framework Information](#api-framework-information)
+- [Button API](#button-api)
+  - [GET /api/v1/buttons (Get Buttons)](#get-apiv1buttons-get-buttons)
+  - [POST /api/v1/buttons (Create Button)](#post-apiv1buttons-create-button)
+  - [GET /api/v1/buttons/:id (Get Button)](#get-apiv1buttons-id-get-button)
+  - [PATCH /api/v1/buttons/:id (Update Button)](#patch-apiv1buttons-id-update-button)
+  - [DELETE /api/v1/buttons/:id (Delete Button)](#delete-apiv1buttons-id-delete-button)
+- [Device API](#device-api)
+  - [GET /api/v1/devices (Get Devices)](#get-apiv1devices-get-devices)
+  - [GET /api/v1/devices/:id (Get Device)](#get-apiv1devices-id-get-device)
+  - [PATCH /api/v1/devices/:id (Update Device)](#patch-apiv1devices-id-update-device)
+  - [DELETE /api/v1/devices/:id (Delete Device)](#delete-apiv1devices-id-delete-device)
+  - [POST /api/v1/devices (Create Device)](#post-apiv1devices-create-device)
+
 ## Authentication
 ### POST /oauth2/token (OAuth Token Exchange)
 * Endpoint: POST /oauth2/token
@@ -58,6 +100,12 @@ The application uses several controller methods to manage API requests:
 * **exists?:** Checks for record existence.
 * **allowed?:** Checks permissions.
 * **set_browser_token_header:** Sets a header with a browser token.
+
+API paths generally follow these patterns:
+* OAuth endpoints: `/oauth2/...`
+* SAML authentication: `/saml/...`
+* API version 1: `/api/v1/...`
+* Authentication: `/auth/...`
 
 ## Button API
 
