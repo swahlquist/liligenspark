@@ -204,10 +204,4 @@ API paths generally follow these patterns:
   * name: The name of the device.
 * **Response:** The newly created device.
 
-API paths generally follow these patterns:
-* OAuth endpoints: `/oauth2/...`
-* SAML authentication: `/saml/...`
-* API version 1: `/api/v1/...`
-* Authentication: `/auth/...`
-
 Add Button and Device API endpoints
