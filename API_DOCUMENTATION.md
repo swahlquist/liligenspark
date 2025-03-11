@@ -43,7 +43,6 @@
      "code": "AUTHORIZATION_CODE"
    }```
 
-
 ## Boards API
 
 ### GET /utterances/r/:reply_code (Utterance Redirect)
