@@ -76,4 +76,4 @@ end
 # Use Capistrano for deployment
 # gem 'capistrano', group: :development
 
-ruby "2.6.6"
+ruby '3.3.7'
