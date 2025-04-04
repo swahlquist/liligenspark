@@ -1,4 +1,4 @@
-Coughdrop::RESERVED_ROUTES ||= [
+LingoLinq::RESERVED_ROUTES ||= [
   'admin', 'etc', 'settings', 'status', 'reports', 'stats', 'search', 
   'messages', 'inbox', 'log', 'logs', 'session', 'sessions', 'imports', 
   'boards', 'users', 'groups', 'organizations', 'pages', 'people', 'videos', 
@@ -17,7 +17,7 @@ Coughdrop::RESERVED_ROUTES ||= [
 require 'resque/server'
 require 'admin_constraint'
 
-Coughdrop::Application.routes.draw do
+LingoLinq::Application.routes.draw do
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 
@@ -227,150 +227,5 @@ Coughdrop::Application.routes.draw do
       post '2fa' => 'users#update_2fa'
       get 'external_nonce/:nonce_id' => 'users#external_nonce'
     end
-    
-    resources :images do
-      get 'batch', on: :collection
-      get 'upload_success'
-    end
-    
-    get "buttonsets/:id" => "button_sets#show"
-    get "buttonsets" => "button_sets#index"
-    post "buttonsets/:id/generate" => "button_sets#generate"
-    get "boardversions" => "boards#history"
-    get "userversions" => "users#history"
-    
-    get 'gifts/code_check' => 'purchasing#code_check'
-    resources :gifts
-    
-    resources :sounds do
-      get 'upload_success'
-      post 'imports' => 'sounds#import', on: :collection
-    end
-
-    resources :videos do
-      get 'upload_success'
-    end
-    
-    resources :goals
-
-    resources :profiles do
-      get 'latest', on: :collection
-    end
-    
-    resources :badges
-    
-    resources :units do
-      get 'stats'
-      get 'log_stats'
-      get 'logs'
-      post 'note'
-    end
-    resources :snapshots
-
-    resources :lessons do
-      get 'recent'
-      post 'assign'
-      post 'unassign'
-      post 'complete'
-    end
-
-    resources :organizations do
-      get 'managers'
-      get 'evals'
-      get 'users'
-      get 'supervisors'
-      get 'extras'
-      get 'logs'
-      get 'stats'
-      get 'admin_reports'
-      get 'blocked_emails'
-      get 'blocked_cells'
-      post 'extra_action'
-      post 'alias'
-      post 'start_code' => 'organizations#start_code'
-      post 'status/:user_id' => 'organizations#set_status'
-    end
-    
-    resources :utterances do
-      post 'share'
-      post 'reply'
-    end
-    
-    get "search/symbols" => "search#symbols"
-    get "search/protected_symbols" => "search#protected_symbols"
-    get "search/external_resources" => "search#external_resources"
-    get "search/proxy" => "search#proxy"
-    get "search/parts_of_speech" => "search#parts_of_speech"
-    get "search/apps" => "search#apps"
-    get "search/audio" => "search#audio"
-    get "search/focus" => "search#focuses"
-    get "progress/:id" => "progress#progress"
-    
-    resources :logs do
-      get 'lam'
-      get 'obl', on: :collection
-      post 'import' => 'logs#import', on: :collection
-      post 'code_check' => 'logs#code_check', on: :collection
-
-      get 'trends', on: :collection
-      get 'trends_slice', on: :collection
-      get 'anonymous_logs', on: :collection
-    end
-    resources :webhooks do
-      post 'test'
-    end
-    resources :integrations
-    
-    post 'purchasing_event' => 'purchasing#event'
-    post 'purchase_gift' => 'purchasing#purchase_gift'
   end
-
-  # Example of regular route:
-  #   get 'products/:id' => 'catalog#view'
-
-  # Example of named route that can be invoked with purchase_url(id: product.id)
-  #   get 'products/:id/purchase' => 'catalog#purchase', as: :purchase
-
-  # Example resource route (maps HTTP verbs to controller actions automatically):
-  #   resources :products
-
-  # Example resource route with options:
-  #   resources :products do
-  #     member do
-  #       get 'short'
-  #       post 'toggle'
-  #     end
-  #
-  #     collection do
-  #       get 'sold'
-  #     end
-  #   end
-
-  # Example resource route with sub-resources:
-  #   resources :products do
-  #     resources :comments, :sales
-  #     resource :seller
-  #   end
-
-  # Example resource route with more complex sub-resources:
-  #   resources :products do
-  #     resources :comments
-  #     resources :sales do
-  #       get 'recent', on: :collection
-  #     end
-  #   end
-
-  # Example resource route with concerns:
-  #   concern :toggleable do
-  #     post 'toggle'
-  #   end
-  #   resources :posts, concerns: :toggleable
-  #   resources :photos, concerns: :toggleable
-
-  # Example resource route within a namespace:
-  #   namespace :admin do
-  #     # Directs /admin/products/* to Admin::ProductsController
-  #     # (app/controllers/admin/products_controller.rb)
-  #     resources :products
-  #   end
 end

@@ -1,0 +1,42 @@
+// LingoLinq Color Scheme
+// Based on the LingoLinq logo
+
+// Primary Colors
+$primary-blue: #13A9DE;       // Bright blue from speech bubble
+$primary-navy: #1A365D;       // Navy blue from "Lingo" text
+$primary-light-blue: #4ABAED; // Light blue from "Linq" text
+$primary-orange: #F7941D;     // Orange from molecular nodes
+$primary-green: #8DC63F;      // Green from gradient dish
+$primary-yellow: #FFF200;     // Yellow from gradient dish
+
+// Background Colors
+$background-white: #FFFFFF;
+$background-light: #F5F9FC;
+$background-medium: #E9F4FB;
+
+// Text Colors
+$text-dark: #1A365D;          // Navy blue for primary text
+$text-medium: #4A5568;        // Medium gray for secondary text
+$text-light: #718096;         // Light gray for tertiary text
+
+// Accent Colors
+$accent-success: #48BB78;     // Green for success messages
+$accent-warning: #F7941D;     // Orange for warnings
+$accent-danger: #E53E3E;      // Red for errors
+$accent-info: #4ABAED;        // Light blue for info
+
+// Border Colors
+$border-light: #E2E8F0;
+$border-medium: #CBD5E0;
+
+// Button Colors
+$button-primary: $primary-blue;
+$button-secondary: $primary-navy;
+$button-success: $accent-success;
+$button-danger: $accent-danger;
+$button-warning: $accent-warning;
+$button-info: $accent-info;
+
+// Hover States
+$hover-primary: darken($primary-blue, 10%);
+$hover-secondary: darken($primary-navy, 10%);
