@@ -3,7 +3,7 @@ source 'https://rubygems.org'
 # TODO: https://rails-assets.org/ for bower support
 
 group :development, :test do
-  gem 'dotenv'
+  gem 'dotenv', '~> 2.0'
   gem 'guard'
   gem 'guard-jasmine'
   gem 'guard-rspec'
@@ -51,6 +51,7 @@ gem 'boy_band'
 gem 'ttfunk', '1.7'
 gem 'ruby-saml'
 gem 'rotp'
+gem 'matrix'
 
 gem 'ar-octopus', require: 'octopus', git: 'https://github.com/whitmer/octopus'
 # TODO: getting errors on load for rails 5, so pinned to beta, this isn't actually a core dependency
