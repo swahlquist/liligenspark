@@ -3,7 +3,7 @@ source 'https://rubygems.org'
 # TODO: https://rails-assets.org/ for bower support
 
 group :development, :test do
-  gem 'dotenv', '~> 2.0'
+  gem 'dotenv'
   gem 'guard'
   gem 'guard-jasmine'
   gem 'guard-rspec'
@@ -14,7 +14,7 @@ group :development, :test do
 end
 
 # Rails 5.2 doesn't seem to work on heroku with octopus :-/
-gem 'rails', '5.2.8'
+gem 'rails', '5.0.7.2'
 gem 'pg' #, '0.19.0' #, '>=1.1.3'
 gem 'sass-rails'
 gem 'uglifier', '>= 1.3.0'
@@ -51,7 +51,6 @@ gem 'boy_band'
 gem 'ttfunk', '1.7'
 gem 'ruby-saml'
 gem 'rotp'
-gem 'matrix'
 
 gem 'ar-octopus', require: 'octopus', git: 'https://github.com/whitmer/octopus'
 # TODO: getting errors on load for rails 5, so pinned to beta, this isn't actually a core dependency
